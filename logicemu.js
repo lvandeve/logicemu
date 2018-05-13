@@ -1,11 +1,30 @@
 /*
 LogicEmu
-Copyright (C) 2018 by Lode Vandevenne
 
-Main program js file
+Copyright (c) 2018 Lode Vandevenne
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 */
 
 /*
+Main program js file
+
 Welcome to the main JS source code of LogicEmu, in all its frameworkless glory.
 
 This has been tested to work in Chrome and Firefox, and hopefully works in other browsers too.
@@ -254,11 +273,13 @@ connected together with a "master".
 
 // this is mainly for the "change type" dropdown.
 var typesymbols = {}; // cannot use object colon notation because JS then interprets the variable names as strings, not as their numeric values
-typesymbols[TYPE_NULL] = '?'; typesymbols[TYPE_SWITCH_OFF] = 's'; typesymbols[TYPE_SWITCH_ON] = 'S';
-typesymbols[TYPE_LED] = 'l'; typesymbols[TYPE_PUSHBUTTON_OFF] = 'p'; typesymbols[TYPE_PUSHBUTTON_ON] = 'P';
+typesymbols[TYPE_NULL] = '`'; typesymbols[TYPE_SWITCH_OFF] = 's'; typesymbols[TYPE_SWITCH_ON] = 'S';
+typesymbols[TYPE_LED] = 'l'; typesymbols[TYPE_LED_RGB] = 'L';
+typesymbols[TYPE_PUSHBUTTON_OFF] = 'p'; typesymbols[TYPE_PUSHBUTTON_ON] = 'P';
 typesymbols[TYPE_TIMER_OFF] = 'r'; typesymbols[TYPE_TIMER_ON] = 'R'; typesymbols[TYPE_AND] = 'a';
 typesymbols[TYPE_OR] = 'o'; typesymbols[TYPE_XOR] = 'e'; typesymbols[TYPE_NAND] = 'A';
 typesymbols[TYPE_NOR] = 'O'; typesymbols[TYPE_XNOR] = 'E'; typesymbols[TYPE_FLIPFLOP] = 'c';
+typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_TRISTATE] = 'V';
 
 
 // all devices except flipflop, those are treated differently because multiple different cells of its type can form one component
@@ -1467,9 +1488,10 @@ function VTE() {
       var index = 0;
       if(s[0] == '0' && s[1] == 'x') index = parseInt(s); // NOTE: this also supports decimal with prefix '0x' and oct with prefix '0'
       else index = parseInt(s, 10); // do NOT support the horrible octal notation
-      if(index > 255) {
+      var maxval = (1 << this.numoutputs) - 1;
+      if(index > maxval) {
         for(var i = 0; i < s.length; i++) this.doBackspace();
-        index = 255;
+        index = maxval;
         s = '' + index;
         for(var i = 0; i < s.length; i++) this.addChar(s[i]);
       }
@@ -2352,9 +2374,22 @@ function Component() {
       return;
     }
     if(changeMode) {
-      this.type = changeMode;
+      var value = this.value;
+      var type = changeMode;
+      var symbol = typesymbols[type];
+      if(changeMode == 'c') {
+        type = this.inputs.length ? TYPE_FLIPFLOP : TYPE_CONSTANT;
+        value = false;
+        symbol = 'c';
+      }
+      if(changeMode == 'C') {
+        type = this.inputs.length ? TYPE_FLIPFLOP : TYPE_CONSTANT;
+        value = true;
+        symbol = 'C';
+      }
+      this.type = type;
+      this.value = value;
       changeMode = null;
-      var symbol = typesymbols[this.type];
       if(!symbol) return;
       for(var i = 0; i < this.cells.length; i++) {
         var cell = world[this.cells[i][1]][this.cells[i][0]];
@@ -2362,7 +2397,7 @@ function Component() {
         cell.symbol = symbol;
         cell.displaysymbol = symbol;
         cell.circuitsymbol = symbol;
-        cell.initDiv2();
+        cell.initDiv(cell.x, cell.y);
       }
       return;
     }
@@ -2447,8 +2482,14 @@ var activeVTE = null;
 document.body.onkeypress = function(e) {
   //console.log('body keypress: vte: ' + activeVTE + ', event: ' + e);
   if(activeVTE) {
-    var key = e.which || e.charCode || e.keyCode || 0;
-    activeVTE.typeKeyboard(key);
+    if(e.code == 'Backspace') {
+      // do nothing. onkeydown does backspace already.
+      // chrome only handles backspace in onkeydown, while firefox
+      // handles it in both onkeypress and onkeydown
+    } else {
+      var key = e.which || e.charCode || e.keyCode || 0;
+      activeVTE.typeKeyboard(key);
+    }
     // use render() if no update of components should be done but you still want to see the
     // new character appear. Use update() to do a full component update, similar to what
     // is done after pressing on button with mouse.
@@ -2592,6 +2633,7 @@ function Cell() {
   };
 
   this.initDiv2 = function() {
+    var c = this.circuitsymbol;
     var symbol = this.displaysymbol;
     var virtualsymbol = symbol;
     if((symbol == '#' || symbol == '$') && this.components[0]) {
@@ -2606,7 +2648,50 @@ function Cell() {
       if(this.components[0].type == TYPE_TIMER_OFF) virtualsymbol = 'r';
     }
 
-    this.renderer.init2(this, symbol, virtualsymbol);
+
+    var title = null;
+    if(!this.comment) {
+      if(c == 's' || c == 'S') title = 'switch';
+      if(c == 'p' || c == 'P') title = 'pushbutton';
+      if(c == 'r' || c == 'R') title = 'timer';
+      if(c == 'l') title = 'LED';
+      if(c == 'L') title = 'RGB LED';
+      if(c == '?') title = 'random generator';
+      if(c == 'a') title = 'AND gate';
+      if(c == 'A') title = 'NAND gate';
+      if(c == 'o') title = 'OR gate';
+      if(c == 'O') title = 'NOR gate';
+      if(c == 'e') title = 'XOR gate';
+      if(c == 'E') title = 'XNOR gate';
+      if(c == 'c' || c == 'C') {
+        if(this.components[0] && this.components[0].type == TYPE_CONSTANT) {
+          if(c == 'c') title = 'constant off';
+          if(c == 'C') title = 'constant on';
+        } else {
+          title = 'counter or flipflop clock input';
+        }
+      }
+      if(c == 'd') title = 'delay or flipflop D input';
+      if(c == 't') title = 'flipflop T input';
+      if(c == 'j') title = 'flipflop J input';
+      if(c == 'k') title = 'flipflop K input';
+      if(c == 'q') title = 'flipflop output and async set';
+      if(c == 'Q') title = 'flipflop inverted output and async reset';
+      if(c == 'V') title = 'tristate buffer';
+      if(c == 'g') title = 'global (backplane) wire';
+      if(c == 'I') title = 'IC definition';
+      if(c == 'i') title = 'IC instance';
+      if(c == 'b' || c == 'B') title = 'ROM/RAM bit, or encoder/decoder';
+    }
+
+    this.renderer.init2(this, symbol, virtualsymbol, title);
+
+    if(!this.comment) {
+      // TODO: use component type instead?
+      var pointer = (c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R' || c == 'b' || c == 'B');
+      if(pointer) this.renderer.setCursorPointer();
+
+    }
   }
 
   // must be called after components are parsed
@@ -2701,7 +2786,7 @@ function RendererText() {
   };
 
   // specific initialization, can be re-done if cell changed on click
-  this.init2 = function(cell, symbol, virtualsymbol) {
+  this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
     if(symbol == ' ') return;
 
     if (!this.init2done) {
@@ -2791,6 +2876,9 @@ function RendererText() {
 
     if(cell.components[0] && cell.components[0].error) {
       this.markError(cell, components[0].errormessage);
+    } else if(opt_title) {
+      this.div0.title = opt_title;
+      this.div1.title = opt_title;
     }
 
     this.init2done = true;
@@ -2806,6 +2894,11 @@ function RendererText() {
     this.div1.style.color = 'red';
     this.div0.title = errortext;
     this.div1.title = errortext;
+  };
+
+  this.setCursorPointer = function() {
+    this.div0.style.cursor = 'pointer';
+    this.div1.style.cursor = 'pointer';
   };
 
   this.setValue = function(cell, value, type) {
@@ -3178,9 +3271,9 @@ function RendererImg() { // RendererCanvas RendererGraphical
   };
 
   // specific initialization, can be re-done if cell changed on click
-  this.init2 = function(cell, symbol, virtualsymbol) {
+  this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
     if(!this.canvas0) {
-      this.fallback.init2(cell, symbol, virtualsymbol);
+      this.fallback.init2(cell, symbol, virtualsymbol, opt_title);
       return;
     }
 
@@ -3202,6 +3295,11 @@ function RendererImg() { // RendererCanvas RendererGraphical
     if(cell.components[0] && cell.components[0].error) {
       error = true;
       this.markError(cell, cell.components[0].errormessage);
+    } else if(opt_title) {
+      //this.text0.title = opt_title;
+      //this.text1.title = opt_title;
+      this.fallback.div0.title = opt_title;
+      this.fallback.div1.title = opt_title;
     }
     var c = cell.circuitsymbol;
     // This avoids blurry lines that take up other amounts of pixels with lighter colors than desired
@@ -3471,6 +3569,13 @@ function RendererImg() { // RendererCanvas RendererGraphical
     this.ctx1.strokeStyle = 'red';
     this.ctx0.fillStyle = 'red';
     this.ctx1.fillStyle = 'red';
+  };
+
+  this.setCursorPointer = function() {
+    this.fallback.div0.style.cursor = 'pointer';
+    this.fallback.div1.style.cursor = 'pointer';
+    this.text0.style.cursor = 'pointer';
+    this.text1.style.cursor = 'pointer';
   };
 
   this.setValue = function(cell, value, type) {
@@ -5906,10 +6011,10 @@ menuRows.style.display = 'block';
 menuRows.style.width = '100%';
 menuRows.style.height = '100px';
 
-var menuRow2El = makeElementAt('span', 0, 0, menuRows);
-var menuRow1El = makeElementAt('span', 0, 48, menuRows);
+var menuRow1El = makeElementAt('span', 0, 0, menuRows);
+var menuRow2El = makeElementAt('span', 0, 48, menuRows);
 //var menuRow3El = makeElementAt('span', 0, 80, menuRows);
-var menuRow3El = menuRow1El;
+var menuRow3El = menuRow2El;
 
 menuRow1El.style.background = '#f8f8f8';
 menuRow1El.style.position = 'absolute';
@@ -6020,7 +6125,7 @@ ticksCounterEl.style.display = 'inline-block';
 
 
 
-var rendererDropdown = makeElement('select', menuRow1El);
+var rendererDropdown = makeElement('select', menuRow2El);
 rendererDropdown.title = 'Choose renderer: graphical or text. Graphical is with HTML5 canvas and has better looking wire connections but may be slow in some browsers for large circuits. Text mode is faster and is more closely related to how you edit circuits with ASCII text.';
 rendererDropdown.onchange = function() {
   graphics_mode = rendererDropdown.selectedIndex;
@@ -6033,7 +6138,7 @@ makeElement('option', rendererDropdown).innerText = 'graphical';
 rendererDropdown.selectedIndex = graphics_mode;
 
 /*
-var toggleButton = makeElement('button', menuRow1El);
+var toggleButton = makeElement('button', menuRow2El);
 toggleButton.innerText = 'spark';
 toggleButton.title = 'after clicking this button, click any component and its state will be toggled. May not take effect in fast mode.';
 toggleButton.onclick = function() {
@@ -6043,7 +6148,7 @@ toggleButton.onclick = function() {
 
 
 
-var zoomoutButton = makeElement('button', menuRow1El);
+var zoomoutButton = makeElement('button', menuRow2El);
 zoomoutButton.innerText = '-';
 zoomoutButton.title = 'Zoom out';
 zoomoutButton.onclick = function() {
@@ -6056,7 +6161,7 @@ zoomoutButton.onclick = function() {
   render();
 };
 
-var zoominButton = makeElement('button', menuRow1El);
+var zoominButton = makeElement('button', menuRow2El);
 zoominButton.innerText = '+';
 zoominButton.title = 'Zoom in';
 zoominButton.onclick = function() {
@@ -6076,23 +6181,25 @@ zoominButton.onclick = function() {
 
 var changeDropdownElements = [];
 
-var changeDropdown = makeElement('select', menuRow1El);
-changeDropdown.title = 'A simpler more primitive form of edit, but it works while a circuit is running. Change the type of a device to this. First click an option, then the device.' +
-    ' This is a very limited form of editing. It can only change a device that has one of the types in the list to another type in the list. On other devices it may either do nothing, or cause' +
-    ' unexpected behavior. Editing in IC templates has no effect on instances. Changes are not saved and not visible under the edit button. To do full editing, use the edit button instead.';
+var changeDropdown = makeElement('select', menuRow2El);
+changeDropdown.title = 'A simpler more primitive form of edit, but it works while a circuit is running. Change the type of a gate, switch or LED to this. First click an option from this list, then the main cell of a device (e.g. the "a" of an AND gate).' +
+    ' This is a very limited form of editing. It doesn\'t support creating or removing wire connections. It can only change a device that has one of the types in the list to another type in the list. On other devices it may either do nothing, or cause' +
+    ' unexpected behavior. Changes in IC templates have no effect on instances. Changes are not saved and not visible under the edit button. To do full editing, use the edit button instead.';
 changeDropdown.onchange = function() {
   changeMode = changeDropdownElements[changeDropdown.selectedIndex];
   changeDropdown.selectedIndex = 0; // so that "onchange" works again even if choosing the same one ...
 };
 
 function registerChangeDropdownElement(type) {
-  var el = makeElement('option', changeDropdown).innerText = (typesymbols[type] == undefined) ? '[change]' : typesymbols[type];
+  var text = (typesymbols[type] == undefined) ? '[change]' : typesymbols[type];
+  if(type == 'c' || type == 'C') text = type;
+  var el = makeElement('option', changeDropdown).innerText = text;
   changeDropdownElements.push(type);
 };
 
 
 function makeChangeButton(type) {
-  var changeButton = makeElement('button', menuRow1El);
+  var changeButton = makeElement('button', menuRow2El);
   changeButton.innerText = typesymbols[type];
   changeButton.title = 'Change the type of this device to this. First click this button, then the device. This is a first very limited form of editing... NOTE that not the cell you click changes, but the type of the core device, e.g. the "a" in an and.';
   changeButton.onclick = function() {
@@ -6108,22 +6215,30 @@ registerChangeDropdownElement(TYPE_PUSHBUTTON_OFF);
 registerChangeDropdownElement(TYPE_TIMER_ON);
 registerChangeDropdownElement(TYPE_TIMER_OFF);
 registerChangeDropdownElement(TYPE_LED);
+registerChangeDropdownElement(TYPE_LED_RGB);
 registerChangeDropdownElement(TYPE_AND);
 registerChangeDropdownElement(TYPE_OR);
 registerChangeDropdownElement(TYPE_XOR);
 registerChangeDropdownElement(TYPE_NAND);
 registerChangeDropdownElement(TYPE_NOR);
 registerChangeDropdownElement(TYPE_XNOR);
-registerChangeDropdownElement(TYPE_FLIPFLOP);
+// For 'c' and 'C' I can unfortunately not use TYPE, because c can mean both flipflop and constant.
+// Instead some logic is created where changeMode is used instead, to decide to make it constant if 0 inputs, toggle flipflop otherwise, in each case off if c, on if C.
+//registerChangeDropdownElement(TYPE_FLIPFLOP);
+registerChangeDropdownElement('c');
+registerChangeDropdownElement('C');
+registerChangeDropdownElement(TYPE_RANDOM);
+
 
 var editmode = false;
 
 var textbeforeedit = '';
 var editarea;
-var editButton = makeElement('button', menuRow1El);
+var editButton = makeElement('button', menuRow2El);
 editButton.innerText = 'edit';
 editButton.title = 'Opens text field to edit the map. Press this button again to stop editing and run the new circuit. Read the editing tutorial under "help" first. Advice: for large projects, do not actually edit in the text field because that is fiddly, use a good text editor (that has block selection), or copypaste a circuit in here from an external source. '
-                 + 'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead.';
+                 + 'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead. Note that nothing gets sent to any server or cloud, everything is'
+                 + 'local to your computer only.';
 editButton.onclick = function() {
   if(!editmode) {
     textbeforeedit = origtext;
@@ -6155,7 +6270,7 @@ editButton.onclick = function() {
 };
 
 
-var forgetButton = makeElement('button', menuRow1El);
+var forgetButton = makeElement('button', menuRow2El);
 forgetButton.innerText = 'forget';
 forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button,' +
                      'you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
@@ -6315,28 +6430,91 @@ function printTransform(text, op) {
 }
 
 
-var circuitDropdownSpan = makeElement('span', menuRow2El);
+var circuitDropdownSpan = makeElement('span', menuRow1El);
 
 var currentSelectedCircuit = 0;
 
-var prevCircuitButton = makeElement('button', menuRow2El);
+var prevCircuitButton = makeElement('button', menuRow1El);
 prevCircuitButton.innerText = '<';
-prevCircuitButton.title = 'Next circuit';
+prevCircuitButton.title = 'Previous built-in circuit';
 prevCircuitButton.onclick = function() {
   currentSelectedCircuit--;
   if(currentSelectedCircuit < 0) currentSelectedCircuit = allRegisteredCircuits.length - 1;
   parseText(allRegisteredCircuits[currentSelectedCircuit][1], allRegisteredCircuits[currentSelectedCircuit][0]);
 };
 
-var nextCircuitButton = makeElement('button', menuRow2El);
+var nextCircuitButton = makeElement('button', menuRow1El);
 nextCircuitButton.innerText = '>';
-nextCircuitButton.title = 'Next circuit';
+nextCircuitButton.title = 'Next built-in circuit';
 nextCircuitButton.onclick = function() {
   currentSelectedCircuit++;
   if(currentSelectedCircuit >= allRegisteredCircuits.length) currentSelectedCircuit = 0;
   parseText(allRegisteredCircuits[currentSelectedCircuit][1], allRegisteredCircuits[currentSelectedCircuit][0]);
 };
 
+
+var importButton = makeElement('button', menuRow1El);
+importButton.innerText = 'import';
+importButton.title = 'Import a circuit from its ASCII diagram copypasted from elsewhere. Paste it into the field that appears, press done (this button itself) when finished. To export a circuit instead, use the "edit" button, or create your own circuit in a text editor.';
+importButton.onclick = function() {
+  if(!editmode) {
+    var fontsize = 10;
+    var ewidth = 60;
+    var eheight = 60;
+    editarea = makeAbsElement('textarea', 30, 128, 400, 400);
+    editarea.rows = 40;
+    editarea.cols = 40;
+    editarea.value = '';
+    editarea.style.fontSize = fontsize + 'px';
+
+    pause();
+    importButton.innerText = 'done';
+    editmode = true;
+  } else {
+    document.body.removeChild(editarea);
+    importButton.innerText = 'import';
+    editmode = false;
+    var newtext = editarea.value;
+    if(newtext == '') {
+      unpause();
+    } else {
+      parseText(newtext);
+    }
+  }
+};
+
+
+// This button is commented out, because exporting a circuit only makes sense if you edited it, and if you edit circuits you already know how to copypaste their ASCII text from the 'edit' textfield
+/*
+var exportButton = makeElement('button', menuRow1El);
+exportButton.innerText = 'export';
+exportButton.title = 'Export a circuit. Copypaste its ASCII diagram to store or post it. Then press done (this button itself) to remove the popup textfield. NOTE: nothing gets exported to the cloud. Everything is stored locally and you must copypaste it yourself to share it.';
+exportButton.onclick = function() {
+  if(!editmode) {
+    var fontsize = 10;
+    var ewidth = 60;
+    var eheight = 60;
+    editarea = makeAbsElement('textarea', 30, 128, 400, 400);
+    editarea.rows = h;
+    editarea.cols = w;
+    editarea.value = origtext;
+    editarea.style.fontSize = fontsize + 'px';
+    editarea.style.whiteSpace = 'nowrap';
+
+    pause();
+    exportButton.innerText = 'done';
+    editmode = true;
+  } else {
+    document.body.removeChild(editarea);
+    exportButton.innerText = 'export';
+    editmode = false;
+    unpause();
+  }
+};*/
+
+
+var githubLink = makeElement('span', menuRow1El);
+githubLink.innerHTML = '&nbsp<a href="https://github.com/lvandeve/logicemu">github</a>';
 
 function CircuitGroup(name) {
   this.circuits = [];
@@ -6385,13 +6563,6 @@ function registerTitle(title) {
   var circuit = '0"This is a title section. Choose the next circuit to view the first one under this title.';
   registerCircuit(name, circuit, true);
 }
-
-
-
-// the text you last edited is remembered. To remove the memory, use the edit button, clear the string, and save
-var stored_text = getLocalStorage('circuit_text');
-if (stored_text != '' && !!stored_text) parseText(stored_text, 'stored circuit');
-
 var fallbackhelptext = '0"Load any circuit from the dropdowns above, or press edit to make a new one."\n0"Use help if this is your first time"';
 
 var introText = `
@@ -6439,7 +6610,20 @@ var introText = `
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `;
 
-if(origtext == '') parseText(introText, 'Welcome');
+
+
+var initialCircuitText = introText;
+var initialTitle = 'Emulate Logic Circuits';
+
+// the text you last edited is remembered. To remove the memory, use the edit button, clear the string, and save
+var stored_text = getLocalStorage('circuit_text');
+if (stored_text != '' && !!stored_text) {
+  initialCircuitText = stored_text;
+  initialTitle = 'stored circuit';
+}
+
+
+parseText(initialCircuitText, initialTitle);
 
 
 function printComponentsDebug() {

@@ -1,9 +1,32 @@
 /*
 LogicEmu
-Copyright (C) 2018 by Lode Vandevenne
 
-Help-file circuits for viewing and editing.
+Copyright (c) 2018 Lode Vandevenne
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 */
+
+/*
+This JS file contains help circuits for viewing and editing,
+and injects them into a dropdown from logicemu.js
+*/
+
 registerCircuitGroup('help');
 
 registerCircuit('Welcome', introText);
@@ -818,8 +841,8 @@ s---g1         0g----->l
 
 
 
-0"Antennas are another form of 'backplane' wires, connected to the 'dish'"
-0"they're aimed at. You do not have to see these as wireless signals."
+0"Antennas are another form of 'backplane' wires, connected to the corresponding 'dish'"
+0"they're aimed at. Calling them 'antennas' or 'wireless' is just a metaphor."
 0"These provide another way to reduce clutter, and are especially useful"
 0"for large wrap-around circuits."
 
@@ -2182,11 +2205,11 @@ s---G    G--->l
 
 0"NEW PART: straight backplane connections ('antennas')"
 
-0"(,),u,n: 'antennas'. Connect at any distance to the opposing 'antenna dish' they"
-0"are aimed at: ( aims horizontally to ), n aims downwards to u and vice versa."
-0"The signal flies over all other non-wireless circuitry."
-0"If you don't like the antenna analogy, you may also imagine a wire on the"
-0"back side of the board connecting those points, similar to g and G."
+0"(,),u,n: 'antennas'. These are another form of 'backplane' wires, connected"
+0"to the corresponding 'dish' they're aimed at. Calling them 'antennas'"
+0"or 'wireless' is just a metaphor."
+0"These provide another way to reduce clutter, and are especially useful"
+0"for large wrap-around circuits."
 
          l             l
          ^             ^
@@ -2211,8 +2234,11 @@ s---G    G--->l
 0"The antenna can also connect some non-wire-like connections, such as be in-between"
 0"an input and a device"
 
-
  s--->(    )l
+
+0"Antennas can be nested recursively:"
+
+ s-(   s-(    )->l   )->l
 
 0"The antenna has very specific special rules for diagonal connections. Those are too"
 0"detailed to explain in this tutorial, but the goal of the rules is that you can make"
@@ -2881,7 +2907,7 @@ registerCircuit('Unit Test', `
 
 0"Note: also try: applyTransform(4), applyTransform(2)"
 
-0"Note: also test the map 'game of life large ship' and enable autotick"
+0"Note: also test the map 'game of life ship' and enable autotick"
 
 0"On"
 0"--"

@@ -1,8 +1,30 @@
 /*
 LogicEmu
-Copyright (C) 2018 by Lode Vandevenne
 
-Various demo circuits and electronics tutorials
+Copyright (c) 2018 Lode Vandevenne
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+/*
+This JS file contains various demo circuits and electronics tutorials,
+and injects them into a dropdown from logicemu.js
 */
 
 registerCircuitGroup('circuits');
@@ -1184,11 +1206,14 @@ registerCircuit('8-bit ALU from adder', `
 0"however, with just an adder you can do all those operations. An ALU"
 0"in a CPU, at a very basic level, does exactly that: It usually includes an adder to"
 0"do various different computations."
+
 0"In twos complement binary notation, subtracting a-b can be done by inverting the bits"
-0"of and adding 1. So before the adder inputs, put a circuit that can optionally negate"
+0"of b and adding 1. So before the adder inputs, put a circuit that can optionally negate"
 0"b's bits (with xor gates), and adding 1 can be done with the carry input."
-0"Comparing can be done by subtracting and then looking at the highest bit, which indicates"
-0"the sign, or by checking of all bits are zero with OR gates to test equality"
+
+0"Comparing can be done by subtracting and then looking at the carry out:"
+0"when subtracting a-b, it will be high when a >= b, low when a < b. To"
+0"test for equality, use a many-input NOR gate to check if all out bits are zero."
 
 0"The build below does this, and is operated as follows:"
 0"The operation depends on the 3 input flags of the right side:"
@@ -7416,10 +7441,49 @@ i87#############################################################################
                                                                                 ^^^^^^^^^^^^^^^^
                                                                                 ssssssssssssssss
 
+`);
 
 
 
+registerCircuit('16-bit adder with decimal IO', `
 
+0"Binary 16-bit adder with decimal input and decimal output."
+
+0"Decimal conversions done with the built-in terminal component. For true"
+0"decimal conversion circuits from gates, see bcd/binary encoder/decoder circuits"
+0"or the 'compact display' circuits"
+
+0"The output is 17-bit: the carry is used as extra output bit."
+
+0"Click with mouse in input field to move keyboard cursor there."
+
+TTTTTTTTTTTTTTTTT
+^^^^^^^^^^^^^^^^^
+*iiiiiiiiiiiiiiiiiiiiiiiiiiiiiii16<c
+ ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
+ TTTTTTTTTTTTTTTT TTTTTTTTTTTTTTTT
+
+
+0"(IC definitions below)"
+
+        l
+        ^
+  l<o<a e *sI1
+    ^ ^^^/
+    a e *
+    ^^^
+    s s
+
+   l  l  l  l  l  l  l  l  l  l  l  l  l  l  l  l
+   ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^
+l<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<sI16
+  ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^
+  31 31 21 21 21 21 20 20 20 20 20 20 10 10 10 10
+  15 04 93 82 71 60 59 48 37 26 15 04 93 82 71 60
+  yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+  3322222222221111 1111110000000000
+  1098765432109876 5432109876543210
+  ssssssssssssssss ssssssssssssssss
 
 `);
 
