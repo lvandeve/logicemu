@@ -2689,6 +2689,14 @@ function Cell() {
     if(!this.comment) {
       // TODO: use component type instead?
       var pointer = (c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R' || c == 'b' || c == 'B');
+      // currently cursor pointer not enabled for wires etc... that are part of the switch (even though pressing them actually works... but it would look a bit too messy)
+      if((c == '#' || c == '$') && this.components[0]) {
+        var type = this.components[0].type;
+        if(type == TYPE_SWITCH_OFF || type == TYPE_SWITCH_ON || type == TYPE_PUSHBUTTON_OFF || type == TYPE_PUSHBUTTON_ON ||
+           type == TYPE_TIMER_OFF || type == TYPE_TIMER_ON) {
+           pointer = true;
+        }
+      }
       if(pointer) this.renderer.setCursorPointer();
 
     }
@@ -5903,12 +5911,21 @@ function parseText2(text, opt_title) {
     }
   }
 
+  var fityindex2 = origtext.indexOf('FIT:y', fityindex + 1);
+  var fity2 = 0;
+  if(fityindex2 >= 0) {
+    for(var i = 0; i < fityindex2; i++) {
+      if(origtext[i] == '\n') fity2++;
+    }
+    fity = fity2 - fity;
+  }
+
   var fitx = (origtext.indexOf('FIT:x') >= 0);
 
   var fitwidth = true;
   var fitheight = true;
-  var docwidth = document.body.clientWidth - 8;
-  var docheight = document.body.clientHeight - 100 - 8;
+  var docwidth = /*document.body.clientWidth*/window.innerWidth - 8;
+  var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8;
   if(!docwidth) docwidth = 1000;
   if(!docheight) docwidth = 800;
   var h2 = h;
@@ -5919,7 +5936,18 @@ function parseText2(text, opt_title) {
       fitheight = false; // if it's very high, then do not try to fit h, use width only, and scroll for h
     }
   }
-  if(fitx) fitheight = false;
+  if(fitx) {
+    if(fity > 0 && fity < h) {
+      //if you have both a FIT:x and a FIT:y, then it means:
+      //be as wide as possible as you can, while still fitting that what
+      //FIT:y asked for. Without FIT:x, the FIT:y might be having no
+      //effect when it tries to fit an even higher h. But FIT:x then
+      //lets it try to be as wide as possible.
+      h2 = fity;
+    } else {
+      fitheight = false;
+    }
+  }
   tw = Math.floor(docwidth / (nonthinw + 2));
   th = Math.floor(docheight / (h2 + 2));
   var t = tw;
@@ -6076,7 +6104,7 @@ function updateModeButtonText() {
 
 var tickButton = makeElement('button', menuRow3El);
 tickButton.innerText = 'tick';
-tickButton.title = 'Tick once. If the emulator is already autoticking, pressing this button has little effect. If it is paused, then this button allows to advance step by step.';
+tickButton.title = 'Tick once, to update to next state when the circuit is paused or in "investigate" mode. If the emulator is already autoticking, pressing this button has little effect.';
 tickButton.onclick = update;
 
 function isPaused() {
@@ -6279,6 +6307,27 @@ forgetButton.title = 'If you have edited a circuit, this removes the saved circu
 forgetButton.onclick = function() {
   setLocalStorage('', 'circuit_text');
 }
+
+
+var linkButton = makeElement('button', menuRow2El);
+linkButton.innerText = 'links';
+linkButton.title = 'Shows circuits that can be linked to by external link';
+linkButton.onclick = function() {
+  var html = '';
+  var url = window.location.href;
+  var q = url.indexOf('?');
+  if(q >= 0) url = url.substr(0, q);
+  html += '<a href="' + url + '">' + url + '</a><br>';
+  for(var i = 0; i < linkableCircuitsOrder.length; i++) {
+    var link = url + '?id=' + linkableCircuitsOrder[i];
+    var title = linkableCircuits[linkableCircuitsOrder[i]][0];
+    html += '<a href="' + link + '" title="' + title + '">' + link + '</a><br>';
+  }
+  resetForParse();
+  worldDiv.innerHTML = html;
+  worldDiv.style.width = '800px';
+}
+
 
 // utility functions to mirror/rotate a whole circuit
 // does NOT yet support comments and possibly other things correctly: manual tuning may be needed afterwards
@@ -6543,30 +6592,38 @@ var circuitGroups = [];
 
 function registerCircuitGroup(name) {
   currentCircuitGroup = new CircuitGroup(name);
-  registerCircuit('[choose circuit]', ``, true);
+  registerCircuit('[choose circuit]', ``, undefined, true);
   circuitGroups.push(currentCircuitGroup);
 }
 
 var allRegisteredCircuits = [];
+var linkableCircuits = {};
+var linkableCircuitsOrder = [];
 
-function registerCircuit(name, circuit, opt_is_title) {
+function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
   var el = makeElement('option', currentCircuitGroup.dropdown).innerHTML = name;
+  var index = allRegisteredCircuits.length;
   currentCircuitGroup.circuits.push(circuit);
-  currentCircuitGroup.circuitsNumbers.push(allRegisteredCircuits.length);
+  currentCircuitGroup.circuitsNumbers.push(index);
   currentCircuitGroup.circuitsNames.push(name);
   if(!opt_is_title) allRegisteredCircuits.push([name, circuit]);
+  if(opt_link_id) {
+    linkableCircuits[opt_link_id] = [name, circuit, index];
+    linkableCircuitsOrder.push(opt_link_id);
+  }
 }
 
 function registerTitle(title) {
   var name = '---- ' + title + ' ----';
   if(!title) name = '--------';
   var circuit = '0"This is a title section. Choose the next circuit to view the first one under this title.';
-  registerCircuit(name, circuit, true);
+  registerCircuit(name, circuit, undefined, true);
 }
 var fallbackhelptext = '0"Load any circuit from the dropdowns above, or press edit to make a new one."\n0"Use help if this is your first time"';
 
 var introText = `
-0"Welcome to LogicEmu, a cell-based logic circuit simulator running in your browser"
+0"Welcome to LogicEmu, a logic simulator running in your browser"
+0"that supports combinational and sequential logic circuits."
 
 0"LogicEmu comes with a lot of pre-packaged circuits built in. You can"
 0"load them using the dropdowns at the top labeled 'help' and 'circuits'"
@@ -6576,19 +6633,20 @@ var introText = `
 
 0"In circuits, press the green 's' inputs with the mouse to change values."
 0"Read results from the red 'l' outputs. For example, below is an AND gate"
-0"(The 'a', this simulator comes with its own letter based notation)"
-0"There are two input switches and one output LED. Only if both switches are on,"
-0"the LED will go on. Try enabling both switches by clicking them:""
+0"(The 'a', this simulator comes with its own letter based notation)."
+0"Only if both switches are on, the LED will go on. Try enabling both"
+0"switches by clicking them:""
 
    s****>a****>l
          ^
    s******
 
-0"There are much more types of gates and devices available. See the next"
+0"There are much more types of gates and devices available: logic gates,"
+0"flip-flops, integrated circuits, ROMs, displays, ... See the next"
 0"tutorials to learn more!"
 
 
-0"Here are a few more demos presented on this front page:"
+0"A few more demos for the front page:"
 
  TTTTTTTTTTTTTTTTTTTTTTT       s>jq>l      s******>a******>l
  ^   ^     ^     ^     ^       s>c#            *   ^
@@ -6610,21 +6668,7 @@ var introText = `
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `;
 
-
-
-var initialCircuitText = introText;
-var initialTitle = 'Emulate Logic Circuits';
-
-// the text you last edited is remembered. To remove the memory, use the edit button, clear the string, and save
-var stored_text = getLocalStorage('circuit_text');
-if (stored_text != '' && !!stored_text) {
-  initialCircuitText = stored_text;
-  initialTitle = 'stored circuit';
-}
-
-
-parseText(initialCircuitText, initialTitle);
-
+var introTitle = 'Online Logic Simulator';
 
 function printComponentsDebug() {
   for(var i = 0; i < components.length; i++) {
@@ -6641,3 +6685,4 @@ function printComponentsDebug() {
     }
   }
 }
+

@@ -195,7 +195,7 @@ registerCircuit('Logic Gates Tutorial', `
 0"  1  0 |  0    1   0    0     1    1     0     0     1   "
 0"  1  1 |       1   0    1     0    0     1     1     0   "
 
-`);
+`, 'gates');
 
 registerCircuit('Binary Numbers Tutorial', `
 
@@ -295,7 +295,7 @@ registerCircuit('Binary Numbers Tutorial', `
      TTTTTTTTTTTTTTTTTTTTTT"decimal"
 
 "FIT:x"
-`);
+`, 'binary');
 
 registerCircuit('16 gates', `
 
@@ -304,78 +304,80 @@ registerCircuit('16 gates', `
 0"gate. Here, all 16 are implemented and their properties and names from logic shown"
 
 
-            "gate name     value          properties              logic name"
+          "gate name     value      properties              logic name"
 
-   * *
-   * ***  **>l "ZERO"       "0"          0"nullary, symmetric"    0"contradiction"
-   * *
-   **+**
-   * *
-   * ***>a**>l "AND"       "a*b"         0"binary, symmetric"     0"conjunction"
-   * *   ^
-   **+****
-   * *
-   * ***>a**>l "a NIMPLY b""a>b"         0"universal, asymmetric" 0"nonimplication, abjunction"
-   * *   m
-   **+****
-   * *
-   * *******>l "A"          "a"          0"unary, asymmetric"     0"statement"
-   * *
-   **+**
-   * *
-   * ***]a**>l "b NIMPLY a" "a<b"        0"universal, asymmetric" 0"converse nonimplication"
-   * *   ^
-   **+****
-   * *
-   * *** ***>l "B"          "b"          0"unary, asymmetric"     0"statement"
-   * *   *
-   **+****
-   * *
-   * ***>e**>l "XOR"       "a!=b"        0"binary, symmetric"     0"exclusive disjunction"
-   * *   ^               "a+b mod 2"
-   **+****
-   * *
-   * ***>o**>l "OR"        "a+b"         0"binary, symmetric"     0"(inclusive) disjunction"
-   * *   ^
-   **+****
-   * *
-   * ***>O**>l "NOR"                     0"universal, symmetric"  0"joint denial"
-   * *   ^
-   **+****
-   * *
-   * ***>E**>l "XNOR, EQV" "a==b"        0"binary, symmetric"       0"biconditional"
-   * *   ^
-   **+****
-   * *
-   * *** O**>l "NOT B"                   0"unary, asymmetric"       0"negation"
-   * *   ^
-   **+****
-   * *
-   * ***>o**>l "a IMPLY b" "a>=b"        0"universal, asymmetric"   0"converse implication"
-   * *   m
-   **+****
-   * *
-   * ***>O**>l "NOT A"                   0"unary, asymmetric"       0"negation"
-   * *
-   **+**
-   * *
-   * ***]o**>l "a IMPLY b" "a<=b"        0"universal, asymmetric"   0"implication"
-   * *   ^
-   **+****
-   * *
-   * ***>A**>l "NAND"                    0"universal, symmetric"    0"alternative denial"
-   * *   ^
-   **+****
-   * *
-   * *** O**>l "ONE"        "1"          0"nullary, symmetric"      0"tautology"
-   * *
-   **+**
-   * *
-   * *
-   * *
-   s s
+ * *
+ * ***  **>l "ZERO"       "0"      0"nullary, symmetric"    0"contradiction"
+ * *
+ **+**
+ * *
+ * ***>a**>l "AND"       "a*b"     0"binary, symmetric"     0"conjunction"
+ * *   ^
+ **+****
+ * *
+ * ***>a**>l "a NIMPLY b""a>b"     0"universal, asymmetric" 0"nonimplication, abjunction"
+ * *   m
+ **+****
+ * *
+ * *******>l "A"          "a"      0"unary, asymmetric"     0"statement"
+ * *
+ **+**
+ * *
+ * ***]a**>l "b NIMPLY a" "a<b"    0"universal, asymmetric" 0"converse nonimplication"
+ * *   ^
+ **+****
+ * *
+ * *** ***>l "B"          "b"      0"unary, asymmetric"     0"statement"
+ * *   *
+ **+****
+ * *
+ * ***>e**>l "XOR"       "a!=b"    0"binary, symmetric"     0"exclusive disjunction"
+ * *   ^               "a+b mod 2"
+ **+****
+ * *
+ * ***>o**>l "OR"        "a+b"     0"binary, symmetric"     0"(inclusive) disjunction"
+ * *   ^
+ **+****
+ * *
+ * ***>O**>l "NOR"                 0"universal, symmetric"  0"joint denial"
+ * *   ^
+ **+****
+ * *
+ * ***>E**>l "XNOR, EQV" "a==b"    0"binary, symmetric"     0"biconditional"
+ * *   ^
+ **+****
+ * *
+ * *** O**>l "NOT B"               0"unary, asymmetric"     0"negation"
+ * *   ^
+ **+****
+ * *
+ * ***>o**>l "a IMPLY b" "a>=b"    0"universal, asymmetric" 0"converse implication"
+ * *   m
+ **+****
+ * *
+ * ***>O**>l "NOT A"               0"unary, asymmetric"     0"negation"
+ * *
+ **+**
+ * *
+ * ***]o**>l "a IMPLY b" "a<=b"    0"universal, asymmetric" 0"implication"
+ * *   ^
+ **+****
+ * *
+ * ***>A**>l "NAND"                0"universal, symmetric"  0"alternative denial"
+ * *   ^
+ **+****
+ * *
+ * *** O**>l "ONE"        "1"      0"nullary, symmetric"    0"tautology"
+ * *
+ **+**
+ * *
+ * *
+ * *
+ s s
 
-  "b a"
+"b a"
+
+"FIT:y FIT:x"
 
 0"Configurable gate"
 
@@ -406,7 +408,8 @@ registerCircuit('16 gates', `
    * *
    * *
    s s
-`);
+
+`, 'gates16');
 
 
 registerCircuit('3-input logic gates', `
@@ -470,7 +473,7 @@ s**** a**>l
 s**>E**
 
 
-`);
+`, 'gates3');
 
 
 registerCircuit('De Morgan\'s law', `
@@ -507,7 +510,7 @@ registerCircuit('De Morgan\'s law', `
 0"'it is NOT so that the sun is NOT hot OR that the sun is NOT round'"
 0"Notice the three NOTs there and how the AND is replaced by OR"
 
-`);
+`, 'morgan');
 
 
 registerCircuit('NAND logic', `
@@ -680,7 +683,7 @@ s***>A**>A>A**>l
    ^ v ^ v
 s***>A**>A>A**>l
 
-`);
+`, 'nand');
 
 
 registerCircuit('NOR logic', `
@@ -853,7 +856,7 @@ s****>O****>O*>O**>l
    ^  v  ^  v
 s****>O****>O*>O**>l
 
-`);
+`, 'nor');
 
 
 
@@ -900,7 +903,7 @@ registerCircuit('mux & demux', `
 
 
 
-`);
+`, 'mux');
 
 
 registerTitle('Arithmetic');
@@ -929,7 +932,7 @@ l<**a e a e a e a e **S
 
 
 
-`);
+`, 'halfadder');
 
 
 
@@ -968,7 +971,7 @@ registerCircuit('full adder', `
         *     *     *     *     *     *     *     *
         s     s     s     s     s     s     s     s
 
-`);
+`, 'fulladder');
 
 
 registerCircuit('8-bit ripple carry adder', `
@@ -1009,7 +1012,7 @@ registerCircuit('8-bit ripple carry adder', `
 
 
 
-`);
+`, 'adder8');
 
 
 registerCircuit('4-bit carry lookahead adder', `
@@ -1076,7 +1079,7 @@ registerCircuit('4-bit carry lookahead adder', `
 0"rippling every single bit (which would be an even slower but even cheaper option). And then, even"
 0"more tradeoffs can be made by doing any of the above with other sizes than 4-bit CLA's."
 
-`);
+`, 'cla');
 
 
 registerCircuit('half subtractor', `
@@ -1103,7 +1106,7 @@ registerCircuit('half subtractor', `
 
 "a b"
 
-`);
+`, 'halfsub');
 
 
 registerCircuit('full subtractor', `
@@ -1157,7 +1160,7 @@ registerCircuit('full subtractor', `
         s     s     s     s     s     s     s     s
 
 
-`);
+`, 'fullsub');
 
 
 registerCircuit('8-bit comparator', `
@@ -1195,7 +1198,7 @@ registerCircuit('8-bit comparator', `
      "b128   b64   b32   b16    b8    b4    b2    b1"
 
 
-`);
+`, 'comp');
 
 
 registerCircuit('8-bit ALU from adder', `
@@ -1261,7 +1264,7 @@ registerCircuit('8-bit ALU from adder', `
               "2 4 2 6        "                             "2   4   2   6                "
               "8              "                             "8                            "
 
-`);
+`, 'alu');
 
 registerCircuit('2-bit multiplier', `
 
@@ -1283,7 +1286,7 @@ registerCircuit('2-bit multiplier', `
  "b2"s******>a******>a**>l"r8"
 
 
-`);
+`, 'mul2');
 
 registerCircuit('4-bit multiplier', `
 
@@ -1390,7 +1393,7 @@ registerCircuit('4-bit multiplier', `
 
 
 
-`);
+`, 'mul');
 
 
 registerCircuit('8-bit multiplier', `
@@ -1503,7 +1506,7 @@ registerCircuit('8-bit multiplier', `
 
 
 
-`);
+`, 'mul8');
 
 
 registerCircuit('4-bit divider', `
@@ -1643,7 +1646,7 @@ registerCircuit('4-bit divider', `
          "b8           b4           b2           b1"
 
 
-`);
+`, 'div');
 
 
 
@@ -1761,13 +1764,13 @@ registerCircuit('8-bit divider', `
 
 
 
-`);
+`, 'div8');
 
 
 registerCircuit('8-bit right barrel shifter', `
 
 
-0"A right barrel shifter can shift a binary number by a configurable"                     o
+0"A right barrel shifter can shift a binary number by a configurable"
 0"amount of bits. This is implemented with layers of multiplexers."
 0"The last layer, for 8+ bits of shifting, makes it always output 0, since"
 0"it means the number got shifted too far."
@@ -1831,12 +1834,14 @@ registerCircuit('8-bit right barrel shifter', `
       *     *     *     *     *     *     *     *
       s     s     s     s     s     s     s     s
 
-`);
+0"FIT:y"
+
+`, 'rshift');
 
 registerCircuit('8-bit left barrel shifter', `
 
 
-0"A left barrel shifter can shift a binary number by a configurable"                     o
+0"A left barrel shifter can shift a binary number by a configurable"
 0"amount of bits. This is implemented with layers of multiplexers."
 0"The last layer, for 8+ bits of shifting, makes it always output 0, since"
 0"it means the number got shifted too far."
@@ -1895,7 +1900,9 @@ registerCircuit('8-bit left barrel shifter', `
       *     *     *     *     *     *     *     *
       s     s     s     s     s     s     s     s
 
-`);
+0"FIT:y"
+
+`, 'lshift');
 
 
 registerCircuit('8-bit fully customizable barrel shifter', `
@@ -2499,7 +2506,7 @@ s****>d**]a**>l
               v         *
     "J"s*****>a>O<***>a>O<*****>l"Q  on"
               ^ * *   ^ * *
-            ***  x  ***  x
+            ***  x  ***  x  0"broken, see note!"
             * v * * * v * *
     "K"s****+>a>O<**+>a>O<*****>l"Q' off"
             * ^     *   *
@@ -2530,7 +2537,7 @@ s****>d**]a**>l
               v         *
     "T"s*****>a>O<***>a>O<*****>l"Q  on"
           *   ^ * *   ^ * *
-          * ***  x  ***  x
+          * ***  x  ***  x  0"broken, see note!"
           * * v * * * v * *
           **+>a>O<**+>a>O<*****>l"Q' off"
             * ^     *   *
@@ -2594,19 +2601,74 @@ s****>d**]a**>l
   "C"s*************     s
                      "clear"
 
+0"Summary"
+0"-------"
+
+0"Above we saw latches (which are transparent), gated latches (which are"
+0"transparent if the gate is enabled), and flip-flops (which can change"
+0"only on a clock edge). And then we saw the types SR, D, T, JK. This"
+0"table summarizes the amount of inputs (including gate/clock but excluding"
+0"optional preset/clear inputs) of each of those types, or leaves the"
+0"table cell empty if there is no useful circuit (e.g. JK/T latch is not"
+0"because their toggle is chaotic, and D latch is not because it would be"
+0"simply a pass-through wire)"
+
+0"    | latch | gated l. | flip-flop |"
+0"----+-------+----------+-----------+"
+0" SR |   2   |   3      |    3      |"
+0"----+-------+----------+-----------+"
+0" D  |       |   2      |    2      |"
+0"----+-------+----------+-----------+"
+0" T  |       |          |    2      |"
+0"----+-------+----------+-----------+"
+0" JK |       |          |    3      |"
+0"----+-------+----------+-----------+"
+
+0"Epilogue"
+0"--------"
+
+0"This concludes the first flip-flop tutorial. Now enjoy using them in designs :)"
+
+0"The next tutorial 'flip-flops (from NAND)' is a second part that will build flip-flops from NAND gates only."
+0"It is also an important part since a few more canonical typical flip-flop circuits"
+0"are introduced."
+
+0"Don't forget that you don't need to use all those logic gates if you don't"
+0"want to, there are simple built-in flip-flops available in the simulation"
+0"like so:"
+
+s**>j#q**>l
+    ###
+s**>k##
+    ###
+s**>c#Q**>l
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+0"RENDER:graphical"
+
+`, 'ff');
+
+
+registerCircuit('flip-flops (from NAND)', `
+
+
+0"This circuit continues the previous one named 'flip-flops tutorial',"
+0"so it's recommended to view that one first unless you already know"
+0"what flip-flops do and how they work."
 
 0"Flip-flops from NAND gates only"
 0"-------------------------------"
 
 0"The NAND gate is a universal gate so any circuit can be made from only"
 0"NAND."
-0"In the above we created perfect flip-flops from pure logic gates, but"
+0"In the flip-flops tutorial we created perfect flip-flops from pure logic gates, but"
 0"it was a mix of different gates. In practice, it may be cheaper to"
 0"create circuits from only a single gate, the NAND gate. This argument"
 0"probably does not hold true today, where you can make any gates from"
 0"any transistors you want on the surfaces of chips, but the flip-flops"
 0"from NAND logic only are actually still quite cheap and elegant compared"
-0"to the ones above, and often the canonical circuits, so the chapters"
+0"to the ones from the previous tutorial, and often the canonical circuits, so the chapters"
 0"below are worth it for that."
 
 0"We could do something similar with NOR-only logic, in most circuits you"
@@ -2618,10 +2680,13 @@ s****>d**]a**>l
 0"NAND latches"
 0"------------"
 
-0"Earlier we saw the NOR latch. Now let's present the NAND latch, which"
+0"In the previous tutorial we saw the NOR latch. Now let's present the NAND latch, which"
 0"acts the same, except its inputs are active-low (so both switches off"
 0"is now the invalid combination, and you must set both switches on to"
 0"make it remember state)."
+0"NOTE: if you saw this latch flicker when just loading the circuit, that's normal, initially"
+0"a flip-flop is in a bistable state and takes time to settle to a random state,"
+0"this is emulated when we are in 'electron' mode, in real life this happens in nanoseconds."
 
  "S'"S**>A**>l"Q  on"
          ^ *
@@ -2743,7 +2808,7 @@ s****>d**]a**>l
              ^ ^   *
              *******
 
-0"Note that, as before, these JK and T latches are not useful due to the"
+0"Note that, as in the previous tutorial, these JK and T latches are not useful due to the"
 0"uncontrolled toggling, even when it has an 'enable' input."
 
 0"Of interest, also, is an alternative form of D latch, the Earle latch"
@@ -2816,7 +2881,7 @@ s****>d**]a**>l
 "J"s****>A>A******>A>A*+****>l"Q"
          ^ ^ *     ^   * *
       ****  x   ****   * *
-      *  v v *  *  v   * *
+      *  v v *  *  v   * * 0"broken! see note"
 "K"s**+*>A>A****+*>A>A** *
       *  ^      *    ^   *
       A  *******+*********
@@ -2830,7 +2895,7 @@ s****>d**]a**>l
 "J"s****>A>A**>A>A******>A>A*+****>l"Q"
          ^       ^ *     ^   * *
       ****        x   ****   * *
-      *  v       v *  *  v   * *
+      *  v       v *  *  v   * * 0"broken! see note"
 "K"s**+*>A>A**>A>A****+*>A>A** *
       *        ^      *    ^   *
       A        *******+*********
@@ -2883,26 +2948,9 @@ s****>d**]a**>l
                 ^       *
 "C"s*********************
 
-0"Epilogue"
-0"--------"
+0"RENDER:graphical"
 
-0"This concludes the flip-flop tutorial. Now enjoy using them in designs :)"
-
-0"Don't forget that you don't need to use all those logic gates if you don't"
-0"want to, there are simple built-in flip-flops available in the simulation"
-0"like so:"
-
-s**>j#q**>l
-    ###
-s**>k##
-    ###
-s**>c#Q**>l
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-"RENDER:graphical"
-
-`);
+`, 'ffnand');
 
 
 registerCircuit('flip-flops (from counters)', `
@@ -3127,7 +3175,7 @@ registerCircuit('7-segment display', `
       sss     ssss
      "gfe     dcba"
 
-`);
+`, '7seg');
 
 
 registerCircuit('7-segment decoder', `
@@ -3172,7 +3220,7 @@ registerCircuit('7-segment decoder', `
 
           "8421"
 
-`);
+`, '7segdec');
 
 
 registerCircuit('10 7-segments', `
@@ -3221,7 +3269,7 @@ registerCircuit('Hello World terminal', `
              ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ *
              ************************R
 
-`);
+`, 'helloworld');
 
 
 registerCircuit('Keyboard and screen', `
@@ -3248,7 +3296,7 @@ registerCircuit('Keyboard and screen', `
      R5
 
 0"The 'd' delay ensures the keyboard can output first before the screen reads"
-`);
+`, 'terminal');
 
 
 registerTitle('Sequential Logic');
@@ -3265,7 +3313,7 @@ registerCircuit('Asynchronous binary up counter', `
    * * * * * * * *
    c[c[c[c[c[c[c[c<**p
 
-`);
+`, 'counter');
 
 
 registerCircuit('Synchronous up counter', `
@@ -3286,13 +3334,7 @@ registerCircuit('Synchronous up counter', `
     ^     ^     ^     ^     ^     ^     ^     ^
     ***************************************************p
 
-
-
-
-
-
-
-`);
+`, 'synchcounter');
 
 
 registerCircuit('Synchronous down counter', `
@@ -3427,7 +3469,7 @@ registerCircuit('register', `
        ^^^^^^^^
        ssssssss
 
-`);
+`, 'register');
 
 
 registerCircuit('serial-in, serial-out shift register', `
@@ -3529,7 +3571,7 @@ registerCircuit('binary decoders', `
               *     *     *     *     *     *     *     *
  "1"s***************************************************************
 
-`);
+`, 'decoder');
 
 
 registerCircuit('simple encoders', `
@@ -3664,7 +3706,7 @@ registerCircuit('simple encoders', `
 
    "FEDCBA9876543210"
 
-`);
+`, 'encoder');
 
 
 registerCircuit('priority encoders', `
@@ -3765,13 +3807,13 @@ s****+*+*+>o***+*+*+>o***+*+*+>o***+*+*+>o**>l
    * * * *   * * * *   * * * *   * * * *
    s s s s   s s s s   s s s s   s s s s
   "f e d c   b a 9 8   7 6 5 4   3 2 1 0"
-`);
+`, 'priority');
 
 
 
 registerCircuit('8-bit binary to BCD decoder', `
 
-0"8-bit binary to decimal (BCD), double dabble"                                         o
+0"8-bit binary to decimal (BCD), double dabble"
 
 0"BCD is a method of representing decimal numbers with 4 bits per"
 0"decimal digit (0-9)."
@@ -3812,6 +3854,7 @@ registerCircuit('8-bit binary to BCD decoder', `
 0"The ROM with B's is to turn the 4-bit decimal digits into the"
 0"segments for the 7-segment display."
 
+0"FIT:y"
 
                            $$l<-*          $$l<-*          $$l<-*
                           $   $ |         $   $ |         $   $ |
@@ -3911,13 +3954,15 @@ registerCircuit('8-bit binary to BCD decoder', `
                                       ### ### ### ### ### ### ### ###
                                      "128  64  32  16   8   4   2   1"
 
-`);
+0"FIT:y"
+
+`, 'doubledabble');
 
 
 registerCircuit('bcd to binary, 0-255', `
 
 
-0"BCD = binary coded decimal, each 4 bits represents 1 decimal digit."                          o
+0"BCD = binary coded decimal, each 4 bits represents 1 decimal digit."
 0"This circuit converts 3 digits of binary coded decimal to a single"
 0"8-bit binary number"
 
@@ -4013,12 +4058,12 @@ registerCircuit('bcd to binary, 0-255', `
 
 
 
-`);
+`, 'bcdtobin');
 
 
 registerCircuit('bcd to binary, 0-999', `
 
-0"See the 0-255 circuit for the explanation of this one. This is just a"          o
+0"See the 0-255 circuit for the explanation of this one. This is just a"
 0"slightly bigger version to do up to 999"
 
 
@@ -4107,7 +4152,8 @@ registerCircuit('bcd to binary, 0-999', `
    "800   400   200   100  | 80    40    20    10 |  8     4     2     1"
    "      hundreds         |         tens         |         units       "
 
-`);
+`, 'bcdtobin999');
+
 registerCircuit('compact 0-999 display', `
 
 
@@ -4227,7 +4273,7 @@ registerCircuit('keypad', `
 
 
 
-`);
+`, 'keypad');
 
 
 registerTitle('Quantum Gates');
@@ -4366,7 +4412,7 @@ s****>e**>l
        *       ^ *       ^ *       ^ *       ^ *       ^
        ********* ********* ********* ********* *********
 
-`);
+`, 'fredkin');
 
 
 registerCircuit('Toffoli gate', `
@@ -4484,7 +4530,7 @@ registerCircuit('Toffoli gate', `
       *   ^   *   ^    *   ^
       *****   *****    *****
 
-`);
+`, 'toffoli');
 
 
 
@@ -4599,7 +4645,7 @@ s*+***^     ^
   *  v      *
 s***>A*******
 
-"wire crossing with 10 NANDs (various shapes)"
+0"wire crossing with 10 NANDs (various shapes)"
 
                                            s
    ***>A****        s**>A**>A**>l          *
@@ -4664,7 +4710,7 @@ s******+******** *
 
 
 
-`);
+`, 'nand2');
 
 registerCircuit('NAND logic III: no wire crossings', `
 
@@ -4880,7 +4926,7 @@ s*************>l>A>A**************>l
 "C"s*********************
 
 
-`);
+`, 'nand3');
 
 
 registerCircuit('Relay Logic', `
@@ -5594,9 +5640,9 @@ s**>4
 
 
 
-"RENDER:graphical"
-"MODE:sequential"
-`);
+0"RENDER:graphical"
+0"MODE:sequential"
+`, 'relay');
 
 registerCircuit('mirror bits', `
      l l l l l l l l      llllllll
@@ -5648,7 +5694,7 @@ registerCircuit('shuffle & unshuffle bits', `
      * * * * * * * *      ||||||||
      s s s s s s s s      ssssssss
 
-`);
+`, 'shuffle');
 
 
 
@@ -5715,7 +5761,7 @@ registerCircuit('gray code', `
   *  *  *  *  *  *  *  *
   s  s  s  s  s  s  s  s
 
-`);
+`, 'gray');
 
 
 registerCircuit('bit sorter', `
@@ -5731,21 +5777,21 @@ l l l l l l l l
 ^ ^ ^ ^ ^ ^ ^ ^
 * * * * * * * *
 * * * * * * * *
-o a o a o a o a "8"
+o a o a o a o a"8"
 ^ ^^^ ^^^ ^^^ ^
-a o a o a o a o "7"
+a o a o a o a o"7"
 ^^^ ^^^ ^^^ ^^^
-o a o a o a o a "6"
+o a o a o a o a"6"
 ^ ^^^ ^^^ ^^^ ^
-a o a o a o a o "5"
+a o a o a o a o"5"
 ^^^ ^^^ ^^^ ^^^
-o a o a o a o a "4"
+o a o a o a o a"4"
 ^ ^^^ ^^^ ^^^ ^
-a o a o a o a o "3"
+a o a o a o a o"3"
 ^^^ ^^^ ^^^ ^^^
-o a o a o a o a "2"
+o a o a o a o a"2"
 ^ ^^^ ^^^ ^^^ ^
-a o a o a o a o "1"
+a o a o a o a o"1"
 ^^^ ^^^ ^^^ ^^^
 * * * * * * * *
 * * * * * * * *
@@ -5759,48 +5805,48 @@ s s s s s s s s
 l   l   l   l   l   l   l   l
 ^   ^   ^   ^   ^   ^   ^   ^
 *   *   *   *   *   *   *   *
-a< >o   a< >o   a< >o   a< >o "6"
-^ x ^   ^ x ^   ^ x ^   ^ x ^
+a< >o   a< >o   a< >o   a< >o
+^ x ^   ^ x ^   ^ x ^   ^ x ^"6"
 ** **   ** **   ** **   ** **
 *   *   *   *   *   *   *   *
-a<**|**>o   *   a<**|**>o   * "5"
-^   X   ^   *   ^   X   ^   *
+a<**|**>o   *   a<**|**>o   *
+^   X   ^   *   ^   X   ^   *"5"
 ****|****   *   ****|****   *
 *   *   *   *   *   *   *   *
-*   a<**|**>o   *   a<**|**>o "5"
-*   ^   X   ^   *   ^   X   ^
+*   a<**|**>o   *   a<**|**>o
+*   ^   X   ^   *   ^   X   ^"5"
 *   ****|****   *   ****|****
 *   *   *   *   *   *   *   *
-*   *   *   a< >o   *   *   * "4"
-*   *   *   ^ x ^   *   *   *
+*   *   *   a< >o   *   *   *
+*   *   *   ^ x ^   *   *   *"4"
 *   *   *   ** **   *   *   *
 *   *   *   *   *   *   *   *
-*   *   a<**+* *+**>o   *   * "4"
-*   *   ^   * x *   ^   *   *
+*   *   a<**+* *+**>o   *   *
+*   *   ^   * x *   ^   *   *"4"
 *   *   ****+* *+****   *   *
 *   *   *   *   *   *   *   *
-*   a<**+***+* *+***+**>o   * "4"
-*   ^   *   * x *   *   ^   *
+*   a<**+***+* *+***+**>o   *
+*   ^   *   * x *   *   ^   *"4"
 *   ****+***+* *+***+****   *
 *   *   *   *   *   *   *   *
-a<**+***+***+* *+***+***+**>o "4"
-^   *   *   * x *   *   *   ^
+a<**+***+***+* *+***+***+**>o
+^   *   *   * x *   *   *   ^"4"
 ****+***+***+* *+***+***+****
 *   *   *   *   *   *   *   *
-a< >o   a< >o   a< >o   a< >o "3"
-^ x ^   ^ x ^   ^ x ^   ^ x ^
+a< >o   a< >o   a< >o   a< >o
+^ x ^   ^ x ^   ^ x ^   ^ x ^"3"
 ** **   ** **   ** **   ** **
 *   *   *   *   *   *   *   *
-*   a< >o   *   *   a< >o   * "2"
-*   ^ x ^   *   *   ^ x ^   *
+*   a< >o   *   *   a< >o   *
+*   ^ x ^   *   *   ^ x ^   *"2"
 *   ** **   *   *   ** **   *
 *   *   *   *   *   *   *   *
-a<**+* *+**>o   a<**+* *+**>o "2"
-^   * x *   ^   ^   * x *   ^
+a<**+* *+**>o   a<**+* *+**>o
+^   * x *   ^   ^   * x *   ^"2"
 ****+* *+****   ****+* *+****
 *   *   *   *   *   *   *   *
-a< >o   a< >o   a< >o   a< >o "1"
-^ x ^   ^ x ^   ^ x ^   ^ x ^
+a< >o   a< >o   a< >o   a< >o
+^ x ^   ^ x ^   ^ x ^   ^ x ^"1"
 ** **   ** **   ** **   ** **
 *   *   *   *   *   *   *   *
 s   s   s   s   s   s   s   s
@@ -5815,49 +5861,49 @@ s   s   s   s   s   s   s   s
 l   l   l   l   l   l   l   l
 ^   ^   ^   ^   ^   ^   ^   ^
 *   *   *   *   *   *   *   *
-*   a< >o   a< >o   a< >o   * "6"
-*   ^ x ^   ^ x ^   ^ x ^   *
+*   a< >o   a< >o   a< >o   *
+*   ^ x ^   ^ x ^   ^ x ^   *"6"
 *   ** **   ** **   ** **   *
 *   *   *   *   *   *   *   *
-*   *   a<**|**>o   *   *   * "5"
-*   *   ^   X   ^   *   *   *
+*   *   a<**|**>o   *   *   *
+*   *   ^   X   ^   *   *   *"5"
 *   *   ****|****   *   *   *
 *   *   *   *   *   *   *   *
-*   *   *   a<**|**>o   *   * "5"
-*   *   *   ^   X   ^   *   *
+*   *   *   a<**|**>o   *   *
+*   *   *   ^   X   ^   *   *"5"
 *   *   *   ****|****   *   *
 *   *   *   *   *   *   *   *
-a<**+***|***+**>o   *   *   * "4"
-^   *   X   *   ^   *   *   *
+a<**+***|***+**>o   *   *   *
+^   *   X   *   ^   *   *   *"4"
 ****+***|***+****   *   *   *
 *   *   *   *   *   *   *   *
-*   a<**+***|***+**>o   *   * "4"
-*   ^   *   X   *   ^   *   *
+*   a<**+***|***+**>o   *   *
+*   ^   *   X   *   ^   *   *"4"
 *   ****+***|***+****   *   *
 *   *   *   *   *   *   *   *
-*   *   a<**+***|***+**>o   * "4"
-*   *   ^   *   X   *   ^   *
+*   *   a<**+***|***+**>o   *
+*   *   ^   *   X   *   ^   *"4"
 *   *   ****+***|***+****   *
 *   *   *   *   *   *   *   *
-*   *   *   a<**+***|***+**>o "4"
-*   *   *   ^   *   X   *   ^
+*   *   *   a<**+***|***+**>o
+*   *   *   ^   *   X   *   ^"4"
 *   *   *   ****+***|***+****
 *   *   *   *   *   *   *   *
-*   a< >o   *   *   a< >o   * "3"
-*   ^ x ^   *   *   ^ x ^   *
+*   a< >o   *   *   a< >o   *
+*   ^ x ^   *   *   ^ x ^   *"3"
 *   ** **   *   *   ** **   *
 *   *   *   *   *   *   *   *
-a<**|**>o   *   a<**|**>o   * "2"
-^   X   ^   *   ^   X   ^   *
+a<**|**>o   *   a<**|**>o   *
+^   X   ^   *   ^   X   ^   *"2"
 ****|****   *   ****|****   *
 *   *   *   *   *   *   *   *
-*   a<**|**>o   *   a<**|**>o "2"
-*   ^   X   ^   *   ^   X   ^
+*   a<**|**>o   *   a<**|**>o
+*   ^   X   ^   *   ^   X   ^"2"
 *   ****|****   *   ****|****
 *   *   *   *   *   *   *   *
 *   *   *   *   *   *   *   *
-a< >o   a< >o   a< >o   a< >o "1"
-^ x ^   ^ x ^   ^ x ^   ^ x ^
+a< >o   a< >o   a< >o   a< >o
+^ x ^   ^ x ^   ^ x ^   ^ x ^"1"
 ** **   ** **   ** **   ** **
 *   *   *   *   *   *   *   *
 s   s   s   s   s   s   s   s
@@ -5871,21 +5917,21 @@ l l l l l l l l
 ^ ^ ^ ^ ^ ^ ^ ^
 * * * * * * * *
 * * * * * * * *
-o a o a o a o a "8"
+o a o a o a o a"8"
 ^ ^^^ ^^^ ^^^ ^
-a o a o a o a o "7"
+a o a o a o a o"7"
 ^^^ ^^^ ^^^ ^^^
-o a o a o a o a "6"
+o a o a o a o a"6"
 ^ ^^^ ^^^ ^^^ ^
-a o a o a o a o "5"
+a o a o a o a o"5"
 ^^^ ^^^ ^^^ ^^^
-o a o a o a o a "4"
+o a o a o a o a"4"
 ^ ^^^ ^^^ ^^^ ^
-a o a o a o a o "3"
+a o a o a o a o"3"
 ^^^ ^^^ ^^^ ^^^
-o a o a o a o a "2"
+o a o a o a o a"2"
 ^ ^^^ ^^^ ^^^ ^
-a o a o a o a o "1"
+a o a o a o a o"1"
 ^^^ ^^^ ^^^ ^^^
 * * * * * * * *
 * * * * * * * *
@@ -5900,7 +5946,7 @@ a o a o a o a o "1"
 
 
 
-`);
+`, 'sort');
 
 registerCircuit('4-bit majority gate', `
 
@@ -6061,7 +6107,7 @@ registerCircuit('population count', `
       ^^^ ^^^ ^^^ ^^^ *
       s s s s s s s s s  "9-bit popcount"
 
-`);
+`, 'popcount');
 
 
 
@@ -6250,7 +6296,7 @@ registerCircuit('Conway\'s game of life', `
            h          |v         h
           l           sl          l
 
-`);
+`, 'gol');
 
 registerCircuit('Conway\'s game of life galaxy', `
 
@@ -6371,7 +6417,7 @@ registerCircuit('Conway\'s game of life galaxy', `
            h          |v         h
           l           sl          l
 
-`);
+`, 'galaxy');
 
 
 registerCircuit('Conway\'s game of life wrap', `
@@ -6495,7 +6541,7 @@ registerCircuit('Conway\'s game of life wrap', `
            h          |v         h
           l           sl          l
 
-`);
+`, 'golwrap');
 
 
 registerCircuit('Conway\'s game of life ship', `
@@ -6618,7 +6664,7 @@ registerCircuit('Conway\'s game of life ship', `
            h          |v         h
           l           sl          l
 
-`);
+`, 'ship');
 
 registerCircuit('Langtons Ant', `
 0"Langton's Ant"
@@ -6718,7 +6764,7 @@ registerCircuit('Langtons Ant', `
          l     s     l
 
 
-`);
+`, 'langton');
 
 
 
@@ -6800,7 +6846,7 @@ registerCircuit('16-bit carry lookahead adder', `
                                   * *               * *          * *      * *
                                   * *               * *          * *      * *
                                   s s               s s          s s      s s
-`);
+`, 'cla16');
 
 
 registerCircuit('16-bit ripple vs lookahead speed comparison', `
@@ -6829,7 +6875,7 @@ registerCircuit('16-bit ripple vs lookahead speed comparison', `
 
 
 
-                             llll                 llll            llll        llll     ###
+                             llll                 llll            llll        llll
                              ^^^^                 ^^^^            ^^^^        ^^^^     ###
 2"c0 "-----------------------++++-------------*---++++--------*---++++----*---++++-*---s##"<------ CARRY"
 2"p0 "-----*-----------------++++------------*+---++++-------*+---++++---*+--*|||| *   ###
@@ -6893,7 +6939,7 @@ registerCircuit('16-bit ripple vs lookahead speed comparison', `
                                   * *               * *          * *      * *
                                   * *               * *          * *      * *
                                   s s               s s          s s      s s
-`);
+`, 'cla_speed');
 
 
 registerCircuit('16-bit divider', `
@@ -6970,7 +7016,7 @@ registerCircuit('16-bit divider', `
     s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s
                                                    "b8  b4  b2  b1"
 
-`);
+`, 'div16');
 
 
 registerCircuit('32-bit divider', `
@@ -7078,7 +7124,7 @@ registerCircuit('32-bit divider', `
     s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s
                                                                                                                    "b8  b4  b2  b1"
 
-`);
+`, 'div32');
 
 
 
@@ -7296,7 +7342,7 @@ registerCircuit('74181 ALU', `
      "f0f1= f2f3    g c p"
 
 
-`);
+`, '74181');
 
 
 registerCircuit('compact 0-255 display', `
@@ -7655,6 +7701,124 @@ registerCircuit('4 math functions with decimal', `
                     ^ ^ ^ ^ | | | | |
                     p | | | | | | | |
                       s s s s s s s s
-`);
+`, 'math');
+
+
+
+registerCircuit('8-bit divider effect', `
+
+0"MODE:electron"
+
+0"This circuit automatically shows the delay of the operation of the divider in action using a strategically placed timer."
+0"The timer makes it alternate between computing 15/1 and 15/3"
+
+                 "r128         r64          r32          r16          r8           r4           r2           r1"
+                  l            l            l            l            l            l            l            l
+                  ^            ^            ^            ^            ^            ^            ^            ^
+                  *            *            *            *            *            *            *            *
+                  o<*          o<*          o<*          o<*          o<*          o<*          o<*          o<*
+                  ^ *          ^ *          ^ *          ^ *          ^ *          ^ *          ^ *          ^ *
+            *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*
+            *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *
+         ***+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+***
+         *  *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *
+   "q1"l[***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***
+            * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *
+            * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**
+            * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *
+            *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *********S"a1"
+            *         *  *         *  *         *  *         *  *         *  *         *  *         *  *
+         ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<*
+            *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *
+            *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*
+            *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *
+         ***+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+***
+         *  *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *
+   "q2"l[***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***
+            * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *
+            * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**
+            * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *
+            *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *********S"a2"
+            *         *  *         *  *         *  *         *  *         *  *         *  *         *  *
+         ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<*
+            *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *
+            *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*
+            *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *
+         ***+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+***
+         *  *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *
+   "q4"l[***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***
+            * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *
+            * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**
+            * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *
+            *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *********S"a4"
+            *         *  *         *  *         *  *         *  *         *  *         *  *         *  *
+         ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<*
+            *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *
+            *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*
+            *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *
+         ***+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+***
+         *  *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *
+   "q8"l[***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***
+            * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *
+            * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**
+            * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *
+            *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *********S"a8"
+            *         *  *         *  *         *  *         *  *         *  *         *  *         *  *
+         ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<*
+            *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *
+            *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*
+            *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *
+         ***+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+***
+         *  *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *
+  "q16"l[***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***
+            * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *
+            * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**
+            * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *
+            *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *********s"a16"
+            *         *  *         *  *         *  *         *  *         *  *         *  *         *  *
+         ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<*
+            *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *
+            *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*
+            *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *
+         ***+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+***
+         *  *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *
+  "q32"l[***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***
+            * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *
+            * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**
+            * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *
+            *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *********s"a32"
+            *         *  *         *  *         *  *         *  *         *  *         *  *         *  *
+         ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<*
+            *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *
+            *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*
+            *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *
+         ***+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+***
+         *  *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *
+  "q64"l[***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***
+            * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *
+            * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**
+            * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *
+            *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *******  *** *********s"a64"
+            *         *  *         *  *         *  *         *  *         *  *         *  *         *  *
+         ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<* ***+*****o<*
+            *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *    *     ^ *
+            *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*  *   *]a a<*
+            *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *  *   * ^ ^ *
+         ***+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+****+*****+*+***
+         *  *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *    *     * *
+ "q128"l[***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***+*o<a e * ***
+            * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *  * ^ m^^ * *
+            * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**  * a e **+**
+            * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *    * ^mm   *
+            *** *****    *** *****    *** *****    *** *****    *** *****    *** *****    *** *****    *** *********s"a128"
+            *            *            *            *            *            *            *            *
+            s            s            s            s            s            s            R80          S
+           "b128         b64          b32          b16          b8           b4           b2           b1"
+
+
+
+
+`, 'diveffect');
+
 
 

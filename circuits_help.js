@@ -29,7 +29,7 @@ and injects them into a dropdown from logicemu.js
 
 registerCircuitGroup('help');
 
-registerCircuit('Welcome', introText);
+registerCircuit('Welcome', introText, 'intro');
 
 registerCircuit('Basic Help', `
 0"LogicEmu Basic Help"
@@ -297,7 +297,7 @@ s**>d**>d**>d**>d**>l
 
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`);
+`, 'help1');
 
 registerCircuit('Full Help', `
 0"LogicEmu Full Help"
@@ -883,7 +883,7 @@ l<----*
 "RENDER:graphical"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`);
+`, 'help2');
 
 
 registerCircuit('Ticks and Emulation Algorithms', `
@@ -1017,7 +1017,7 @@ s->C->C->C->C->C->C->C->C
 0"FIT:x"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`);
+`, 'algohelp');
 
 
 
@@ -1061,7 +1061,7 @@ s---->a-****-->a>l** *|*>l1
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`);
+`, 'renderhelp');
 
 
 registerTitle('Editing');
@@ -1333,7 +1333,7 @@ s**>d**>d**>d**>d**>l
 0"FIT:x"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`);
+`, 'edit1');
 
 
 registerCircuit('Full Editing Tutorial', `
@@ -2476,6 +2476,7 @@ s   s   s
 0"'RENDER: graphical' --> force graphics mode rendering (canvas)"
 0"'FIT: x' --> zoom horizontally to full width, even if it means scrolling y"
 0"'FIT: y' --> if possible zoom vertically such that top up to this marker is visible"
+0"             if two such markers present, zoom such that height matches their vertical distance."
 
 0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 0"SECTION VII: Interchangeable ASCII characters"
@@ -2599,7 +2600,7 @@ s     s     s     s
 0"FIT:x"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`);
+`, 'edit2');
 
 
 registerCircuit('ASCII symbol summary (for editing)', `
@@ -2667,7 +2668,7 @@ registerCircuit('ASCII symbol summary (for editing)', `
 0"$: extend the surface area of devices without input/output interaction"
 0"0123456789: modifiers: LED color, timer speed, bus/ic/backplane id"
 
-`);
+`, 'symbols');
 
 registerCircuit('Electronic Diagram', `
 0"comparison with real electrical diagrams. On the left real life notation, on the right our ASCII notation"
@@ -2893,7 +2894,7 @@ registerCircuit('Electronic Diagram', `
 
 
 
-`);
+`, 'diagram');
 
 
 registerTitle();
@@ -3328,4 +3329,4 @@ I196
 "RENDER:text"
 
 
-`);
+`, 'test');
