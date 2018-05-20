@@ -195,7 +195,7 @@ registerCircuit('Logic Gates Tutorial', `
 0"  1  0 |  0    1   0    0     1    1     0     0     1   "
 0"  1  1 |       1   0    1     0    0     1     1     0   "
 
-`, 'gates');
+`, 'logic_gates');
 
 registerCircuit('Binary Numbers Tutorial', `
 
@@ -295,7 +295,7 @@ registerCircuit('Binary Numbers Tutorial', `
      TTTTTTTTTTTTTTTTTTTTTT"decimal"
 
 "FIT:x"
-`, 'binary');
+`, 'binary_numbers');
 
 registerCircuit('16 gates', `
 
@@ -510,7 +510,7 @@ registerCircuit('De Morgan\'s law', `
 0"'it is NOT so that the sun is NOT hot OR that the sun is NOT round'"
 0"Notice the three NOTs there and how the AND is replaced by OR"
 
-`, 'morgan');
+`, 'morgans_law');
 
 
 registerCircuit('NAND logic', `
@@ -683,7 +683,7 @@ s***>A**>A>A**>l
    ^ v ^ v
 s***>A**>A>A**>l
 
-`, 'nand');
+`, 'nand_logic');
 
 
 registerCircuit('NOR logic', `
@@ -856,7 +856,7 @@ s****>O****>O*>O**>l
    ^  v  ^  v
 s****>O****>O*>O**>l
 
-`, 'nor');
+`, 'nor_logic');
 
 
 
@@ -932,7 +932,7 @@ l<**a e a e a e a e **S
 
 
 
-`, 'halfadder');
+`, 'half_adder');
 
 
 
@@ -971,7 +971,7 @@ registerCircuit('full adder', `
         *     *     *     *     *     *     *     *
         s     s     s     s     s     s     s     s
 
-`, 'fulladder');
+`, 'full_adder');
 
 
 registerCircuit('8-bit ripple carry adder', `
@@ -1012,7 +1012,7 @@ registerCircuit('8-bit ripple carry adder', `
 
 
 
-`, 'adder8');
+`, 'ripple_carry_adder');
 
 
 registerCircuit('4-bit carry lookahead adder', `
@@ -1079,7 +1079,7 @@ registerCircuit('4-bit carry lookahead adder', `
 0"rippling every single bit (which would be an even slower but even cheaper option). And then, even"
 0"more tradeoffs can be made by doing any of the above with other sizes than 4-bit CLA's."
 
-`, 'cla');
+`, 'cla_adder');
 
 
 registerCircuit('half subtractor', `
@@ -1106,7 +1106,7 @@ registerCircuit('half subtractor', `
 
 "a b"
 
-`, 'halfsub');
+`, 'half_sub');
 
 
 registerCircuit('full subtractor', `
@@ -1160,7 +1160,7 @@ registerCircuit('full subtractor', `
         s     s     s     s     s     s     s     s
 
 
-`, 'fullsub');
+`, 'full_sub');
 
 
 registerCircuit('8-bit comparator', `
@@ -1198,7 +1198,7 @@ registerCircuit('8-bit comparator', `
      "b128   b64   b32   b16    b8    b4    b2    b1"
 
 
-`, 'comp');
+`, 'comparator');
 
 
 registerCircuit('8-bit ALU from adder', `
@@ -1393,7 +1393,7 @@ registerCircuit('4-bit multiplier', `
 
 
 
-`, 'mul');
+`, 'multiply');
 
 
 registerCircuit('8-bit multiplier', `
@@ -1646,7 +1646,7 @@ registerCircuit('4-bit divider', `
          "b8           b4           b2           b1"
 
 
-`, 'div');
+`, 'divide');
 
 
 
@@ -2647,7 +2647,7 @@ s**>c#Q**>l
 
 0"RENDER:graphical"
 
-`, 'ff');
+`, 'flip_flops');
 
 
 registerCircuit('flip-flops (from NAND)', `
@@ -2950,7 +2950,7 @@ registerCircuit('flip-flops (from NAND)', `
 
 0"RENDER:graphical"
 
-`, 'ffnand');
+`, 'flip_flops_nand');
 
 
 registerCircuit('flip-flops (from counters)', `
@@ -3175,7 +3175,7 @@ registerCircuit('7-segment display', `
       sss     ssss
      "gfe     dcba"
 
-`, '7seg');
+`, '7_seg');
 
 
 registerCircuit('7-segment decoder', `
@@ -3220,7 +3220,7 @@ registerCircuit('7-segment decoder', `
 
           "8421"
 
-`, '7segdec');
+`, '7_seg_dec');
 
 
 registerCircuit('10 7-segments', `
@@ -3269,7 +3269,7 @@ registerCircuit('Hello World terminal', `
              ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ *
              ************************R
 
-`, 'helloworld');
+`, 'hello_world');
 
 
 registerCircuit('Keyboard and screen', `
@@ -3334,7 +3334,7 @@ registerCircuit('Synchronous up counter', `
     ^     ^     ^     ^     ^     ^     ^     ^
     ***************************************************p
 
-`, 'synchcounter');
+`, 'synch_counter');
 
 
 registerCircuit('Synchronous down counter', `
@@ -3807,7 +3807,7 @@ s****+*+*+>o***+*+*+>o***+*+*+>o***+*+*+>o**>l
    * * * *   * * * *   * * * *   * * * *
    s s s s   s s s s   s s s s   s s s s
   "f e d c   b a 9 8   7 6 5 4   3 2 1 0"
-`, 'priority');
+`, 'priority_encoder');
 
 
 
@@ -3956,7 +3956,7 @@ registerCircuit('8-bit binary to BCD decoder', `
 
 0"FIT:y"
 
-`, 'doubledabble');
+`, 'double_dabble');
 
 
 registerCircuit('bcd to binary, 0-255', `
@@ -4058,7 +4058,7 @@ registerCircuit('bcd to binary, 0-255', `
 
 
 
-`, 'bcdtobin');
+`, 'bcd_to_bin');
 
 
 registerCircuit('bcd to binary, 0-999', `
@@ -4152,7 +4152,7 @@ registerCircuit('bcd to binary, 0-999', `
    "800   400   200   100  | 80    40    20    10 |  8     4     2     1"
    "      hundreds         |         tens         |         units       "
 
-`, 'bcdtobin999');
+`, 'bcd_to_bin_999');
 
 registerCircuit('compact 0-999 display', `
 
@@ -4710,7 +4710,7 @@ s******+******** *
 
 
 
-`, 'nand2');
+`, 'nand_logic_2');
 
 registerCircuit('NAND logic III: no wire crossings', `
 
@@ -4926,7 +4926,7 @@ s*************>l>A>A**************>l
 "C"s*********************
 
 
-`, 'nand3');
+`, 'nowirecross');
 
 
 registerCircuit('Relay Logic', `
@@ -5642,7 +5642,7 @@ s**>4
 
 0"RENDER:graphical"
 0"MODE:sequential"
-`, 'relay');
+`, 'relay_logic');
 
 registerCircuit('mirror bits', `
      l l l l l l l l      llllllll
@@ -5761,7 +5761,7 @@ registerCircuit('gray code', `
   *  *  *  *  *  *  *  *
   s  s  s  s  s  s  s  s
 
-`, 'gray');
+`, 'gray_code');
 
 
 registerCircuit('bit sorter', `
@@ -5946,7 +5946,7 @@ a o a o a o a o"1"
 
 
 
-`, 'sort');
+`, 'sorter');
 
 registerCircuit('4-bit majority gate', `
 
@@ -6296,7 +6296,7 @@ registerCircuit('Conway\'s game of life', `
            h          |v         h
           l           sl          l
 
-`, 'gol');
+`, 'game_of_life');
 
 registerCircuit('Conway\'s game of life galaxy', `
 
@@ -6417,7 +6417,7 @@ registerCircuit('Conway\'s game of life galaxy', `
            h          |v         h
           l           sl          l
 
-`, 'galaxy');
+`, 'gol_galaxy');
 
 
 registerCircuit('Conway\'s game of life wrap', `
@@ -6541,7 +6541,7 @@ registerCircuit('Conway\'s game of life wrap', `
            h          |v         h
           l           sl          l
 
-`, 'golwrap');
+`, 'gol_wrap');
 
 
 registerCircuit('Conway\'s game of life ship', `
@@ -6664,7 +6664,7 @@ registerCircuit('Conway\'s game of life ship', `
            h          |v         h
           l           sl          l
 
-`, 'ship');
+`, 'gol_ship');
 
 registerCircuit('Langtons Ant', `
 0"Langton's Ant"
@@ -6764,7 +6764,7 @@ registerCircuit('Langtons Ant', `
          l     s     l
 
 
-`, 'langton');
+`, 'langtons_ant');
 
 
 
@@ -6846,7 +6846,7 @@ registerCircuit('16-bit carry lookahead adder', `
                                   * *               * *          * *      * *
                                   * *               * *          * *      * *
                                   s s               s s          s s      s s
-`, 'cla16');
+`, 'cla_adder_16');
 
 
 registerCircuit('16-bit ripple vs lookahead speed comparison', `
@@ -6939,7 +6939,7 @@ registerCircuit('16-bit ripple vs lookahead speed comparison', `
                                   * *               * *          * *      * *
                                   * *               * *          * *      * *
                                   s s               s s          s s      s s
-`, 'cla_speed');
+`, 'cla_adder_speed');
 
 
 registerCircuit('16-bit divider', `
@@ -7701,7 +7701,7 @@ registerCircuit('4 math functions with decimal', `
                     ^ ^ ^ ^ | | | | |
                     p | | | | | | | |
                       s s s s s s s s
-`, 'math');
+`, 'calculator');
 
 
 
@@ -7818,7 +7818,7 @@ registerCircuit('8-bit divider effect', `
 
 
 
-`, 'diveffect');
+`, 'div_effect');
 
 
 

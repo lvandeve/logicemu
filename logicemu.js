@@ -6310,7 +6310,7 @@ forgetButton.onclick = function() {
 
 
 var linkButton = makeElement('button', menuRow2El);
-linkButton.innerText = 'links';
+linkButton.innerText = 'link ids';
 linkButton.title = 'Shows circuits that can be linked to by external link';
 linkButton.onclick = function() {
   var html = '';
