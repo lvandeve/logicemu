@@ -63,6 +63,32 @@ function makeDiv(x, y, w, h, opt_parent) {
   return el;
 }
 
+function styleUIElement(el, opt_smallbutton) {
+  el.style.border = '1px solid #888';
+  el.style.height = '20px';
+  el.style.width = '80px';
+  el.style.margin = '1px';
+  el.style.padding = '0';
+  el.style.backgroundColor = '#eee';
+  el.style.cursor = 'pointer';
+  el.style.boxShadow = '0.5px 0.5px #aaa';
+  el.style.textAligh = 'center';
+  el.style.alignItems = 'flex-start';
+  el.style.boxSizing = 'border-box';
+  el.style.font = '400 13.3333px Arial';
+
+  if (opt_smallbutton) {
+    el.style.width = '20px';
+  }
+}
+
+
+function makeUIElement(tag, opt_parent, opt_smallbutton) {
+  var el = makeElement(tag, opt_parent);
+  styleUIElement(el, opt_smallbutton);
+  return el;
+}
+
 var worldDiv = makeDiv(10, 128, 0, 0);
 var renderingMessageDiv = makeDiv(10, 128, 0, 0);
 
@@ -175,6 +201,7 @@ var AUTO_CHOOSE_MODE = true; // automatically choose AUTOUPDATE and UPDATE_ALGOR
 var numticks = 0;
 
 var origtext = ''; // the currently loaded circuit original text
+var origtitle = undefined;
 
 var BACKSLASH_ALTERNATIVE = ';'; // because backslash in `` type strings does not work
 var DQUOT_ALTERNATIVE = '`'; // JS strings can use `, in other languages " is already the string quotes
@@ -2816,16 +2843,19 @@ function RendererText() {
     this.div1.innerText = symbol;
 
     if(cell.comment) {
-      this.div0.style.color = '#940';
-      this.div0.style.fontWeight = 'bold';
-      this.div1.style.color = '#940';
-      this.div1.style.fontWeight = 'bold';
+      this.div0.style.color = '#000';
+      this.div0.style.backgroundColor = '#fff6ea';
+      //this.div0.style.fontWeight = 'bold';
+
+      //this.div1.style.color = '#940';
+      //this.div1.style.fontWeight = 'bold';
 
       // allow the text to go to the right
       if(cell.commentalign != -1) {
         this.div0.style.whiteSpace = 'pre';
         this.div1.style.whiteSpace = 'pre';
-        this.div0.style.width = '' + (tw * cell.commentlength) + 'px';
+        //this.div0.style.width = '' + (tw * cell.commentlength) + 'px';
+        this.div0.style.width = ''; // make it as wide as the text itself, which looks better if a background is enabled for it
         if(cell.commentalign == 0) this.div0.style.textAlign = 'left';
         else if(cell.commentalign == 1) this.div0.style.textAlign = 'center';
         else if(cell.commentalign == 2) this.div0.style.textAlign = 'right';
@@ -4861,6 +4891,7 @@ function resetForParse() {
   timerticks = 0;
   sequential_mode_changed = true;
   numticks = 0;
+  showingLinkIds = false;
 }
 
 // 3D version, for wire crossings etc...
@@ -5813,7 +5844,8 @@ function parseComponents() {
 function initDivs() {
   worldDiv.style.display = 'none'; // making it invisible while rendering makes it faster in some browsers
   worldDiv.innerText = '';
-  for(var y = 0; y < h; y++) {
+  // y in opposite order: reason: fonts usually have attachments at the bottom, not the top. And sometimes the bottom attachment spills over into the cell below. If the cell below has a background color, it would come on top of the font, clipping it. Doing bottom to to porder makes higher cells be on top of lower cells, fixing that.
+  for(var y = h - 1; y >= 0; y--) {
     for(var x = line0[y]; x < line1[y]; x++) {
       world[y][x].initDiv(x, y);
     }
@@ -5854,6 +5886,7 @@ function parseText(text, opt_title) {
 function parseText2(text, opt_title) {
   worldDiv.style.display = 'none';
   origtext = text;
+  origtitle = opt_title;
   console.log(text);
   resetForParse();
   startLogPerformance();
@@ -6074,7 +6107,7 @@ function getMode() {
 }
 
 
-var modeDropdown = makeElement('select', menuRow3El);
+var modeDropdown = makeUIElement('select', menuRow3El);
 modeDropdown.title = 'Choose Emulation Algorithm. combinational: does not auto tick, does fast update when using a button or timer.' +
                      ' sequential: does fast update every so many milliseconds, works with sequential circuits with c, does not work for some flip-flops made from actual gates.' +
                      ' electron: does slow update every so many milliseconds, supports flip-flops crafted from gates, and even has some randomness mechanism to get them out of metastable state.' +
@@ -6102,7 +6135,7 @@ function updateModeButtonText() {
 }
 
 
-var tickButton = makeElement('button', menuRow3El);
+var tickButton = makeUIElement('button', menuRow3El);
 tickButton.innerText = 'tick';
 tickButton.title = 'Tick once, to update to next state when the circuit is paused or in "investigate" mode. If the emulator is already autoticking, pressing this button has little effect.';
 tickButton.onclick = update;
@@ -6114,7 +6147,7 @@ function isPaused() {
 function updatePauseButtonText() {
   pauseButton.innerText = isPaused() ? 'paused' : 'pause';
 }
-var pauseButton = makeElement('button', menuRow3El);
+var pauseButton = makeUIElement('button', menuRow3El);
 pauseButton.innerText = 'pause';
 pauseButton.title = 'pauses auto ticking and timers, or enables them again if already paused.';
 pauseButton.onclick = function() {
@@ -6128,7 +6161,7 @@ updatePauseButtonText();
 
 
 var boosted = false;
-var boostButton = makeElement('button', menuRow3El);
+var boostButton = makeUIElement('button', menuRow3El);
 boostButton.title = 'speeds up simulation, if possible within the computational resources of the web browser';
 boostButton.innerText = 'boost';
 boostButton.onclick = function() {
@@ -6153,7 +6186,7 @@ ticksCounterEl.style.display = 'inline-block';
 
 
 
-var rendererDropdown = makeElement('select', menuRow2El);
+var rendererDropdown = makeUIElement('select', menuRow2El);
 rendererDropdown.title = 'Choose renderer: graphical or text. Graphical is with HTML5 canvas and has better looking wire connections but may be slow in some browsers for large circuits. Text mode is faster and is more closely related to how you edit circuits with ASCII text.';
 rendererDropdown.onchange = function() {
   graphics_mode = rendererDropdown.selectedIndex;
@@ -6166,7 +6199,7 @@ makeElement('option', rendererDropdown).innerText = 'graphical';
 rendererDropdown.selectedIndex = graphics_mode;
 
 /*
-var toggleButton = makeElement('button', menuRow2El);
+var toggleButton = makeUIElement('button', menuRow2El);
 toggleButton.innerText = 'spark';
 toggleButton.title = 'after clicking this button, click any component and its state will be toggled. May not take effect in fast mode.';
 toggleButton.onclick = function() {
@@ -6176,7 +6209,7 @@ toggleButton.onclick = function() {
 
 
 
-var zoomoutButton = makeElement('button', menuRow2El);
+var zoomoutButton = makeUIElement('button', menuRow2El, true);
 zoomoutButton.innerText = '-';
 zoomoutButton.title = 'Zoom out';
 zoomoutButton.onclick = function() {
@@ -6189,7 +6222,7 @@ zoomoutButton.onclick = function() {
   render();
 };
 
-var zoominButton = makeElement('button', menuRow2El);
+var zoominButton = makeUIElement('button', menuRow2El, true);
 zoominButton.innerText = '+';
 zoominButton.title = 'Zoom in';
 zoominButton.onclick = function() {
@@ -6209,7 +6242,7 @@ zoominButton.onclick = function() {
 
 var changeDropdownElements = [];
 
-var changeDropdown = makeElement('select', menuRow2El);
+var changeDropdown = makeUIElement('select', menuRow2El);
 changeDropdown.title = 'A simpler more primitive form of edit, but it works while a circuit is running. Change the type of a gate, switch or LED to this. First click an option from this list, then the main cell of a device (e.g. the "a" of an AND gate).' +
     ' This is a very limited form of editing. It doesn\'t support creating or removing wire connections. It can only change a device that has one of the types in the list to another type in the list. On other devices it may either do nothing, or cause' +
     ' unexpected behavior. Changes in IC templates have no effect on instances. Changes are not saved and not visible under the edit button. To do full editing, use the edit button instead.';
@@ -6223,16 +6256,6 @@ function registerChangeDropdownElement(type) {
   if(type == 'c' || type == 'C') text = type;
   var el = makeElement('option', changeDropdown).innerText = text;
   changeDropdownElements.push(type);
-};
-
-
-function makeChangeButton(type) {
-  var changeButton = makeElement('button', menuRow2El);
-  changeButton.innerText = typesymbols[type];
-  changeButton.title = 'Change the type of this device to this. First click this button, then the device. This is a first very limited form of editing... NOTE that not the cell you click changes, but the type of the core device, e.g. the "a" in an and.';
-  changeButton.onclick = function() {
-    changeMode = type;
-  }
 };
 
 registerChangeDropdownElement('change');
@@ -6262,7 +6285,7 @@ var editmode = false;
 
 var textbeforeedit = '';
 var editarea;
-var editButton = makeElement('button', menuRow2El);
+var editButton = makeUIElement('button', menuRow2El);
 editButton.innerText = 'edit';
 editButton.title = 'Opens text field to edit the map. Press this button again to stop editing and run the new circuit. Read the editing tutorial under "help" first. Advice: for large projects, do not actually edit in the text field because that is fiddly, use a good text editor (that has block selection), or copypaste a circuit in here from an external source. '
                  + 'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead. Note that nothing gets sent to any server or cloud, everything is'
@@ -6298,7 +6321,7 @@ editButton.onclick = function() {
 };
 
 
-var forgetButton = makeElement('button', menuRow2El);
+var forgetButton = makeUIElement('button', menuRow2El);
 forgetButton.innerText = 'forget';
 forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button,' +
                      'you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
@@ -6309,15 +6332,24 @@ forgetButton.onclick = function() {
 }
 
 
-var linkButton = makeElement('button', menuRow2El);
+var linkButton = makeUIElement('button', menuRow2El);
 linkButton.innerText = 'link ids';
 linkButton.title = 'Shows circuits that can be linked to by external link';
 linkButton.onclick = function() {
+  showLinkIds();
+}
+
+function showLinkIds() {
+  if(showingLinkIds) {
+    parseText(origtext, origtitle);
+  }
+
   var html = '';
   var url = window.location.href;
   var q = url.indexOf('?');
   if(q >= 0) url = url.substr(0, q);
   html += '<a href="' + url + '">' + url + '</a><br>';
+  html += '<a href="' + url + '?id=links' + '">' + url + '?id=links' + '</a><br>';
   for(var i = 0; i < linkableCircuitsOrder.length; i++) {
     var link = url + '?id=' + linkableCircuitsOrder[i];
     var title = linkableCircuits[linkableCircuitsOrder[i]][0];
@@ -6326,6 +6358,7 @@ linkButton.onclick = function() {
   resetForParse();
   worldDiv.innerHTML = html;
   worldDiv.style.width = '800px';
+  showingLinkIds = true;
 }
 
 
@@ -6483,7 +6516,7 @@ var circuitDropdownSpan = makeElement('span', menuRow1El);
 
 var currentSelectedCircuit = 0;
 
-var prevCircuitButton = makeElement('button', menuRow1El);
+var prevCircuitButton = makeUIElement('button', menuRow1El, true);
 prevCircuitButton.innerText = '<';
 prevCircuitButton.title = 'Previous built-in circuit';
 prevCircuitButton.onclick = function() {
@@ -6492,7 +6525,7 @@ prevCircuitButton.onclick = function() {
   parseText(allRegisteredCircuits[currentSelectedCircuit][1], allRegisteredCircuits[currentSelectedCircuit][0]);
 };
 
-var nextCircuitButton = makeElement('button', menuRow1El);
+var nextCircuitButton = makeUIElement('button', menuRow1El, true);
 nextCircuitButton.innerText = '>';
 nextCircuitButton.title = 'Next built-in circuit';
 nextCircuitButton.onclick = function() {
@@ -6502,7 +6535,7 @@ nextCircuitButton.onclick = function() {
 };
 
 
-var importButton = makeElement('button', menuRow1El);
+var importButton = makeUIElement('button', menuRow1El);
 importButton.innerText = 'import';
 importButton.title = 'Import a circuit from its ASCII diagram copypasted from elsewhere. Paste it into the field that appears, press done (this button itself) when finished. To export a circuit instead, use the "edit" button, or create your own circuit in a text editor.';
 importButton.onclick = function() {
@@ -6535,7 +6568,7 @@ importButton.onclick = function() {
 
 // This button is commented out, because exporting a circuit only makes sense if you edited it, and if you edit circuits you already know how to copypaste their ASCII text from the 'edit' textfield
 /*
-var exportButton = makeElement('button', menuRow1El);
+var exportButton = makeUIElement('button', menuRow1El);
 exportButton.innerText = 'export';
 exportButton.title = 'Export a circuit. Copypaste its ASCII diagram to store or post it. Then press done (this button itself) to remove the popup textfield. NOTE: nothing gets exported to the cloud. Everything is stored locally and you must copypaste it yourself to share it.';
 exportButton.onclick = function() {
@@ -6574,7 +6607,7 @@ function CircuitGroup(name) {
   this.title = makeElement('span', this.main);
   this.title.innerText = name;
   makeElement('br', this.main);
-  this.dropdown = makeElement('select', this.main);
+  this.dropdown = makeUIElement('select', this.main);
   this.dropdown.style.width = '120px';
   var that = this;
   this.dropdown.onchange = function() {

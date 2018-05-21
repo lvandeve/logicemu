@@ -294,7 +294,7 @@ registerCircuit('Binary Numbers Tutorial', `
      *  *  *  *  *  *  *  *
      TTTTTTTTTTTTTTTTTTTTTT"decimal"
 
-"FIT:x"
+0"FIT:x"
 `, 'binary_numbers');
 
 registerCircuit('16 gates', `
@@ -377,7 +377,7 @@ registerCircuit('16 gates', `
 
 "b a"
 
-"FIT:y FIT:x"
+0"FIT:y FIT:x"
 
 0"Configurable gate"
 

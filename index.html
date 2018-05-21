@@ -5,12 +5,67 @@
 <meta name="description" content="LogicEmu - Logic Simulator Running in the Browser">
 </head>
 <body>
-<noscript>Welcome to LogicEmu, a logic circuit simulator running in your browser. This online logic simulator requires JavaScript to run and it is disabled.<p/>LogicEmu. Copyright (c) 2018 by Lode Vandevenne</noscript>
+<noscript>
+Welcome to LogicEmu, a logic circuit simulator running in your browser.<p/>
+This online logic simulator requires JavaScript to run and JavaScript is disabled.<p/>
+You can still view the source code on <a href="https://github.com/lvandeve/logicemu">github</a>.<p/>
+You can run LogicEmu offline if you wish: download the html and js files from github, then open index.html in offline browser. LogicEmu is completely independent of any online connection, it executes locally.<p/>
+Here are examples of what circuits look like, except with JavaScript it renders them nicer and makes them interactive:
+<font color="gray"><pre>
+0"8-Bit Ripple Carry Adder"
+
+        "128"  "64"  "32"  "16"  "8"   "4"   "2"   "1"
+          l     l     l     l     l     l     l     l
+          ^     ^     ^     ^     ^     ^     ^     ^
+    l&lto&lta e o&lta e o&lta e o&lta e o&lta e o&lta e o&lta e o&lta e s
+      ^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/
+      a e * a e * a e * a e * a e * a e * a e * a e *
+      ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^
+      * *   * *   * *   * *   * *   * *   * *   * *
+      * *   * *   * *   * *   * *   * *   * *   * *
+      s *   s *   s *   s *   s *   s *   s *   s *
+        *     *     *     *     *     *     *     *
+        s     s     s     s     s     s     s     s
+
+
+0"Wire Crossing from NAND"
+
+      ***>A****
+      *   ^   v
+   s***>A**>A>A***>l
+      v ^ v ^
+      A** A**
+      ^ v ^ v
+   s***>A**>A>A***>l
+      *   v   ^
+      ***>A****
+
+
+0"Shift Register"
+
+                     1"parallel input"
+          s     s     s     s     s     s     s     s
+          *     *     *     *     *     *     *     *
+ "W"s*****+*****+*****+*****+*****+*****+*****+**** *
+        * v   * v   * v   * v   * v   * v   * v   * v
+        *>a** *>a** *>a** *>a** *>a** *>a** *>a** *>a**
+            * *   v *   v *   v *   v *   v *   v *   v
+            * *]a>o *]a>o *]a>o *]a>o *]a>o *]a>o *]a>o
+            *   ^ *   ^ *   ^ *   ^ *   ^ *   ^ *   ^
+            *>d** *>d** *>d** *>d** *>d** *>d** *>d******>l 0"serial output"
+              c     c     c     c     c     c     c
+              ^     ^     ^     ^     ^     ^     ^
+ "C"s**********************************************
+
+
+</pre></font>
+LogicEmu. Copyright (c) 2018 by Lode Vandevenne
+</noscript>
 </body>
 </html>
 <!--the version cgi params are to encourage browsers to update js file cache when new version uploaded, by changing it to new date-->
-<script src="logicemu.js?v=20180520"></script>
-<script src="circuits_help.js?v=20180520"></script>
-<script src="circuits_main.js?v=20180520"></script>
-<script src="footer.js?v=20180520"></script>
+<script src="logicemu.js?v=20180521"></script>
+<script src="circuits_help.js?v=20180521"></script>
+<script src="circuits_main.js?v=20180521"></script>
+<script src="footer.js?v=20180521"></script>
 

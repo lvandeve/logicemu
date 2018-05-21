@@ -39,16 +39,24 @@ if (stored_text != '' && !!stored_text) {
 
 var link_id = getParameterByName('id');
 if(link_id) {
-  var linkableCircuit = linkableCircuits[link_id];
-  if(linkableCircuit) {
-    initialCircuitText = linkableCircuit[1];
-    initialTitle = linkableCircuit[0];
-    currentSelectedCircuit = linkableCircuit[2];
+  if(link_id == 'links') {
+    showLinkIds();
+    initialCircuitText = null;
+    initialTitle = null;
   } else {
-    initialCircuitText = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
-    initialTitle = introTitle;
+    var linkableCircuit = linkableCircuits[link_id];
+    if(linkableCircuit) {
+      initialCircuitText = linkableCircuit[1];
+      initialTitle = linkableCircuit[0];
+      currentSelectedCircuit = linkableCircuit[2];
+    } else {
+      initialCircuitText = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
+      initialTitle = introTitle;
+    }
   }
 }
 
-parseText(initialCircuitText, initialTitle);
+if(initialCircuitText) {
+  parseText(initialCircuitText, initialTitle);
+}
 
