@@ -29,6 +29,7 @@ been initialized and registered.
 
 var initialCircuitText = introText;
 var initialTitle = introTitle;
+var initialId = 'welcome';
 
 // the text you last edited is remembered. To remove the memory, use the edit button, clear the string, and save
 var stored_text = getLocalStorage('circuit_text');
@@ -39,24 +40,19 @@ if (stored_text != '' && !!stored_text) {
 
 var link_id = getParameterByName('id');
 if(link_id) {
-  if(link_id == 'links') {
-    showLinkIds();
-    initialCircuitText = null;
-    initialTitle = null;
+  var linkableCircuit = linkableCircuits[link_id];
+  if(linkableCircuit) {
+    initialCircuitText = linkableCircuit[1];
+    initialTitle = linkableCircuit[0];
+    initialId = link_id;
+    currentSelectedCircuit = linkableCircuit[2];
   } else {
-    var linkableCircuit = linkableCircuits[link_id];
-    if(linkableCircuit) {
-      initialCircuitText = linkableCircuit[1];
-      initialTitle = linkableCircuit[0];
-      currentSelectedCircuit = linkableCircuit[2];
-    } else {
-      initialCircuitText = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
-      initialTitle = introTitle;
-    }
+    initialCircuitText = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
+    initialTitle = introTitle;
   }
 }
 
 if(initialCircuitText) {
-  parseText(initialCircuitText, initialTitle);
+  parseText(initialCircuitText, initialTitle, initialId);
 }
 

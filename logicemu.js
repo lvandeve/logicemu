@@ -73,9 +73,8 @@ function styleUIElement(el, opt_smallbutton) {
   el.style.cursor = 'pointer';
   el.style.boxShadow = '0.5px 0.5px #aaa';
   el.style.textAligh = 'center';
-  el.style.alignItems = 'flex-start';
   el.style.boxSizing = 'border-box';
-  el.style.font = '400 13.3333px Arial';
+  el.style.font = '400 13px Arial';
 
   if (opt_smallbutton) {
     el.style.width = '20px';
@@ -141,6 +140,13 @@ function getParameterByName(name, opt_url) {
   if (!results) return null;
   if (!results[2]) return '';
   return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+function getUrlWithoutQueries() {
+  var url = window.location.href;
+  var q = url.indexOf('?');
+  if(q >= 0) url = url.substr(0, q);
+  return url;
 }
 
 function clearSelection() {
@@ -278,6 +284,7 @@ var TYPE_IC_PASSTHROUGH = TYPE_index++; // the switch gets internally converted 
 var TYPE_VTE = TYPE_index++;
 var TYPE_TRISTATE = TYPE_index++;
 var TYPE_RANDOM = TYPE_index++;
+var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
 // number types (higher value = higher priority) [numbertype]
 var NUMBER_index = 0;
@@ -328,7 +335,8 @@ var knownmap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true
                 'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true, 'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
                 'c':true, 'C':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'z':true, 'Z':true, 'h':true, 'H':true,
-                '#':true, 'y':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true, '$':true, 'V':true, '?':true};
+                '#':true, 'y':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true, '$':true, 'V':true, '?':true,
+                'toc':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
 var defsubs = {}; // key is number of the sub (but those are not consecutive like in an array, e.g. one could make a I555 and the index would be 555)
@@ -2802,6 +2810,50 @@ function Renderer() {
   };
 };
 
+
+
+function setTocHTML(el) {
+  el.innerText = '';
+  var html = '';
+  for(var i = 0; i < linkableCircuitsOrder.length; i++) {
+    //var div = makeDiv(0, (i * th), w * tw, th, el);
+    var div = makeDiv(0, (i * th), tw, th, el);
+    div.style.width = '800px';
+    var id = linkableCircuitsOrder[i];
+    var circuit = linkableCircuits[id][1];
+    var title = linkableCircuits[id][0];
+    div.innerText = title;
+    div.style.textAlign = 'left';
+    div.style.color = '#44f';
+    div.style.textDecoration = 'underline';
+    div.style.cursor = 'pointer';
+    div.onclick = bind(function(circuit, title, id) {
+      parseText(circuit, title, id);
+    }, circuit, title, id);
+  }
+}
+
+// alternative to setTocHTML
+function setLinkHTML(el) {
+  el.innerText = '';
+  var html = '';
+
+  var url = getUrlWithoutQueries();
+
+  for(var i = 0; i < linkableCircuitsOrder.length; i++) {
+    var div = makeDiv(0, (i * th), w * tw, th, el);
+    var id = linkableCircuitsOrder[i];
+    div.style.textAlign = 'left';
+    var circuit = linkableCircuits[id][1];
+    var title = linkableCircuits[id][0];
+    var link = url + '?id=' + linkableCircuitsOrder[i];
+    if(id == 'welcome') link = url;
+    var a = makeElement('a', div);
+    a.innerText = title;
+    a.href = link;
+  }
+}
+
 /** @implements Renderer */
 function RendererText() {
   this.prevvalue = -1;
@@ -2863,6 +2915,9 @@ function RendererText() {
 
       // allow text selection of those
       this.div0.onmousedown = null;
+    } else if(symbol == 'toc') {
+      setTocHTML(this.div0);
+      //setLinkHTML(this.div0);
     } else {
       if(virtualsymbol == 'l') {
         var color = cell.components[0] ? cell.components[0].number : 0;
@@ -3549,6 +3604,8 @@ function RendererImg() { // RendererCanvas RendererGraphical
       } else if(virtualsymbol == 'L') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
       } else if(cell.comment) {
+        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
+      } else if(c == 'toc') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
       } else {
         var alreadybg = error;
@@ -5182,6 +5239,8 @@ function parseComponents() {
             if(ffmap[c]) type = TYPE_FLIPFLOP;
           }
 
+          if(c == 'toc') type = TYPE_TOC;
+
           if(type == TYPE_NULL && (c == '#' || c == '$')) type = TYPE_UNKNOWN_DEVICE;
 
           if(world[y][x].number >= 0 && devicemapext[c]) {
@@ -5872,7 +5931,7 @@ function setDocumentTitle(text) {
   document.title = 'LogicEmu: ' + text;
 }
 
-function parseText(text, opt_title) {
+function parseText(text, opt_title, opt_id) {
   renderingMessageDiv.innerText = 'rendering';
   // The timeout is so that the 'rendering' text becomes visible first before
   // it starts creating all the divs and canvases.
@@ -5880,17 +5939,54 @@ function parseText(text, opt_title) {
   // may force a redraw
   var dummy = worldDiv.offsetHeight;
   worldDiv.style.display = 'none';
-  window.setTimeout(bind(parseText2, text, opt_title), 0);
+  window.setTimeout(bind(parseText2, text, opt_title, opt_id), 0);
 }
 
-function parseText2(text, opt_title) {
+function parseText2(text, opt_title, opt_id) {
   worldDiv.style.display = 'none';
   origtext = text;
   origtitle = opt_title;
   console.log(text);
+
+  if(opt_id) {
+    directLink.href = getUrlWithoutQueries() + '?id=' + opt_id;
+    directLink.style.visibility = 'visible';
+  } else {
+    directLink.style.visibility = 'hidden';
+  }
+
+  var tocPos = text.indexOf('INSERT:toc');
+  var tocX = 0;
+  var tocY = 0;
+  if(tocPos >= 0) {
+    var start = tocPos;
+    var end = tocPos + 10;
+    if(text[start - 1] == '"') {
+      start--;
+      if(text[start - 1] == '0') start--;
+    }
+    if(text[end] == '"') end++;
+    for(var i = 0; i < start; i++) {
+      if(text[i] == '\n') tocY++;
+    }
+    var newlines = '';
+    for(var i = 0; i < linkableCircuitsOrder.length; i++) newlines += '\n';
+    text = text.substr(0, start) + newlines + text.substr(end);
+  }
+
+
   resetForParse();
   startLogPerformance();
   if(!parseCells(text)) return false;
+  if(tocPos >= 0) {
+    world[tocY][tocX].symbol = 'toc';
+    world[tocY][tocX].circuitsymbol = 'toc';
+    world[tocY][tocX].displaysymbol = 'toc';
+    world[tocY][tocX].metasymbol = 'toc';
+    world[tocY][tocX].skipparsing = false;
+    line0[tocY] = 0;
+    line1[tocY] = 1;
+  }
 
   logPerformance('parseNumbers begin');
   parseNumbers();
@@ -6332,35 +6428,29 @@ forgetButton.onclick = function() {
 }
 
 
-var linkButton = makeUIElement('button', menuRow2El);
-linkButton.innerText = 'link ids';
-linkButton.title = 'Shows circuits that can be linked to by external link';
-linkButton.onclick = function() {
-  showLinkIds();
+var indexLink = makeElement('span', menuRow2El);
+if(getParameterByName('id')) {
+  indexLink.innerHTML = '&nbsp;&nbsp;<a href="' + getUrlWithoutQueries() + '">index</a>';
+} else {
+  indexLink.innerHTML = 'index';
+  indexLink.style.paddingLeft = '10px';
+  indexLink.style.color = '#44f';
+  indexLink.style.textDecoration = 'underline';
+  indexLink.style.cursor = 'pointer';
+  indexLink.onclick = function() {
+    if(origtext == introText) return;
+    parseText(introText, introTitle, 'welcome')
+  };
 }
 
-function showLinkIds() {
-  if(showingLinkIds) {
-    parseText(origtext, origtitle);
-  }
 
-  var html = '';
-  var url = window.location.href;
-  var q = url.indexOf('?');
-  if(q >= 0) url = url.substr(0, q);
-  html += '<a href="' + url + '">' + url + '</a><br>';
-  html += '<a href="' + url + '?id=links' + '">' + url + '?id=links' + '</a><br>';
-  for(var i = 0; i < linkableCircuitsOrder.length; i++) {
-    var link = url + '?id=' + linkableCircuitsOrder[i];
-    var title = linkableCircuits[linkableCircuitsOrder[i]][0];
-    html += '<a href="' + link + '" title="' + title + '">' + link + '</a><br>';
-  }
-  resetForParse();
-  worldDiv.innerHTML = html;
-  worldDiv.style.width = '800px';
-  showingLinkIds = true;
-}
-
+var directLinkSpan = makeElement('span', menuRow2El);
+directLinkSpan.innerHTML = '&nbsp;&nbsp;';//<a href="' + getUrlWithoutQueries() + '">direct link</a>';
+var directLink = makeElement('a', directLinkSpan);
+directLink.innerText = 'direct link';
+directLink.href = getUrlWithoutQueries();
+directLink.style.visibility = 'hidden';
+directLink.title = 'external link to link directly to this circuit rather than the index page';
 
 // utility functions to mirror/rotate a whole circuit
 // does NOT yet support comments and possibly other things correctly: manual tuning may be needed afterwards
@@ -6522,7 +6612,9 @@ prevCircuitButton.title = 'Previous built-in circuit';
 prevCircuitButton.onclick = function() {
   currentSelectedCircuit--;
   if(currentSelectedCircuit < 0) currentSelectedCircuit = allRegisteredCircuits.length - 1;
-  parseText(allRegisteredCircuits[currentSelectedCircuit][1], allRegisteredCircuits[currentSelectedCircuit][0]);
+  parseText(allRegisteredCircuits[currentSelectedCircuit][1],
+      allRegisteredCircuits[currentSelectedCircuit][0],
+      allRegisteredCircuits[currentSelectedCircuit][2]);
 };
 
 var nextCircuitButton = makeUIElement('button', menuRow1El, true);
@@ -6531,7 +6623,9 @@ nextCircuitButton.title = 'Next built-in circuit';
 nextCircuitButton.onclick = function() {
   currentSelectedCircuit++;
   if(currentSelectedCircuit >= allRegisteredCircuits.length) currentSelectedCircuit = 0;
-  parseText(allRegisteredCircuits[currentSelectedCircuit][1], allRegisteredCircuits[currentSelectedCircuit][0]);
+  parseText(allRegisteredCircuits[currentSelectedCircuit][1],
+      allRegisteredCircuits[currentSelectedCircuit][0],
+      allRegisteredCircuits[currentSelectedCircuit][2]);
 };
 
 
@@ -6602,6 +6696,7 @@ function CircuitGroup(name) {
   this.circuits = [];
   this.circuitsNumbers = [];
   this.circuitsNames = [];
+  this.circuitsIds = [];
   this.main = makeElement('div', circuitDropdownSpan);
   this.main.style.display = 'inline-block';
   this.title = makeElement('span', this.main);
@@ -6609,11 +6704,14 @@ function CircuitGroup(name) {
   makeElement('br', this.main);
   this.dropdown = makeUIElement('select', this.main);
   this.dropdown.style.width = '120px';
+  // disabled, using onclick of element instead
   var that = this;
   this.dropdown.onchange = function() {
-    currentSelectedCircuit = that.circuitsNumbers[that.dropdown.selectedIndex];
-    var c = that.circuits[that.dropdown.selectedIndex];
-    parseText(c, that.circuitsNames[that.dropdown.selectedIndex]);
+    var index = that.dropdown.selectedIndex;
+    currentSelectedCircuit = that.circuitsNumbers[index];
+    var c = that.circuits[index];
+    parseText(c, that.circuitsNames[index], that.circuitsIds[index]);
+    that.dropdown.selectedIndex = 0;
   };
 }
 
@@ -6639,7 +6737,8 @@ function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
   currentCircuitGroup.circuits.push(circuit);
   currentCircuitGroup.circuitsNumbers.push(index);
   currentCircuitGroup.circuitsNames.push(name);
-  if(!opt_is_title) allRegisteredCircuits.push([name, circuit]);
+  currentCircuitGroup.circuitsIds.push(opt_link_id);
+  if(!opt_is_title) allRegisteredCircuits.push([name, circuit, opt_link_id]);
   if(opt_link_id) {
     linkableCircuits[opt_link_id] = [name, circuit, index];
     linkableCircuitsOrder.push(opt_link_id);
@@ -6658,11 +6757,11 @@ var introText = `
 0"Welcome to LogicEmu, a logic simulator running in your browser"
 0"that supports combinational and sequential logic circuits."
 
-0"LogicEmu comes with a lot of pre-packaged circuits built in. You can"
-0"load them using the dropdowns at the top labeled 'help' and 'circuits'"
+0"LogicEmu comes with a lot of pre-packaged circuits built in. A selection"
+0"is below, and all are in the 'help' and 'circuits' dropdowns above."
 0"It's also possible to edit them or create your own circuits."
-0"Try to experience the tutorials from the 'help' dropdown first. The"
-0"circuit you're viewing right now is called 'Welcome'."
+0"Try to experience the help tutorials first. The circuit you're viewing"
+0"right now is called 'Welcome'."
 
 0"In circuits, press the green 's' inputs with the mouse to change values."
 0"Read results from the red 'l' outputs. For example, below is an AND gate"
@@ -6678,26 +6777,18 @@ var introText = `
 0"flip-flops, integrated circuits, ROMs, displays, ... See the next"
 0"tutorials to learn more!"
 
+   s-->jq->l
+   s-->c#
+   s-->kQ->l
 
-0"A few more demos for the front page:"
+0"Below is a selection of some, but not all, circuits. The dropdowns in the"
+0"top menu contain more. After loading a circuit below the list here will"
+0"be gone (unless you load this welcome page itself), but you can always"
+0"use the top dropdowns to load others."
 
- TTTTTTTTTTTTTTTTTTTTTTT       s>jq>l      s******>a******>l
- ^   ^     ^     ^     ^       s>c#            *   ^
- l1  l1    l1    l1    l1      s>kQ>l          * ***
- ^   ^     ^     ^     ^                       * *
- o<a e o<a e o<a e o<a e     ***>A****     s** **+** *>e**>l
- ^ ^^^/^ ^^^/^ ^^^/^ ^^^     *   ^   v       *   * v * ^
- a e * a e * a e * a e *   s**>A**>A>A>l     * **+>a*+**
- ^^^   ^^^   ^^^   ^^^ *     v ^ v ^         * * *   * v
- l4l4  l4l4  l4l4  l4l4l4    A** A**       s*+*+**>a**>a>e>l
- ^ ^   ^ ^   ^ ^   ^ ^ ^     ^ v ^ v         * *   ^   * ^
- ? ?   ? ?   ? ?   ? ? ?   s**>A**>A>A>l     **+**** **+**
- ^ ^   ^ ^   ^ ^   ^ ^ ^     *   v   ^         *   v * * v
- ***********************     ***>A****     s******>a** *>a>l
- *
- R20
+0"INSERT:toc"
 
-
+0"FIT:x"
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `;
 

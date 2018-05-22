@@ -7,9 +7,14 @@
 <body>
 <noscript>
 Welcome to LogicEmu, a logic circuit simulator running in your browser.<p/>
-This online logic simulator requires JavaScript to run and JavaScript is disabled.<p/>
-You can still view the source code on <a href="https://github.com/lvandeve/logicemu">github</a>.<p/>
-You can run LogicEmu offline if you wish: download the html and js files from github, then open index.html in offline browser. LogicEmu is completely independent of any online connection, it executes locally.<p/>
+This online logic simulator requires JavaScript to run and it is disabled in your browser. Some options:<p/>
+
+<ul>
+<li>You can enable JS to view LogicEmu running here</li>
+<li>You can view the source code on <a href="https://github.com/lvandeve/logicemu">github</a></li>
+<li>You can run LogicEmu offline: download the html and js files from github or with 'view source' here, then open index.html from disk with a browser (offline if you wish). LogicEmu is completely independent of any online connection, it executes locally</li>
+</ul>
+
 Here are examples of what circuits look like, except with JavaScript it renders them nicer and makes them interactive:
 <font color="gray"><pre>
 0"8-Bit Ripple Carry Adder"
@@ -17,7 +22,7 @@ Here are examples of what circuits look like, except with JavaScript it renders 
         "128"  "64"  "32"  "16"  "8"   "4"   "2"   "1"
           l     l     l     l     l     l     l     l
           ^     ^     ^     ^     ^     ^     ^     ^
-    l&lto&lta e o&lta e o&lta e o&lta e o&lta e o&lta e o&lta e o&lta e s
+    l&lt;o&lt;a e o&lt;a e o&lt;a e o&lt;a e o&lt;a e o&lt;a e o&lt;a e o&lt;a e s
       ^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/
       a e * a e * a e * a e * a e * a e * a e * a e *
       ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^
@@ -64,8 +69,8 @@ LogicEmu. Copyright (c) 2018 by Lode Vandevenne
 </body>
 </html>
 <!--the version cgi params are to encourage browsers to update js file cache when new version uploaded, by changing it to new date-->
-<script src="logicemu.js?v=20180521"></script>
-<script src="circuits_help.js?v=20180521"></script>
-<script src="circuits_main.js?v=20180521"></script>
-<script src="footer.js?v=20180521"></script>
+<script src="logicemu.js?v=20180522"></script>
+<script src="circuits_help.js?v=20180522"></script>
+<script src="circuits_main.js?v=20180522"></script>
+<script src="footer.js?v=20180522"></script>
 

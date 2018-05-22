@@ -29,7 +29,7 @@ and injects them into a dropdown from logicemu.js
 
 registerCircuitGroup('help');
 
-registerCircuit('Welcome', introText, 'intro');
+registerCircuit('Welcome', introText, 'welcome');
 
 registerCircuit('Basic Help', `
 0"LogicEmu Basic Help"
@@ -100,7 +100,7 @@ s******>l
     v
     l
 
-0"Wire crossing:
+0"Wire crossing:"
 
     s
     *
