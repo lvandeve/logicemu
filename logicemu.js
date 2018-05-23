@@ -2827,9 +2827,10 @@ function setTocHTML(el) {
     div.style.color = '#44f';
     div.style.textDecoration = 'underline';
     div.style.cursor = 'pointer';
-    div.onclick = bind(function(circuit, title, id) {
+    div.onclick = bind(function(circuit, title, id, index) {
       parseText(circuit, title, id);
-    }, circuit, title, id);
+      currentSelectedCircuit = index;
+    }, circuit, title, id, linkableCircuits[id][2]);
   }
 }
 
@@ -4160,7 +4161,7 @@ function parseCells(text) {
   //while(lines.length > 0 && lines[0].length == 0) lines.splice(0, 1);
   //while(lines.length > 0 && lines[lines.length - 1].length == 0) lines.length--;
   h = lines.length;
-  w = 0;
+  w = 1;
   for(var i = 0; i < lines.length; i++) w = Math.max(w, lines[i].length);
 
   for(var y = 0; y < h; y++) {
@@ -5974,10 +5975,10 @@ function parseText2(text, opt_title, opt_id) {
     text = text.substr(0, start) + newlines + text.substr(end);
   }
 
-
   resetForParse();
   startLogPerformance();
   if(!parseCells(text)) return false;
+
   if(tocPos >= 0) {
     world[tocY][tocX].symbol = 'toc';
     world[tocY][tocX].circuitsymbol = 'toc';
@@ -6427,31 +6428,6 @@ forgetButton.onclick = function() {
   setLocalStorage('', 'circuit_text');
 }
 
-
-var indexLink = makeElement('span', menuRow2El);
-if(getParameterByName('id')) {
-  indexLink.innerHTML = '&nbsp;&nbsp;<a href="' + getUrlWithoutQueries() + '">index</a>';
-} else {
-  indexLink.innerHTML = 'index';
-  indexLink.style.paddingLeft = '10px';
-  indexLink.style.color = '#44f';
-  indexLink.style.textDecoration = 'underline';
-  indexLink.style.cursor = 'pointer';
-  indexLink.onclick = function() {
-    if(origtext == introText) return;
-    parseText(introText, introTitle, 'welcome')
-  };
-}
-
-
-var directLinkSpan = makeElement('span', menuRow2El);
-directLinkSpan.innerHTML = '&nbsp;&nbsp;';//<a href="' + getUrlWithoutQueries() + '">direct link</a>';
-var directLink = makeElement('a', directLinkSpan);
-directLink.innerText = 'direct link';
-directLink.href = getUrlWithoutQueries();
-directLink.style.visibility = 'hidden';
-directLink.title = 'external link to link directly to this circuit rather than the index page';
-
 // utility functions to mirror/rotate a whole circuit
 // does NOT yet support comments and possibly other things correctly: manual tuning may be needed afterwards
 
@@ -6610,8 +6586,9 @@ var prevCircuitButton = makeUIElement('button', menuRow1El, true);
 prevCircuitButton.innerText = '<';
 prevCircuitButton.title = 'Previous built-in circuit';
 prevCircuitButton.onclick = function() {
+  if(currentSelectedCircuit == 0) return;
   currentSelectedCircuit--;
-  if(currentSelectedCircuit < 0) currentSelectedCircuit = allRegisteredCircuits.length - 1;
+  //if(currentSelectedCircuit < 0) currentSelectedCircuit = allRegisteredCircuits.length - 1;
   parseText(allRegisteredCircuits[currentSelectedCircuit][1],
       allRegisteredCircuits[currentSelectedCircuit][0],
       allRegisteredCircuits[currentSelectedCircuit][2]);
@@ -6621,8 +6598,9 @@ var nextCircuitButton = makeUIElement('button', menuRow1El, true);
 nextCircuitButton.innerText = '>';
 nextCircuitButton.title = 'Next built-in circuit';
 nextCircuitButton.onclick = function() {
+  if(currentSelectedCircuit + 1 >= allRegisteredCircuits.length) return;
   currentSelectedCircuit++;
-  if(currentSelectedCircuit >= allRegisteredCircuits.length) currentSelectedCircuit = 0;
+  //if(currentSelectedCircuit >= allRegisteredCircuits.length) currentSelectedCircuit = 0;
   parseText(allRegisteredCircuits[currentSelectedCircuit][1],
       allRegisteredCircuits[currentSelectedCircuit][0],
       allRegisteredCircuits[currentSelectedCircuit][2]);
@@ -6660,6 +6638,35 @@ importButton.onclick = function() {
 };
 
 
+
+var githubLink = makeElement('span', menuRow2El);
+githubLink.innerHTML = '&nbsp<a href="https://github.com/lvandeve/logicemu">github</a>';
+
+var indexLink = makeElement('span', menuRow1El);
+if(getParameterByName('id')) {
+  indexLink.innerHTML = '&nbsp;&nbsp;<a href="' + getUrlWithoutQueries() + '">index</a>';
+} else {
+  indexLink.innerHTML = 'index';
+  indexLink.style.paddingLeft = '10px';
+  indexLink.style.color = '#44f';
+  indexLink.style.textDecoration = 'underline';
+  indexLink.style.cursor = 'pointer';
+  indexLink.onclick = function() {
+    if(origtext == introText) return;
+    parseText(introText, introTitle, 'welcome')
+  };
+}
+
+
+var directLinkSpan = makeElement('span', menuRow1El);
+directLinkSpan.innerHTML = '&nbsp;&nbsp;';//<a href="' + getUrlWithoutQueries() + '">direct link</a>';
+var directLink = makeElement('a', directLinkSpan);
+directLink.innerText = 'direct link';
+directLink.href = getUrlWithoutQueries();
+directLink.style.visibility = 'hidden';
+directLink.title = 'external link to link directly to this circuit rather than the index page';
+
+
 // This button is commented out, because exporting a circuit only makes sense if you edited it, and if you edit circuits you already know how to copypaste their ASCII text from the 'edit' textfield
 /*
 var exportButton = makeUIElement('button', menuRow1El);
@@ -6688,9 +6695,6 @@ exportButton.onclick = function() {
   }
 };*/
 
-
-var githubLink = makeElement('span', menuRow1El);
-githubLink.innerHTML = '&nbsp<a href="https://github.com/lvandeve/logicemu">github</a>';
 
 function CircuitGroup(name) {
   this.circuits = [];

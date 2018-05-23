@@ -2477,6 +2477,7 @@ s   s   s
 0"'FIT: x' --> zoom horizontally to full width, even if it means scrolling y"
 0"'FIT: y' --> if possible zoom vertically such that top up to this marker is visible"
 0"             if two such markers present, zoom such that height matches their vertical distance."
+0"'INSERT: toc' --> inserts a table of contents of built-in circuits here"
 
 0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 0"SECTION VII: Interchangeable ASCII characters"
