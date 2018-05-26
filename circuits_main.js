@@ -4290,6 +4290,7 @@ registerCircuit('Fredkin gate', `
 "b"s****>e>a**>e**>l 0"(b AND NOT c) OR (a AND c)"
        *       ^
        *********
+           I
 
 "a"s********>e****>l 0"(a AND NOT c) OR (b AND c)"
          *   ^
@@ -4324,93 +4325,105 @@ s****>e**>l
 0"Of course if no XOR gates are available, the AND/NOT/OR expressions given at the output labels above"
 0"can be used instead (requires 4 ands, 2 ors and an invertor)."
 
+
+0"It's defined as a chip at the beginning so we can use it as follows now (with the"
+0"control input always at the top):"
+
+"c"s**>i**>l
+       i
+"a"s**>i**>l
+       i
+"b"s**>i**>l
+
+
 0"The Fredkin gate can make all regular gates, but there are 'garbage' input and output signals to support the reversibility"
 
-"AND"
+0"AND"
+0"---"
 
-"a"s**************>l2
-           *
-"a"s*******+>e****>l2
-         v v ^
-"0"c****>e>a**>e**>l 0"a and b"
-       *       ^
-       *********
-
+"a"s**>i**>l2
+       i
+"b"s**>i**>l2
+       i
+"0"c**>i**>l 0"a and b"
 
 
-"OR"
+0"OR"
+0"--"
 
-"a"s**************>l2
-           *
-"a"s*******+>e****>l 0"a or b"
-         v v ^
-"1"C****>e>a**>e**>l2
-       *       ^
-       *********
-
-
-"NOT"
-
-"a"s**************>l2
-           *
-"0"c*******+>e****>l2
-         v v ^
-"1"C****>e>a**>e**>l 0"not a"
-       *       ^
-       *********
+"a"s**>i**>l2
+       i
+"b"s**>i**>l 0"a or b"
+       i
+"1"C**>i**>l2
 
 
-"XOR, XNOR"
 
-"a"s*************************>l2
-                     *
-"b"s*****************+*******>l2
-           *         *
-"0"c*******+>e*******+>e*****>l 0"a xor b"
-         v v ^     v v ^
-"1"C****>e>a**>e**>e>a**>e***>l 0"a xnor b"
-       *       ^ *       ^
-       ********* *********
 
-"NAND"
+0"NOT"
+0"---"
 
-"a"s****************************>l2
-           *
-"a"s*******+>e********>e********>l2
-         v v ^     *   ^
-"0"c****>e>a**>e***+***+********>l2
-       *       ^   v v *
-"1"C***+*******+**>e>a**>e******>l 0"a nand b"
-       *       * *       ^
-       ********* *********
+"a"s**>i**>l2
+       i
+"0"c**>i**>l2
+       i
+"1"C**>i**>l 0"not a"
 
-"NOR"
 
-"a"s****************************>l2
-           *
-"1"C*******+>e********>e********>l 0"a nor b"
-         v v ^     *   ^
-"b"s****>e>a**>e***+***+********>l2
-       *       ^   v v *
-"0"c***+*******+**>e>a**>e******>l2
-       *       * *       ^
-       ********* *********
+0"XOR, XNOR"
+0"---------"
+
+
+0"Please not how 'antennas' are used to make some wires cross the chip,"
+0"the --(i)-- wire passes through it."
+
+"a"s********>i*******>l2
+             i
+"b"s**>i****(i)******>l2
+       i     i
+"0"c**>i****>i*******>l 0"a xor b"
+       i     i
+"1"C**>i****>i*******>l 0"a xnor b"
+
+0"NAND"
+0"----"
+
+"a"s**>i**********>l2
+       i
+"b"s**>i* *>i*****>l2
+       i x  i
+"0"c**>i* *>i*****>l2
+            i
+"1"C*******>i*****>l 0"a nand b"
+
+
+0"NOR"
+0"---"
+
+"a"s**>i**********>l2
+       i
+"1"C**>i* *>i*****>l2
+       i x  i
+"b"s**>i* *>i*****>l 0"a nor b"
+            i
+"0"c*******>i*****>l2
 
 
 0"Full Adder"
+0"----------"
+
+"a"s**>i****************************>l2
+       i
+"b"s**(i)***>i****************>i****>l2
+       i     i                 i
+"c"s**(i)***(i)***>i*** >i* **>i****>l 0"carry"
+       i     i     i   x i x   i
+"0"c**>i****>i****>i*** >i* **(i)***>l 0"sum"
+       i     i     i     i     i
+"1"C**>i****>i****>i****>i****>i****>l2
 
 
-"a"s******************************************************>l2
-           *
-"b"s*******+**********************************************>l2
-           *         *                             *
-"c"s*******+*********+********************>e*******+>e****>l 0"carry"
-           *         *         *       *   ^     * * ^
-"0"c*******+>e*******+>e*******+>e*****+***+*****+*+*+****>l 0"sum"
-         v v ^     v v ^     v v ^     v v *     v v *
-"1"C****>e>a**>e**>e>a**>e**>e>a**>e**>e>a**>e**>e>a**>e**>l2
-       *       ^ *       ^ *       ^ *       ^ *       ^
-       ********* ********* ********* ********* *********
+0"FIT:x"
 
 `, 'fredkin');
 
@@ -4428,92 +4441,92 @@ registerCircuit('Toffoli gate', `
 "c"s*** a>e****>l"(a AND b) XOR c"
       *   ^
       *****
+        I
+
+0"It's defined as a chip above so we can use it as follows now (with the"
+0"controlled input/output always at bottom):"
+
+s**>i**>l
+    i
+s**>i**>l
+    i
+s**>i**>l
 
 
-
-
-0"It can make all regular gates, but there are 'garbage' input and output signals to support the reversibility"
+0"It can make all regular gates, but there are 'garbage' input and output"
+0"signals to support the reversibility"
 
 "NOT"
 
-"1"C***********>l2
-        *
-"1"C****+******>l2
-       vv
-"a"s*** a>e****>l"NOT a"
-      *   ^
-      *****
+"1"C**>i**>l2
+       i
+"1"C**>i**>l2
+       i
+"a"s**>i**>l"NOT a"
 
 
 "AND"
 
-"a"s***********>l2
-        *
-"b"s****+******>l2
-       vv
-"0"c*** a>e****>l"a AND b"
-      *   ^
-      *****
+"a"s**>i**>l2
+       i
+"b"s**>i**>l2
+       i
+"0"c**>i**>l"a AND b"
 
 
 
 "NAND"
 
-"q"s***********>l2
-        *
-"b"s****+******>l2
-       vv
-"1"c*** a>e****>l"a NAND b"
-      *   ^
-      *****
+"a"s**>i**>l2
+       i
+"b"s**>i**>l2
+       i
+"1"c**>i**>l"a NAND b"
 
 
 "XOR"
 
-"a"s***********>l2
-        *
-"1"C****+******>l2
-       vv
-"b"s*** a>e****>l"a XOR b"
-      *   ^
-      *****
+"a"s**>i**>l2
+       i
+"1"C**>i**>l2
+       i
+"b"s**>i**>l"a XOR b"
 
 0"one garbage signal of XOR removed with a loop-back to an input:"
 0"(similar can be done with XNOR, OR, NOR, NOT, but not shown there)
 
-    ***********
-    *         *
-    **********+**>l2
-        *     *
-"a"s****+******
-       vv
-"b"s*** a>e******>l"a XOR b"
-      *   ^
-      *****
+    ********
+    *      *
+    **>i***+**>l2
+       i   *
+"a"s**>i****
+       i
+"b"s**>i******>l"a XOR b"
+
+
 
 
 
 "XNOR"
+0"Please not how 'antennas' are used to make some wires cross the chip,"
+0"the --(i)-- wire passes through it."
 
-"1"C****************>l2
-              *
-"a"s**********+*****>l2
-        *     *
-"1"C****+*****+*****>l2
-       vv    vv
-"b"s*** a>e** a>e***>l"a XNOR b"
-      *   ^ *   ^
-      ***** *****
+"1"C******>i***>l2
+           i
+"a"s**>i**(i)**>l2
+       i   i
+"1"C**>i**>i***>l2
+       i   i
+"b"s**>i**>i***>l"a XNOR b"
 
 "OR"
 
-"a"s******************>l2
-        *       *
-"b"s****+*** ***+*****>l2
-       vv   x  vv
-"1"C*** a>e* ** a>e***>l"a OR b"
-      *   ^   *   ^
-      *****   *****
+
+"a"s**>i***>i***>l2
+       i    i
+"b"s**>i* *>i***>l2
+       i x  i
+"1"C**>i* *>i***>l"a OR b"
 
 
 "NOR"
@@ -4529,6 +4542,17 @@ registerCircuit('Toffoli gate', `
 "1"C*** a>e**** a>e***** a>e**>l"a NOR b"
       *   ^   *   ^    *   ^
       *****   *****    *****
+
+
+"a"s***** ***** *******>l2
+         x    * *
+"b"s**>i* *>i*-X-*>i***>l2
+       i    i * *  i
+"1"C**>i***>i** **>i***>l2
+       i    i      i
+"1"C**>i***>i*****>i***>l"a NOR b"
+
+0"FIT:x"
 
 `, 'toffoli');
 
@@ -4706,8 +4730,6 @@ s****^ * v ^   ^ * v ^
 s******+******** *
        *         v
        *********>A*********>l
-
-
 
 
 `, 'nand_logic_2');

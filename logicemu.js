@@ -2812,6 +2812,32 @@ function Renderer() {
 
 
 
+function setTocHTML2(el) {
+  el.innerText = '';
+  var html = '';
+  for(var i = 0; i < allRegisteredCircuits.length; i++) {
+    //var div = makeDiv(0, (i * th), w * tw, th, el);
+    var div = makeDiv(0, (i * th), tw, th, el);
+    div.style.width = '800px';
+    var id = allRegisteredCircuits[i].linkid;
+    var circuit = allRegisteredCircuits[i].text;
+    var title = allRegisteredCircuits[i].title;
+    div.innerText = title;
+    div.style.textAlign = 'left';
+    if(allRegisteredCircuits[i].istitle/* == 1*/) {
+      div.style.color = '#000';
+    } else {
+      div.style.color = '#44f';
+      div.style.textDecoration = 'underline';
+      div.style.cursor = 'pointer';
+      div.onclick = bind(function(circuit, title, id, index) {
+        parseText(circuit, title, id);
+        currentSelectedCircuit = index;
+      }, circuit, title, id, i);
+    }
+  }
+}
+
 function setTocHTML(el) {
   el.innerText = '';
   var html = '';
@@ -2917,7 +2943,8 @@ function RendererText() {
       // allow text selection of those
       this.div0.onmousedown = null;
     } else if(symbol == 'toc') {
-      setTocHTML(this.div0);
+      setTocHTML2(this.div0);
+      //setTocHTML(this.div0);
       //setLinkHTML(this.div0);
     } else {
       if(virtualsymbol == 'l') {
@@ -5932,7 +5959,13 @@ function setDocumentTitle(text) {
   document.title = 'LogicEmu: ' + text;
 }
 
+var firstParse = true; // to keep scrolled down if you were scrolled down before refresh
+
 function parseText(text, opt_title, opt_id) {
+  if(firstParse) {
+    parseText2(text, opt_title, opt_id);
+    return;
+  }
   renderingMessageDiv.innerText = 'rendering';
   // The timeout is so that the 'rendering' text becomes visible first before
   // it starts creating all the divs and canvases.
@@ -5944,6 +5977,14 @@ function parseText(text, opt_title, opt_id) {
 }
 
 function parseText2(text, opt_title, opt_id) {
+  // for the very first parse, do NOT scroll up, it is handy if you have
+  // a big edited circuit open and refresh the browser to still see the
+  // same one
+  if(!firstParse) {
+    window.scrollTo(0, 0);
+  }
+  firstParse = false;
+
   worldDiv.style.display = 'none';
   origtext = text;
   origtitle = opt_title;
@@ -5971,7 +6012,9 @@ function parseText2(text, opt_title, opt_id) {
       if(text[i] == '\n') tocY++;
     }
     var newlines = '';
-    for(var i = 0; i < linkableCircuitsOrder.length; i++) newlines += '\n';
+    //var numLines = linkableCircuitsOrder.length;
+    var numLines = allRegisteredCircuits.length;
+    for(var i = 0; i < numLines; i++) newlines += '\n';
     text = text.substr(0, start) + newlines + text.substr(end);
   }
 
@@ -6586,24 +6629,28 @@ var prevCircuitButton = makeUIElement('button', menuRow1El, true);
 prevCircuitButton.innerText = '<';
 prevCircuitButton.title = 'Previous built-in circuit';
 prevCircuitButton.onclick = function() {
-  if(currentSelectedCircuit == 0) return;
-  currentSelectedCircuit--;
-  //if(currentSelectedCircuit < 0) currentSelectedCircuit = allRegisteredCircuits.length - 1;
-  parseText(allRegisteredCircuits[currentSelectedCircuit][1],
-      allRegisteredCircuits[currentSelectedCircuit][0],
-      allRegisteredCircuits[currentSelectedCircuit][2]);
+  for(;;) {
+    if(currentSelectedCircuit == 0) return;
+    currentSelectedCircuit--;
+    if(!allRegisteredCircuits[currentSelectedCircuit].istitle) break;
+  }
+  parseText(allRegisteredCircuits[currentSelectedCircuit].text,
+      allRegisteredCircuits[currentSelectedCircuit].title,
+      allRegisteredCircuits[currentSelectedCircuit].linkid);
 };
 
 var nextCircuitButton = makeUIElement('button', menuRow1El, true);
 nextCircuitButton.innerText = '>';
 nextCircuitButton.title = 'Next built-in circuit';
 nextCircuitButton.onclick = function() {
-  if(currentSelectedCircuit + 1 >= allRegisteredCircuits.length) return;
-  currentSelectedCircuit++;
-  //if(currentSelectedCircuit >= allRegisteredCircuits.length) currentSelectedCircuit = 0;
-  parseText(allRegisteredCircuits[currentSelectedCircuit][1],
-      allRegisteredCircuits[currentSelectedCircuit][0],
-      allRegisteredCircuits[currentSelectedCircuit][2]);
+  for(;;) {
+    if(currentSelectedCircuit + 1 >= allRegisteredCircuits.length) return;
+    currentSelectedCircuit++;
+    if(!allRegisteredCircuits[currentSelectedCircuit].istitle) break;
+  }
+  parseText(allRegisteredCircuits[currentSelectedCircuit].text,
+      allRegisteredCircuits[currentSelectedCircuit].title,
+      allRegisteredCircuits[currentSelectedCircuit].linkid);
 };
 
 
@@ -6711,7 +6758,7 @@ function CircuitGroup(name) {
   // disabled, using onclick of element instead
   var that = this;
   this.dropdown.onchange = function() {
-    var index = that.dropdown.selectedIndex;
+    var index = that.dropdown.selectedIndex - 1;
     currentSelectedCircuit = that.circuitsNumbers[index];
     var c = that.circuits[index];
     parseText(c, that.circuitsNames[index], that.circuitsIds[index]);
@@ -6727,8 +6774,10 @@ var circuitGroups = [];
 
 function registerCircuitGroup(name) {
   currentCircuitGroup = new CircuitGroup(name);
-  registerCircuit('[choose circuit]', ``, undefined, true);
   circuitGroups.push(currentCircuitGroup);
+
+  var el = makeElement('option', currentCircuitGroup.dropdown);
+  el.innerHTML = '[choose circuit]';
 }
 
 var allRegisteredCircuits = [];
@@ -6736,13 +6785,20 @@ var linkableCircuits = {};
 var linkableCircuitsOrder = [];
 
 function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
-  var el = makeElement('option', currentCircuitGroup.dropdown).innerHTML = name;
+  var dropdownname = name;
+  if(opt_is_title && name != '--------') dropdownname = '--- ' + name + ' ---';
+  var el = makeElement('option', currentCircuitGroup.dropdown).innerHTML = dropdownname;
   var index = allRegisteredCircuits.length;
   currentCircuitGroup.circuits.push(circuit);
   currentCircuitGroup.circuitsNumbers.push(index);
   currentCircuitGroup.circuitsNames.push(name);
   currentCircuitGroup.circuitsIds.push(opt_link_id);
-  if(!opt_is_title) allRegisteredCircuits.push([name, circuit, opt_link_id]);
+  var c = {};
+  c.text = circuit;
+  c.title = name;
+  c.linkid = opt_link_id;
+  c.istitle = opt_is_title;
+  allRegisteredCircuits.push(c);
   if(opt_link_id) {
     linkableCircuits[opt_link_id] = [name, circuit, index];
     linkableCircuitsOrder.push(opt_link_id);
@@ -6750,10 +6806,10 @@ function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
 }
 
 function registerTitle(title) {
-  var name = '---- ' + title + ' ----';
+  var name = title;
   if(!title) name = '--------';
   var circuit = '0"This is a title section. Choose the next circuit to view the first one under this title.';
-  registerCircuit(name, circuit, undefined, true);
+  registerCircuit(name, circuit, undefined, 1);
 }
 var fallbackhelptext = '0"Load any circuit from the dropdowns above, or press edit to make a new one."\n0"Use help if this is your first time"';
 
@@ -6785,10 +6841,9 @@ var introText = `
    s-->c#
    s-->kQ->l
 
-0"Below is a selection of some, but not all, circuits. The dropdowns in the"
-0"top menu contain more. After loading a circuit below the list here will"
-0"be gone (unless you load this welcome page itself), but you can always"
-0"use the top dropdowns to load others."
+0"Below are all built-in circuits. You can always use the dropdowns at"
+0"the top in the menu section to open these while one is open and you"
+0"don't have this list."
 
 0"INSERT:toc"
 

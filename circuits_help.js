@@ -29,6 +29,9 @@ and injects them into a dropdown from logicemu.js
 
 registerCircuitGroup('help');
 
+
+registerTitle('Viewing');
+
 registerCircuit('Welcome', introText, 'welcome');
 
 registerCircuit('Basic Help', `
@@ -2898,7 +2901,7 @@ registerCircuit('Electronic Diagram', `
 `, 'diagram');
 
 
-registerTitle();
+registerTitle('Testing');
 
 
 
