@@ -7,14 +7,18 @@
 <body>
 <noscript>
 Welcome to LogicEmu, a logic circuit simulator running in your browser.<p/>
-This online logic simulator requires JavaScript to run and it is disabled in your browser. Some options:<p/>
+This online logic simulator requires JavaScript to run and JavaScript is disabled in your browser. Some options:<p/>
 
 <ul>
 <li>You can enable JS to view LogicEmu running here</li>
 <li>You can view the source code on <a href="https://github.com/lvandeve/logicemu">github</a></li>
-<li>You can run LogicEmu offline: download the html and js files from github or with 'view source' here, then open index.html from disk with a browser (offline if you wish). LogicEmu is completely independent of any online connection, it executes locally</li>
+<li>You can run LogicEmu offline: download the html and js files from github or with 'view source' here, then open index.html from disk with a browser (offline if you wish).</li>
 </ul>
 
+LogicEmu is completely independent of any online connection, it executes locally. It happens to be implemented in JavaScript and run in a browser for convenience,
+but this JavaScript does not make any remote connections, all built-in circuits are hardcoded in the source code, and user-edited
+circuits are only locally stored as well.
+<p>
 Here are examples of what circuits look like, except with JavaScript it renders them nicer and makes them interactive:
 <font color="gray"><pre>
 0"8-Bit Ripple Carry Adder"

@@ -2819,18 +2819,19 @@ function setTocHTML2(el) {
     //var div = makeDiv(0, (i * th), w * tw, th, el);
     var div = makeDiv(0, (i * th), tw, th, el);
     div.style.width = '800px';
+    var span = makeElementAt('span', 0, 0, div);
     var id = allRegisteredCircuits[i].linkid;
     var circuit = allRegisteredCircuits[i].text;
     var title = allRegisteredCircuits[i].title;
-    div.innerText = title;
+    span.innerText = title;
     div.style.textAlign = 'left';
     if(allRegisteredCircuits[i].istitle/* == 1*/) {
-      div.style.color = '#000';
+      span.style.color = '#000';
     } else {
-      div.style.color = '#44f';
-      div.style.textDecoration = 'underline';
-      div.style.cursor = 'pointer';
-      div.onclick = bind(function(circuit, title, id, index) {
+      span.style.color = '#00e';
+      span.style.textDecoration = 'underline';
+      span.style.cursor = 'pointer';
+      span.onclick = bind(function(circuit, title, id, index) {
         parseText(circuit, title, id);
         currentSelectedCircuit = index;
       }, circuit, title, id, i);
@@ -2850,7 +2851,7 @@ function setTocHTML(el) {
     var title = linkableCircuits[id][0];
     div.innerText = title;
     div.style.textAlign = 'left';
-    div.style.color = '#44f';
+    div.style.color = '#00';
     div.style.textDecoration = 'underline';
     div.style.cursor = 'pointer';
     div.onclick = bind(function(circuit, title, id, index) {
@@ -6424,6 +6425,7 @@ registerChangeDropdownElement(TYPE_RANDOM);
 var editmode = false;
 
 var textbeforeedit = '';
+var editdiv;
 var editarea;
 var editButton = makeUIElement('button', menuRow2El);
 editButton.innerText = 'edit';
@@ -6442,6 +6444,8 @@ editButton.onclick = function() {
     editarea.cols = ewidth;
     editarea.value = origtext;
     editarea.style.fontSize = fontsize + 'px';
+    editarea.style.zIndex = '-1';
+    //editarea.style.position = 'fixed';
 
     pause();
     numticks = 0;
@@ -6662,24 +6666,45 @@ importButton.onclick = function() {
     var fontsize = 10;
     var ewidth = 60;
     var eheight = 60;
-    editarea = makeAbsElement('textarea', 30, 128, 400, 400);
+    editdiv = makeDiv(30-5, 128-5, 400+15, 400+15+30);
+    editdiv.style.backgroundColor = '#888';
+    editdiv.style.position = 'fixed';
+    editarea = makeAbsElement('textarea', 5, 5, 400, 400, editdiv);
     editarea.rows = 40;
     editarea.cols = 40;
     editarea.value = '';
     editarea.style.fontSize = fontsize + 'px';
+    editarea.focus();
+
+    var donebutton = makeUIElement('button', editdiv);
+    donebutton.style.position = 'absolute';
+    donebutton.style.left = '330px';
+    donebutton.style.top = '415px';
+    donebutton.innerText = 'done';
+    donebutton.onclick = importButton.onclick;
+
+    var cancelbutton = makeUIElement('button', editdiv);
+    cancelbutton.style.position = 'absolute';
+    cancelbutton.style.left = '245px';
+    cancelbutton.style.top = '415px';
+    cancelbutton.innerText = 'cancel';
+    cancelbutton.onclick = function() {
+      editarea.value = '';
+      importButton.onclick();
+    };
 
     pause();
     importButton.innerText = 'done';
     editmode = true;
   } else {
-    document.body.removeChild(editarea);
+    var newtext = editarea.value;
+    document.body.removeChild(editdiv);
     importButton.innerText = 'import';
     editmode = false;
-    var newtext = editarea.value;
     if(newtext == '') {
       unpause();
     } else {
-      parseText(newtext);
+      parseText(newtext, 'imported circuit');
     }
   }
 };
@@ -6695,7 +6720,7 @@ if(getParameterByName('id')) {
 } else {
   indexLink.innerHTML = 'index';
   indexLink.style.paddingLeft = '10px';
-  indexLink.style.color = '#44f';
+  indexLink.style.color = '#00e';
   indexLink.style.textDecoration = 'underline';
   indexLink.style.cursor = 'pointer';
   indexLink.onclick = function() {
@@ -6847,8 +6872,24 @@ var introText = `
 
 0"INSERT:toc"
 
-0"FIT:x"
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
+
+0"LogicEmu runs completely offline, even though it happens to be"
+0"implemented in JavaScript and opened in a web browser."
+0"That is, this html file and the few included js files are fetched"
+0"from the server initially but once it runs, it does not make any"
+0"further connections to any server, cloud or remote storage."
+0"This means you can run LogicEmu as an offline application: if you download"
+0"the html file and the few js files (either by viewing source here, or"
+0"through github) and save them to disk, you can run LogicEmu from there"
+0"with an offline browser."
+0"All circuits listed above are already loaded since they are hardcoded"
+0"in LogicEmu's source code. If you edit your own circuit, it's only"
+0"stored in your browsers local storage (not cookie) but never sent"
+0"anywhere. To share a circuit with others, you must share its source"
+0"code yourself."
+
+
+0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"              0"FIT:x"
 `;
 
 var introTitle = 'Online Logic Simulator';
