@@ -29,17 +29,15 @@ and injects them into a dropdown from logicemu.js
 
 registerCircuitGroup('help');
 
+registerCircuit('Welcome', introText, 'welcome');
+
+registerCircuit('Help Index', `0"List of help circuits. If this is your first time, the first one ('Help' under 'Viewing') is recommended."\n\nINSERT:toc_help`, 'helpindex');
 
 registerTitle('Viewing');
 
-registerCircuit('Welcome', introText, 'welcome');
-
-registerCircuit('Basic Help', `
-0"LogicEmu Basic Help"
-0"-------------------"
-
-0"This basic help introduces the main subset of all the possible parts."
-0"See the full help to also get the more specialized parts."
+registerCircuit('Help', `
+0"LogicEmu Help"
+0"-------------"
 
 0"First of all, what is LogicEmu? It emulates logic circuits. It has a whole"
 0"bunch of circuits included to play with, including binary adders, multipliers,"
@@ -54,15 +52,15 @@ registerCircuit('Basic Help', `
 0"fits on a single screen and it's quite flexible. Also, each cell is an"
 0"ASCII character, which has advantages for editing and sharing circuits."
 
-0"Another aspect is, it's a logic emulator, but not an electrical simulator."
+0"It's a digital logic emulator, but not an electrical simulator."
 0"Power sources and voltages are abstracted away. Every component (gates, LEDs, even switches)"
 0"implicitely have two connections to a power source with positive voltage and ground terminals,"
-0"but this is not shown. The only wires shown are signals between components,"
-0"which are always either 0 (implicitely 'ground') or 1 (implicitely 'positive voltage')."
+0"but these are not shown. The only wires shown are signals between components,"
+0"which are always either 0 (false) or 1 (true). Whether these have voltages or"
+0"ground associated with them does not matter for the digital logic."
 
-0"The rest of this help file explains how to view and interact with circuits,"
-0"by explaining the meaning of all the symbols. There are also yet more other"
-0"help files for other topics like emulation algorithms and render modes."
+0"This help tutorial explains how to view and interact with circuits and all parts."
+0"See the next tutorials for different topics such as emulation algorithms, rendering and editing."
 
 0"Note that this tutorial is multiple screens long, so scroll down to see all"
 
@@ -71,7 +69,9 @@ registerCircuit('Basic Help', `
 
 0"In general, a circuit has input switches, some processing logic, possibly"
 0"some state, and finally output LEDs. So the simplest circuit has a switch"
-0"and a LED. Toggle the switch (s) with the mouse to toggle the LED (l)".
+0"and a LED with a wire in between."
+
+0"Toggle the switch (s) with the mouse to toggle the LED (l)".
 
 s****>l
 
@@ -89,9 +89,20 @@ l  0": the output LED"
 
 p****>l
 
-0"Wires can split or cross:"
+0"As you can see, the electrical circuits above are not closed. That is"
+0"because we only simulate the logic here. Power sources and closing of"
+0"the electrical circuit are implicit"
 
-0"Wire split:"
+0"This switch is a simple component here, but in real life it would actually be"
+0"quite involved: it needs a pullup/pulldown resistor (or be a SPDT switch)"
+0"to toggle between the two voltages (and not float), and needs a"
+0"debouncing circuit."
+
+0"Wires can cross or split. If they cross, the signals don't interfere."
+
+0"Wire split (indicated with a little dot at the connection, or * in text mode):"
+0"The input switch activates all connected outout devices. This is also known"
+0"as fanout."
 
     l
     ^
@@ -103,7 +114,8 @@ s******>l
     v
     l
 
-0"Wire crossing:"
+0"Wire crossing (indicated with the wires rendered slightly disconnected, or a + in text mode):"
+0"Both switch/LED pairs work independently and don't interact:"
 
     s
     *
@@ -117,20 +129,36 @@ s***+**>l
 
 0"Diagonal wire crossing:"
 
-s*** **>l
-    x
-s*** **>l
 
-0"Diagonal wire crossing in the arrowhead itself (causing 2 diagonal crossing inputs):"
+           l     l
+            ^   ^
+s*** **>l    ; /
+    x         x
+s*** **>l    / ;
+            /   ;
+           s     s
+
+0"Diagonal wire crossing at the arrowhead itself (causing 2 diagonal crossing inputs):"
 
 s****** l
        >
 s****** l
 
+0"LEDs can also come in various different colors (using numeric digits)"
+
+
+s*************>l0
+
+s*************>l2
+
+s*************>l3
+
+s*************>l4
+
 0"Logic Gates"
 0"-----------"
 
-0"Actual logic can be done with logic gates. AND, OR and XOR gates are"
+0"Actual logic is done with logic gates. AND, OR and XOR gates are"
 0"represented with the letters a, o and e respectively (e stands for"
 0"exclusive or)"
 
@@ -195,6 +223,12 @@ s**>e**>l
     ^
 s****
 
+0"0-input and 1-input gates are also possible. A 0-input AND gate outputs"
+0"true due to the empty product:"
+
+a****>l
+
+
 0"There also exist negated inputs. Normal inputs are indicated with an"
 0"arrow head, negated inputs instead with a little circle (or in text"
 0"mode, that is m]w[ for NESW respectively):"
@@ -203,9 +237,27 @@ s**]l
 
 0"For example logic gates can get negated inputs that way:"
 
+s**]o***>l
+
 s**]a***>l
     ^
 s****
+
+0"NOTE: In real life electronics, logic gates normally don't have such"
+0"easy way of negating inputs and invertors are needed. In real life,"
+0"what you will see more often, is circuits where a regular and a negated"
+0"version of a signal runs through the whole system, like so:"
+
+                  l
+                  ^
+                  o<*
+                  ^ *
+                *>a a<*
+                * ^ ^ *
+       %>O------*-+-+-+-------- 0"A'"
+ "A"s--*----------+-*-+-------- 0"A"
+       %>O--------+---*-------- 0"B'"
+ "B"s--*----------*------------ 0"B"
 
 0"To make gates with more than 3 inputs, their size can be increased"
 0"In text mode, you can see that character '#' is used for this"
@@ -230,8 +282,15 @@ s**>e**>a
        >
 s******>e**>l
 
-0"Sequential Logic"
-0"----------------"
+
+0"Flip-Flops"
+0"----------"
+
+0"This describes the built in 'flip-flop' devices. Note that, as in"
+0"real life, all of these can be made from the logic gates above. It is"
+0"very useful to have idealized built-in ones however. This tutorial"
+0"only explains how to view them, see the flip-flop tutorial to get the"
+0"description what flip-flops do and how they work."
 
 0"A 'gate' with a 'c' instead of 'a', 'o', 'e' represent a single-input"
 0"T flip-flop or counter (the c stands for counter here). Everytime the"
@@ -247,14 +306,30 @@ s**>c**>l
     ^   ^   ^   ^
 s**>c**>c**>c**>c
 
-0"Combined with flip-flop parts 'd', 't', 'j', 'k', 'q' or 'Q', the 'c'"
-0"acts as the clock of an entire flip-flop instead. Here, d is D-input"
-0"for D-flip-flop, t the T-input for T-flip-flop, J and K the inputs for"
-0"either SR or JK flip-flop, q an output as well as asynch set, Q"
-0"inverted output as well as asynch reset. Most other parts than q and Q"
-0"will also output signal so using q and Q is not required for that."
-0"These parts can be combined in any way, with # (visible in text mode) as filler"
+0"The c can also used as a 'constant' when it has no inputs (it then keeps"
+0"its state forever, hence constant). A small 'c' is off, a large 'C' is"
+0"on:"
 
+c****>l
+
+C****>l
+
+0"Other gates without inputs, like o and O, could be used for this purpose"
+0"but in most built-in circuits 'c' is chosen for consistency."
+
+0"Real ideal flip-flops can be made from 'c', 'd', 'j', 'k', 't', 'q' and 'Q',"
+0"and in this case the c stands for 'clock'. Here is how to interpret each letter:"
+0"c: the clock input. When the clock input goes from low to high the flip-flop"
+0"   will toggle if needed"
+0"j: the S input for SR flip-flop or the J input for JK flip-flop"
+0"k: the R input for SR flip-flop or the K input for JK flip-flop"
+0"d: the D input for D flip-flop"
+0"t: the T input for T flip-flop"
+0"q: output, or asynchronous S input. Note that c, j, k, d and t can also already"
+0"   be used as outputs"
+0"Q: negated output, or asynchronous R input"
+0"Most other parts will also output signal so using q and Q is not required for that."
+0"These parts can be combined in any way, with # (visible in text mode) as filler"
 
 s**>c**>l
     #       0"D flip-flop: when triggering c, the output will remember the state of d"
@@ -279,393 +354,19 @@ s**>q**>l
     #      0"SR latch: no clock, output remembers single switch"
 s**>Q**>l
 
-0"A single loose d instead acts as a single-tick delay"
 
-s**>d**>l
-
-s**>d**>d**>d**>d**>l
-
-0"Epilogue"
-0"--------"
-
-0"And that is all for this basic help! Other parts exist, such"
-0"as colored LEDs, integrated circuits (reusable templates), wire bundles,"
-0"interactive terminals, ROMs, etc... but these are in the full help."
-0"However, in theory those are not needed, since all these things (except"
-0"the visual/interactive things like colored LEDs) can already be built"
-0"with the above parts."
-
-0"Also check other help tutorials for such explanations as the graphic"
-0"modes, the updater algorithms, and how to edit your own circuits"
-
-
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`, 'help1');
-
-registerCircuit('Full Help', `
-0"LogicEmu Full Help"
-0"------------------"
-
-0"This is the full help for viewing with LogicEmu. This one explains all"
-0"parts unlike the basic help. However this one still does not explain"
-0"the editing, for that see the basic and full editing tutorials."
-
-0"First of all, what is LogicEmu? It emulates logic circuits. It has a whole"
-0"bunch of circuits included to play with, including binary adders, multipliers,"
-0"flip-flops, NAND-only logic, and so on."
-
-0"LogicEmu also allows creating new circuits, see the editing tutorials"
-0"for more on that."
-
-0"What is different from many other logic simulators it that this one is"
-0"cell-based. This has as a side effect that the notation is not standard"
-0"notation. On the other hand, this has as advantage that a lot of logic"
-0"fits on a single screen and it's quite flexible. Also, each cell is an"
-0"ASCII character, which has advantages for editing and sharing circuits."
-
-0"Another aspect is, it's a logic emulator, but not an electrical simulator."
-0"Power sources and voltages are abstracted away. Every component (gates, LEDs, even switches)"
-0"implicitely have two connections to a power source with positive voltage and ground terminals,"
-0"but this is not shown. The only wires shown are signals between components,"
-0"which are always either 0 (implicitely 'ground') or 1 (implicitely 'positive voltage')."
-
-0"The rest of this help file explains how to view and interact with circuits,"
-0"by explaining the meaning of the most important symbols. There are also yet more other"
-0"help files for other topics like the extended symbols, emulation algorithms and render modes."
-
-0"Note that this tutorial is multiple screens long, so scroll down to see all"
-
-0"Switches, wires and LEDs"
-0"------------------------"
-
-0"Switches, indicated with 's', can be toggled on and off with the mouse"
-0"Wires connect switches to LEDs"
-0"LEDs, indicated with 'l', go on when they receive signal from the wire"
-0"Click the switches to see the corresponding LEDs"
-
-
-s--------------->l
-
-    ************
-    *          *
-s****          v
-               l
-
-
-      l
-     ^
-    /
-   /
-  /
- /
-s
-
-0"As you can see, the electrical circuits above are not closed. That is"
-0"because we only simulate the logic here. Power sources and closing of"
-0"the electrical circuit are implicit"
-
-0"This switch is a simple component here, but in real life it would actually be"
-0"quite involved: it needs a pullup/pulldown resistor (or be a SPDT switch)"
-0"to toggle between the two voltages (and not float), and needs a"
-0"debounding circuit."
-
-0"Wires can cross or split. If they cross, the signals don't interfere."
-
-
-    s            l     l
-    |             ^   ^
-    |              ; /
-s---+--->l          x
-    |              / ;
-    v             /   ;
-    l            s     s
-
-0"If the wire splits, indicated with a little dot at the split point,"
-0"then the signal is connected to all wires, and multiple devices can"
-0"be activated from a single input"
-
-    l
-    ^
-    |
-s---*--->l
-    |
-    v
-    l
-
-0"Push buttons, indicated with 'p', are similar to switches, but they"
-0"are only on as long as the mouse is held down on them"
-
-
-p------>l
-
-0"LEDs can also come in various different colors (using numeric digits)"
-
-
-s--------------->l0
-
-s--------------->l2
-
-s--------------->l3
-
-s--------------->l4
-
-0"Logic Gates"
-0"-----------"
-
-0"The 'AND', 'OR' and 'XOR' gates are indicated with 'a', 'o' and 'e'"
-0"respectively"
-
-s---v
-    a---->l
-s---^
-
-s---v
-    o---->l
-s---^
-
-s---v
-    e---->l
-s---^
-
-0"The 'NAND', 'NOR' and 'XOR' gates are indicated with 'A', 'O' and 'E'"
-0"respectively. So the capital letters mean negated output"
-
-
-s---v
-    A---->l
-s---^
-
-s---v
-    O---->l
-s---^
-
-s---v
-    E---->l
-s---^
-
-0"A 'NOT' gate can be made with a single-input 'O'"
-
-s--->O--->l
-
-0"Gates can have less or more inputs than 2 and can be bigger to have"
-0"space for more inputs"
-
-
-s---->o---->l
-
-      a---->l 0"inputless AND gate is on (empty product)"
-
-s----v
-s--->a----->l
-s----^
-
-s--->###
-s--->###
-s--->#e#---->l
-s--->###
-s--->###
-
-0"Negated inputs to gates can be used as well. These are indicated with"
-0"a little circle instead of an arrowhead (in text mode, with characters"
-0"m]w[ instead of ^>v<). These negated inputs invert the signal before"
-0"it enters the gate."
-
-s--]o-->l
-    ^
-s---*
-
-s-->a-->l
-    m
-s---*
-
-0"NOTE: In real life electronics, logic gates normally don't have such"
-0"easy way of negating inputs and invertors are needed. In real life,"
-0"what you will see more often, is circuits where a regular and a negated"
-0"version of a signal runs through the whole system, like so:"
-
-                   l
-                   ^
-                **>o<**
-                *     *
-                a<*   a<*
-                ^ *   ^ *
-       %>O------*-+---+-+----- "...A'"
- "A"s--*----------+---*-+----- "...A"
-       %>O--------+-----*----- "...B'"
- "B"s--*----------*----------- "...B"
-
-0"Tri-state buffers, incicated with 'V' (that is capital V), can all"
-0"output to the same wire. Our simulation does NOT support three states,"
-0"but the tri-state buffer's behavior tries to be as close to real-life"
-0"as possible. All tri-state buffers can output their signal to the wire,"
-0"but you should have only one active at the time. Multiple active at"
-0"the same time would create a short in real life, but that is not simulated"
-0"here (in the example below, since each tristate has a push button, the"
-0"error condition would occur if you pressed multiple push buttons at the"
-0"same time)"
-
-     p
-     v
- s**>V***
-        *
-     p  *
-     v  *
- s**>V***
-        *
-     p  *
-     v  *
- s**>V******>l
-
-
-0"Multiple single-input 'V's can also be used to OR multiple wires together"
-0"where in real life you would need no gate at all there or diodes would have"
-0"sufficed. Again, the simulation cannot simulate that, connecting multiple"
-0"wires from different devices together would result in an error (because inconsistency"
-0"is possible where one device outputs ground, andother positive voltage, to it. Aka a short)."
-0"One solution would be to OR them, but you can also use the 'V' instead simply to indicate:"
-0"in real life, no gate is needed here. It has the same effect in the simulation, but the notation"
-0"indicates the intended meaning better."
-
-    s           s            s
-    *           *            *
-    *           v            *0"this one indictes error, but in real life this can be"
-    v           V            *0"fine, depending on what the switches are connected to"
-s**>o**>l   s*>V***>l    s********>l
-    ^           V            *
-    *           ^            *
-    *           *            *
-    s           s            s
-
-0"So in conclusion, if you see a 'V' it means: the simulation has limitations here"
-0"because it cannot represent tri-state logic or floating wires. Let use use a 'V'"
-0"to show how you could make this circuit in real life without gates or with a"
-0"tristate buffer. In the simulation, the V acts as an AND gate and multiple V"
-0"outputs together are OR-ed, but in real life you need neither the AND nor the OR,"
-0"you need a tristate buffer instead of the AND, and nothing at all (just connect"
-0"wires together) instead of the OR"
-
-
-0"Flip-Flops and Memory"
-0"---------------------"
-
-0"The 'counter' gate, indicated with 'c', acts like a 1-input T flip-flop"
-0"It will change its state whenever the input goes from low to high"
-
-s--->c--->l
-
-     l    l    l    l
-     ^    ^    ^    ^
-     |    |    |    |
-s--->c--->c--->c--->c
-
-0"Real ideal flip-flops are made from 'c', 'd', 'j', 'k', 't', 'q' and 'Q'"
-0"Here is how to interpret each letter:"
-0"c: the clock input. When the clock input goes from low to high the flip-flop"
-0"   will toggle if needed"
-0"j: the S input for SR flip-flop or the J input for JK flip-flop"
-0"k: the R input for SR flip-flop or the K input for JK flip-flop"
-0"d: the D input for D flip-flop"
-0"t: the T input for T flip-flop"
-0"q: output, or asynchronous S input. Note that c, j, k, d and t can also already"
-0"   be used as outputs"
-0"Q: negated output, or asynchronous R input"
-
-        p
-        v
- s---->jq----->l
- s---->k#
- s---->cQ
-        ^
-        p
-
- s---->t----->l
- s---->c
-
- s---->d----->l
- s---->c
-
- s---->q----->l
- s---->Q----->l
-
-0"A ROM, indicated with 'b' for off and 'B' for ON bits, can contain"
-0"binary information. The mouse can toggle b's"
-
-           lllll
-           ^^^^^
-  0"select"|||||
-    s----->bbBbB
-    s----->bBBbB
-    s----->BbbbB
-    s----->BbBbB
-    s----->bBBbB
-
-
-0"A RAM is like a writable ROM:"
-
-           lllll
-           ^^^^^
-  0"select"|||||
-    s----->bbBbB<----p0"write"
-    s----->bBBbB
-    s----->BbbbB
-    s----->BbBbB
-    s----->bBBbB
-           ^^^^^
-           |||||
-           sssss
-
-0"A ROM and RAM can use binary addressing instead of unary select. A"
-0"RAM can also have invisible bits this way. This RAM has 16 lines."
-0"The invisible ones are initially zero but it will remember once you write 1 bits"
-0"to them"
-
-           lllll
-           ^^^^^
- 1"address"|||||
- "8"s----->bbBbB<----p0"write"
- "4"s----->bBBbB
- "2"s----->BbbbB
- "1"s----->BbBbB
-           bBBbB
-           ^^^^^
-           |||||
-           sssss0"data"
-
-0"A thin line of b's can also make devices with different behavior"
-
-   "76543210"
-    llllllll
-    ^^^^^^^^
-    ||||||||
-    bbbbbbbb 0"binary to unary"
-         ^^^
-         |||
-         sss
-        "421"
-
-
-        "421"
-         lll
-         ^^^
-         |||
-    bbbbbbbb 0"unary to binary"
-    ^^^^^^^^
-    ||||||||
-    ssssssss
-   "76543210"
-
-
-   "76543210"
-    llllllll
-    ^^^^^^^^
-    ||||||||
-    bbbbbbbb 0"priority select (highest input)"
-    ^^^^^^^^
-    ||||||||
-    ssssssss
-   "76543210"
-
-
+s-->c-->l
+s-->t-->l
+s-->d-->l
+s-->j-->l 0"All parts combined in 1 flip-flop (not realistic but possible)"
+s-->k-->l
+s-->q-->l
+s-->Q-->l
+
+0"So to summarize, the 'c' and 'C' can actually mean three different things:"
+0"-counter: when standalone with an input"
+0"-constant: when standalone without an input"
+0"-clock: when combined with other flip-flop cells like j, k, ..."
 
 0"Integrated Circuits"
 0"-------------------"
@@ -682,9 +383,9 @@ s--->c--->c--->c--->c
                l
                ^
                *
-     l<****o<a e%*****s
-           ^ ^^^|
-           a e *%
+     l<****o<a e *****s
+           ^ ^^^/
+           a e *
            ^^^
            * *
            * *
@@ -719,13 +420,14 @@ s--->c--->c--->c--->c
 
 0"The delay (or buffer), indicated with 'd', introduced a 1-tick delay"
 
-s--->d--->l
+s-->d-->l
 
 
-s--->d--->d--->d--->d--->l
+s-->d-->d-->d-->d-->d-->d-->d-->d-->l
 
-0"A timer blinks with a certain speed. It can also be toggled on and off with the mouse."
-0"The speed is given in tenths of a second (default if none is given is 0.5 seconds to toggle)."
+0"A timer 'R' blinks with a certain speed. It can also be toggled on and off with the mouse."
+0"The speed is given in tenths of a second, and the total period is twice that."
+0"If no number is given, the default is 0.5 seconds to toggle (so 1 second full period)."
 
  10R------>l
 
@@ -735,12 +437,12 @@ s--->d--->d--->d--->d--->l
 
   5R------>l
 
-0"A small r means it's initially not on and must be toggled on with mouse"
+0"A small 'r' means it's initially not on and must be toggled on with mouse"
 
 
   5r------>l
 
-0"An RGB LED takes a red, green and blue input:"
+0"An RGB LED 'L' takes a red, green and blue input:"
 
 2"B"s--->L<---s0"R"
          ^
@@ -779,8 +481,9 @@ s--->d--->d--->d--->d--->l
          ^^^^^^^^
          TTTTTTTT
 
-0"A ? is a random generator. It will change to a random value on any positive"
-0"or negative edge of the input and have a random initial value."
+0"A ? is a random generator. It starts with a random initial value. If it"
+0"has inputs it will change to a random value on any positive or negative"
+0"edge of the input."
 
 ?-->l  ?-->l  ?-->l  ?-->l
 ?-->l  ?-->l  ?-->l  ?-->l
@@ -789,15 +492,185 @@ s--->d--->d--->d--->d--->l
 
 s-->?-->l
 
+p-->?-->l
+
 R-->?-->l
 1
+
+0"A ROM, indicated with 'b' for off and 'B' for ON bits, can contain"
+0"binary information. The mouse can toggle b's"
+
+           0"output"
+           lllll
+           ^^^^^
+  0"select"|||||
+    s----->bbBbB
+    s----->bBBbB
+    s----->BbbbB
+    s----->BbBbB
+    s----->bBBbB
+
+
+0"A RAM is like a writable ROM:"
+
+           0"output"
+           lllll
+           ^^^^^
+  0"select"|||||
+    s----->bbBbB<----p0"write"
+    s----->bBBbB
+    s----->BbbbB
+    s----->BbBbB
+    s----->bBBbB
+           ^^^^^
+           |||||
+           sssss
+           0"data input"
+
+0"A ROM and RAM can use binary addressing instead of unary select. A"
+0"RAM can also have invisible bits this way. This RAM has 16 lines."
+0"The invisible ones are initially zero but it will remember once you write 1 bits"
+0"to them"
+
+           0"output"
+           lllll
+           ^^^^^
+ 1"address"|||||
+ "8"s----->bbBbB<----p0"write"
+ "4"s----->bBBbB
+ "2"s----->BbbbB
+ "1"s----->BbBbB
+           bBBbB
+           ^^^^^
+           |||||
+           sssss
+           0"data input"
+
+0"A thin line of b's can also make devices with different behavior"
+
+   "76543210"
+    llllllll
+    ^^^^^^^^
+    ||||||||
+    bbbbbbbb 0"binary to unary"
+         ^^^
+         |||
+         sss
+        "421"
+
+
+        "421"
+         lll
+         ^^^
+         |||
+    bbbbbbbb 0"unary to binary"
+    ^^^^^^^^
+    ||||||||
+    ssssssss
+   "76543210"
+
+
+   "76543210"
+    llllllll
+    ^^^^^^^^
+    ||||||||
+    bbbbbbbb 0"priority select (highest input)"
+    ^^^^^^^^
+    ||||||||
+    ssssssss
+   "76543210"
+
+
+0"Tri-state buffers, indicated with 'V' (that is capital V), allow multiple"
+0"devices to output to the same wire, something that normally is not allowed"
+0"and would normally create a conflict."
+
+0"Our simulation does not support three states, but the tri-state buffer's"
+0"behavior tries to be as close to real-life as possible. All tri-state"
+0"buffers can output their signal to the wire, but you should have only"
+0"one active at the time. Multiple active at the same time could create a"
+0"short in real life, but that is not simulated here. In real life, one"
+0"may be active and output a signal to the shared wire, and all others"
+0"must have 'floating' state. This 'floating' state is the same as '0' in"
+0"the simulation, in real life it's a 'third' state."
+
+0"In the circuit below, you can activate exactly one tristate buffer at"
+0"the same time thanks to using pushbuttons (can't press more than one"
+0"with a single mouse cursor), so this one cannot create a short in"
+0"real life. Enabling multiple 's' switches is ok, that is just the"
+0"signal passed through if the corresponding tristate buffer is selected."
+
+     p
+     v
+ s**>V***
+        *
+     p  *
+     v  *
+ s**>V***
+        *
+     p  *
+     v  *
+ s**>V******>l
+
+
+0"Multiple single-input 'V's can also be used to OR multiple wires together"
+0"where in real life you would need no gate at all there or diodes would have"
+0"sufficed. Again, the simulation cannot simulate that, connecting multiple"
+0"wires from different devices together would result in an error (because inconsistency"
+0"is possible where one device outputs ground, andother positive voltage, to it. Aka a short)."
+0"One solution would be use an OR gate, but the 'V' is available instead"
+0"simply to indicate: 'in real life, no gate is needed here.'"
+0"It has the same effect as OR in the simulation, but the notation indicates"
+0"the intended meaning better."
+
+    s           s            s
+    *           *            *
+    *           v            *0"this one indicates error, but in real life this can be"
+    v           V            *0"fine, depending on what the switches are connected to"
+s**>o**>l   s*>V***>l    s********>l
+    ^           V            *
+    *           ^            *
+    *           *            *
+    s           s            s
+
+0"So in conclusion, if you see a 'V' it means: the simulation has limitations here"
+0"because it cannot represent tri-state logic or floating wires. Let use use a 'V'"
+0"to show how you could make this circuit in real life without gates or with a"
+0"tristate buffer. In the simulation, the V acts as an AND gate and multiple V"
+0"outputs together are OR-ed, but in real life you need neither the AND nor the OR,"
+0"you need a tristate buffer instead of the AND, and nothing at all (just connect"
+0"wires together) instead of the OR. In real life you also must make sure only one"
+0"V at the time is anything other than 'floating' to avoid a short."
+
+0"As far as the simulation is concerned, here is what V's correspond to (but"
+0"this is not what it corresponds to in real life since the below allows"
+0"to easily make shorts):"
+
+s****                      s****
+    v                          v
+s**>V**                    s**>a**
+      *                          v
+      *>l 1"corresponds to"      o>l
+      *                          ^
+s**>V**                    s**>a**
+    ^                          ^
+s****                      s****
+
+
+s**>V**                    s******
+      *                          v
+s**>V**>l 1"corresponds to"s****>o>l
+      *                          ^
+s**>V**                    s******
+
+0"The built-in circuit where these V's are used the most, is the one named 'Relay Logic'"
 
 
 0"Special wires"
 0"-------------"
 
 0"Buses are a bundle of wires. Matching numbers of the bus connect to"
-0"corresponding inputs and outputs"
+0"corresponding inputs and outputs. This allows to save a lot of space."
 
 
                                      llllllll
@@ -827,10 +700,11 @@ s---4y         y         y4--->l
                y1---s
                y0---s
 
+
 0"Global wires, indicated with 'g', are all connected to each other."
 0"If there is a number, then to all other matching numbers. This can be"
-0"used e.g. for a global clock signal. Imagine it as being connected by"
-0"wires on the backplane"
+0"used e.g. for a global clock signal or other such control signals."
+0"Imagine it as being connected by wires on the backplane"
 
                 g----->l
 
@@ -847,7 +721,7 @@ s---g1         0g----->l
 0"Antennas are another form of 'backplane' wires, connected to the corresponding 'dish'"
 0"they're aimed at. Calling them 'antennas' or 'wireless' is just a metaphor."
 0"These provide another way to reduce clutter, and are especially useful"
-0"for large wrap-around circuits."
+0"for large wrap-around circuits (see the built-in cellular automata circuits)."
 
           l
           ^
@@ -879,17 +753,20 @@ l<----*
 0"--------"
 
 0"The end, see the next tutorials for more information, such as about"
-0"the different tick algorithms, rendering modes, ..."
+0"the different tick algorithms, rendering modes, editing, ..."
 
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+0"INSERT:toc_help"
 
-"RENDER:graphical"
+0"RENDER:graphical"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`, 'help2');
+`, 'mainhelp');
 
 
 registerCircuit('Ticks and Emulation Algorithms', `
+0"Ticks and Emulation Algorithms"
+0"------------------------------"
+
 0"The simulation is based on ticks: Each tick, components update their"
 0"value based on their input components. Normally, the ticks run"
 0"automatically. You can pause the simulation by pressing the pause"
@@ -1025,25 +902,35 @@ s->C->C->C->C->C->C->C->C
 
 
 registerCircuit('Rendering Modes', `
-0"There are two rendering modes: text (ASCII) and graphical (HTML5 canvas)."
-0"They can be selected with a dropdown in the top menu. The graphical"
-0"mode draws nice wires, boxes around components, regular inputs as"
-0"neatly drawn arrows and negated inputs as little circles. The ASCII"
-0"mode on the other hand draws everything with ASCII characters, with"
-0"similar letters used for components, but various other"
-0"symbols for different types of wire connections and inputs. To"
-0"learn the meaning of these, see the editing tutorials instead."
-0"Normally the graphical mode is easiest to use, but on huge circuits"
-0"it may be too slow, and in some browsers automatically select the"
-0"ASCII mode"
+0"Rendering Modes"
+0"---------------"
 
-0"BROWSER NOTE: Currently the graphics mode is fast in chrome but slow in some"
+0"There are two rendering modes: text (ASCII) and graphical (HTML5 canvas)."
+0"They can be selected with a dropdown in the top menu."
+
+0"The graphical mode draws nice wires, boxes around components, device"
+0"inputs as neatly drawn arrows and negated inputs as little circles."
+
+0"The text mode on the other hand draws everything with ASCII characters,"
+0"matching how you edit circuits. Gates use the similar letters as the graphical"
+0"mode, but now every cell uses some ASCII character, e.g. wires are broken up"
+0"into different characters (depending on direction, how to connect, ...)."
+0"To learn the meaning of these, see the editing tutorials instead."
+
+0"Normally the graphical mode is easiest to use and selected by default,"
+0"but on huge circuits it may be too slow, and in some browsers it"
+0"automatically select the text mode then."
+
+0"BROWSER NOTE: Currently the graphics mode is fast in Chrome but slow in some"
 0"other browsers, so for very large circuits it will automatically change"
 0"to text mode in those browsers. The reason is: every cell uses its own"
-0"little HTML5 canvas, and for Chrome that seems to be no problem while"
-0"for firefox each little canvas appears to have a big overhead to create it."
+0"little HTML5 canvas (rather than having one big canvas), and for Chrome"
+0"that seems to be no problem while apparently for Firefox it is not good"
+0"to have many little canvases."
+0"This may be fixed later but will require a rewrite of the rendering."
 
-0"Try out the two modes on the circuit below"
+0"Try out the two modes on the circuit below by changing the dropdown at"
+0"the top between 'graphical' and 'text'":
 
       l   lll
       m  lzzZl
@@ -1072,9 +959,12 @@ registerTitle('Editing');
 
 registerCircuit('Basic Editing Tutorial', `
 
-0"This basic editing tutorial only introduces the basic parts."
-0"See the full editing tutorial for explanations of all the parts,"
-0"including fancy ones or ones that are for compactness only."
+0"This basic editing tutorial only introduces the basic parts (switches,"
+0"logic gates, LEDs and flip-flops) but leaves out the more advanced parts"
+0"to have a cleaner first introduction."
+
+0"See the full editing tutorial for all the parts and cells, including"
+0"including fancy ones and shortcuts that exist for compactness only."
 
 0"Note that for the editing tutorial, 'text' rendering mode is enabled"
 0"by default, but you can still manually change it to 'graphics' mode."
@@ -1082,7 +972,7 @@ registerCircuit('Basic Editing Tutorial', `
 0"Editing"
 0"-------"
 
-0"Editing is done with ASCII text. The simulation is cell based: Every"
+0"Editing is done with ASCII text in 2D. The simulation is cell based: Every"
 0"character is a cell. Cells contain wires, parts, and so on. Devices"
 0"can span multiple cells, e.g. a long wire, an enlarged AND gate, ..."
 
@@ -1093,18 +983,24 @@ registerCircuit('Basic Editing Tutorial', `
 0"finished circuit in this browser based application to try it out"
 
 0"Try it out here: You can change the AND gate below into an OR gate,"
-0"by turning the 'a' into an 'o'. Press the edit button, find this"
+0"by turning the 'a' into an 'o'. Press the 'edit' button, find this"
 0"and gate in it, change the a into an o, and press 'done'."
 
 s**>a**>l
     ^
 s****
 
-0"Once you edited a map, it is saved in local storage in your browser"
-0"(but not sent to the internet nor shared, it's just local on your machine). Everytime"
-0"you reload the page you will see your last edited circuit. To get rid"
-0"of that and see the default instead, save an emtpy string with the"
-0"edit tool, that is, select all and press delete."
+0"Once you edited a map using the 'edit' button, it is saved in local"
+0"storage in your browser (but not sent to the internet nor shared,"
+0"it's just local on your machine). Everytime you reload the page you"
+0"will see your last edited circuit. To get rid of that and see the"
+0"default welcome page again, use the 'forget' button. The 'import'"
+0"button is a simpler version of the 'edit' button and will not remember."
+0"If you have '?id=...' in the URL then that overrides the local storage,"
+0"remove it or press the 'index' link if you want to autoload the edited circuit."
+
+0"Note that local storage is unreliable, save circuits to your disk"
+0"with a text editor instead to safely keep them."
 
 0"Input/Output/Wires"
 0"------------------"
@@ -1115,7 +1011,7 @@ s****
 0"devices, with the arrowhead showing the direction of the connection. The arrowhead"
 0"is also called a 'device input' (not to be confused with a switch which is a 'user input'),"
 0"because it is attached to a device that sees this wire as an input."
-0"Wires can also take various advanced and fancy forms (busses, backplane, ...)"
+0"Wires can also take various advanced and fancy forms (bundles, backplane, diagonal, ...)"
 0"but not in this reduced tutorial, here we only see the basic wires."
 
 0"The most simple circuit that does something looks like this (a switch connected to a LED):"
@@ -1255,7 +1151,6 @@ s**>#
 0"the way the diagonal-crossing inputs are used to have two inputs for"
 0"each a and e gate:"
 
-
 s**>a**>o**>l
    >    ^
 s**>e**>a
@@ -1298,37 +1193,59 @@ s**>c**>l
 s**>t
 
 
-s****
-    v
-    j#q**>l
+s**>j#q**>l
+    ###
 s**>c##     0"Serves as SR or as JK flip-flop"
-    k#Q**>l
-    ^
-s****
+    ###
+s**>k#Q**>l
+
+
+s->jq->l 0"This is a more compact version, but this is just a side-mention in the basic"
+s->c#    0"editing tutorial, this tutorial does not mention those closely packed wires"
+s->kQ->l 0"and switches because the built-in circuits mostly avoid this and adhere to a"
+         0"certain grid for aesthetic reasons."
 
 
 s**>q**>l
     #      0"SR latch: no clock, output remembers single switch"
 s**>Q**>l
 
+
+s**>j**>l
+    #
+s**>c**>l 0"JK flip-flop with q and Q left out, they are not required to get outputs"
+    #
+s**>k**>l
+
+
 0"A single loose d instead acts as a single-tick delay"
 
 s**>d**>l
 
-s**>d**>d**>d**>d**>l
+s**>d**>d**>d**>d**>d**>d**>d**>d**>l
+
+0"Text Comments"
+0"-------------"
+
+0"Comments like you're reading right here are made by surrounding them with double"
+0"quotes. You can only see these quotes in the source code, even in text"
+0"mode they are not rendered. For narrow width text that is easier to read,"
+0"quotes can be prepended with a 0. For other alignment options, see the full"
+0"editing tutorial."
+
+"full width example"
+ 0"narrow width example"
 
 0"Epilogue"
 0"--------"
 
-0"And that is all for this reduced set tutorial! Other parts exist, such"
+0"And that is all for this reduced editing tutorial. Other parts exist, such"
 0"as colored LEDs, integrated circuits (reusable templates), wire bundles,"
-0"interactive terminals, ROMs, etc... but these are in the full help."
-0"However, in theory those are not needed, since all these things (except"
-0"the visual/interactive things like colored LEDs) can already be built"
-0"with the above parts."
+0"interactive terminals, ROMs, etc... but these are in the full editing tutorial."
 
-0"Also check other help tutorials for such explanations as the graphic"
-0"modes, the updater algorithms, and how to edit your own circuits"
+0"However, in theory those are not needed, since all these things (except"
+0"the visuals like colored LEDs, or interactivity like keyboard reading)"
+0"can already be built with the above parts."
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -1336,11 +1253,11 @@ s**>d**>d**>d**>d**>l
 0"FIT:x"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`, 'edit1');
+`, 'editing_basic');
 
 
 registerCircuit('Full Editing Tutorial', `
-0"This tutorial introduces all the characters for editing."
+0"This tutorial introduces all the parts and cell characters for editing."
 
 0"RENDER:text (for edit tutorials we force text mode at start. Manually select 'graphical' to see graphics mode)"
 
@@ -1379,8 +1296,9 @@ s****
 
 0"Comments are made with double quotes."
 0"The comment starts at a quote and ends at the next quote on the same line."
-0"A 0, 1 or 2 before the first double quote can also enable aligned text"
-0"Below the 4 types of comments are shown. The quotes themselves are not"
+0"A number before the first double quote (or alternatively after the last)"
+0"can also enable aligned text."
+0"Below the different types of alignment are shown. The quotes themselves are not"
 0"visible in the rendering (not even in text mode), only in the source code."
 
 "In quotes: regular comment, 1 character per cell"
@@ -1390,6 +1308,10 @@ s****
 1"In quotes with 1 prepended: center aligned narrow width"
 
 2"In quotes with 2 prepended: right aligned narrow width"
+
+3"quotes with 3: 1 char per cell, shifted left a bit"
+
+4"quotes with 4: 1 char per cell, shifted right a bit"
 
 0"NEW BEHAVIOR: force mode"
 
@@ -2481,6 +2403,7 @@ s   s   s
 0"'FIT: y' --> if possible zoom vertically such that top up to this marker is visible"
 0"             if two such markers present, zoom such that height matches their vertical distance."
 0"'INSERT: toc' --> inserts a table of contents of built-in circuits here"
+0"                  this also also works with 'toc_main' and 'toc_help'"
 
 0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 0"SECTION VII: Interchangeable ASCII characters"
@@ -2488,16 +2411,97 @@ s   s   s
 
 0"There are a few pairs of ASCII charcters that have the same or similar meaning:"
 
-0"@ and ASCII space: both are isolator. @ is rendered differently so this can be used for visual features"
+0"@ and ASCII space: both are isolator. @ is slightly different because it can connect IC"
+0"templates while space ends them, and @ can be used as visual aid such as drawing a casing around a device"
 
-0"ASCII backtick and ASCII double quote: the backtick will be replaced by quotes, for text in circuits"
+0"ASCII backtick and ASCII double quote: the backtick will be replaced by double quotes, for text in circuits"
+0"--> this helps with defining circuits in double quoted strings in programming languages. Tip: use raw string literals when available."
 
-0"; and ASCII backslash: the ; will be replaced by backslash in the circuit"
+0"; and \\ (ASCII backslash): the ; will be replaced by backslash in the circuit (but not inside comments)"
+0"--> this helps with defining circuits in strings in programming languages. Tip: use raw string literals when available (but in JS \\ still has special meaning)."
 
 0". and *: the . has the same functionality as * (wire)"
+0"--> this helps with drawing circuits on paper"
 
 0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"SECTION VIII: Editing in the Geany Text Editor"
+0"SECTION VIII: Style used in built-in circuits"
+0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+
+0"Most built-in circuits use a certain style that is not optimally compact but looks better. It works as follows:"
+
+0"For wires, mostly * is used, no - or |, forcing to have a 1-cell gat between neighbor wires."
+0"so no closely packed wires. The only exception is for ROM and Terminals and sometimes for multi-bit signals."
+
+0"yes:"     0"no:"
+
+s****>l   s---->
+          s---->
+s****>l   s---->
+
+s****>l
+
+0"but, yes for ROM:"
+
+    lll
+    ^^^
+s-->BbB
+s-->bBb
+s-->bBB
+
+
+0"Some of the 'compact shortcut' cells are avoided except in rare circumstances,"
+0"in particular 'h', 'H', 'Z', '%', '&' and touching >^<v inputs from sides"
+
+0"yes:"       0"no:"       0"no:"
+
+s**>a**>l     s*&>a**>l   s**>a**>l
+   >            &+z          h
+s**>e**>l     s**>e**>l   s**>e**>l
+
+0"Centers and corners of devices are aligned on a certain grid for aesthetic reasons:"
+
+3" a-a-a-a"
+3" |@|@|@|"
+3" a-a-a-a"
+3" |@|@|@|"
+3" a-a-a-a"
+3" |@|@|@|"
+3" a-a-a-a"
+
+0"In that grid:"
+0"*) 'a' can be almost anything, such as gates, except gate inputs"
+0"*) '|' and '-' can be gate inputs '^>v<m]w[' or wires '*' or 'x'"
+0"*) '@' may only be empty, or filler of large devices, or the middle"
+0"   (diagonal) one of a ^^^ style gate input."
+
+0"This with various exceptions for numbers, backplane wires, comments, etc..."
+0"but this is the spirit of the idea."
+
+0"The grid may shift in case of isolated or far apart devices."
+
+0"yes:"            0"no:"
+
+s>l                s*>l
+
+
+s**>l              s***>l
+          s**
+            v
+s**>a**>l   a>l    s***v
+    ^       ^          a**>l
+s****     s**      s***^
+
+
+s**>d#q**>l        s**>dq**>l
+    ###                ##
+s**>c#Q**>l        s**>cQ**>l
+
+0"This is just a principle followed in many built-in circuits. This turned out"
+0"to make nicer looking circuits than trying to make everything as small as possible"
+0"with compaction tricks. However, there's no need to follow this in your own editing."
+
+0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"SECTION IX: Editing in the Geany Text Editor"
 0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 
 0"Editing is best done in a good plain text editor, at least it must support a fixed"
@@ -2604,7 +2608,7 @@ s     s     s     s
 0"FIT:x"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`, 'edit2');
+`, 'editing');
 
 
 registerCircuit('ASCII symbol summary (for editing)', `
@@ -3308,6 +3312,47 @@ s##
 *
 *
 
+0"Comment Alignment"
+0"-----------------"
+
+0"In each test below the word 'hi' is aligned with different methods."
+0"The word should appear on top of the capital letters indicated"
+0"with gates below it. In the case of an E it must be exact, in the"
+0"case of an O slight deviation is allowed (this is for half width text)"
+
+"hi"      "hi"
+eEEee     eEEee
+
+0"hi"     0"hi"
+Ooooo     Ooooo
+
+"hi"0     "hi"0
+Ooooo     Ooooo
+
+1"hi"     1"hi"
+ooOoo     ooOoo
+
+"hi"1     "hi"1
+ooOoo     ooOoo
+
+2"hi"     2"hi"
+ooooO     ooooO
+
+"hi"2     "hi"2
+ooooO     ooooO
+
+3"hi"     3"hi"
+EEeee     EEeee
+
+"hi"3     "hi"3
+EEeee     EEeee
+
+4"hi"     4"hi"
+eeeEE     eeeEE
+
+"hi"4     "hi"4
+eeeEE     eeeEE
+
 0"Errors"
 0"------"
 
@@ -3330,7 +3375,7 @@ I197
 s------>e----->l
 I196
 
-"RENDER:text"
+0"RENDER:text"
 
 
 `, 'test');

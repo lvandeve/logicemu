@@ -88,6 +88,12 @@ function makeUIElement(tag, opt_parent, opt_smallbutton) {
   return el;
 }
 
+function makeUISpacer(width, el) {
+  var s = makeElement('span', el);
+  s.style.width = width + 'px';
+  s.style.display = 'inline-block';
+}
+
 var worldDiv = makeDiv(10, 128, 0, 0);
 var renderingMessageDiv = makeDiv(10, 128, 0, 0);
 
@@ -2812,12 +2818,15 @@ function Renderer() {
 
 
 
-function setTocHTML2(el) {
+function setTocHTML(toc, el) {
   el.innerText = '';
   var html = '';
+  var j = 0;
   for(var i = 0; i < allRegisteredCircuits.length; i++) {
+    if(toc == 1 && (allRegisteredCircuits[i].group != 0 || allRegisteredCircuits[i].linkid == 'helpindex' || allRegisteredCircuits[i].title == 'Welcome')) continue;
+    if(toc == 2 && allRegisteredCircuits[i].group != 1 && allRegisteredCircuits[i].linkid != 'helpindex') continue;
     //var div = makeDiv(0, (i * th), w * tw, th, el);
-    var div = makeDiv(0, (i * th), tw, th, el);
+    var div = makeDiv(0, (j * th), tw, th, el);
     div.style.width = '800px';
     var span = makeElementAt('span', 0, 0, div);
     var id = allRegisteredCircuits[i].linkid;
@@ -2836,51 +2845,10 @@ function setTocHTML2(el) {
         currentSelectedCircuit = index;
       }, circuit, title, id, i);
     }
+    j++;
   }
 }
 
-function setTocHTML(el) {
-  el.innerText = '';
-  var html = '';
-  for(var i = 0; i < linkableCircuitsOrder.length; i++) {
-    //var div = makeDiv(0, (i * th), w * tw, th, el);
-    var div = makeDiv(0, (i * th), tw, th, el);
-    div.style.width = '800px';
-    var id = linkableCircuitsOrder[i];
-    var circuit = linkableCircuits[id][1];
-    var title = linkableCircuits[id][0];
-    div.innerText = title;
-    div.style.textAlign = 'left';
-    div.style.color = '#00';
-    div.style.textDecoration = 'underline';
-    div.style.cursor = 'pointer';
-    div.onclick = bind(function(circuit, title, id, index) {
-      parseText(circuit, title, id);
-      currentSelectedCircuit = index;
-    }, circuit, title, id, linkableCircuits[id][2]);
-  }
-}
-
-// alternative to setTocHTML
-function setLinkHTML(el) {
-  el.innerText = '';
-  var html = '';
-
-  var url = getUrlWithoutQueries();
-
-  for(var i = 0; i < linkableCircuitsOrder.length; i++) {
-    var div = makeDiv(0, (i * th), w * tw, th, el);
-    var id = linkableCircuitsOrder[i];
-    div.style.textAlign = 'left';
-    var circuit = linkableCircuits[id][1];
-    var title = linkableCircuits[id][0];
-    var link = url + '?id=' + linkableCircuitsOrder[i];
-    if(id == 'welcome') link = url;
-    var a = makeElement('a', div);
-    a.innerText = title;
-    a.href = link;
-  }
-}
 
 /** @implements Renderer */
 function RendererText() {
@@ -2923,19 +2891,28 @@ function RendererText() {
     this.div1.innerText = symbol;
 
     if(cell.comment) {
-      this.div0.style.color = '#000';
-      this.div0.style.backgroundColor = '#fff6ea';
+      var fgcolor = '#000'; // '#940';
+      var bgcolor = '#fff6ea';
       //this.div0.style.fontWeight = 'bold';
 
-      //this.div1.style.color = '#940';
-      //this.div1.style.fontWeight = 'bold';
+      this.div0.style.color = fgcolor;
+      this.div0.style.backgroundColor = bgcolor;
+
+      // no need to affect div1, it's never shown for comments
 
       // allow the text to go to the right
-      if(cell.commentalign != -1) {
-        this.div0.style.whiteSpace = 'pre';
-        this.div1.style.whiteSpace = 'pre';
-        //this.div0.style.width = '' + (tw * cell.commentlength) + 'px';
-        this.div0.style.width = ''; // make it as wide as the text itself, which looks better if a background is enabled for it
+      if(cell.commentalign >= 0 && cell.commentalign <= 2) {
+        this.div0.innerText = '';
+        this.div0.style.backgroundColor = 'unset';
+        // this span is there so that we can have the background color only over the text, not whitespace parts left or right
+        var span0 = makeElement('span', this.div0);
+        span0.innerText = symbol;
+        span0.style.color = fgcolor;
+        span0.style.backgroundColor = bgcolor;
+        span0.style.whiteSpace = 'pre';
+        //span0.style.fontSize = th + 'px';
+        span0.style.fontSize = Math.floor(tw * 0.9) + 'px'; // avoids background overlapping parts of font issues
+        this.div0.style.width = '' + (tw * cell.commentlength) + 'px';
         if(cell.commentalign == 0) this.div0.style.textAlign = 'left';
         else if(cell.commentalign == 1) this.div0.style.textAlign = 'center';
         else if(cell.commentalign == 2) this.div0.style.textAlign = 'right';
@@ -2944,9 +2921,7 @@ function RendererText() {
       // allow text selection of those
       this.div0.onmousedown = null;
     } else if(symbol == 'toc') {
-      setTocHTML2(this.div0);
-      //setTocHTML(this.div0);
-      //setLinkHTML(this.div0);
+      setTocHTML(cell.circuitextra, this.div0);
     } else {
       if(virtualsymbol == 'l') {
         var color = cell.components[0] ? cell.components[0].number : 0;
@@ -4184,10 +4159,6 @@ function parseCells(text) {
   world = [];
   logPerformance('parseCells start');
   var lines = text.split('\n');
-  if(lines[0].length == 0) lines.splice(0, 1); // only the first one, typically in long string literal you begin the first line after the quote and really don't want that first empty line created by it
-  // commented out stripping other empty lines: you may want them on purpose to allow scrolling, ...
-  //while(lines.length > 0 && lines[0].length == 0) lines.splice(0, 1);
-  //while(lines.length > 0 && lines[lines.length - 1].length == 0) lines.length--;
   h = lines.length;
   w = 1;
   for(var i = 0; i < lines.length; i++) w = Math.max(w, lines[i].length);
@@ -4200,6 +4171,10 @@ function parseCells(text) {
     line0[y] = 0;
     line1[y] = 0;
     var line0inited = false;
+    var commentstart = 0; // quote
+    var commentstart2 = 0; // quote or number
+    var commentend = 0; // quote
+    var commentend2 = 0; // quote or number
 
     for(var x = 0; x < w; x++) {
       var cell = new Cell();
@@ -4228,31 +4203,85 @@ function parseCells(text) {
           cell.comment = true;
           cell.commentalign = commentalign;
           comment = !comment;
+
+          if(commentalign >= 3 && commentalign <= 4) {
+            if(commentend2 > x) {
+              x++;
+              world[y][x] = new Cell();
+              world[y][x].x = x;
+              world[y][x].y = y;
+            }
+            var i;
+            for(i = commentstart2; i <= commentend2; i++) {
+              var j = i;
+              if(commentalign == 4) j = commentend2 - (i - commentstart2); // need to go from other end to not overwrite
+              var shift = (commentalign == 3) ?
+                  (j + 1 + (commentstart - commentstart2)) :
+                  j - 1 - (commentend2 - commentend);
+              if(shift > commentstart && shift < commentend) {
+                world[y][j].commentalign = -1;
+                world[y][j].displaysymbol = world[y][shift].displaysymbol;
+                world[y][j].circuitsymbol = world[y][shift].circuitsymbol;
+                world[y][j].metasymbol = world[y][shift].metasymbol;
+                world[y][j].symbol = world[y][shift].symbol;
+                world[y][j].comment = true;
+                world[y][j].nuber = true;
+              } else {
+                world[y][j].commentalign = -1;
+                world[y][j].displaysymbol = ' ';
+                world[y][j].circuitsymbol = ' ';
+                world[y][j].metasymbol = ' ';
+                world[y][j].symbol = ' ';
+                world[y][j].comment = false;
+              }
+            }
+          }
+
           thincommentcell = null;
           commentalign = null;
         }
       } else {
         if(cell.symbol == '"') {
+          commentstart = x;
           cell.displaysymbol = ' ';
           cell.circuitsymbol = ' ';
           cell.comment = true;
           cell.commentlength = 2; // the begin and end quote themselves take place in the alignment room
           comment = !comment;
           commentalign = -1;
+
+          commentend = x + 1;
+          for(;;) {
+            if(lines[y][commentend] == '"') break;
+            if(commentend + 1 == w) break;
+            commentend++;
+          }
+          commentend2 = commentend;
+
           var x2 = x - 1;
           if(x2 >= 0 && (lines[y][x2] == '0')) commentalign = 0;
           else if(x2 >= 0 && (lines[y][x2] == '1')) commentalign = 1;
           else if(x2 >= 0 && (lines[y][x2] == '2')) commentalign = 2;
+          else if(x2 >= 0 && (lines[y][x2] == '3')) commentalign = 3;
+          else if(x2 >= 0 && (lines[y][x2] == '4')) commentalign = 4;
           else {
             for(x2 = x + 1; x2 < w; x2++) {
               if(lines[y][x2] == '"') break;
             }
             x2++;
+            commentend2++;
             if(x2 < w && lines[y][x2] == '0') commentalign = 0;
             else if(x2 < w && lines[y][x2] == '1') commentalign = 1;
             else if(x2 < w && lines[y][x2] == '2') commentalign = 2;
+            else if(x2 < w && lines[y][x2] == '3') commentalign = 3;
+            else if(x2 < w && lines[y][x2] == '4') commentalign = 4;
+            else commentend2 = commentend;
           }
-          thincommentcell = (commentalign == -1) ? null : (x2 < x ? world[y][x2] : cell);
+          commentstart = x;
+          commentstart2 = x;
+          if(x2 == x - 1 && commentalign >= 0) commentstart2 = x2;
+
+          thincommentcell = (commentalign >= 0 && commentalign <= 2) ? (x2 < x ? world[y][x2] : cell) : null;
           cell.commentalign = commentalign;
 
           if(thincommentcell && thincommentcell != cell) {
@@ -5998,12 +6027,20 @@ function parseText2(text, opt_title, opt_id) {
     directLink.style.visibility = 'hidden';
   }
 
+  // remove a first newline if present. typically in long string literal you begin the first line after the quote and really don't want that first empty line created by it
+  if(text[0] == '\n') text = text.substr(1); // only the first one, typically in long string literal you begin the first line after the quote and really don't want that first empty line created by it
+  // keep other starting newlines: you may want them on purpose to allow scrolling
+
   var tocPos = text.indexOf('INSERT:toc');
+  var tocType = 0;
+  if(text.indexOf('INSERT:toc_help') == tocPos) tocType = 1;
+  if(text.indexOf('INSERT:toc_main') == tocPos) tocType = 2;
   var tocX = 0;
   var tocY = 0;
   if(tocPos >= 0) {
     var start = tocPos;
     var end = tocPos + 10;
+    if(tocType == 1 || tocType == 2) end += 5;
     if(text[start - 1] == '"') {
       start--;
       if(text[start - 1] == '0') start--;
@@ -6013,9 +6050,18 @@ function parseText2(text, opt_title, opt_id) {
       if(text[i] == '\n') tocY++;
     }
     var newlines = '';
-    //var numLines = linkableCircuitsOrder.length;
     var numLines = allRegisteredCircuits.length;
-    for(var i = 0; i < numLines; i++) newlines += '\n';
+    if(tocType == 1) {
+      numLines = 0;
+      for(var i = 0; i < allRegisteredCircuits.length; i++) if(allRegisteredCircuits[i].group == 0) numLines++;
+      numLines -= 2; // circuits 'Help' and 'Welcome' not counted for this one
+    }
+    if(tocType == 2) {
+      numLines = 0;
+      for(var i = 0; i < allRegisteredCircuits.length; i++) if(allRegisteredCircuits[i].group == 1) numLines++;
+      numLines++; // circuit 'Help' counted for this one
+    }
+    for(var i = 1; i < numLines; i++) newlines += '\n';
     text = text.substr(0, start) + newlines + text.substr(end);
   }
 
@@ -6029,6 +6075,7 @@ function parseText2(text, opt_title, opt_id) {
     world[tocY][tocX].displaysymbol = 'toc';
     world[tocY][tocX].metasymbol = 'toc';
     world[tocY][tocX].skipparsing = false;
+    world[tocY][tocX].circuitextra = tocType;
     line0[tocY] = 0;
     line1[tocY] = 1;
   }
@@ -6218,6 +6265,8 @@ var menuRow2El = makeElementAt('span', 0, 48, menuRows);
 //var menuRow3El = makeElementAt('span', 0, 80, menuRows);
 var menuRow3El = menuRow2El;
 
+menuRows.style.zIndex = 5; // can be anything as long as it's higher than what we assign to editarea
+
 menuRow1El.style.background = '#f8f8f8';
 menuRow1El.style.position = 'absolute';
 menuRow1El.style.width = '100%';
@@ -6376,9 +6425,7 @@ zoominButton.onclick = function() {
   render();
 };
 
-
-
-
+makeUISpacer(16, menuRow2El);
 
 
 var changeDropdownElements = [];
@@ -6444,7 +6491,8 @@ editButton.onclick = function() {
     editarea.cols = ewidth;
     editarea.value = origtext;
     editarea.style.fontSize = fontsize + 'px';
-    editarea.style.zIndex = '-1';
+    editarea.style.zIndex = '1'; // anything as long as it's less than the menu bar
+    //worldDiv.style.display = 'none';
     //editarea.style.position = 'fixed';
 
     pause();
@@ -6660,7 +6708,7 @@ nextCircuitButton.onclick = function() {
 
 var importButton = makeUIElement('button', menuRow1El);
 importButton.innerText = 'import';
-importButton.title = 'Import a circuit from its ASCII diagram copypasted from elsewhere. Paste it into the field that appears, press done (this button itself) when finished. To export a circuit instead, use the "edit" button, or create your own circuit in a text editor.';
+importButton.title = 'Import a circuit from its ASCII diagram copypasted from elsewhere. Paste it into the field that appears and use the buttons to import or cancel. To export or change a circuit instead, use the "edit" button, or create your own circuit in a text editor.';
 importButton.onclick = function() {
   if(!editmode) {
     var fontsize = 10;
@@ -6680,7 +6728,7 @@ importButton.onclick = function() {
     donebutton.style.position = 'absolute';
     donebutton.style.left = '330px';
     donebutton.style.top = '415px';
-    donebutton.innerText = 'done';
+    donebutton.innerText = 'import';
     donebutton.onclick = importButton.onclick;
 
     var cancelbutton = makeUIElement('button', editdiv);
@@ -6689,8 +6737,9 @@ importButton.onclick = function() {
     cancelbutton.style.top = '415px';
     cancelbutton.innerText = 'cancel';
     cancelbutton.onclick = function() {
-      editarea.value = '';
-      importButton.onclick();
+      document.body.removeChild(editdiv);
+      importButton.innerText = 'import';
+      editmode = false;
     };
 
     pause();
@@ -6701,11 +6750,7 @@ importButton.onclick = function() {
     document.body.removeChild(editdiv);
     importButton.innerText = 'import';
     editmode = false;
-    if(newtext == '') {
-      unpause();
-    } else {
-      parseText(newtext, 'imported circuit');
-    }
+    parseText(newtext, 'imported circuit');
   }
 };
 
@@ -6823,6 +6868,7 @@ function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
   c.title = name;
   c.linkid = opt_link_id;
   c.istitle = opt_is_title;
+  c.group = circuitGroups.length - 1;
   allRegisteredCircuits.push(c);
   if(opt_link_id) {
     linkableCircuits[opt_link_id] = [name, circuit, index];
@@ -6839,14 +6885,7 @@ function registerTitle(title) {
 var fallbackhelptext = '0"Load any circuit from the dropdowns above, or press edit to make a new one."\n0"Use help if this is your first time"';
 
 var introText = `
-0"Welcome to LogicEmu, a logic simulator running in your browser"
-0"that supports combinational and sequential logic circuits."
-
-0"LogicEmu comes with a lot of pre-packaged circuits built in. A selection"
-0"is below, and all are in the 'help' and 'circuits' dropdowns above."
-0"It's also possible to edit them or create your own circuits."
-0"Try to experience the help tutorials first. The circuit you're viewing"
-0"right now is called 'Welcome'."
+0"Welcome to LogicEmu, a digital logic simulator running in your browser."
 
 0"In circuits, press the green 's' inputs with the mouse to change values."
 0"Read results from the red 'l' outputs. For example, below is an AND gate"
@@ -6859,34 +6898,39 @@ var introText = `
    s******
 
 0"There are much more types of gates and devices available: logic gates,"
-0"flip-flops, integrated circuits, ROMs, displays, ... See the next"
-0"tutorials to learn more!"
+0"flip-flops, integrated circuits, ROMs, displays, ... Explore the circuits"
+0"index below or read the help circuits first to learn more!
 
-   s-->jq->l
-   s-->c#
-   s-->kQ->l
+                  s**>a**>o**>l"carry"
+   s-->jq->l         >    ^
+   s-->c#         s**>e**>a
+   s-->kQ->l             >
+                  s******>e**>l"sum"
 
-0"Below are all built-in circuits. You can always use the dropdowns at"
-0"the top in the menu section to open these while one is open and you"
-0"don't have this list."
+0"Circuits index. You can also use the 'help' and 'circuits' dropdowns"
+0"and the prev/next buttons in the top bar to navigate to these. You can also"
+0"edit or create your own circuits instead."
 
-0"INSERT:toc"
+0"INSERT:toc_main"
 
+0"Note that even this welcome page itself is a circuit, named 'Welcome'"
+0"in the 'help' dropdown but hidden in the list and help index above on"
+0"purpose to avoid such redundancy."
 
-0"LogicEmu runs completely offline, even though it happens to be"
-0"implemented in JavaScript and opened in a web browser."
-0"That is, this html file and the few included js files are fetched"
-0"from the server initially but once it runs, it does not make any"
+0"LogicEmu runs completely offline, even though it uses JavaScript in a"
+0"web browser. Once the HTML and JS got fetched, it does not make any"
 0"further connections to any server, cloud or remote storage."
-0"This means you can run LogicEmu as an offline application: if you download"
-0"the html file and the few js files (either by viewing source here, or"
-0"through github) and save them to disk, you can run LogicEmu from there"
-0"with an offline browser."
+
+0"If you download the HTML file and the few JS files (with view source"
+0"or from github) and save them to disk, you can run LogicEmu locally"
+0"without internet."
+
 0"All circuits listed above are already loaded since they are hardcoded"
-0"in LogicEmu's source code. If you edit your own circuit, it's only"
-0"stored in your browsers local storage (not cookie) but never sent"
-0"anywhere. To share a circuit with others, you must share its source"
-0"code yourself."
+0"in LogicEmu's source code."
+
+0"If you edit your own circuit, it's only stored in your browsers local"
+0"storage (not cookie), it's not sent anywhere. To share a circuit with"
+0"others, you must post its source somewhere yourself."
 
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"              0"FIT:x"

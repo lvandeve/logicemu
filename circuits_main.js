@@ -1166,7 +1166,8 @@ registerCircuit('full subtractor', `
 registerCircuit('8-bit comparator', `
 
 0"Note: in practice you don't need a separate circuit like this, you can"
-0"use the full adder, to subtract, and look at the sign bit of the result"
+0"use the full adder, to subtract, and look at the carry bit of the result,"
+0"see the ALU circuit for more on that."
 
 
 
@@ -4278,10 +4279,97 @@ registerCircuit('keypad', `
 
 registerTitle('Quantum Gates');
 
+registerCircuit('Quantum logic gates', `
+0"Here a few quantum logic gates are introduced in a handwavy way."
+
+0"Most useful quantum logic gates cannot be emulated here because they"
+0"involve negative, imaginary or complex numbers and superpositions. We"
+0"can only simulate the ones where inputs that are exactly True or False"
+0"only give outputs that are exactly True or False."
+
+0"The gates that are possible are emulated on classical bits here, but"
+0"do not be mislead, as in quantum physics each input and each output can"
+0"be much more, each can be associated with a normalized pair of complex"
+0"numbers with arbitrary precision to which a unitary complex matrix"
+0"operation is applied, and with multiple inputs and outputs this state"
+0"size (amount of complex numbers) grows exponentially larger."
+
+0"So the gates shown below are classical gates simulating the behavior"
+0"of some quantum gates."
+
+0"Quantum gates all must have the property of being reversible: it has as"
+0"many inputs as outputs, and each input combination has a unique output"
+0"combination so you can tell from the output what the input was, and vice"
+0"versa."
+
+0"Pauli-X gate: acts like a NOT gate:"
+
+s**>O**>l
+
+0"SWAP gate: swaps two inputs:"
+
+s** **>l
+   x
+s** **>l
+
+0"Controlled NOT gate: CNOT gate: acts like XOR plus lets the control input through."
+
+s******>l
+    v
+s**>e**>l
+
+0"Controlled SWAP gate: Fredkin gate:"
+
+"c"s**************>l 0"c"
+           *
+"a"s*******+>e****>l 0"(a AND NOT c) OR (b AND c)"
+         v v ^
+"b"s****>e>a**>e**>l 0"(b AND NOT c) OR (a AND c)"
+       *       ^
+       *********
+
+0"Controlled-controlled NOT gate: CCNOT gate: Toffoli gate:"
+
+      *****
+      *   *
+"a"s**+***+****>l"a"
+      * v *
+"b"s***>a *****>l"b"
+        v
+"c"s***>e******>l"(a AND b) XOR c"
+
+
+0"Fredkin and Toffoli are able to implement all classical logic gates,"
+0"they are universal classical logic gates (but they are not universal"
+0"quantum logic gates). See next circuits for examples of this."
+
+0"Other common quantum gates, such as Hadamard, Pauli-Y, Pauli-Z, roots of"
+0"the above, phase shift, ..., cannot be implemented here and so there is"
+0"not good reason to describe them here. But you need them to take the actual"
+0"advantage of quantum computing, you need gates that create superpositions."
+0"Also, we didn't use any of the notation normally used for quantum circuits"
+0"here. If interested check out literature on it and try out an online quantum"
+0"computer simulator."
+
+`, 'quantum');
+
+
 registerCircuit('Fredkin gate', `
 
 0"The Fredkin gate is a reversible gate: every unique input has a unique output"
-0"It is also known as the controlled swap gate"
+
+0"In addition, it always has as many ones at the input as at the output."
+
+0"It is a universal classical logic gate: all regular logic gates can be"
+0"built from it, as shown below."
+
+0"It is also useful for quantum computing thanks to being reversible and"
+0"emulating classic gates. It is not a universal quantum gate though so"
+0"not sufficient. For more on that and its typical notation, see literature"
+0"or try out an online quantum computer simulator. Here we show a classical"
+0"(non-quantum) Fredkin gate instead."
+
+0"It is also known as the controlled swap gate (CSWAP)."
 
 "c"s**************>l 0"c"
            *
@@ -4338,8 +4426,17 @@ s****>e**>l
 
 0"The Fredkin gate can make all regular gates, but there are 'garbage' input and output signals to support the reversibility"
 
-0"AND"
-0"---"
+3"NOT"
+3"---"
+
+"a"s**>i**>l2
+       i
+"0"c**>i**>l2
+       i
+"1"C**>i**>l 0"not a"
+
+3"AND"
+3"---"
 
 "a"s**>i**>l2
        i
@@ -4347,9 +4444,32 @@ s****>e**>l
        i
 "0"c**>i**>l 0"a and b"
 
+3"NAND"
+3"----"
 
-0"OR"
-0"--"
+0"Note: NOT is reversible so if all you care about is reversibility you can"
+0"use a NOT instead of the second Fredkin gate instead. Here we do everything"
+0"from fredkin only so need two."
+
+"a"s**>i**********>l2
+       i
+"b"s**>i* *>i*****>l2
+       i x  i
+"0"c**>i* *>i*****>l2
+            i
+"1"C*******>i*****>l 0"a nand b"
+
+0"Nicer version if NOT can be used:"
+
+"a"s**>i******>l2
+       i
+"b"s**>i******>l2
+       i
+"0"c**>i**>O**>l 0"a nand b"
+
+
+3"OR"
+3"--"
 
 "a"s**>i**>l2
        i
@@ -4359,19 +4479,28 @@ s****>e**>l
 
 
 
+3"NOR"
+3"---"
 
-0"NOT"
-0"---"
-
-"a"s**>i**>l2
+"a"s**>i**********>l2
        i
-"0"c**>i**>l2
+"1"C**>i* *>i*****>l2
+       i x  i
+"b"s**>i* *>i*****>l 0"a nor b"
+            i
+"0"c*******>i*****>l2
+
+0"Nicer version if NOT can be used:"
+
+"a"s**>i******>l2
        i
-"1"C**>i**>l 0"not a"
+"b"s**>i**>O**>l 0"a nor b"
+       i
+"1"C**>i******>l2
 
 
-0"XOR, XNOR"
-0"---------"
+3"XOR, XNOR"
+3"---------"
 
 
 0"Please not how 'antennas' are used to make some wires cross the chip,"
@@ -4385,32 +4514,10 @@ s****>e**>l
        i     i
 "1"C**>i****>i*******>l 0"a xnor b"
 
-0"NAND"
-0"----"
-
-"a"s**>i**********>l2
-       i
-"b"s**>i* *>i*****>l2
-       i x  i
-"0"c**>i* *>i*****>l2
-            i
-"1"C*******>i*****>l 0"a nand b"
 
 
-0"NOR"
-0"---"
-
-"a"s**>i**********>l2
-       i
-"1"C**>i* *>i*****>l2
-       i x  i
-"b"s**>i* *>i*****>l 0"a nor b"
-            i
-"0"c*******>i*****>l2
-
-
-0"Full Adder"
-0"----------"
+3"Full Adder"
+3"----------"
 
 "a"s**>i****************************>l2
        i
@@ -4431,16 +4538,27 @@ s****>e**>l
 registerCircuit('Toffoli gate', `
 
 0"The Toffoli gate is a reversible gate: every unique input has a unique output"
+
+0"It is a universal classical logic gate: all regular logic gates can be"
+0"built from it, as shown below."
+
+0"It is also useful for quantum computing thanks to being reversible and"
+0"emulating classic gates. It is not a universal quantum gate though so"
+0"not sufficient. For more on that and its typical notation, see literature"
+0"or try out an online quantum computer simulator. Here we show a classical"
+0"(non-quantum) Toffoli gate instead."
+
 0"It is also known as the controlled controlled not gate (CCNOT)"
+
 0"If both a and b are true, c gets inverted, else all outputs are the same as the inputs"
 
-"a"s***********>l"a"
-        *
-"b"s****+******>l"b"
-       vv
-"c"s*** a>e****>l"(a AND b) XOR c"
-      *   ^
       *****
+      *   *
+"a"s**+***+****>l"a"
+      * v *
+"b"s***>a *****>l"b"
+        v
+"c"s***>e******>l"(a AND b) XOR c"
         I
 
 0"It's defined as a chip above so we can use it as follows now (with the"
@@ -4456,7 +4574,8 @@ s**>i**>l
 0"It can make all regular gates, but there are 'garbage' input and output"
 0"signals to support the reversibility"
 
-"NOT"
+3"NOT"
+3"---"
 
 "1"C**>i**>l2
        i
@@ -4465,7 +4584,8 @@ s**>i**>l
 "a"s**>i**>l"NOT a"
 
 
-"AND"
+3"AND"
+3"---"
 
 "a"s**>i**>l2
        i
@@ -4474,17 +4594,59 @@ s**>i**>l
 "0"c**>i**>l"a AND b"
 
 
-
-"NAND"
+3"NAND"
+3"----"
 
 "a"s**>i**>l2
        i
 "b"s**>i**>l2
        i
-"1"c**>i**>l"a NAND b"
+"1"C**>i**>l"a NAND b"
 
 
-"XOR"
+3"OR"
+3"--"
+
+"a"s**>i***>i***>l2
+       i    i
+"b"s**>i* *>i***>l2
+       i x  i
+"1"C**>i* *>i***>l"a OR b"
+
+0"Nicer version if NOT can be used (with Morgan's law):"
+
+"a"s**>O**>i**>l2
+           i
+"b"s**>O**>i**>l2
+           i
+"1"C******>i**>l"a OR b"
+
+
+3"NOR"
+3"---"
+
+0"(TODO: verify if there is no way with 2 gates)"
+
+"a"s***** ***** *******>l2
+         x    * *
+"b"s**>i* *>i*-X-*>i***>l2
+       i    i * *  i
+"1"C**>i***>i** **>i***>l2
+       i    i      i
+"1"C**>i***>i*****>i***>l"a NOR b"
+
+0"Nicer version if NOT can be used (with Morgan's law):"
+
+0"Nicer if we allow NOT gates:"
+
+"a"s**>O**>i******>l2
+           i
+"b"s**>O**>i******>l2
+           i
+"1"C******>i**>O**>l"a NOR b"
+
+3"XOR"
+3"---"
 
 "a"s**>i**>l2
        i
@@ -4492,22 +4654,10 @@ s**>i**>l
        i
 "b"s**>i**>l"a XOR b"
 
-0"one garbage signal of XOR removed with a loop-back to an input:"
-0"(similar can be done with XNOR, OR, NOR, NOT, but not shown there)
 
-    ********
-    *      *
-    **>i***+**>l2
-       i   *
-"a"s**>i****
-       i
-"b"s**>i******>l"a XOR b"
+3"XNOR"
+3"----"
 
-
-
-
-
-"XNOR"
 0"Please not how 'antennas' are used to make some wires cross the chip,"
 0"the --(i)-- wire passes through it."
 
@@ -4519,38 +4669,14 @@ s**>i**>l
        i   i
 "b"s**>i**>i***>l"a XNOR b"
 
-"OR"
+0"Nicer version if NOT can be used (with Morgan's law):"
 
+"a"s**>i******>l2
+       i
+"1"C**>i******>l2
+       i
+"b"s**>i**>O**>l"a XNOR b"
 
-"a"s**>i***>i***>l2
-       i    i
-"b"s**>i* *>i***>l2
-       i x  i
-"1"C**>i* *>i***>l"a OR b"
-
-
-"NOR"
-
-0"(TODO: verify if there is no way with 2 gates)"
-
-"a"s******** ******** ********>l2
-            x       * *
-"b"s******** *******-X-*******>l2
-        *       *   * *  *
-"1"C****+*******+**** ***+****>l2
-       vv      vv       vv
-"1"C*** a>e**** a>e***** a>e**>l"a NOR b"
-      *   ^   *   ^    *   ^
-      *****   *****    *****
-
-
-"a"s***** ***** *******>l2
-         x    * *
-"b"s**>i* *>i*-X-*>i***>l2
-       i    i * *  i
-"1"C**>i***>i** **>i***>l2
-       i    i      i
-"1"C**>i***>i*****>i***>l"a NOR b"
 
 0"FIT:x"
 
