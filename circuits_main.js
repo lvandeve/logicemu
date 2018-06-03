@@ -2022,7 +2022,7 @@ registerCircuit('8-bit fully customizable barrel shifter', `
                     *     *     *     *     *     *     *     *
                     s     s     s     s     s     s     s     s
 
-`);
+`, 'fullshift');
 
 
 registerTitle('Flip-flops');
@@ -3128,7 +3128,7 @@ s****>d>e>c*****>l
     *   ^
     *****
 
-`);
+`, 'edge');
 
 registerTitle('Displays');
 
@@ -3146,7 +3146,7 @@ registerCircuit('colored LEDs', `
   *^* *^* *m* *m* *^* *^* *m* *m*
    |   |   |   |   |   |   |   |
    s   s   s   s   s   s   s   s
-`);
+`, 'colored_leds');
 
 
 
@@ -3160,7 +3160,7 @@ registerCircuit('colored LEDs wave', `
       *]c>c]c--->l5
       *>c]c]c--->l6
       *]c]c]c--->l7
-`);
+`, 'wave');
 
 
 registerCircuit('7-segment display', `
@@ -3252,7 +3252,7 @@ registerCircuit('10 7-segments', `
      ||| | ||| ||| | ||| ||| | ||| ||| | ||| ||| | ||| ||| | ||| ||| | ||| ||| | ||| ||| | ||| ||| | |||
      sSS S SSS sss s SSs SsS S sSS Sss S SSS SSs s SSs SSs S SsS SSS S SsS sss s SSS SSS S SSS SSs S SSS
 
-`);
+`, '10_7_seg');
 
 
 registerCircuit('Hello World terminal', `
@@ -3365,7 +3365,7 @@ registerCircuit('Synchronous down counter', `
     ^     ^     ^     ^     ^     ^     ^     ^
     ***************************************************p
 
-`);
+`, 'down_counter');
 
 
 registerCircuit('Synchronous up/down counter', `
@@ -3383,7 +3383,7 @@ registerCircuit('Synchronous up/down counter', `
       *     *     *     *     *     *     *     *
     ******************************************************s"up/down"
 
-`);
+`, 'up_down_counter');
 
 
 registerCircuit('Synchronous up/down counter w. load', `
@@ -3411,7 +3411,7 @@ registerCircuit('Synchronous up/down counter w. load', `
 
 
 
-`);
+`, 'full_counter');
 
 
 registerCircuit('register', `
@@ -3488,6 +3488,9 @@ registerCircuit('register', `
 
 registerCircuit('serial-in, serial-out shift register', `
 
+0"The serial-in, serial-out (SISO) shift register,"
+0"reads one input value per tick, and outputs one per tick later."
+
  "D"s**>d*>d*>d*>d*>d*>d*>d*>d**>l
         #  #  #  #  #  #  #  #
         c  c  c  c  c  c  c  c
@@ -3498,6 +3501,10 @@ registerCircuit('serial-in, serial-out shift register', `
 
 
 registerCircuit('serial-in, parallel-out shift register', `
+
+0"The serial-in, parallel-out (SIPO) shift register,"
+0"reads one input value per tick, and outputs all at the same time,"
+0"to the correct wires after the correct amount of shifts."
 
 
         l  l  l  l  l  l  l  l
@@ -3512,6 +3519,9 @@ registerCircuit('serial-in, parallel-out shift register', `
 
 
 registerCircuit('parallel-in, serial-out shift register', `
+
+0"The parralel-in, serial-out (PISO) shift register,"
+0"reads all inputs at the same time, then outputs them one by one."
 
 
 "W = write to the register"
@@ -3549,7 +3559,7 @@ registerCircuit('rotating shift register', `
          ^ ^ ^ ^ ^ ^ ^ ^
  "C"p*******************
 
-`);
+`, 'rot_shift');
 
 registerTitle('Coders');
 
@@ -4230,7 +4240,7 @@ registerCircuit('compact 0-999 display', `
                  p | | | | | | | | | |
                    s s s s s s s s s s
 
-`);
+`, 'compact_999_display');
 
 
 registerCircuit('keypad', `
@@ -5830,7 +5840,7 @@ registerCircuit('mirror bits', `
       x   x   x   x
      * * * * * * * *
      s s s s s s s s
-`);
+`, 'mirror');
 
 
 registerCircuit('shuffle & unshuffle bits', `
@@ -6134,7 +6144,7 @@ registerCircuit('4-bit majority gate', `
 
 0"for more bits, try the bit sorter"
 
-`);
+`, '4_bit_majority');
 
 
 registerCircuit('population count', `
@@ -6290,7 +6300,7 @@ c
 ^
 p
 
-`);
+`, 'roll');
 
 
 registerTitle('Cellular Automata');
@@ -6338,7 +6348,7 @@ registerCircuit('Conway\'s game of life single cell', `
             |           ||         |
                         s
 
-`);
+`, 'gol_cell');
 
 
 registerCircuit('Conway\'s game of life', `
@@ -7509,63 +7519,6 @@ registerCircuit('74181 ALU', `
 
 `, '74181');
 
-
-registerCircuit('compact 0-255 display', `
-
-
-         iiiiiiiiiiiiiiiiiiiii  iiiiiiiiiiiiiiiiiiiii  iiiiiiiiiiiiiiiiiiiii
-         i|| v ||| v ||| v | i  i|| v ||| v ||| v | i  i|| v ||| v ||| v | i
-         i|v$l$v|v$l$v|v$l$v i  i|v$l$v|v$l$v|v$l$v i  i|v$l$v|v$l$v|v$l$v i
-         i|l   l|l   l|l   l i  i|l   l|l   l|l   l i  i|l   l|l   l|l   l i
-         i|$   $|$   $|$   $ i  i|$   $|$   $|$   $ i  i|$   $|$   $|$   $ i
-         i|$   $|$   $|$   $ i  i|$   $|$   $|$   $ i  i|$   $|$   $|$   $ i
-         $&>l$$ &>l$$ &>l$$  i  $&>l$$ &>l$$ &>l$$  i  $&>l$$ &>l$$ &>l$$  i
-         i $   $ $   $ $   $ i  i $   $ $   $ $   $ i  i $   $ $   $ $   $ i
-         i $   $ $   $ $   $ i  i $   $ $   $ $   $ i  i $   $ $   $ $   $ i
-         i l   l l   l l   l i  i l   l l   l l   l i  i l   l l   l l   l i
-         i ^$l$^ ^$l$^ ^$l$^ i  i ^$l$^ ^$l$^ ^$l$^ i  i ^$l$^ ^$l$^ ^$l$^ i
-         i | ^ | | ^ | | ^ | i  i | ^ | | ^ | | ^ | i  i | ^ | | ^ | | ^ | i
-         iiiiiiiiiiiiiiiii89ii  iiiiiiiiiiiiiiiii89ii  iiiiiiiiiiiiiiiii89ii
-                ^^^^^^^^               ^^^^^^^^               ^^^^^^^^
-                ssssssss               ssssssss               ssssssss
-               "....8421               ....8421               ....8421"
-
-
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
- lllllll      lllllll lllllll lllllll        l   l   l   lI5
- ^^^^^^^      ^^^^^^^ ^^^^^^^ ^^^^^^^        ^   ^   ^   ^
- |||||||      ||||||| ||||||| |||||||        e<a e   *** *
- bBBBBBBI6    i6##### i6##### i6#####I87     ^ ^^^     * *
- bbbbBBb      ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^        * * **o<a e *
- BbBBbBB      p p i85################        * *   ^ ^^^ *
- BbbBBBB              ^ ^ ^ ^ ^ ^ ^ ^        * *** a e a e
- BBbbBBb              s s s s s s s s        *   * ^^^ ^^^
- BBbBBbB                                     *   * * * * *
- BBBBBbB                                     *   * * * * *
- bbbbBBB          l l l l l l l l l l        * **+**-+-* *
- BBBBBBB          ^ ^ ^ ^ ^ ^ ^ ^ ^ ^        * * *   *   *
- BBbBBBB          | | | | | | | | | |        * o<+*a<+*o<*
- BBBbBBB          | i5##### i5##### |        * ^ * ^ * ^ *
- BBBBBbb          | ^ ^ ^ ^ ^ ^ ^ ^ |        *** *** *** *
- bBBBbbB          | | | | | | | | | |        s   s   s   s
- BbBBBBb          i5##### i5##### |I|
- BBBBbbB          ^ ^ ^ ^ ^ ^ ^ ^ |8|
- BBBbbbB          | | | | | | | | |5|     v* v* l l l v* *v  v* v* l l l v* *v  v* v* l l l v* *v
-    ^^^^          p | | i5##### | | |     l| l| ^ ^ ^ l x l  l| l| ^ ^ ^ l x l  l| l| ^ ^ ^ l x l
-    ||||            | | ^ ^ ^ ^ | | |      |  | | | |  * *    |  | | | |  * *    |  | | | |  * *
-    ||||            | | | | | | | | |   i87#######################################################I89
-    ssss            | i5##### | | | |                                                     ^^^^^^^^
-                    | ^ ^ ^ ^ | | | |                                                     ssssssss
-                    | | | | | | | | |
-                    i5##### | | | | |
-                    ^ ^ ^ ^ | | | | |
-                    p | | | | | | | |
-                      s s s s s s s s
-
-`);
-
 registerCircuit('compact 0-65535 display', `
 
          #################################
@@ -7652,7 +7605,7 @@ i87#############################################################################
                                                                                 ^^^^^^^^^^^^^^^^
                                                                                 ssssssssssssssss
 
-`);
+`, 'compact_65535_display');
 
 
 
@@ -7696,7 +7649,7 @@ l<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<sI16
   1098765432109876 5432109876543210
   ssssssssssssssss ssssssssssssssss
 
-`);
+`, 'decimal_adder');
 
 
 

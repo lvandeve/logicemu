@@ -137,8 +137,7 @@ function clone(obj) {
   throw new Error('Cloning this object not supported.');
 }
 
-// gets CGI parameter from URL
-function getParameterByName(name, opt_url) {
+function getCGIParameterByName(name, opt_url) {
   var url = opt_url || window.location.href;
   name = name.replace(/[\[\]]/g, "\\$&");
   var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
@@ -148,9 +147,33 @@ function getParameterByName(name, opt_url) {
   return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
+// like getCGIParameterByName, but with # instead of ?
+function getFragmentParameterByName(name, opt_url) {
+  var url = opt_url || window.location.href;
+  name = name.replace(/[\[\]]/g, "\\$&");
+  var regex = new RegExp("[#&]" + name + "(=([^&#]*)|&|#|$)");
+  var results = regex.exec(url);
+  if (!results) return null;
+  if (!results[2]) return '';
+  return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+// set value to null to remove it
+// currently overwrites all, but that's fine for now since we don't have multiple values in it
+function setFragment(name, value) {
+  if(value == null) {
+    window.location.hash = '';
+  } else {
+    window.location.hash = '#' + name + '=' + value;
+  }
+}
+
+// removes queries and fragments
 function getUrlWithoutQueries() {
   var url = window.location.href;
   var q = url.indexOf('?');
+  if(q >= 0) url = url.substr(0, q);
+  q = url.indexOf('#');
   if(q >= 0) url = url.substr(0, q);
   return url;
 }
@@ -2923,7 +2946,7 @@ function setTocHTML(toc, el) {
       span.style.textDecoration = 'underline';
       span.style.cursor = 'pointer';
       span.onclick = bind(function(circuit, title, id, index) {
-        parseText(circuit, title, id);
+        parseText(circuit, title, allRegisteredCircuits[index]);
         currentSelectedCircuit = index;
       }, circuit, title, id, i);
     }
@@ -6107,9 +6130,9 @@ function setDocumentTitle(text) {
 
 var firstParse = true; // to keep scrolled down if you were scrolled down before refresh
 
-function parseText(text, opt_title, opt_id) {
+function parseText(text, opt_title, opt_registeredCircuit) {
   if(firstParse) {
-    parseText2(text, opt_title, opt_id);
+    parseText2(text, opt_title, opt_registeredCircuit);
     return;
   }
   renderingMessageDiv.innerText = 'rendering';
@@ -6119,10 +6142,10 @@ function parseText(text, opt_title, opt_id) {
   // may force a redraw
   var dummy = worldDiv.offsetHeight;
   worldDiv.style.display = 'none';
-  window.setTimeout(bind(parseText2, text, opt_title, opt_id), 0);
+  window.setTimeout(bind(parseText2, text, opt_title, opt_registeredCircuit), 0);
 }
 
-function parseText2(text, opt_title, opt_id) {
+function parseText2(text, opt_title, opt_registeredCircuit) {
   // for the very first parse, do NOT scroll up, it is handy if you have
   // a big edited circuit open and refresh the browser to still see the
   // same one
@@ -6136,12 +6159,18 @@ function parseText2(text, opt_title, opt_id) {
   origtitle = opt_title;
   console.log(text);
 
-  if(opt_id) {
-    directLink.href = getUrlWithoutQueries() + '?id=' + opt_id;
-    directLink.style.visibility = 'visible';
+  var opt_id = opt_registeredCircuit ? opt_registeredCircuit.linkid : undefined;
+
+  if(opt_id && opt_id != 'welcome') {
+    //directLink.href = getUrlWithoutQueries() + '#id=' + opt_id;
+    //directLink.style.visibility = 'visible';
+    setFragment('id', opt_id);
   } else {
-    directLink.style.visibility = 'hidden';
+    //directLink.style.visibility = 'hidden';
+    setFragment('id', null);
   }
+
+  updateCircuitDropdowns(opt_registeredCircuit);
 
   // remove a first newline if present. typically in long string literal you begin the first line after the quote and really don't want that first empty line created by it
   if(text[0] == '\n') text = text.substr(1); // only the first one, typically in long string literal you begin the first line after the quote and really don't want that first empty line created by it
@@ -6655,7 +6684,7 @@ editButton.onclick = function() {
     editButton.innerText = 'edit';
     if(newtext != textbeforeedit) setLocalStorage(newtext, 'circuit_text');
     editmode = false;
-    parseText(newtext);
+    parseText(newtext, 'edited circuit');
   }
 };
 
@@ -6803,7 +6832,7 @@ function transform(text, op) {
 // 0=none, 1=rot90, 2=rot180, 3=rot270, 4=transpose, 5=flipver, 6=antitranpose, 7=fliphor
 function applyTransform(op) {
   var text = transform(origtext, op);
-  parseText(text);
+  parseText(text, 'transformed circuit');
 }
 
 // extreme debugging! makes size 8x bigger so use with care!
@@ -6812,7 +6841,7 @@ function applyAllTransforms() {
   for(var i = 0; i < 8; i++) {
     text += transform(origtext, i) + '\n';
   }
-  parseText(text);
+  parseText(text, 'transformed circuit');
 }
 
 function printTransform(text, op) {
@@ -6835,7 +6864,7 @@ prevCircuitButton.onclick = function() {
   }
   parseText(allRegisteredCircuits[currentSelectedCircuit].text,
       allRegisteredCircuits[currentSelectedCircuit].title,
-      allRegisteredCircuits[currentSelectedCircuit].linkid);
+      allRegisteredCircuits[currentSelectedCircuit]);
 };
 
 var nextCircuitButton = makeUIElement('button', menuRow1El, true);
@@ -6849,7 +6878,7 @@ nextCircuitButton.onclick = function() {
   }
   parseText(allRegisteredCircuits[currentSelectedCircuit].text,
       allRegisteredCircuits[currentSelectedCircuit].title,
-      allRegisteredCircuits[currentSelectedCircuit].linkid);
+      allRegisteredCircuits[currentSelectedCircuit]);
 };
 
 
@@ -6908,7 +6937,7 @@ var githubLink = makeElement('span', menuRow2El);
 githubLink.innerHTML = '&nbsp<a href="https://github.com/lvandeve/logicemu">github</a>';
 
 var indexLink = makeElement('span', menuRow1El);
-if(getParameterByName('id')) {
+if(getCGIParameterByName('id')) {
   indexLink.innerHTML = '&nbsp;&nbsp;<a href="' + getUrlWithoutQueries() + '">index</a>';
 } else {
   indexLink.innerHTML = 'index';
@@ -6918,18 +6947,18 @@ if(getParameterByName('id')) {
   indexLink.style.cursor = 'pointer';
   indexLink.onclick = function() {
     if(origtext == introText) return;
-    parseText(introText, introTitle, 'welcome')
+    parseText(introText, introTitle)
   };
 }
 
 
-var directLinkSpan = makeElement('span', menuRow1El);
+/*var directLinkSpan = makeElement('span', menuRow1El);
 directLinkSpan.innerHTML = '&nbsp;&nbsp;';//<a href="' + getUrlWithoutQueries() + '">direct link</a>';
 var directLink = makeElement('a', directLinkSpan);
 directLink.innerText = 'direct link';
 directLink.href = getUrlWithoutQueries();
 directLink.style.visibility = 'hidden';
-directLink.title = 'external link to link directly to this circuit rather than the index page';
+directLink.title = 'external link to link directly to this circuit rather than the index page';*/
 
 
 // This button is commented out, because exporting a circuit only makes sense if you edited it, and if you edit circuits you already know how to copypaste their ASCII text from the 'edit' textfield
@@ -6960,12 +6989,41 @@ exportButton.onclick = function() {
   }
 };*/
 
+function maybeLoadFromLinkId() {
+  var link_id = getFragmentParameterByName('id');
+  if(!link_id) return;
+
+  var linkableCircuit = linkableCircuits[link_id];
+  if(linkableCircuit) {
+    initialCircuitText = linkableCircuit[1];
+    initialTitle = linkableCircuit[0];
+    initialId = link_id;
+    currentSelectedCircuit = linkableCircuit[2];
+  } else {
+    initialCircuitText = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
+    initialTitle = introTitle;
+  }
+}
+
+function updateCircuitDropdowns(opt_registeredCircuit) {
+  if(!opt_registeredCircuit) {
+    for(var i = 0; i < circuitGroups.length; i++) {
+      circuitGroups[i].dropdown.selectedIndex = 0;
+    }
+    return;
+  }
+
+  for(var i = 0; i < circuitGroups.length; i++) {
+    if(i == opt_registeredCircuit.group) {
+      circuitGroups[i].dropdown.selectedIndex = opt_registeredCircuit.groupindex + 1;
+    } else {
+      circuitGroups[i].dropdown.selectedIndex = 0;
+    }
+  }
+}
 
 function CircuitGroup(name) {
   this.circuits = [];
-  this.circuitsNumbers = [];
-  this.circuitsNames = [];
-  this.circuitsIds = [];
   this.main = makeElement('div', circuitDropdownSpan);
   this.main.style.display = 'inline-block';
   this.title = makeElement('span', this.main);
@@ -6977,10 +7035,9 @@ function CircuitGroup(name) {
   var that = this;
   this.dropdown.onchange = function() {
     var index = that.dropdown.selectedIndex - 1;
-    currentSelectedCircuit = that.circuitsNumbers[index];
     var c = that.circuits[index];
-    parseText(c, that.circuitsNames[index], that.circuitsIds[index]);
-    that.dropdown.selectedIndex = 0;
+    currentSelectedCircuit = c.index;
+    parseText(c.text, c.title, c);
   };
 }
 
@@ -7007,16 +7064,19 @@ function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
   if(opt_is_title && name != '--------') dropdownname = '--- ' + name + ' ---';
   var el = makeElement('option', currentCircuitGroup.dropdown).innerHTML = dropdownname;
   var index = allRegisteredCircuits.length;
-  currentCircuitGroup.circuits.push(circuit);
-  currentCircuitGroup.circuitsNumbers.push(index);
-  currentCircuitGroup.circuitsNames.push(name);
-  currentCircuitGroup.circuitsIds.push(opt_link_id);
   var c = {};
   c.text = circuit;
   c.title = name;
   c.linkid = opt_link_id;
   c.istitle = opt_is_title;
   c.group = circuitGroups.length - 1;
+  c.index = index;
+  c.groupindex = currentCircuitGroup.circuits.length;
+  /*currentCircuitGroup.circuits.push(circuit);
+  currentCircuitGroup.circuitsNumbers.push(index);
+  currentCircuitGroup.circuitsNames.push(name);
+  currentCircuitGroup.circuitsIds.push(opt_link_id);*/
+  currentCircuitGroup.circuits.push(c);
   allRegisteredCircuits.push(c);
   if(opt_link_id) {
     linkableCircuits[opt_link_id] = [name, circuit, index];

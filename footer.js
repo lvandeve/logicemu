@@ -38,19 +38,7 @@ if (stored_text != '' && !!stored_text) {
   initialTitle = 'stored circuit';
 }
 
-var link_id = getParameterByName('id');
-if(link_id) {
-  var linkableCircuit = linkableCircuits[link_id];
-  if(linkableCircuit) {
-    initialCircuitText = linkableCircuit[1];
-    initialTitle = linkableCircuit[0];
-    initialId = link_id;
-    currentSelectedCircuit = linkableCircuit[2];
-  } else {
-    initialCircuitText = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
-    initialTitle = introTitle;
-  }
-}
+maybeLoadFromLinkId();
 
 if(initialCircuitText) {
   parseText(initialCircuitText, initialTitle, initialId);
