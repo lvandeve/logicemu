@@ -158,13 +158,27 @@ function getFragmentParameterByName(name, opt_url) {
   return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-// set value to null to remove it
+// set value to null or undefined to remove it
 // currently overwrites all, but that's fine for now since we don't have multiple values in it
 function setFragment(name, value) {
-  if(value == null) {
-    window.location.hash = '';
+  if(history && history.replaceState) {
+    // using history to NOT have history!
+    // with history.replaceState, this avoids it creating a new back-button entry each time you update the URL fragment
+    // reason for not storing this as history: it doesn't actually work because there's nothing here that handles pressing the back button,
+    // and, it's quite annoying if this app creates a long back button history so you can't go back to the real previous website you came from.
+    // if I do implement history button at some point, maybe it should only go back to index, but not through all circuits visited to avoid that annoyance
+    if(!value) {
+      if(window.location.hash) history.replaceState(undefined, undefined, '#');
+    } else {
+      history.replaceState(undefined, undefined, '#' + name + '=' + value);
+    }
   } else {
-    window.location.hash = '#' + name + '=' + value;
+    // fallback for browsers that don't support history.replaceState
+    if(!value) {
+      if(window.location.hash) window.location.hash = '';
+    } else {
+      window.location.hash = '#' + name + '=' + value;
+    }
   }
 }
 
@@ -6989,16 +7003,28 @@ exportButton.onclick = function() {
   }
 };*/
 
+
+// called by footer.js
+function maybeLoadFromLocalStorage() {
+  // the text you last edited is remembered. To remove the memory, use the edit button, clear the string, and save
+  var stored_text = getLocalStorage('circuit_text');
+  if (stored_text != '' && !!stored_text) {
+    initialCircuitText = stored_text;
+    initialTitle = 'stored circuit';
+  }
+}
+
+// called by footer.js
 function maybeLoadFromLinkId() {
   var link_id = getFragmentParameterByName('id');
   if(!link_id) return;
 
   var linkableCircuit = linkableCircuits[link_id];
   if(linkableCircuit) {
-    initialCircuitText = linkableCircuit[1];
-    initialTitle = linkableCircuit[0];
+    initialCircuitText = linkableCircuit.text;
+    initialTitle = linkableCircuit.title;
     initialId = link_id;
-    currentSelectedCircuit = linkableCircuit[2];
+    currentSelectedCircuit = linkableCircuit.index;
   } else {
     initialCircuitText = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
     initialTitle = introTitle;
@@ -7072,14 +7098,10 @@ function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
   c.group = circuitGroups.length - 1;
   c.index = index;
   c.groupindex = currentCircuitGroup.circuits.length;
-  /*currentCircuitGroup.circuits.push(circuit);
-  currentCircuitGroup.circuitsNumbers.push(index);
-  currentCircuitGroup.circuitsNames.push(name);
-  currentCircuitGroup.circuitsIds.push(opt_link_id);*/
   currentCircuitGroup.circuits.push(c);
   allRegisteredCircuits.push(c);
   if(opt_link_id) {
-    linkableCircuits[opt_link_id] = [name, circuit, index];
+    linkableCircuits[opt_link_id] = c;
     linkableCircuitsOrder.push(opt_link_id);
   }
 }

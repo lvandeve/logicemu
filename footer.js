@@ -30,17 +30,12 @@ been initialized and registered.
 var initialCircuitText = introText;
 var initialTitle = introTitle;
 var initialId = 'welcome';
+var initialRegisteredCircuit = undefined;
 
-// the text you last edited is remembered. To remove the memory, use the edit button, clear the string, and save
-var stored_text = getLocalStorage('circuit_text');
-if (stored_text != '' && !!stored_text) {
-  initialCircuitText = stored_text;
-  initialTitle = 'stored circuit';
-}
-
+maybeLoadFromLocalStorage();
 maybeLoadFromLinkId();
 
 if(initialCircuitText) {
-  parseText(initialCircuitText, initialTitle, initialId);
+  parseText(initialCircuitText, initialTitle, linkableCircuits[initialId]);
 }
 

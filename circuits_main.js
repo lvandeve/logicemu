@@ -4378,7 +4378,7 @@ s**>e**>l
 0"here. If interested check out literature on it and try out an online quantum"
 0"computer simulator."
 
-`, 'quantum');
+`, 'quantum_gates');
 
 
 registerCircuit('Fredkin gate', `
@@ -5108,6 +5108,26 @@ registerCircuit('Relay Logic', `
 
 0"Here, we simulate different types of relays, and build logic gates out"
 0"of them."
+
+    s
+    *
+    ***
+    v *
+  *>V*+**>l
+  *   *
+s** ***
+  * * w
+  **+>V**>l
+    *
+    ***
+    v *
+  *>V*+**>l
+  *   *
+s**   *
+  *   w
+  ***>V**>l
+
+
 
 0"What is a relay? It's a controlled switch. Optical versions exist, but the typical original version works"
 0"electromagnetically: It has is a coil and a mechanical switch. When you send current through the coil,"
