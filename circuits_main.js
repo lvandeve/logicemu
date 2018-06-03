@@ -2043,7 +2043,7 @@ registerCircuit('flip-flops tutorial', `
 0"All of these types have a clock input C. This clock is edge-triggered,"
 0"that is, only at that exact instant where it goes on,"
 0"it will update its state. At any other time, while the clock is high"
-0"or low, it will remember that state.
+0"or low, it will remember that state."
 
 0"SR Flip-Flop"
 0"------------"
@@ -2523,7 +2523,7 @@ s****>d**]a**>l
 0"touching the clock). Now your inputs are still all off. Since J and K"
 0"are off, if you now enable to clock, a perfect JK flip-flop should not"
 0"turn on. But now enable to clock on the above one, and observe what"
-0"happens: it goes on anyway, because turnong the J off and on again"
+0"happens: it goes on anyway, because turning the J off and on again"
 0"managed to change the state of the first latch. The D-flip-flop did"
 0"not suffer from this problem, because the D was wired in such a way"
 0"that it always actively provides either a set or a reset to the inputs."
@@ -2700,9 +2700,19 @@ registerCircuit('flip-flops (from NAND)', `
 0"above, with as only reason to have the Q and Q' in more desirable"
 0"positions in the circuits below that use this same core."
 
-0"Note that most other circuits below will all be nicely active-high,"
-0"because we'll be using NAND gates at the input of this latch as well,"
-0"which will invert the inputs making them effectively active-high."
+0"To try it out more intuitivily with active-high input, here it is"
+0"with the inputs inverted at the cost of two extra NANDs:"
+
+ "S"s**>A>A**>l"Q  on"
+          ^ *
+           x
+          v *
+ "R"s**>A>A**>l"Q' off"
+
+0"Note that most other circuits below will all be nicely active-high"
+0"while using the first active-low latch, because we'll be using NAND"
+0"gates at the input of this latch as well, which will invert the"
+0"inputs making them effectively active-high."
 
 0"The JK latch can also be made with 4 NAND gates."
 0"Comparing this to the earlier JK latch: this is like using its SR"
@@ -2873,7 +2883,9 @@ registerCircuit('flip-flops (from NAND)', `
 
 
 0"Now let's add the master-slave JK flip-flop with two JK latches again,"
-0"though remember this one is not TRULY an edge triggered JK flip-flop."
+0"though remember this one is not TRULY an edge triggered JK flip-flop, as"
+0"seen in the previous flip-flop tutorial (it's broken because, starting with"
+0"everything off, enable J, disable J, enable C. It toggles while it shouldn't)
 
 0"The version with 3-input NANDs:"
 
@@ -2941,13 +2953,13 @@ registerCircuit('flip-flops (from NAND)', `
 
 0"A more compact looking version of the same thing:"
 
-          *******************
-          v v               *
-"J"s*****>A>A *>A**>A**>A**>A<****>l
-          v v * ^ v ^ * ^ v v *
-"K"s*****>A>A** A>A>A<* *>A>A**
-                ^       *
-"C"s*********************
+          ***********************
+          v v                   *
+"J"s*****>A>A *>A**>A<*>A**>A***+**>l"Q"
+          v v * ^ v v * ^ v ^ * *
+"K"s*****>A>A** A>A>A** *>A>A<* *
+                ^       *   *   *
+"C"s*********************   *****
 
 0"RENDER:graphical"
 
@@ -2964,9 +2976,9 @@ registerCircuit('flip-flops (from counters)', `
 0"possible to change state while the clock is high instead of only on clock"
 0"rising edge"
 
-"D" s**>e<*
-        v c***>l
-"E" s**>a*^
+"D" s**>e<c**>l
+        v ^
+"E" s**>a**
 
 0"D flipflop. Two c's are needed to prevent anything from changing"
 0"except when clock goes from low to high."
@@ -2978,9 +2990,10 @@ registerCircuit('flip-flops (from counters)', `
 "C" s********
 
 0"It's not possible to do the above or any of the next flip-flops with only"
-0"a single c, because a c's output comes 1 tick after its input, and when"
-0"looping the output back to the input, needed for the control logic, it"
-0"may disable itself the next tick, like this:"
+0"a single c, because when looping c's output back to the input, needed"
+0"for the control logic, it will disable itself the next tick, like below:"
+0"(if you've ever seen one of those amusing 'useless machines' that powers"
+0"off its own on switch, this does exactly the same)"
 
     ***
     v *
@@ -3018,7 +3031,7 @@ s**>c****>l
               m   ^
 "C" s**************
 
-`);
+`, 'flip_flops_counters');
 
 
 registerCircuit('flip-flops (from Qq)', `
@@ -3080,7 +3093,7 @@ registerCircuit('flip-flops (from Qq)', `
 
 
 
-`);
+`, 'flip_flops_qq');
 
 
 registerCircuit('edge detectors', `
@@ -3244,31 +3257,31 @@ registerCircuit('10 7-segments', `
 
 registerCircuit('Hello World terminal', `
 
-    TTTTTTT<**************************
-    TTTTTTT                          *
-    TTTTTTT                          *
-    TTTTTTT                          *
-    ^^^^^^^                          *
-    |||||||                          *
-    bBbbbbB<-----------------------* *
-    BBbbBbb<---------------------* * *
-    BBbBBbb<-------------------* * * *
-    BBBbbBb<-----------------* * * * *
-    BBbBBBB<---------------* * * * * *
-    BBBbBBB<-------------* * * * * * *
-    bBbbbbb<-----------* * * * * * * *
-    BBbBBBB<---------* * * * * * * * *
-    BBbBBbb<-------* * * * * * * * * *
-    BBbBBbb<-----* * * * * * * * * * *
-    BBbbBbB<---* * * * * * * * * * * *
-    BbbBbbb<-* * * * * * * * * * * * *
-             * * * * * * * * * * * * *
-           **+*+*+*+*+*+*+*+*+*+*+** *
-           * * * * * * * * * * * * * *
-           *>d>d>d>d>d>d>d>d>d>d>d>d *
-             C c c c c c c c c c c c *
-             ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ *
-             ************************R
+    TTTTTTT<****************************
+    TTTTTTT                            *
+    TTTTTTT                            *
+    TTTTTTT                            *
+    ^^^^^^^                            *
+    |||||||                            *
+    bBbbbbB<-----------------------*   *
+    BBbbBbb<---------------------* *   *
+    BBbBBbb<-------------------* * *   *
+    BBBbbBb<-----------------* * * *   *
+    BBbBBBB<---------------* * * * *   *
+    BBBbBBB<-------------* * * * * *   *
+    bBbbbbb<-----------* * * * * * *   *
+    BBbBBBB<---------* * * * * * * *   *
+    BBbBBbb<-------* * * * * * * * *   *
+    BBbBBbb<-----* * * * * * * * * *   *
+    BBbbBbB<---* * * * * * * * * * *   *
+    BbbBbbb<-* * * * * * * * * * * *   *
+             * * * * * * * * * * * *   *
+           **+*+*+*+*+*+*+*+*+*+*+**   *
+           * * * * * * * * * * * * *   *
+           *>d>d>d>d>d>d>d>d>d>d>d>d   *
+             C c c c c c c c c c c c   *
+             ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^   *
+             ************************d<R
 
 `, 'hello_world');
 
@@ -3405,7 +3418,7 @@ registerCircuit('register', `
 0"A register can be made from a D flip-flop plus a mux. A D flip-flop is"
 0"in fact sufficient to have a working memory unit useful as a register,"
 0"but the addition of the mux allows to have an independent 'enable'"
-0"flag that will *not* interfere with the clock signal (if you would"
+0"flag that will not interfere with the clock signal (if you would"
 0"try to AND an enable signal with the clock, then enabling it while"
 0"the clock is high would cause a positive edge that should not be there)."
 0"This is desirable because in a CPU you want registers to only be written"
@@ -3461,7 +3474,7 @@ registerCircuit('register', `
     ^
     s
 
-0"And then used as follows:
+0"And then used as follows:"
 
        llllllll
        ^^^^^^^^
@@ -3481,7 +3494,7 @@ registerCircuit('serial-in, serial-out shift register', `
         ^  ^  ^  ^  ^  ^  ^  ^
  "C"p*************************
 
-`);
+`, 'siso');
 
 
 registerCircuit('serial-in, parallel-out shift register', `
@@ -3495,7 +3508,7 @@ registerCircuit('serial-in, parallel-out shift register', `
         ^  ^  ^  ^  ^  ^  ^  ^
  "C"p*************************
 
-`);
+`, 'sipo');
 
 
 registerCircuit('parallel-in, serial-out shift register', `
@@ -3521,7 +3534,7 @@ registerCircuit('parallel-in, serial-out shift register', `
               ^     ^     ^     ^     ^     ^     ^
  "C"s****************************************************
 
-`);
+`, 'piso');
 
 registerCircuit('rotating shift register', `
 
@@ -3707,6 +3720,8 @@ registerCircuit('simple encoders', `
 
    "FEDCBA9876543210"
 
+0"FIT:x"
+
 `, 'encoder');
 
 
@@ -3808,6 +3823,8 @@ s****+*+*+>o***+*+*+>o***+*+*+>o***+*+*+>o**>l
    * * * *   * * * *   * * * *   * * * *
    s s s s   s s s s   s s s s   s s s s
   "f e d c   b a 9 8   7 6 5 4   3 2 1 0"
+
+0"FIT:x"
 `, 'priority_encoder');
 
 
@@ -6295,11 +6312,11 @@ registerCircuit('Conway\'s game of life single cell', `
           y                          y
           y           ###"clk"       y
           y           ###            y
-        s-7           ##p-->c<*      1-s
-          y *----]a------>a>d *      y
+        s-7           ##p-->c<d      1-s
+          y *----]a------>a>d ^      y
           y *     ^       ^ t<*p#    y
           y o<a e>e<o<a e>o<*  ##    y
-          y ^ ^^^   ^ ^^^   * "tgl"  y
+          y ^ ^^^   ^ ^^^   * "togl" y
           y a e *   a e *   *        y
           y ^^^ *   ^^^ *   *        y
           y * * ** ** * *** *        y
@@ -6422,9 +6439,9 @@ registerCircuit('Conway\'s game of life', `
        s    *         ||        *    s          l
         ; yy8yyyyyyyyy80yyyyyyyy8yy /      ls   ^   sl
          *7                       1*        h;  |s /h
-          y             g-->c<*s  y          ;h |vh/
-          y *----]a------>a>d |   y           i####
-          y |     ^       ^ t<*   y           #   #<--s
+          y             g-->c<d   y          ;h |vh/
+          y *----]a------>a>d ^   y           i####
+          y |     ^       ^ t<*s  y           #   #<--s
           y o<a e>e<o<a e>o<*     y         s>#   #-->l
           y ^ ^^^   ^ ^^^   |     y       l<--#>l #<s
           y a e *   a e *   |     y           #   #
@@ -6449,9 +6466,9 @@ registerCircuit('Conway\'s game of life', `
 registerCircuit('Conway\'s game of life galaxy', `
 
    "tick" g    "autotick"
-    p##-->o<-----##R2
-    ###          ###
-    ###          ###
+    p##-->o<-----###
+    ###         2R##<d<C
+    ###          ### 4
 
 
 
@@ -6543,17 +6560,17 @@ registerCircuit('Conway\'s game of life galaxy', `
        s    *         ||        *    s          l
         ; yy8yyyyyyyyy80yyyyyyyy8yy /      ls   ^   sl
          *7                       1*        h;  |s /h
-          y             g-->c<*s  y          ;h |vh/
-          y *----]a------>a>d |   y           i####
-          y |     ^       ^ t<*   y           #   #<--------o<sI1
+          y         g------>c<d   y          ;h |vh/
+          y *----]a------>a>d ^   y           i####
+          y |     ^       ^ t<*s  y           #   #<--------o<sI1
           y o<a e>e<o<a e>o<*     y         s>#   #-->l     ^
-          y ^ ^^^   ^ ^^^   |     y       l<--#>l #<s       e<
-          y a e *   a e *   |     y           #   #         ^|
+          y ^ ^^^   ^ ^^^   |     y       l<--#>l #<s       a<
+          y a e *   a e *   |     y           #   #         m|
           y ^^^ |   ^^^ |   |     y          /#####;        d|
        s--6 0 2 4   1 3 5   |     8->l      hh  ^| hh       ^|
-       l<-8 yyyyyyyyyyyyyyy |     2--s     l/   s|  ;l      d|
-          y 0 1 2   3 4   5 |     y        s     v   s      ^|
-          y a e o<a e o<a e |     y              l          a*
+       l<-8 yyyyyyyyyyyyyyy |     2--s     l/   s|  ;l      C*
+          y 0 1 2   3 4   5 |     y        s     v   s
+          y a e o<a e o<a e |     y              l
           y ^^^ ^ ^^^ ^ ^^^ |     y
           y * * a e * a e * |     y
           y | | ^^^ | ^^^ | |     yI
@@ -6571,9 +6588,9 @@ registerCircuit('Conway\'s game of life galaxy', `
 registerCircuit('Conway\'s game of life wrap', `
 
    "tick" g    "autotick"
-    p##-->o<-a<--s##
-    ###      ^   ###
-    ###      r4  ###
+    p##-->o<-----###
+    ###          ##r4
+    ###          ###
 
 
 
@@ -6667,9 +6684,9 @@ registerCircuit('Conway\'s game of life wrap', `
        s    *         ||        *    s          l
         ; yy8yyyyyyyyy80yyyyyyyy8yy /      ls   ^   sl
          *7                       1*        h;  |s /h
-          y             g-->c<*s  y          ;h |vh/
-          y *----]a------>a>d |   y           i####
-          y |     ^       ^ t<*   y           #   #<--s
+          y             g-->c<d   y          ;h |vh/
+          y *----]a------>a>d ^   y           i####
+          y |     ^       ^ t<*s  y           #   #<--s
           y o<a e>e<o<a e>o<*     y         s>#   #-->l
           y ^ ^^^   ^ ^^^   |     y       l<--#>l #<s
           y a e *   a e *   |     y           #   #
@@ -6696,8 +6713,8 @@ registerCircuit('Conway\'s game of life ship', `
 
    "tick" g    "autotick"
     p##-->o<-----###
-    ###          ##R1
-    ###          ###
+    ###         1R##<d<C
+    ###          ### 4
 
 
 
@@ -6790,17 +6807,17 @@ registerCircuit('Conway\'s game of life ship', `
        s    *         ||        *    s          l
         ; yy8yyyyyyyyy80yyyyyyyy8yy /      ls   ^   sl
          *7                       1*        h;  |s /h
-          y             g-->c<*s  y          ;h |vh/
-          y *----]a------>a>d |   y           i####
-          y |     ^       ^ t<*   y           #   #<--------o<sI1
+          y         g------>c<d   y          ;h |vh/
+          y *----]a------>a>d ^   y           i####
+          y |     ^       ^ t<*s  y           #   #<--------o<sI1
           y o<a e>e<o<a e>o<*     y         s>#   #-->l     ^
-          y ^ ^^^   ^ ^^^   |     y       l<--#>l #<s       e<
-          y a e *   a e *   |     y           #   #         ^|
+          y ^ ^^^   ^ ^^^   |     y       l<--#>l #<s       a<
+          y a e *   a e *   |     y           #   #         m|
           y ^^^ |   ^^^ |   |     y          /#####;        d|
        s--6 0 2 4   1 3 5   |     8->l      hh  ^| hh       ^|
-       l<-8 yyyyyyyyyyyyyyy |     2--s     l/   s|  ;l      d|
-          y 0 1 2   3 4   5 |     y        s     v   s      ^|
-          y a e o<a e o<a e |     y              l          a*
+       l<-8 yyyyyyyyyyyyyyy |     2--s     l/   s|  ;l      C*
+          y 0 1 2   3 4   5 |     y        s     v   s
+          y a e o<a e o<a e |     y              l
           y ^^^ ^ ^^^ ^ ^^^ |     y
           y * * a e * a e * |     y
           y | | ^^^ | ^^^ | |     yI

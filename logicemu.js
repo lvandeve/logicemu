@@ -207,7 +207,7 @@ Good combinations of AUTOUPDATE and UPDATE_ALGORITHM are as follows:
 var AUTOUPDATE = 1; // 0: only update on manual tick, 1: update once whenever user switch or real time timer event happened, 2: update all the time, every so many ticks
 var UPDATE_ALGORITHM = 2; // 0=scanline, 1=fast recursive, 2=slow, 3=slow with infinite metastability fix
 
-// zoektermen: autochoose auto_choose autoalgo auto_algo
+// search words: autochoose auto_choose autoalgo auto_algo
 var AUTO_CHOOSE_MODE = true; // automatically choose AUTOUPDATE and UPDATE_ALGORITHM based on the circuit
 
 var numticks = 0;
@@ -282,8 +282,10 @@ var TYPE_XOR = TYPE_index++;
 var TYPE_NAND = TYPE_index++;
 var TYPE_NOR = TYPE_index++;
 var TYPE_XNOR = TYPE_index++;
-var TYPE_FLIPFLOP = TYPE_index++; // "c", "C", and all other FF parts
+var TYPE_FLIPFLOP = TYPE_index++; // "c", "C" when combined with other FF parts
+var TYPE_COUNTER = TYPE_index++; // standalone "c", "C"
 var TYPE_CONSTANT = TYPE_index++; // also "c", "C", but when they have no inputs. Why it exists: if you use C as constant, you do not want mode to become sequential due to this C, and we auto-set mode to sequential if any TYPE_FLIPFLOP is present
+var TYPE_DELAY = TYPE_index++;
 var TYPE_ROM = TYPE_index++;
 var TYPE_IC = TYPE_index++; // also called "sub"
 var TYPE_IC_PASSTHROUGH = TYPE_index++; // the switch gets internally converted into this. Behaves like OR, but will have always only 1 input
@@ -319,7 +321,7 @@ typesymbols[TYPE_PUSHBUTTON_OFF] = 'p'; typesymbols[TYPE_PUSHBUTTON_ON] = 'P';
 typesymbols[TYPE_TIMER_OFF] = 'r'; typesymbols[TYPE_TIMER_ON] = 'R'; typesymbols[TYPE_AND] = 'a';
 typesymbols[TYPE_OR] = 'o'; typesymbols[TYPE_XOR] = 'e'; typesymbols[TYPE_NAND] = 'A';
 typesymbols[TYPE_NOR] = 'O'; typesymbols[TYPE_XNOR] = 'E'; typesymbols[TYPE_FLIPFLOP] = 'c';
-typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_TRISTATE] = 'V';
+typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd'; typesymbols[TYPE_TRISTATE] = 'V';
 
 
 // all devices except flipflop, those are treated differently because multiple different cells of its type can form one component
@@ -525,7 +527,6 @@ function CallSub(id) {
       component.error = v.error;
       component.errormessage = v.errormessage;
       component.previnputs = clone(v.previnputs);
-      component.prevnumon = v.prevnumon;
       component.ff_cycle = v.ff_cycle;
       component.ff_cycle_time = v.ff_cycle_time;
       component.master = null; // handled further
@@ -572,7 +573,6 @@ function CallSub(id) {
       if(v.ff) {
         var ff = new FF();
         ff.value = v.ff.value;
-        ff.isdelay = v.ff.isdelay;
         component.ff = ff;
       }
       if(v.tristate) {
@@ -1879,10 +1879,45 @@ function VTE() {
   };
 }
 
+function countFFComponents(array) {
+  var o = {};
+  o.numc = 0;
+  o.numC = 0;
+  o.numQ = 0;
+  o.numff = 0;
+  o.numd = 0;
+  for(var i = 0; i < array.length; i++) {
+    var cell = world[array[i][1]][array[i][0]];
+
+    if(cell.circuitsymbol == 'C') o.numC++;
+    if(cell.circuitsymbol == 'c') o.numc++;
+    if(cell.circuitsymbol == 'Q') o.numQ++;
+    if(cell.circuitsymbol == 'd') o.numd++;
+    if(ffmap[cell.circuitsymbol]) o.numff++;
+  }
+  return o;
+}
+
+// returns [type, value]
+function getFFType(array) {
+  var num = countFFComponents(array);
+
+  var value = num.numC > 0;
+  var type = TYPE_FLIPFLOP;
+
+  if(num.numff == 1) {
+    // could also return TYPE_CONSTANT, but it depends on whetehr there are inputs
+    // or not and that's not known yet here...
+    if(num.numc || num.numC) type = TYPE_COUNTER;
+    if(num.numd) type = TYPE_DELAY;
+  }
+
+  return [type, value];
+}
+
 // flip flop
 function FF() {
   this.cells = [];
-  this.isdelay = false;
 
   this.value = false;
 
@@ -1893,25 +1928,14 @@ function FF() {
   // returns true if ok, false if error
   this.init1 = function(array) {
     var array2 = [];
-    var numc = 0;
-    var numC = 0;
-    var numQ = 0;
-    var numff = 0;
-    var numd = 0;
+    var num = countFFComponents(array);
+
     for(var i = 0; i < array.length; i++) {
       var cell = world[array[i][1]][array[i][0]];
       array2.push(cell);
-      if(cell.circuitsymbol == 'C') this.value = true;
-
-      if(cell.circuitsymbol == 'C') numC++;
-      if(cell.circuitsymbol == 'c') numc++;
-      if(cell.circuitsymbol == 'Q') numQ++;
-      if(cell.circuitsymbol == 'd') numd++;
-      if(ffmap[cell.circuitsymbol]) numff++;
     }
 
-    if(numff == 1 && numd == 1) this.isdelay = true;
-
+    if(num.numC) this.value = true;
 
     this.master = array2[0].components[0];
     for(var i = 0; i < array2.length; i++) {
@@ -2050,7 +2074,6 @@ function Component() {
   this.error = false;
   this.errormessage = null;
   this.previnputs = []; // previous values of these inputs (already negated for negated inputs), only used for counters. For some algorithms this is same as this.inputs[i].prevvalue, but for algorithm 1 in case of loops it is not.
-  this.prevnumon = 0;
   this.ff_cycle = false;
   this.ff_cycle_time = 0;
   this.input_ff_types = []; // only used by flipflops. 0=c, 1=j, 2=k, 3=d, 4=t, 5=q, 6=Q
@@ -2190,12 +2213,16 @@ function Component() {
       return numon == 0;
     } else if(this.type == TYPE_XNOR) {
       return (numon & 1) == 0;
+    } else if(this.type == TYPE_DELAY) {
+      return this.value; // not implemented in this function, but elsewhere
+    } else if(this.type == TYPE_COUNTER) {
+      return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_FLIPFLOP) {
-      return this.value; // counter NOT implemented in this function. Uses too much different variables.
+      return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_ROM) {
-      return this.value; // rom NOT implemented in this function, but elsewhere
+      return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_VTE) {
-      return this.value; // NOT implemented in this function, but elsewhere
+      return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_RANDOM) {
       return (Math.random() < 0.5);
     }
@@ -2221,6 +2248,13 @@ function Component() {
       }
     }
 
+    if(this.type == TYPE_COUNTER || this.type == TYPE_RANDOM) {
+      for(var i = 0; i < this.inputs.length; i++) {
+        this.previnputs[i] = true; // this ensures we will NOT have inputs counted as going from low to high initially
+      }
+    }
+
+    if(this.type == TYPE_DELAY && this.number < 0) this.number = 1;
 
     this.prevvalue = this.value = value;
   };
@@ -2232,7 +2266,10 @@ function Component() {
     var numon = 0;
     var numoff = 0;
 
-    var numc = 0; // for counter, not updated for other types
+    // for counter, flipflops, ..., not updated for other types
+    var numc = 0;
+    var numc_pos_edge = 0;
+    var numc_neg_edge = 0;
     var numf0 = 0;
     var numf1 = 0;
     var numF0 = 0;
@@ -2241,7 +2278,10 @@ function Component() {
     var numQ = 0;
     var rom_inputs = []; // only filled in if this is ROM
 
-    if(UPDATE_ALGORITHM == 3 && this.ff_cycle && this.ff_cycle_time > 5 && this.type != TYPE_FLIPFLOP && Math.random() < TWIDDLE_PROBABILITY) return;
+    if(UPDATE_ALGORITHM == 3 && this.ff_cycle && this.ff_cycle_time > 5 && this.type != TYPE_FLIPFLOP && Math.random() < TWIDDLE_PROBABILITY) {
+      // emulate flip flop made from gates metastability
+      return;
+    }
 
     for(var i = 0; i < this.inputs.length; i++) {
       var negated = this.inputs_negated[i];
@@ -2254,14 +2294,14 @@ function Component() {
       if(UPDATE_ALGORITHM == 0) {
         // simple but inconsistent (based on scanline order) algorithm
         value2 = component2.value;
-        if(this.type == TYPE_FLIPFLOP /*&& component2.type == TYPE_FLIPFLOP*/) value2 = component2.prevvalue; // otherwise shift registers don't work as intended with D flipflops made from counters
       } else if(UPDATE_ALGORITHM == 1) {
         // recursive fast algorithm
         if(!component2.updated) {
-          // this can happen if the cells were wrongly sorted for the fast update algorithm, but also simply if there are loops. So no action taken (we could have printed error in console or this.markError here, but then loops would not be supported)
+          // this can happen if the cells were wrongly sorted for the fast update algorithm,
+          //but also simply if there are loops. So no action taken (we could have printed
+          //error in console or this.markError here, but then loops would not be supported)
         }
         value2 = component2.value;
-        if(this.type == TYPE_FLIPFLOP /*&& component2.type == TYPE_FLIPFLOP*/) value2 = component2.prevvalue; // otherwise shift registers don't work as intended with D flipflops made from counters
       } else if(UPDATE_ALGORITHM == 2) {
         // slow algorithm, components only update based on previous value of inputs
         value2 = component2.prevvalue;
@@ -2269,34 +2309,61 @@ function Component() {
         // also slow algorithm, but as seen elsewhere this component has small chance to not update this tick
         value2 = component2.prevvalue;
       }
+
+      if(this.ff && this.type == TYPE_FLIPFLOP && (UPDATE_ALGORITHM == 0 || UPDATE_ALGORITHM == 1)) {
+        if(this.input_ff_types[i] >= 1 && this.input_ff_types[i] <= 4) {
+          // add a 1-tick delay to the non-clock inputs of built-in flip flops,
+          // otherwise serial-in shift registers from D flipflops don't work as intended
+          // the flipflops would be too fast and all update at once instead of one by one
+
+          // the shift register is not the only example why this is needed, in fast update modes
+          // when there are loops, the order in which components are updated is not defined (because there is
+          // no topographical order then), and that may cause some flipflops to read old values and
+          // others to read new values (that were already updated this cycle). We want all
+          // flipflops to update from data values from the same moment, the ones from the previous cycle, otherwise
+          // you might get e.g. 8-bit registers that partially updated from the previous, partially from new values...
+          value2 = component2.prevvalue;
+        }
+      }
+
+
       value2 = (value2 != negated);
       if (value2) numon++;
       else numoff++;
 
-      if(this.type == TYPE_FLIPFLOP) {
-        if(this.ff) {
-          var prevvalue2 = (this.previnputs[i] == undefined) ? value2 : this.previnputs[i];
-          this.previnputs[i] = value2;
-          if(this.input_ff_types[i] == 0) { // c
-            if(value2 && !prevvalue2) numc++;
-          } else if(this.input_ff_types[i] == 1) { // j
-            if(value2) numf1++;
-            else numf0++;
-          } else if(this.input_ff_types[i] == 2) { // k
-            if(value2) numF1++;
-            else numF0++;
-          } else if(this.input_ff_types[i] == 3) { // d
-            if(value2) { numf1++; numF0++; }
-            else  { numf0++; numF1++; }
-          } else if(this.input_ff_types[i] == 4) { // t
-            if(value2) { numf1++; numF1++; }
-            else  { numf0++; numF0++; }
-          } else if(this.input_ff_types[i] == 5) { // q
-            if(value2) numq++;
-          } else if(this.input_ff_types[i] == 6) { // Q
-            if(value2) numQ++;
-          }
+      // The this.ff check ensures this only happens for the flipflop master component
+      if(this.type == TYPE_FLIPFLOP && this.ff) {
+        var prevvalue2 = (this.previnputs[i] == undefined) ? value2 : this.previnputs[i];
+        this.previnputs[i] = value2;
+        if(this.input_ff_types[i] == 1) { // j
+          if(value2) numf1++;
+          else numf0++;
+        } else if(this.input_ff_types[i] == 2) { // k
+          if(value2) numF1++;
+          else numF0++;
+        } else if(this.input_ff_types[i] == 3) { // d
+          if(value2) { numf1++; numF0++; }
+          else  { numf0++; numF1++; }
+        } else if(this.input_ff_types[i] == 4) { // t
+          if(value2) { numf1++; numF1++; }
+          else  { numf0++; numF0++; }
+        } else if(this.input_ff_types[i] == 5) { // q
+          if(value2) numq++;
+        } else if(this.input_ff_types[i] == 6) { // Q
+          if(value2) numQ++;
+        } else { // c: this.input_ff_types[i] == 0, but also if undefined for some edge cases
+          if(value2) numc++;
+          if(value2 && !prevvalue2) numc_pos_edge++;
+          if(!value2 && prevvalue2) numc_neg_edge++;
         }
+      }
+
+      if(this.type == TYPE_COUNTER || this.type == TYPE_RANDOM) {
+        var prevvalue2 = (this.previnputs[i] == undefined) ? value2 : this.previnputs[i];
+        this.previnputs[i] = value2;
+        if(value2) numc++;
+        if(value2 && !prevvalue2) numc_pos_edge++;
+        if(!value2 && prevvalue2) numc_neg_edge++;
       }
 
       if(this.type == TYPE_ROM || this.type == TYPE_LED_RGB || this.type == TYPE_VTE) {
@@ -2325,10 +2392,18 @@ function Component() {
       for(var i = 0; i < rom_inputs.length && i < 3; i++) color += (rom_inputs[i] << i);
       this.rgbcolor = color;
     } else if(this.type == TYPE_FLIPFLOP) {
-      if(this.ff && !this.ff.isdelay) {
-        //we do not take the positive edge of the xor "e", but instead the xor of the positive edges. Otherwise while one input is high, a second input would be negative edge triggered. So we use num instead of e here.
-        var clocked = (numc & 1);
+      // beware that the numf0, numf1, numF0, numF1 inputs, which are the data inputs,
+      // have been delayed by 1 above, for the fast algorithms! This to make the built-in
+      // flipflops not TOO fast, otherwise serial shift registers from D's don't work like in real life.
 
+
+      //we do not take the positive edge of the xor "e", but instead the xor of the positive edges. Otherwise while one input is high, a second input would be negative edge triggered. So we use num instead of e here.
+      var clocked = (numc_pos_edge & 1);
+
+      // flip flops are made from multiple components (d, c, ...), but only one of them
+      // is designated as master component.
+      // Only the master component has its own ff. So it's updated only once, as intended.
+      if(this.ff) {
         if(numQ && numq) {
           this.ff.value = !this.ff.value;
         } else if(numQ) {
@@ -2345,39 +2420,44 @@ function Component() {
           }
         }
       }
-      else if(this.ff && this.ff.isdelay) {
-        //this.ff.value = this.ff.prevvalued || false;
-        //this.ff.prevvalued = numon;
 
-        if(this.number > 1 && this.number <= 256) {
-          if(!this.reg) {
-            this.reg = [];
-            this.regpos = 0;
-            for(var r = 0; r < this.number; r++) this.reg[r] = false;
-          }
-          this.reg[this.regpos] = numon;
-          this.regpos++;
-          if(this.regpos >= this.number) this.regpos = 0;
-          this.ff.value = this.reg[this.regpos];
-        } else {
-          this.ff.value = numon;
-        }
-      }
-
-      if(this.ff || (this.master && this.master.ff)) {
-        var value = this.master ? this.master.ff.value : this.ff.value;
+      var ff = (this.ff || (this.master && this.master.ff));
+      if(ff) {
+        var value = ff.value;
         // The output value of these particular cells of a flip flop, are inverted. Reading from Q gives inverted of what flip flops' full state is.
         if(this.corecell.circuitsymbol == 'Q' || this.corecell.circuitsymbol == 'k') value = !value;
         this.value = value;
       } else {
-        // It's a TYPE_FLIPFLOP but it has no ff. This is normally not possible, except if a user used the '[change]' dropdown to change a logic
-        // gate into a C. That means it's desired to act like a counter. So below is the code for doing so without using the 'ff' class.
-        //console.log('suspicious: ff component without ff field');
-        var trigger = (numon > this.prevnumon && ((this.prevnumon - numon) & 1)); // positive edge
-        if(trigger) {
-          this.value = !this.value;
+        console.log('suspicious: ff component without ff field');
+        //if(clocked) this.value = !this.value;
+      }
+    } else if(this.type == TYPE_COUNTER) {
+      var clocked = (numc_pos_edge & 1);
+      if(clocked) {
+        this.value = !this.value;
+      }
+    } else if(this.type == TYPE_RANDOM) {
+      var clocked = ((numc_pos_edge + numc_neg_edge) & 1);
+      if(clocked) {
+        this.value = (Math.random() < 0.5);
+      }
+    } else if(this.type == TYPE_DELAY) {
+      var number = this.number;
+      if(number < 0) number = 1; // default value
+      if(number > 256) number = 0; // too large, disable it
+      if(UPDATE_ALGORITHM == 2 || UPDATE_ALGORITHM == 3) number--; // slow algorithms already introduce a 1-tick delay!
+      if(number > 0) {
+        if(!this.reg) {
+          this.reg = [];
+          this.regpos = 0;
+          for(var r = 0; r < number + 1; r++) this.reg[r] = false;
         }
-        this.prevnumon = numon;
+        this.reg[this.regpos] = numon;
+        this.regpos++;
+        if(this.regpos >= number + 1) this.regpos = 0;
+        this.value = this.reg[this.regpos];
+      } else {
+        this.value = numon; // delay 0, so immediate
       }
     } else if(this.type == TYPE_TRISTATE) {
       this.value = this.tristate.update();
@@ -2385,13 +2465,6 @@ function Component() {
       this.value = false;
     /*} else if(this.type == TYPE_TIMER_ON) {
       this.value = this.clocked && this.getNewValue(numon, numoff);*/
-    } else if(this.type == TYPE_RANDOM) {
-      //var trigger = (numon > this.prevnumon && ((this.prevnumon - numon) & 1)); // positive edge
-      var trigger = ((this.prevnumon - numon) & 1); // pos or neg edge
-      if(trigger) {
-        this.value = (Math.random() < 0.5);
-      }
-      this.prevnumon = numon;
     } else {
       // regular gate, not flip-flop
       this.value = this.getNewValue(numon, numoff);
@@ -2419,12 +2492,12 @@ function Component() {
       var type = changeMode;
       var symbol = typesymbols[type];
       if(changeMode == 'c') {
-        type = this.inputs.length ? TYPE_FLIPFLOP : TYPE_CONSTANT;
+        type = this.inputs.length ? TYPE_COUNTER : TYPE_CONSTANT;
         value = false;
         symbol = 'c';
       }
       if(changeMode == 'C') {
-        type = this.inputs.length ? TYPE_FLIPFLOP : TYPE_CONSTANT;
+        type = this.inputs.length ? TYPE_COUNTER : TYPE_CONSTANT;
         value = true;
         symbol = 'C';
       }
@@ -2554,12 +2627,12 @@ var changeMode = null;
 
 // red, orange, yellow, green, blue, violet, pink, white
 var led_off_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
-var led_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', 'd58', 'white'];
-var led_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', 'fdd', 'ccc'];
-var led_light_bg_colors = ['#fffafa', '#fffcfa', '#fffff4', '#fafffa', '#fbfdff', '#faf8ff', 'fffdfd', 'fcfcfc'];
+var led_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
+var led_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
+var led_light_bg_colors = ['#fffafa', '#fffcfa', '#fffff4', '#fafffa', '#fbfdff', '#faf8ff', '#fffdfd', '#fcfcfc'];
 var led_light_fg_colors = ['#fcc', '#fa8', '#cc2', '#afa', '#ddf', '#d8f', 'fac', '#fff'];
 
-// RGBY order: bit 1: red, bit 2: green, bit 4: blue
+// RGB order: bit 1: red, bit 2: green, bit 4: blue
 // black, red, green, yellow, blue, magenta, cyan, white
 // the RGB led can make cyan, magenta and black, regular leds can make orange, violet and pink
 var rgb_led_fg_colors = ['#333', '#f88', '#8f8', '#ff8', '#ccf', '#f8f', '#8ff', '#000'];
@@ -2708,11 +2781,20 @@ function Cell() {
         if(this.components[0] && this.components[0].type == TYPE_CONSTANT) {
           if(c == 'c') title = 'constant off';
           if(c == 'C') title = 'constant on';
+        } else if(this.components[0] && this.components[0].type == TYPE_COUNTER) {
+          if(c == 'c') title = 'counter off';
+          if(c == 'C') title = 'counter on';
         } else {
-          title = 'counter or flipflop clock input';
+          title = 'flipflop clock input';
         }
       }
-      if(c == 'd') title = 'delay or flipflop D input';
+      if(c == 'd') {
+        if(this.components[0] && this.components[0].type == TYPE_DELAY) {
+          title = 'delay';
+        } else {
+          title = 'flipflop D input';
+        }
+      }
       if(c == 't') title = 'flipflop T input';
       if(c == 'j') title = 'flipflop J input';
       if(c == 'k') title = 'flipflop K input';
@@ -2912,6 +2994,9 @@ function RendererText() {
         span0.style.whiteSpace = 'pre';
         //span0.style.fontSize = th + 'px';
         span0.style.fontSize = Math.floor(tw * 0.9) + 'px'; // avoids background overlapping parts of font issues
+        span0.style.height = th + 'px';
+        span0.style.lineHeight = th + 'px';
+        span0.style.verticalAlign = 'top'; // make the span really go where I want it, not shifted slightly down
         this.div0.style.width = '' + (tw * cell.commentlength) + 'px';
         if(cell.commentalign == 0) this.div0.style.textAlign = 'left';
         else if(cell.commentalign == 1) this.div0.style.textAlign = 'center';
@@ -5116,6 +5201,27 @@ function handleJunctionConnections(used, stack, x, y) {
 var globalLooseWireInstanceI = null;
 var globalLooseWireInstanceE = null;
 
+// merge old component into component and fix up the global components array, world cells, etc...
+// also sets index of old component to -1, since it's no longer part of the components array
+function mergeComponents(component, oldcomponent) {
+  if(oldcomponent.index < 0) return;
+
+  for(var j = 0; j < oldcomponent.cells.length; j++) {
+    component.cells.push(oldcomponent.cells[j]);
+    var x = oldcomponent.cells[j][0];
+    var y = oldcomponent.cells[j][1];
+    var z = oldcomponent.cells[j][2];
+    world[y][x].components[z] = component;
+  }
+  if(oldcomponent.index + 1 < components.length) {
+    components[oldcomponent.index] = components[components.length - 1];
+    components[oldcomponent.index].index = oldcomponent.index;
+    components[components.length - 1] = null;
+  }
+  components.length--;
+  oldcomponent.index = -1;
+}
+
 // create the components after the cells have been parsed (note: is not really parsing anymore, but a post-processing step of it)
 function parseComponents() {
   var used;
@@ -5518,8 +5624,42 @@ function parseComponents() {
       }
 
       if(ff) {
-        var ffobject = new FF();
-        if(!ffobject.init1(array)) ffobject.error = true;
+        var type = getFFType(array);
+        if(type[0] == TYPE_FLIPFLOP) {
+          var ffobject = new FF();
+          if(!ffobject.init1(array)) ffobject.error = true;
+        } else {
+          // This part is a bit tricky. Due to the way the parsing works, for flip-flops
+          // # and $ is considered separate components. At that stage of parsing it does not yet
+          // know if it'll turn out to be a real flip-flop, or a TYPE_DELAY or TYPE_COUNTER, and
+          // merging the # or $ there will cause trouble when you have e.g. j#k, as the j and k for sure
+          // must not be connected (different outputs requires different components).
+          // So if we're a TYPE_DELAY or TYPE_COUNTER, we actually want our #'s to instead
+          // be merged with the main core component. And this requires a bit of fixing up.
+          // In addition, do the main purpose here, which is to change the type of the TYPE_FLIPFLOP component to the new type
+          if(array.length > 0) {
+            // find corecell
+            var corecell = -1;
+            var corecomp = null;
+            for(var i = 0; i < array.length; i++) {
+              var cell = world[array[i][1]][array[i][0]];
+              if(ffmap[cell.circuitsymbol]) {
+                corecell = i;
+                corecomp = cell.components[0];
+                break;
+              }
+            }
+            corecomp.type = type[0];
+            corecomp.value = type[1];
+            for(var i = 0; i < array.length; i++) {
+              var oldcomponent = world[array[i][1]][array[i][0]].components[0];
+              if(oldcomponent != corecomp && oldcomponent.index >= 0) {
+                mergeComponents(corecomp, oldcomponent);
+              }
+              world[array[i][1]][array[i][0]].components[0] = corecomp;
+            }
+          }
+        }
       }
     }
   }
@@ -5787,15 +5927,15 @@ function parseComponents() {
   var global_ff_cycle = false;
   for(var i = 0; i < components.length; i++) {
     var c = components[i];
-    if(c.type == TYPE_FLIPFLOP && c.inputs.length == 0 && c.ff && c.corecell.circuitsymbol != 'Q') {
+    if(c.type == TYPE_COUNTER && c.inputs.length == 0) {
       c.type = TYPE_CONSTANT;
-      c.value = c.ff.value;
     }
     c.ff_cycle = c.hasLength2CycleWithTwoInputs();
     if(c.ff_cycle) global_ff_cycle = true;
     if(c.type == TYPE_FLIPFLOP) global_counter = true;
+    if(c.type == TYPE_COUNTER) global_counter = true;
     if(c.type == TYPE_RANDOM) global_counter = true; // it also changes state on edge trigger
-    if(c.type == TYPE_FLIPFLOP && c.ff && c.ff.isdelay) global_delay = true;
+    if(c.type == TYPE_DELAY) global_delay = true;
   }
 
   // NOTE: this currently will not detect some cycles through flip-flops
@@ -5813,59 +5953,35 @@ function parseComponents() {
   var toposorted = toposort(graph);
   cycle_detected = (toposorted == null);
 
-  // check if any counter reads from another counter
-  // if cycle is de
-  var global_counter_to_counter = false;
-  if(global_counter && cycle_detected) global_counter_to_counter = true; // TODO: actually properly check in this case.
-  if(global_counter && !cycle_detected) {
-    var array = [];
-    for(var i = 0; i < toposorted.length; i++) {
-      var c = components[toposorted[i]];
-      array[i] = 1;
-      if(c.type == TYPE_FLIPFLOP || c.type == TYPE_RANDOM) array[i] = 2;
-      for(var j = 0; j < c.inputs.length; j++) {
-        var c2 = c.inputs[j];
-        var i2 = c2.index;
-        if(array[i2] == 2 && array[i] == 2) {
-          global_counter_to_counter = true;
-          break;
-        }
-        if(array[i2] == 2) array[i] = 2;
-      }
-    }
-  }
-
-
-
   // automatically choose a useful mode
   if(AUTO_CHOOSE_MODE) {
     if(global_ff_cycle) {
-      // MODE:electron
       // if there is a particular doubly looped cycle like an RS latch core, set to 'electron' mode
+
+      // MODE:electron
       UPDATE_ALGORITHM = 3;
       AUTOUPDATE = 2;
-    } else if(global_counter_to_counter || global_delay) {
-      // MODE:sequential
-      // global_counter_to_counter instead of global_counter, because:
-      // it can actaully still be combinational if no counter (or ff or '?') read from any other counter
+    } else if((cycle_detected && global_counter) || (!cycle_detected && global_delay) || (global_counter && global_delay)) {
+      // As soon as the circuit has any loops or delays, the combinational mode does not work and the sequential
+      // mode is needed: a single update is no longer guaranteed to bring the circuit to a final stable
+      // state.
 
-      // if there is any counter gate present, set to 'sequential' mode
-      // maybe the mode is a bit overkill, it keeps updating at autointerval all the time even if things stopped changing
-      // but in the current implementation, combinational is not sufficient, combinational may not do enough updates to support multiple c's
-      // and the timer system is currently a bit difficult to refactor to support auto-pausing after all parts stopped updating
-      // the circuit to try that on is game of life galaxy with auto starting timer in sequential mode
+      // MODE:sequential
       UPDATE_ALGORITHM = 1;
       AUTOUPDATE = 2;
+    } else if(cycle_detected || global_delay /*the global_delay check is in theory not needed here unless I update the above conditions again*/) {
+      // The previous check, which set to MODE:sequential, left out a few cases. Those are set to electron instead of sequential here instead.
+      // This is circuits with loops but without any flip-flops or counters. It is more likely that the user intended to make a circuit
+      // with electron-like behavior than sequential-like behavior in this case (e.g. a roundloop of or gates)
 
-    } else if(cycle_detected) {
       // MODE:electron
-      // other non-flip flop related cycles
-      // TODO: this may be too strict or should maybe use UPDATE_ALGORITHM = 1. E.g. we do NOT want electron for a VTE that happens to have a cycle due to it inputting from its own EOF to read flag.
       UPDATE_ALGORITHM = 3;
       AUTOUPDATE = 2;
     } else {
-      // MODE:combinational
       // otherwise, by default, set to 'combinational' mode, which has no ticks, only updates when a switch is toggled
+      // the circuit should be guaranteed to fully update in a single tick if none of the above conditions triggered
+
+      // MODE:combinational
       UPDATE_ALGORITHM = 1;
       AUTOUPDATE = 1;
     }
@@ -6298,11 +6414,11 @@ function getMode() {
 
 
 var modeDropdown = makeUIElement('select', menuRow3El);
-modeDropdown.title = 'Choose Emulation Algorithm. combinational: does not auto tick, does fast update when using a button or timer.' +
-                     ' sequential: does fast update every so many milliseconds, works with sequential circuits with c, does not work for some flip-flops made from actual gates.' +
-                     ' electron: does slow update every so many milliseconds, supports flip-flops crafted from gates, and even has some randomness mechanism to get them out of metastable state.' +
-                     ' investigate: does not update unless you press the tick button, and does slow gate-per-gate updates without the randomness mechanism for flip-flops.' +
-                     ' When loading a new circuit, a mode is automatically chosen as follows: by default, combinational. If any "c" is present, sequential. If a particular type of loop between gates (such as in SR latch) is detected, electron.'
+modeDropdown.title = 'Choose Emulation Algorithm. *) combinational: does not auto tick, does a single fast update (all gates at once in sorted order, or as sorted as possible in case of loops) when using a button or timer.' +
+                     ' *) sequential: does fast update every so many milliseconds, for sequential circuits with loops (such as memory->processing->memory). It does not emulate metastable behavior of flip-flops made from individual gates correctly but is good for stable practical circuits.' +
+                     ' *) electron: does slow update (gate-per-gate) every so many milliseconds, emulates flip-flops crafted from gates in more interesting way with even a randomness mechanism to get them out of metastable state.' +
+                     ' *) investigate: does not update unless you press the tick button, and does slow gate-per-gate updates without the randomness mechanism for flip-flops.' +
+                     ' When loading a new circuit, a mode is automatically chosen as follows: by default, combinational. If a particular type of loop between gates (such as in SR latch) is detected, electron. If any other loop is present: sequential'
                      ;
 modeDropdown.onchange = function() {
   var mode = modeDropdown.selectedIndex;
@@ -6355,6 +6471,11 @@ var boostButton = makeUIElement('button', menuRow3El);
 boostButton.title = 'speeds up simulation, if possible within the computational resources of the web browser';
 boostButton.innerText = 'boost';
 boostButton.onclick = function() {
+  if(slower) {
+    AUTOSECONDS *= 0.1;
+    TIMERSECONDS *= 0.1;
+    slowerButton.innerText = 'slower';
+  }
   if(boosted) {
     AUTOSECONDS *= 10;
     TIMERSECONDS *= 10;
@@ -6365,6 +6486,32 @@ boostButton.onclick = function() {
     boostButton.innerText = 'unboost';
   }
   boosted = !boosted;
+  slower = false;
+  pause();
+  unpause();
+};
+
+var slower = false;
+var slowerButton = makeUIElement('button', menuRow3El);
+slowerButton.title = 'slows down simulation';
+slowerButton.innerText = 'slower';
+slowerButton.onclick = function() {
+  if(boosted) {
+    AUTOSECONDS *= 10;
+    TIMERSECONDS *= 10;
+    boostButton.innerText = 'boost';
+  }
+  if(slower) {
+    AUTOSECONDS *= 0.1;
+    TIMERSECONDS *= 0.1;
+    slowerButton.innerText = 'slower';
+  } else {
+    AUTOSECONDS *= 10;
+    TIMERSECONDS *= 10;
+    slowerButton.innerText = 'unslower';
+  }
+  slower = !slower;
+  boosted = false;
   pause();
   unpause();
 };
@@ -6461,11 +6608,11 @@ registerChangeDropdownElement(TYPE_XOR);
 registerChangeDropdownElement(TYPE_NAND);
 registerChangeDropdownElement(TYPE_NOR);
 registerChangeDropdownElement(TYPE_XNOR);
-// For 'c' and 'C' I can unfortunately not use TYPE, because c can mean both flipflop and constant.
-// Instead some logic is created where changeMode is used instead, to decide to make it constant if 0 inputs, toggle flipflop otherwise, in each case off if c, on if C.
-//registerChangeDropdownElement(TYPE_FLIPFLOP);
+// For 'c' and 'C' I can unfortunately not use TYPE, because both for on and off it's just called "TYPE_COUNTER", plus it
+// needs to choose between constant and counter (handled elsewhere)
 registerChangeDropdownElement('c');
 registerChangeDropdownElement('C');
+registerChangeDropdownElement(TYPE_DELAY);
 registerChangeDropdownElement(TYPE_RANDOM);
 
 
@@ -6740,6 +6887,7 @@ importButton.onclick = function() {
       document.body.removeChild(editdiv);
       importButton.innerText = 'import';
       editmode = false;
+      unpause();
     };
 
     pause();

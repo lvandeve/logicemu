@@ -786,26 +786,34 @@ registerCircuit('Ticks and Emulation Algorithms', `
 
 0"There are different emulation algorithms available for circuits (aka update modes,"
 0"what it does per tick). These can be selected by the dropdown with the following choices:"
-0"*) combinational: a single update propagating through all components is done only when you"
-0"   press a switch or button. This mode is good for circuits where the output state is"
-0"   determined completely and only by the input switch states, without loops, such as"
-0"   adders or multipliers."
+0"*) combinational: a single update propagating through all components in a sorted order"
+0"   is done only once when you press a switch or button or when a timer ticks. This mode"
+0"   works well for circuits that do not have any loops (that is, components whose input"
+0"   might be determined directly or indirectly through other components by this component's"
+0"   output state) nor delays"
 0"*) sequential: an update propagating through all components is done automatically every"
-0"   so many milliseconds. This mode is good for circuits where the output state is determined"
-0"   not only by input switches but also by memory state, such as registers or CPUs."
+0"   so many milliseconds. This mode is needed when there are loops or delays, because in"
+0"   both these cases a single update is not sufficient to reach the final state. Some circuits"
+0"   may even change state forever, and the sequential mode is perfect for that."
 0"*) electron: updates are done every so many milliseconds, but this update is different than"
 0"   the update done for combinational/sequential. Instead, every component updates only based"
 0"   on the previous state of its input components. This means signals propagage more slowly,"
 0"   as if you can follow the electric signal itself. This mode is good for circuits that"
 0"   build flip-flops from primitive components (rather than using the built-in ideal flip-flops)"
+0"   This mode also adds one more extra igredient: it adds some randomness to a particular kind of"
+0"   double-linked loop as you find in an SR latch, and this is loosely based on realistic physics"
+0"   of a flip-flop in metastable state eventually reaching a stable state anyway. So indeed"
+0"   the electron mode is mainly designed to simulate such behavior in a realistic way. The"
+0"   sequential mode is good and fast but can't simulate matastability, hence the reason to provide the"
+0"   slower 'nanosecond level' electron mode."
 0"*) investigate: similar to electron, but it only updates when you press the tick button,"
 0"   which allows to see how everything updates at any pace. Note that investigate is to electron"
 0"   mode what combinational is to sequential mode. You can use combinational mode as a way to"
-0"   investigate sequential circuits"
+0"   investigate sequential circuits. The randomness feature of electron mode is disabled for investigate."
 
 0"A circuit, when just loaded, will automatically be in one of the modes that is most suitable"
-0"for the circuit: if there are no flipflops or loops, it'll choose combinational mode. If"
-0"there are particular types of short loops, electron mode. If c's are present, sequential"
+0"for the circuit: if there are no loops, it'll choose combinational mode. If"
+0"there are particular types of short loops, electron mode. In other cases with loops, sequential"
 0"mode. A mode may also be enforced with a comment like this, which in this circuit sets it"
 0"to sequential initially:"
 
@@ -830,26 +838,13 @@ s->o->o->o->o->o->o->o->o->l
 
 s->d->d->d->d->d->d->d->d->l
 
-0"A circuit which has multiple premade flip-flops, like any 'c' gate or the bigger"
-0"ones made from cjktdqQ, really need 'sequential' mode to operate properly."
-0"For example this 8-bit counter will update properly when you push the button"
-0"in sequential mode, but in combinational mode you have to press 'tick' up to 8 times."
-0"This because flip-flops will only update based on the previous state of their"
-0"input flip-flops. In fact, flip-flops do in sequential/combinational mode, what"
-0"primitive gates do in electron/investigate mode"
-
-  "1  2  4  8  16 32 64 128"
-   l  l  l  l  l  l  l  l
-   m  m  m  m  m  m  m  m
-   |  |  |  |  |  |  |  |
-s->C->C->C->C->C->C->C->C
-
 0"Below is a 4-bit adder circuit. A circuit like this works in combinational mode"
-0"and does not need the more expensive sequential mode. Try it in all 4 modes to"
-0"see what happens: combinational and sequential work the same. Electron gives"
-0"slower updates so you can see the adder operating but it'll reach the correct"
-0"answer soon. Investigate requires pressing tick several times yourself before"
-0"you get the correct sum:"
+0"and does not need the more expensive sequential mode. There are some long connections"
+0"that go through many gates, but none of them are loops."
+0"Try it in all 4 modes to see what happens: combinational and sequential"
+0"work the same. Electron gives slower updates so you can see the adder operating"
+0"but it'll reach the correct answer soon. Investigate requires pressing tick"
+0"several times yourself before you get the correct sum:"
 
                   "8       4       2       1"
                    l       l       l       l
@@ -865,7 +860,51 @@ s->C->C->C->C->C->C->C->C
                s s     s s     s s     s s
              "b8 a8   b4 a4   b2 a2   b1 a1"
 
+0"However, for a circuit with a loop, you need at least sequential mode."
+0"Here is a very simple example: When you turn the switch from 'off' to"
+0"'on', the counter will disable itself a tick later. But if you do that"
+0"in combinational mode, after pressing the switch, the LED will remain on"
+0"as if the disabling does not happen. Press the 'tick' button to see it"
+0"happen. This example is very simple, a more important case is for example"
+0"when there is memory, then some computation happens on the memory, then"
+0"the result is stored back into the original memory."
 
+    ***
+    v *
+s**>c**>l
+
+0"Another example of something that needs sequential mode is the delay."
+0"if you enable the switch in combinational mode, you'll never see the"
+0"final state of the delay unless when using the 'tick' button"
+
+
+s**>d**>l
+
+0"An example of something that requires electron mode is a 1-tick pulse made"
+0"from gate delays (without using 'd' but regular gates). In electron mode,"
+0"this will pulse once when activating the switch. In fast modes, it'll just"
+0"stay off."
+
+p****>o**]a**>l
+    *     ^
+    *******
+
+0"Another electron example: in electron mode, the signal you make with"
+0"the switch will loop around in a much nicer way than in sequential mode, and"
+0"of course combinational mode does not support the looping at all without"
+0"manually ticking. You can make a neat shape that goes round and round"
+0"in electron mode here by briefly enabling the switch, but when you then"
+0"enable sequential mode it may be destroyed. Also, if you want manual"
+0"ticking, the 'investigate' mode here preserves the signal better than"
+0"'combinational' mode."
+
+s**>e>e>e>e>e>e>e>e
+    ^             v
+    e             e
+    ^             v
+    e             e
+    ^             v
+    e<e<e<e<e<e<e<e
 
 0"Here is a circuit that shows the most interesting behavior in electron"
 0"mode. The two NOR gates each want the opposite, so the circuit keeps"
@@ -1198,12 +1237,6 @@ s**>j#q**>l
 s**>c##     0"Serves as SR or as JK flip-flop"
     ###
 s**>k#Q**>l
-
-
-s->jq->l 0"This is a more compact version, but this is just a side-mention in the basic"
-s->c#    0"editing tutorial, this tutorial does not mention those closely packed wires"
-s->kQ->l 0"and switches because the built-in circuits mostly avoid this and adhere to a"
-         0"certain grid for aesthetic reasons."
 
 
 s**>q**>l
@@ -1941,8 +1974,10 @@ l<i<s
 0"NEW PARTS: timers"
 
 0"r and R: realtime timer. Can be toggled off with mouse"
-0"r is initially off (does not tick at all and must be enabled with mouse like a switch). R is initially on"
-0"During operation, the capital letter means it's not paused, and the color means it's outputting the signal or not based on current phase"
+0"r is initially off (does not tick at all and must be enabled with mouse"
+0"like a switch). R is initially on. During operation, the capital letter"
+0"means it's not paused, and the color means it's outputting the signal or"
+0"not based on current phase"
 
 r****>l   R***>l
 
@@ -2010,31 +2045,31 @@ SsssssS"ASCII code in to screen"
 0"If the blinking cursor is not in here but in the other one, click it with"
 0"the mouse to focus this one:"
 
-          lllllll"keyboard ASCII code out"
+          lllllll"keyboard ASCII code out"0
           ^^^^^^^
           |||||||
-"out"p**>TTTTTTTT<***p"read from in to screen"
+"out"p**>TTTTTTTT<***p"read from in to screen"0
          TTTTTTTT
 "eof"l<**TTTTTTTT
          TTTTTTTT
          TTTTTTTT
           ^^^^^^^
           |||||||
-          SsssssS"ASCII code in to screen"
+          SsssssS"ASCII code in to screen"0
 
 0"With only inputs and no read/out flags, it will instead show the binary input in decimal"
 
-         TTTTTTTT"decimal"
-         ^^^^^^^^
-         ||||||||
-         sSsssssS"binary"
+         TTTTTTTT"decimal"0 T
+         ^^^^^^^^           ^
+         ||||||||           |
+         sSsssssS"binary"0  s
 
 0"With only outputs and no read/out flags, it will instead convert typed decimal value"
 0"to binary, if the number parses as a valid decimal number"
 
-        llllllll
-        ^^^^^^^^
-        TTTTTTTT
+         llllllll
+         ^^^^^^^^
+         TTTTTTTT
 
 0"NEW PART: Random generator"
 
@@ -2120,7 +2155,8 @@ s---G    G--->l
  s---g3  0g--->l
          3g--->l
 
-0"Multi-digit codes are read decimally left to right or top to bottom depending on horizontal or vertical direction compared to the g"
+0"Multi-digit codes are read decimally left to right or top to bottom"
+0"depending on horizontal or vertical direction compared to the g"
 
   s--g1234    1234g-->l
 
@@ -2415,10 +2451,12 @@ s   s   s
 0"templates while space ends them, and @ can be used as visual aid such as drawing a casing around a device"
 
 0"ASCII backtick and ASCII double quote: the backtick will be replaced by double quotes, for text in circuits"
-0"--> this helps with defining circuits in double quoted strings in programming languages. Tip: use raw string literals when available."
+0"--> this helps with defining circuits in double quoted strings in programming languages."
+0"    Tip: use raw string literals when available."
 
 0"; and \\ (ASCII backslash): the ; will be replaced by backslash in the circuit (but not inside comments)"
-0"--> this helps with defining circuits in strings in programming languages. Tip: use raw string literals when available (but in JS \\ still has special meaning)."
+0"--> this helps with defining circuits in strings in programming languages."
+0"    Tip: use raw string literals when available (but in JS \\ still has special meaning)."
 
 0". and *: the . has the same functionality as * (wire)"
 0"--> this helps with drawing circuits on paper"
@@ -3118,6 +3156,14 @@ S------>i$i->l
 
 #------->O-->l
 
+C**>C*******>l
+
+O**>C*******>l
+
+S**>C*******>l
+
+O*****>d****>l
+
 0"Off"
 0"---"
 
@@ -3212,6 +3258,12 @@ s****>S*****>l
 
 S***(")"
       ******>l
+
+C**>c*******>l
+
+O**>c*******>l
+
+S**>c*******>l
 
 
 0"Toggle"
@@ -3308,9 +3360,44 @@ s##
 * *--( )%
 *
 *
+******>o>c**>l
+*    *   ^
+*    *>O**
 *
 *
-*
+
+0"Flip Flops"
+0"----------"
+
+0"expected:"
+0"-main output read from t,c,k,d,q"
+0"-inverted output read from j,Q; inverted to LED so all LEDs should read the same"
+0"-q enables immediately on no matter what"
+0"-Q disables immediately on no matter what"
+0"-Q and q together makes it flicker"
+0"-c may change state on positive edge only according to the rules of T,D,J,K flip-flop inputs"
+0"-when mixing D/T/JK flip-flop inputs"
+0"--on inputs trump off inputs"
+0"--off D trumps off JK & T"
+0"--toggle trumps everything"
+0"--following combinations make it toggle: T, JK, DK"
+
+s-->c-->l
+    #
+s-->t-->l
+s-->d-->l
+s-->j-->l
+s-->k--]l
+    #
+s-->q-->l
+s-->Q--]l
+
+0"Expected: behaves like JK flipflop, all LEDs same value"
+
+s-->c-->l
+s-->j-->l
+s-->k--]l
+
 
 0"Comment Alignment"
 0"-----------------"
