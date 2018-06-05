@@ -7267,7 +7267,7 @@ var introText = `
 0"others, you must post its source somewhere yourself."
 
 
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"              0"FIT:x"
+0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"                     .
 `;
 
 var introTitle = 'Online Logic Simulator';

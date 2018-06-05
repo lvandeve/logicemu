@@ -2194,14 +2194,33 @@ registerCircuit('flip-flops tutorial', `
 0"       |        "
 
 
+0"Epilogue"
+0"--------"
+
+0"This concludes the first flip-flop tutorial. Now enjoy using them in designs :)"
+
+0"This tutorial was only a first introduction describing what they do."
+
+0"The next tutorial shows how to build flip-flops from logic gates, and shows"
+0"the difference between latches, gated latches and true edge-triggered flip-flops"
+
+`, 'flip_flops');
+
+registerCircuit('flip-flops tutorial II: from gates', `
 0"Flip-flops from logic gates"
 0"---------------------------"
 
+0"See the previous tutorial for the explanation what flip-flops do and"
+0"what types exist."
+
 0"Now let's make flip-flops from actual logic gates, rather than using"
-0"the idealized simulated devices above. This section will look at the"
-0"low level timings in the gates, so make sure the update algorithm is"
+0"the idealized simulated devices. This section will look at the low"
+0"level timings in the gates, so make sure the update algorithm is"
 0"set to 'electron' mode"
 
+0"We will actually build up from latches towards true edge-triggered flip-flops."
+0"This because a latch is much simpler to make from gates, and the edge triggered"
+0"ones require more advanced circuits."
 
 0"SR NOR Latch"
 0"------------"
@@ -2211,7 +2230,7 @@ registerCircuit('flip-flops tutorial', `
 
 0"It's called the SR NOR latch (but originally was called flip-flop"
 0"for its behavior). Today, we use the following terminology:"
-0"*) latch: when it operates directly, asynchronously, at the lowest level,"
+0"*) latch: it operates directly, asynchronously, at the lowest level,"
 0"   the inputs directly affect the outputs (transparent)"
 0"*) gated latch: latch with an enable input. When the enable input is high,"
 0"   it still works like a latch"
@@ -2628,9 +2647,9 @@ s****>d**]a**>l
 0"Epilogue"
 0"--------"
 
-0"This concludes the first flip-flop tutorial. Now enjoy using them in designs :)"
+0"This showed how to build flip-flops from mixed gates."
 
-0"The next tutorial 'flip-flops (from NAND)' is a second part that will build flip-flops from NAND gates only."
+0"The next tutorial will build flip-flops from NAND gates only."
 0"It is also an important part since a few more canonical typical flip-flop circuits"
 0"are introduced."
 
@@ -2651,12 +2670,11 @@ s**>c#Q**>l
 `, 'flip_flops');
 
 
-registerCircuit('flip-flops (from NAND)', `
+registerCircuit('flip-flops tutorial III: from NAND', `
 
 
-0"This circuit continues the previous one named 'flip-flops tutorial',"
-0"so it's recommended to view that one first unless you already know"
-0"what flip-flops do and how they work."
+0"This tutorial continues the previous ones so it's recommended to view"
+0"them first unless you already know what flip-flops do and how they work."
 
 0"Flip-flops from NAND gates only"
 0"-------------------------------"
@@ -2970,7 +2988,7 @@ registerCircuit('flip-flops (from counters)', `
 
 0"This one is just for interest in this simulation itself. The simulation"
 0"provides the 'c' gate as counter gate. This is a single-input T flip-flop."
-0"The circuits here show how to make any regular flip-flop for those."
+0"The circuits here show how to make any regular flip-flop from those."
 
 0"Gated D latch. Not a valid D flip-flop, only a gated latch, because it's"
 0"possible to change state while the clock is high instead of only on clock"
