@@ -63,8 +63,17 @@ function makeDiv(x, y, w, h, opt_parent) {
   return el;
 }
 
-function styleUIElement(el, opt_smallbutton) {
+function styleUIElementBorder(el) {
   el.style.border = '1px solid #888';
+}
+
+function highlightUIElementBorder(el, opt_color) {
+  var color = opt_color || 'black';
+  el.style.border = '2px solid ' + color;
+}
+
+function styleUIElement(el, opt_smallbutton) {
+  styleUIElementBorder(el);
   el.style.height = '20px';
   el.style.width = '80px';
   el.style.margin = '1px';
@@ -76,8 +85,16 @@ function styleUIElement(el, opt_smallbutton) {
   el.style.boxSizing = 'border-box';
   el.style.font = '400 13px Arial';
 
-  if (opt_smallbutton) {
+  if (opt_smallbutton == 1) {
     el.style.width = '20px';
+  }
+
+  if (opt_smallbutton == 2) {
+    el.style.width = '40px';
+  }
+
+  if (opt_smallbutton == 3) {
+    el.style.width = '60px';
   }
 }
 
@@ -289,8 +306,10 @@ This algorithm allows the "on" led in the roundabout circuit to travel around ci
 
 
 // [search terms: timerspeed autospeed clockspeed timer_speed auto_seconds timer_seconds]
-var AUTOSECONDS = 0.05; // good value: 0.05. computers can handle faster but this makes operating circuits visible
-var TIMERSECONDS = 0.1; // default speed of "timer" components in seconds (note that the other timers with numbers are all slower than this). Good value: 1.0 or 0.1
+var NORMALAUTOSECONDS = 0.05;
+var NORMALTIMERSECONDS = 0.1;
+var AUTOSECONDS = NORMALAUTOSECONDS; // good value: 0.05. computers can handle faster but this makes operating circuits visible
+var TIMERSECONDS = NORMALTIMERSECONDS; // default speed of "timer" components in seconds (note that the other timers with numbers are all slower than this). Good value: 1.0 or 0.1
 var TWIDDLE_PROBABILITY = 0.1; // for update algorithm 3
 
 // tile size
@@ -2842,6 +2861,7 @@ function Cell() {
       if(c == 'I') title = 'IC definition';
       if(c == 'i') title = 'IC instance';
       if(c == 'b' || c == 'B') title = 'ROM/RAM bit, or encoder/decoder';
+      if(c == 'y') title = 'bus (wire bundle)';
     }
 
     this.renderer.init2(this, symbol, virtualsymbol, title);
@@ -6382,6 +6402,7 @@ function pause() {
     autopauseinterval = null;
   }
   updatePauseButtonText();
+  updateTimeButtonBorders();
 }
 
 function pauseUpdateOnly() {
@@ -6389,6 +6410,7 @@ function pauseUpdateOnly() {
     clearInterval(autoupdateinterval);
     autoupdateinterval = null;
   }
+  updateTimeButtonBorders();
 }
 
 function unpause() {
@@ -6400,6 +6422,7 @@ function unpause() {
     autopauseinterval = setInterval(function(){ pause(); }, AUTOPAUSESECONDS * 1000);
     updatePauseButtonText();
   }
+  updateTimeButtonBorders();
 }
 
 function updateRunningState() {
@@ -6496,7 +6519,7 @@ function isPaused() {
 function updatePauseButtonText() {
   pauseButton.innerText = isPaused() ? 'paused' : 'pause';
 }
-var pauseButton = makeUIElement('button', menuRow3El);
+var pauseButton = makeUIElement('button', menuRow3El, 3);
 pauseButton.innerText = 'pause';
 pauseButton.title = 'pauses auto ticking and timers, or enables them again if already paused.';
 pauseButton.onclick = function() {
@@ -6505,59 +6528,70 @@ pauseButton.onclick = function() {
   } else {
     pause();
   }
+  updateTimeButtonBorders();
 };
 updatePauseButtonText();
 
 
-var boosted = false;
-var boostButton = makeUIElement('button', menuRow3El);
-boostButton.title = 'speeds up simulation, if possible within the computational resources of the web browser';
-boostButton.innerText = 'boost';
-boostButton.onclick = function() {
-  if(slower) {
-    AUTOSECONDS *= 0.1;
-    TIMERSECONDS *= 0.1;
-    slowerButton.innerText = 'slower';
-  }
-  if(boosted) {
-    AUTOSECONDS *= 10;
-    TIMERSECONDS *= 10;
-    boostButton.innerText = 'boost';
-  } else {
-    AUTOSECONDS *= 0.1;
-    TIMERSECONDS *= 0.1;
-    boostButton.innerText = 'unboost';
-  }
-  boosted = !boosted;
-  slower = false;
+var slowerButton = makeUIElement('button', menuRow3El, 3);
+slowerButton.title = 'slows down simulation';
+slowerButton.innerText = 'slow';
+slowerButton.onclick = function() {
+  AUTOSECONDS = NORMALAUTOSECONDS * 10;
+  TIMERSECONDS = NORMALTIMERSECONDS * 10;
+
   pause();
   unpause();
+
+  updateTimeButtonBorders();
 };
 
-var slower = false;
-var slowerButton = makeUIElement('button', menuRow3El);
-slowerButton.title = 'slows down simulation';
-slowerButton.innerText = 'slower';
-slowerButton.onclick = function() {
-  if(boosted) {
-    AUTOSECONDS *= 10;
-    TIMERSECONDS *= 10;
-    boostButton.innerText = 'boost';
-  }
-  if(slower) {
-    AUTOSECONDS *= 0.1;
-    TIMERSECONDS *= 0.1;
-    slowerButton.innerText = 'slower';
-  } else {
-    AUTOSECONDS *= 10;
-    TIMERSECONDS *= 10;
-    slowerButton.innerText = 'unslower';
-  }
-  slower = !slower;
-  boosted = false;
+var normalButton = makeUIElement('button', menuRow3El, 3);
+normalButton.title = 'set to standard speed';
+normalButton.innerText = 'norm';
+normalButton.onclick = function() {
+  AUTOSECONDS = NORMALAUTOSECONDS;
+  TIMERSECONDS = NORMALTIMERSECONDS;
+
   pause();
   unpause();
+
+  updateTimeButtonBorders();
 };
+
+var boostButton = makeUIElement('button', menuRow3El, 3);
+boostButton.title = 'speeds up simulation, if possible within the computational resources of the web browser';
+boostButton.innerText = 'fast';
+boostButton.onclick = function() {
+  AUTOSECONDS = NORMALAUTOSECONDS / 10;
+  TIMERSECONDS = NORMALTIMERSECONDS / 10;
+
+  pause();
+  unpause();
+
+  updateTimeButtonBorders();
+};
+
+var timebuttons = [pauseButton, slowerButton, normalButton, boostButton];
+
+function updateTimeButtonBorders() {
+  var j = 0;
+  if(isPaused()) j = 0;
+  else if(AUTOSECONDS > NORMALAUTOSECONDS) j = 1;
+  else if(AUTOSECONDS == NORMALAUTOSECONDS) j = 2;
+  else if(AUTOSECONDS < NORMALAUTOSECONDS) j = 3;
+  for (var i = 0; i < 4; i++) {
+    if(i == j) {
+      highlightUIElementBorder(timebuttons[i], i == 2 ? 'black' : 'red');
+    } else {
+      styleUIElementBorder(timebuttons[i]);
+    }
+  }
+}
+
+
+
+
 
 var ticksCounterEl = makeElement('div', menuRow3El);
 ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
@@ -6589,7 +6623,7 @@ toggleButton.onclick = function() {
 
 
 
-var zoomoutButton = makeUIElement('button', menuRow2El, true);
+var zoomoutButton = makeUIElement('button', menuRow2El, 1);
 zoomoutButton.innerText = '-';
 zoomoutButton.title = 'Zoom out';
 zoomoutButton.onclick = function() {
@@ -6602,7 +6636,7 @@ zoomoutButton.onclick = function() {
   render();
 };
 
-var zoominButton = makeUIElement('button', menuRow2El, true);
+var zoominButton = makeUIElement('button', menuRow2El, 1);
 zoominButton.innerText = '+';
 zoominButton.title = 'Zoom in';
 zoominButton.onclick = function() {
@@ -6867,7 +6901,7 @@ var circuitDropdownSpan = makeElement('span', menuRow1El);
 
 var currentSelectedCircuit = 0;
 
-var prevCircuitButton = makeUIElement('button', menuRow1El, true);
+var prevCircuitButton = makeUIElement('button', menuRow1El, 1);
 prevCircuitButton.innerText = '<';
 prevCircuitButton.title = 'Previous built-in circuit';
 prevCircuitButton.onclick = function() {
@@ -6881,7 +6915,7 @@ prevCircuitButton.onclick = function() {
       allRegisteredCircuits[currentSelectedCircuit]);
 };
 
-var nextCircuitButton = makeUIElement('button', menuRow1El, true);
+var nextCircuitButton = makeUIElement('button', menuRow1El, 1);
 nextCircuitButton.innerText = '>';
 nextCircuitButton.title = 'Next built-in circuit';
 nextCircuitButton.onclick = function() {

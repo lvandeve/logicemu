@@ -7215,13 +7215,13 @@ registerCircuit('16-bit divider', `
 
 
 registerCircuit('32-bit divider', `
-
+                                                                                                                                                                                   1"remainder"
                                                                                                                                                                                  "r8  r4  r2  r1"
                                                             "q1"l l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l   l
                                                                 m ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
                                                                 *>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>
                     l    lI4                              "q2"l &-i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<
-                    ^    ^                                    m ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^-s"a1"
+                    ^    ^                      2"quotient"   m ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^-s"a1"
                     |    |                                    *>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>###>
                     o<*  |                              "q4"l &-i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<i4#<
                     ^ |  |                                  m ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^-s"a2"
@@ -7840,6 +7840,352 @@ registerCircuit('4 math functions with decimal', `
                     p | | | | | | | |
                       s s s s s s s s
 `, 'calculator');
+
+
+registerCircuit('4-bit CPU', `
+
+0"A working 4-bit CPU. Full explanation with instruction set is further down."
+
+  1                                llll"ALU out"
+  3 0                              ^^^^
+  g g                    yyyyyyyyyy3210                                    g17 g18
+  * *                    y         ||||                                    v   v
+  * *   3210yyyyyyyyyyyy y         iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii14
+  * *   ||||           y y         ^^^^                  ^^^^  ^^^^         ^^^^
+  * *   ||||"registers"y y         ||||      "carry"     ||||  ||||         ||||
+  * *   ||||"memory"   y y         ||||        g19>l     ||||  ||||         ||||
+  * ***>iiiiilllli     y y         |||| 1   0g>i         ||||  ||||         ||||
+  *-+-->i"r0"^^^^i<b<0 y y         |||| 0  13g>3         ||||  ||||         ||||
+  * * *>iiiiiiii32 # y y y         |||| g   1g>0 g10  8g>a|||  ||||         ||||
+  * * * ^^^^       # y y y         |||| w      ^ v       ^|||  ||||         ||||
+  * **+>iiiiilllli # y y y   ******++++>a----->o<a<***** g|||  ||||         ||||
+  *-+-+>i"r1"^^^^i<b<1 y y   *     ||||                * 1|||  ||||  98     ||||
+  * * *>iiiiiiii32 # y y y   *iiiiiii21<***e<a<g19     * 9|||  ||||  gg     ||||
+  * * * ^^^^       # y y y    ^^^^ ^^^^    ^ ^         *  |||  ||||  vv     ||||
+  * **+>iiiiilllli # y y y    |||| ii22<g9** g8        ***|||  iiiiii23     ||||
+  *-+-+>i"r2"^^^^i<b<2 y y    |||| ^^^^                  ||||  ^^^^^^^^     ||||
+  * * *>iiiiiiii32 # y y y yyy3210y7654yyyyyyyyyyyyyyyyyy0321yy32107654yyyyy7654yy3210yy
+  * * * ^^^^       # y y y y    "adder"             "shift"     "logic"           vvvv
+  * **+>iiiiilllli # y y y y                                                      O###
+  *-+-+>i"r3"^^^^i<b<3 y y y     "ALU inputs"                                     v
+  * * *>iiiiiiii32 # y y y yyyyyyy3210yyyy7654                                    lg20 "zero"
+  * * * ^^^^       # y y y y      ||||    ||||
+  * **+>iiiiilllli # y y y y   "A"llll    llll"B"
+  *-+-+>i"r4"^^^^i<b y y y y      ^^^^    ^^^^
+  * * *>iiiiiiii32 # y y y y   0g>ii31 0g>ii31
+  * * * ^^^^       # y y y y   4g>iiii 5g>iiii
+  * **+>iiiiilllli # y y y y   1g>iiii 1g>iiii
+  *-+-+>i"r5"^^^^i<b y y y y      ^^^^    ^^^^
+  * * *>iiiiiiii32 # y y y y      3210yyyy3210
+  * * * ^^^^       # y y y y              ||||
+  * **+>iiiiilllli # y y y y         iiiiiii12<a<g14
+  *-+-+>i"r6"^^^^i<b y y y y         ^^^^ ^^^^
+  * * *>iiiiiiii32 # y yy+y+yyyyyyyyy3210 3210yyyyyy
+  * * * ^^^^       # y   y y          "B imm"      y
+  * **+>iiiiilllli # y   y y                       y
+  *---+>i"r7"^^^^i<b yyyy+y+yyyyyyyyy3210          y
+      *>iiiiiiii32 #     y y         ||||"A ind"   y
+      * ^^^^       #     y y         iiiiiii12[g15 y
+      g ||||       #     y y         ^^^^ ^^^^     y
+      1 ||||"user" #     y yyyyyyyyyy3210 3210yyyyyyyyyyyyyyy3210
+        iiiiiiiiii #     y                                   ||||      6g g5
+        i"r8"^^^^i<b     y                                   ||||       * *
+        ii12 SSSS  #     y          "jump"                   ||||"ABC"  v v
+        ^^^^       #     y         yy3210                    iiiiiiiiiiii13
+        iiiiiiiiii #     y         y ||||                    ^^^^ ^^^^ ^^^^
+        i"r9"^^^^i<b     y         y iiiiiii12[g16           |||| |||| c|||
+        ii12 sSSS  #     y         y ^^^^ ^^^^               |||| ||||  |||
+        ^^^^       #     yyyyyyyyyy+y3210 ||||          11   |||| |||| 1|||
+        iiiiiiiiii #     y         y      ||||          1098 |||| |||| 2|||
+        i"ra"^^^^i<b     y         y     2||||          gggg |||| |||| g|||
+        ii12 ssSS  #     y         y     1||||"inc"     |||| |||| |||| ||||
+        ^^^^       #     y         y     g||||"IP"      llll llll llll llll
+        iiiiiiiiii #     y         y     *ii20<C        ^^^^ ^^^^ ^^^^ ^^^^
+        i"rb"^^^^i<b     y         y      ^^^^          |||| |||| |||| ||||"instruction ROM"0
+        ii12 sssS  #     y         y      ||||          |||| |||| |||| ||||"put program here"0
+        ^^^^       #     y         y    *-*+++--------->bbbb#Bbbb#bbbb#bbbb"0 0000"
+        iiiiiiiiii #     y         y    |*-*++--------->bbbb#BbbB#bbbb#bbbB"1 0001"
+        i"rc"^^^^i<b     y         y"IP"||*-*+--------->bbbb#BbBb#bbbb#bbBb"2 0010"
+        ii12 ssss  #     y         y    |||*-*--------->bbbb#BbBB#bbbb#bbBB"3 0011"
+        ^^^^       #     y         y 0g>ii31            BBbB#bBbb#bBBb#bbbb"4 0100"
+        iiiiiiiiii #     y         y 7g>iiii            bbbb#BBBB#bbBB#bBbb"5 0101"
+        i"rd"^^^^i<b     y         y 2g>iiii            bBBb#bBbb#bbbb#bBbB"6 0110"
+        ii12 ssss  #     y         y    ^^^^            bbBb#bBbb#bbbB#bBbb"7 0111"
+        ^^^^       #     y         y    llll            bBBb#bBbb#bbbb#bBBb"8 1000"
+        iiiiiiiiii #     y         y    ^^^^            bbBb#bBbB#bBBb#BBBB"9 1001"
+        i"re"^^^^i<b     y         y 0g>ii31            BBBb#bbbb#BBBb#bbbb"a 1010"
+        ii12 ssss  #     y         y 6g>iiii            bBBB#bBbb#bBbB#Bbbb"b 1011"
+        ^^^^       #     y         y 1g>iiii            bbbb#bBbb#bbbB#bBBB"c 1100"
+        iiiiiiiiii #     y         y    ^^^^            bBBB#bBBB#bBBb#Bbbb"d 1101"
+        i"rf"^^^^i<b     y         yyyyy3210            BBbb#BBBB#bBbb#bbbb"e 1110"
+        ii12 ssss        y                              bbbb#bbbb#bbbb#bbbb"f 1111"
+        ^^^^             y                                                 "      "
+        3210yyyyyyyyyyyyyy                             "oooo aaaa bbbb iccc"
+                                                       " op |  A |  B |b indir, C"
+
+0"Control the CPU here: clock to toggle ticking, manual clock to do a single tick, reset"
+0"to reset the whole memory, reset IP to only reset the instruction pointer (program counter)."
+
+             ###
+             ###"manual clock"0
+             p##
+         ### v                    ###                   ###
+  "clock"###>o>a*g0           1g--p##"reset"    2go<----p##"reset only IP"
+         ##R   m                  ###             ^     ###
+           3   g3                                 g1
+
+"FIT:y"
+
+
+           4   5   6   7                                                                       g9
+           g   g   g   g   "control logic"                                                     v
+           l   l   l   l                                                              11g>o<***a<g10
+           ^   ^   ^   ^                        1                  15g                    *    m
+     ******+*o<+*o<+*o<+**    11g>a<g10  10g**  6  g8  g9      9g** /    8g        g5     g17  g11
+     w     * ^ * ^ * ^ * *        w          v  g  v   w          v/      v        v
+    (o****>d**>d**>d**>d**>)      a-g13  11g>a->a<-e<o<a<g20  10g>a<****o<a<g6 12g]ag14
+           #   #   #   #          ^                  ^            m     ^          m
+           Q<g Q<g Q<g Q<g     g6**               9g>a<g19    11g**  8g]a<g5   15g**   10g---g18
+           c 2 c 2 c 2 c 2           g16
+           ^   ^   ^   ^             w
+           *   *   *   *         21g>a>c-g3
+ 0g>O*******************             ^ Q<g2
+                                     g6
+
+0"All the global 'g' signals are control signals: 0=clock, 1=reset, 2=reset only IP (instruction pointer), 3=halt,"
+0"4-7=stages, 8-11=opcode, 12=c msb, 13=alu, 14=b imm, 15=a indir, 16=IP jump, 17-18=alu select, 19=carry,"
+0"20=zero, 21=IP carry"
+
+
+0"Templates of the chips from which the CPU above is built:"
+
+    "mux"            "4-bit 2:1 mux"                "4-bit 3:1 mux"                 "4-bit 4:1 mux"
+    *** l         l     l     l     lI12           llll      s    sI13             llll      s      sI14
+    * w ^         ^     ^     ^     ^              ^^^^      v    *                ^^^^      v      *
+  s*+>a>oI      0>i   1>i   2>i   3>i              iiiiiiiii12    *                iiiiiiiii12      *
+    *   ^1      y 1   y 1   y 1   y 1              ^^^^   ^^^^    *                ^^^^   ^^^^      *
+  s*+>a**0      4>0   5>0   6>0   7>0         iiiiiii12<**++++*****           iiiiiii12<* iiiiiii12<*
+    * ^         y ^   y ^   y ^   y ^         ^^^^ ^^^^   ||||                ^^^^ ^^^^ * ^^^^ ^^^^ *
+    ***         y 8   y 8   y 8   y 8         ssss ssss   ssss                ssss ssss * ssss ssss *
+      *         yyyyyyyyyyyyyyyyyyyyy8s                                                 *           *
+      s         0123 4567                                                               *************
+                ssss ssss
+
+
+  "4-bit half adder"          "4-bit full adder"                     "negate 4 bits if flag"
+      l   l   l   lI20            l     l     l     lI21                l   l   l   l
+      ^   ^   ^   ^               ^     ^     ^     ^                   ^   ^   ^   ^
+  l<a e a e a e a e **s     l<o<a e o<a e o<a e o<a e **s               e<* e<* e<* e<*
+    ^^^/^^^/^^^/^^^/          ^ ^^^/^ ^^^/^ ^^^/^ ^^^/                  ^ * ^ * ^ * ^ *
+    * * * * * * * *           a e * a e * a e * a e *                   * **+***+***+****sI22
+    |   |   |   |             ^^^   ^^^   ^^^   ^^^                     *   *   *   *
+    s   s   s   s             7 3   6 2   5 1   4 0                     s   s   s   s
+                              yyyyyyyyyyyyyyyyyyyyy
+                              7654 3210
+                              ssss ssss
+
+"logic: and, nand, or, xor"
+
+                  llll                                                      s sI23
+                  ^^^^                                                      v v
+                  iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii14
+                  ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^
+                  a<* a<* a<* a<* A<* A<* A<* A<* o<* o<* o<* o<* e<* e<* e<* e<*
+                  ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ *
+  0y1y2y3y4y5y6y7y0y4y1y5y2y6y3y7y0y4y1y5y2y6y3y7y0y4y1y5y2y6y3y7y0y4y1y5y2y6y3y7yyyyyyyyyyyyy
+  s s s s s s s s
+
+
+ "1-bit reg. w. clock,"         "4-bit reg w. clock,"                "4-bit reg w. clock,"
+ "enable and reset"              "enable and reset"                  "reset, enable & bus"
+                  l
+                  ^                 l   l   l   lI31                        "bus"
+             ******                 ^   ^   ^   ^                           llllI32
+             *    *               yy+yyy+yyy+yyy+y                          ^^^^
+      "C"s***+***>c           "c"s0>i 0>i 0>i 0>i                      iiiiiii12<* llll"state"
+             *    #           "e"s1>3 1>3 1>3 1>3                      ^^^^ ^^^^ * ^^^^
+             *    Q<*         "r"s2>0 2>0 2>0 2>0                 yyyyy3210 3210y+y3210
+             *    d *               ^   ^   ^   ^                 y         |||| *
+             *    ^ *               s   s   s   s               **+*********++++****s"en. r/w"
+ "enable"s***+****+*+**I                                        * y         ||||
+             * *  * * *3                                        v y s>iiiiiiii31
+      "R"s***+*+**+** *0                               "en. w"s>a-+-->iiiiiiiiii
+             * *  *   *                                           y s>iiiiiiiiii
+             * ]a>o<a<*                                           y         ^^^^
+             *  ^   ^                                             yyyyyyyyyy3210
+             ****   s                                                       ssss
+
+"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"3
+
+0"4-bit CPU information"
+
+0"This is a 4-bit CPU. With 4 bits you can only represent 16 values, and in this"
+0"CPU this is taken quite literally:"
+0"There are less than 16 different possible opcodes"
+0"There are max 16 instructions in the whole program"
+0"There are max 16 addresses for all registers/memory and IO (8 are input, 8 are work/output)"
+0"The ALU does 4-bit addition, 4-bit shift, ..."
+0"So obviously it cannot do too much, but more than you think and it's easy to follow and program"
+
+0"instruction format: oooo aaaa bbbb Dccc. In there:
+0"oooo = opcode"
+0"aaaa = address of first operand a"
+0"bbbb = address or immediate value of second operand b"
+0"D = if 0, b is immediate, else b is direct addressed"
+0"ccc = address of output register/memory c"
+
+0"the opcodes are:"
+0"0000: add a to b and store in c"
+0"0001: add a to b and store in c, using previous carry"
+0"0010: subtract b from a and store in c"
+0"0011: subtract b from a and store in c, using previous carry (borrow)"
+0"0100: right shift a and store in c (NOTE: to left shift, use add a+a)"
+0"0101: right shift a and store in c, using previous carry"
+0"0110: MOV (=copy) indirect-addressed a to c"
+0"0111: MOV (=copy) b to indirect-addressed a"
+0"1000: a and b, store in c"
+0"1001: a nand b, store in c"
+0"1010: a or b, store in c"
+0"1011: a xor b, store in c"
+0"1100: jump to b if a is zero (value of b gives address, b can still be direct or indirect)"
+0"1101: jump to b if a is nonzero (idem)"
+0"1110: jump to b if carry flag set"
+0"1111: jump to b if carry flag not set"
+
+0"Instruction notes:"
+0"-There is no direct MOV instruction, to do direct MOV use ADD, AND or OR with an operand set to zero."
+0"-To do left shift, add a number to itself"
+0"-To compare, subtract two values. If 0000, they are equal. To test lesser than, test the carry flag (1 if a >= b)"
+0"-To negate bits, XOR with 1111"
+0"-there is no unconditional jump. Use conditional one with value known to be 0 or non-0"
+
+0"To enter a program, fill in the matrix of 16x16 instruction bits with b or B. Also fill any of the"
+0"user registers, that is registers 8-f. But registers 0-7 cannot be edited, and may be assumed to all"
+0"start at 0 initially. They may be overwritten by the program as working memory or user output."
+
+"A few example programs:"
+
+"empty template"
+
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+
+"multiplies r8 with r9 and stores result in r7"
+
+"bbbb#Bbbb#bbbb#bbbb" 0"copy r8 to r0"
+"bbbb#BbbB#bbbb#bbbB" 0"copy r9 to r1"
+"Bbbb#bbbB#bbbB#bbBb" 0"mask r1 with 0001 and store in r2"
+"BBbb#bbBb#bBbB#bbbb" 0"if r2 do next instruction, else jump over it"
+"bbbb#bbbb#bBBB#BBBB" 0"add r0 to r7"
+"bbbb#bbbb#bbbb#Bbbb" 0"shift r0 left"
+"bBbb#bbbB#bbbb#bbbB" 0"shift r1 right"
+"BBbB#bbbB#bbBb#bbbb" 0"if r1 goto 2"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+
+0"performs 8-bit addition, using just two commands"
+0"user must put A lsb in r8, A msb in r9, B lsb in ra, B msb in rb,"
+0"result will have lsb in r0 and msb in r1"
+
+"bbbb#Bbbb#BbBb#Bbbb" 0"4-bit add r8 and ra and store in r0"
+"bbbB#BbbB#BbBB#BbbB" 0"4-bit add with previous carry r9 and rb and store in r1"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+
+0"Performs multiplication of 2 4-bit numbers but with 8-bit result"
+0"inputs are in r8 and r9. Output lsbs will be in r6, output msbs in r7"
+
+"bbbb#Bbbb#bbbb#bbbb" 0"copy r8 to r0 (r1 will serve as its msbs)"
+"bbbb#BbbB#bbbb#bbBb" 0"copy r9 to r2"
+"Bbbb#bbBb#bbbB#bbBB" 0"mask r2 with 0001 and store in r3"
+"BBbb#bbBB#bBBb#bbbb" 0"if r3 do next 2 instructions, else jump over them"
+"bbbb#bbbb#bBBb#BBBb" 0"add r0 to r6"
+"bbbB#bbbB#bBBB#BBBB" 0"add r1 to r7, with using previous carry (this & prev op = 8-bit add)"
+"bbbb#bbbb#bbbb#Bbbb" 0"add r0 to r0 and store in r0 (this is left shift but remembering carry)"
+"bbbB#bbbB#bbbB#BbbB" 0"add r1 to r1, with using previous carry, and store in r1 (this & prev op = 8-bit leftshift)"
+"bBbb#bbBb#bbbb#bbBb" 0"shift r2 right"
+"BBbB#bbBb#bbBb#bbbb" 0"if r2 goto 2"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+
+0"Performs 4-bit division"
+0"inputs are in r8 and r9. Output will have remainder in r6, quotient in r7"
+
+"bbbb#bbbb#Bbbb#bbbb" 0"initialize loop variable r0 have highest bit set"
+"bbbb#bBBb#bBBb#BBBb" 0"left shift remainder in r6"
+"Bbbb#Bbbb#bbbb#BbbB" 0"mask numerator with r0 and store in r1"
+"BBbb#bbbB#bBbB#bbbb" 0"if r1 is not zero, do next instruction"
+"BbBb#bBBb#bbbB#bBBb" 0"or (well, xor here) the remainder with 1"
+"bbBb#bBBb#BbbB#BbBb" 0"subtract dividor from remainder and store in r2"
+"Bbbb#bbBb#Bbbb#bbBB" 0"mask off sign bit and store it in r3"
+"BBbB#bbBB#BbBb#bbbb" 0"if the sign bit is zero, do next 2 instructions"
+"bbbb#bbBb#bbbb#bBBb" 0"set remainder to r2"
+"BbBb#bBBB#bbbb#BBBB" 0"or quotient with r0 (set its ith bit to 1)"
+"bBbb#bbbb#bbbb#bbbb" 0"right shift loop var"
+"BBbB#bbbb#bbbB#bbbb" 0"if loop var is not zero, continue at pos 1"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+"bbbb#bbbb#bbbb#bbbb"
+
+0"bubble sort. Sorts r8-r11 into r0-r3"
+0"algo never stops running (there is no space to remember an extra"
+0"variable for a stop condition)"
+
+"bbbb#Bbbb#bbbb#bbbb" 0"copy r8 to r0"
+"bbbb#BbbB#bbbb#bbbB" 0"copy r9 to r1"
+"bbbb#BbBb#bbbb#bbBb" 0"copy r10 to r2"
+"bbbb#BbBB#bbbb#bbBB" 0"copy r11 to r3"
+"BBbB#bBbb#bBBb#bbbb" 0"if r4 == 0 (index)"
+"bbbb#BBBB#bbBB#bBbb" 0"  set r4 to 3"
+"bBBb#bBbb#bbbb#bBbB" 0"copy r[r4] to r5"
+"bbBb#bBbb#bbbB#bBbb" 0"r4-- (index--)"
+"bBBb#bBbb#bbbb#bBBb" 0"copy r[r4] to r6"
+"bbBb#bBbB#bBBb#BBBB" 0"subtract r5 - r6 and store in r7"
+"BBBb#bbbb#BBBb#bbbb" 0"if carry flag not set (so if r5 > r6)"
+"bBBB#bBbb#bBbB#Bbbb" 0"  copy r5 to r[r4]"
+"bbbb#bBbb#bbbB#bBBB" 0"  set r7 to r4 + 1"
+"bBBB#bBBB#bBBb#Bbbb" 0"  copy r6 to r[r7]"
+"BBbb#BBBB#bBbb#bbbb" 0"goto 4"
+"bbbb#bbbb#bbbb#bbbb" 0""
+`, 'cpu');
+
 
 
 
