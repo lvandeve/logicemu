@@ -3509,6 +3509,73 @@ function RendererImg() { // RendererCanvas RendererGraphical
     }
   };
 
+  // The '+' wire crossing can still connect a particular one of its wires to a diagonal crossing input. The graphics for that
+  // are handled here.
+  // returns true if it drew a dot in the center
+  this.drawPlusDiagSplit_ = function(cell, ctx) {
+    var num = 0;
+    var cell;
+    var rect0 = false;
+    var rect1 = false;
+    var rect2 = false;
+
+    ctx.beginPath();
+    n = getNeighbor(cell.x, cell.y, 4);
+    if(n && n.circuitextra == 2) {
+      var c = n.circuitsymbol;
+      if(c == '^' || c == 'm') {
+        this.drawLineCore_(ctx, 0.5, 0, 1, 0);
+        rect1 = true;
+      }
+      if(c == '>' || c == ']') {
+        this.drawLineCore_(ctx, 0.5, 0.5, 1, 0);
+        rect0 = true;
+      }
+    }
+    n = getNeighbor(cell.x, cell.y, 5);
+    if(n && n.circuitextra == 2) {
+      var c = n.circuitsymbol;
+      if(c == 'v' || c == 'w') {
+        this.drawLineCore_(ctx, 0.5, 1, 1, 1);
+        rect2 = true;
+      }
+      if(c == '>' || c == ']') {
+        this.drawLineCore_(ctx, 0.5, 0.5, 1, 1);
+        rect0 = true;
+      }
+    }
+    n = getNeighbor(cell.x, cell.y, 6);
+    if(n && n.circuitextra == 2) {
+      var c = n.circuitsymbol;
+      if(c == 'v' || c == 'w') {
+        this.drawLineCore_(ctx, 0, 1, 0.5, 1);
+        rect2 = true;
+      }
+      if(c == '<' || c == '[') {
+        this.drawLineCore_(ctx, 0.5, 0.5, 0, 1);
+        rect0 = true;
+      }
+    }
+    n = getNeighbor(cell.x, cell.y, 7);
+    if(n && n.circuitextra == 2) {
+      var c = n.circuitsymbol;
+      if(c == '^' || c == 'm') {
+        this.drawLineCore_(ctx, 0, 0, 0.5, 0);
+        rect1 = true;
+      }
+      if(c == '<' || c == '[') {
+        this.drawLineCore_(ctx, 0.5, 0.5, 0, 0);
+        rect0 = true;
+      }
+    }
+    ctx.stroke();
+    if(rect0) ctx.fillRect((tw >> 1) - 1.5, (th >> 1) - 1.5, 3.5, 3.5);
+    if(rect1) ctx.fillRect((tw >> 1) - 1.5, 0, 3.5, 3.5);
+    if(rect2) ctx.fillRect((tw >> 1) - 1.5, th - 4, 3.5, 3.5);
+
+    return rect0;
+  }
+
   // specific initialization, can be re-done if cell changed on click
   this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
     if(!this.canvas0) {
@@ -3563,10 +3630,12 @@ function RendererImg() { // RendererCanvas RendererGraphical
         if(isInterestingComponent(cell, 1)) { this.drawLine_(ctx, 0, 0, 0.4, 0.4); this.drawLine_(ctx, 0.6, 0.6, 1, 1); }
         if(isInterestingComponent(cell, 0)) this.drawLine_(ctx, 0, 1, 1, 0);
       } else if(c == '+') {
+        var centerfull = this.drawPlusDiagSplit_(cell, ctx);
+        var shift = centerfull ? 0.3 : 0.2;
         this.drawLine_(ctx, 0, 0.5, 1, 0.5);
         //this.drawLine(ctx, 0.5, 0, 0.5, 1);
-        this.drawLine_(ctx, 0.5, 0, 0.5, 0.4);
-        this.drawLine_(ctx, 0.5, 0.7, 0.5, 1);
+        this.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+        this.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
       } else if(c == '*' || c == ',') {
         this.drawSplit_(cell, ctx);
       } else if(c == '^') {
@@ -3669,6 +3738,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
         if(hasDevice(cell.x, cell.y, 6)) this.drawAntiArrow_(ctx, 0.5, 0.5, 0, 1);
         if(hasDevice(cell.x, cell.y, 7)) this.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0);
       } else if(c == 'X') {
+        // TODO: better also have a little gap like '+' does
         this.drawSplit_(cell, ctx, -8);
       } else if(c == '&') {
         var draw1 = connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 1);
