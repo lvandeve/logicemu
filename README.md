@@ -38,10 +38,12 @@ Becomes this (and in the application it becomes interactive):
 
 ![adder](screenshot_add.png)
 
-It comes with tons of built-in circuits to explore.
+It comes with tons of built-in circuits to explore and allows creating your own.
 
 ![screenshot](screenshot.png)
 
 # Running offline
 
-LogicEmu can run offline. To do so, download the following files from github: index.html, logicemu.js, footer.js, circuits_main.js, circuits_help.js. Then run index.html from disk in a browser (offline if you wish so).
+LogicEmu can run offline, because it is not cloud based. Everything is ran and stored locally.
+
+To run it offline, download the following files from github: index.html, logicemu.js, footer.js, circuits_main.js, circuits_help.js. Then run index.html from disk in a browser (offline if you wish so).
