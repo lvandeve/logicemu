@@ -7270,7 +7270,7 @@ var introText = `
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"                     .
 `;
 
-var introTitle = 'Online Logic Simulator';
+var introTitle = 'Browser-Based Logic Simulator';
 
 function printComponentsDebug() {
   for(var i = 0; i < components.length; i++) {
