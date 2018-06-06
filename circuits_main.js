@@ -89,7 +89,7 @@ registerCircuit('Logic Gates Tutorial', `
 
 0"The NOT gate has a single input and inverts it, so outputs 1 if the switch is off,"
 0"and outputs 0 if the switch is on"
-0"A XOR gate is denoted with an 'O' in this simulation (but not in real electronics)"
+0"A NOT gate is denoted with an 'O' in this simulation (but not in real electronics)"
 
  "a"s**>O**>l"out"
 
