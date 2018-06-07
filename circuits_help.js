@@ -2384,7 +2384,7 @@ s------zz-zZl
 0"h and H work also diagonally. So can serve also as simple diagonal device inputs"
 
 s     s              l
- x     x            h
+ ;     ;            h
   h     H     s----*
    l     l          h
                      l
@@ -2472,9 +2472,9 @@ s   s   s
 
 0"yes:"     0"no:"
 
-s****>l   s---->
-          s---->
-s****>l   s---->
+s****>l   s---->l
+          s---->l
+s****>l   s---->l
 
 s****>l
 

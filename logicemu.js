@@ -58,6 +58,13 @@ function makeAbsElement(tag, x, y, w, h, opt_parent) {
   return el;
 }
 
+function removeElement(el) {
+  if(!el) return;
+  if(el.parentNode && el.parentNode.contains(el)) {
+    el.parentNode.removeChild(el);
+  }
+}
+
 function makeDiv(x, y, w, h, opt_parent) {
   var el =  makeAbsElement('div', x, y, w, h, opt_parent);
   return el;
@@ -274,9 +281,8 @@ var DQUOT_ALTERNATIVE = '`'; // JS strings can use `, in other languages " is al
 var ASTERIX_ALTERNATIVE = '.'; // because . is easier to write on paper than *
 
 var is_chrome = (navigator.userAgent.indexOf('Chrom') != -1); // 'Chrom' as substring of Chrome/Chromium
-var graphics_mode = 1; // 0=text, 1=canvas
-//canvas too slow in firefox currently (the method with the many little canvases)
-var graphics_mode_browser = is_chrome ? graphics_mode : 0;
+var graphics_mode = 1; // 0=text, 1=canvas, 2=old canvas (the one with many little canvases)
+var graphics_mode_browser = graphics_mode; //is_chrome ? graphics_mode : 0;
 var graphics_mode_actual = graphics_mode_browser;
 
 /*
@@ -2727,6 +2733,17 @@ function registerBlinkingCursor(div) {
   if(initial) blink();
 }
 
+function getNewRenderer() {
+  if(graphics_mode_actual == 0) {
+    return new RendererText();
+  } else if(graphics_mode_actual == 1) {
+    return new RendererImg();
+  } else {
+    return new RendererImgOLD();
+  }
+}
+
+
 var CLICKDEBUG = false;
 
 function Cell() {
@@ -2888,11 +2905,7 @@ function Cell() {
     // make one on the last row though, if user added empty rows they want some scrolling space there
     if(this.displaysymbol == ' ' && !(x == 0 && y == h - 1)) return;
 
-    if(graphics_mode_actual == 0) {
-      this.renderer = new RendererText();
-    } else {
-      this.renderer = new RendererImg();
-    }
+    this.renderer = getNewRenderer();
 
     //toggleMode aka clickFun
     var f = bind(function(component, x, y, e) {
@@ -2931,7 +2944,11 @@ function Cell() {
 }
 
 function Renderer() {
-  // one time initialization
+  // one time initialization for all cells
+  this.globalInit = function() {
+  };
+
+  // one time initialization for this cell
   this.init = function(cell, x, y, clickfun) {
   };
 
@@ -2997,6 +3014,8 @@ function RendererText() {
   this.div1 = null; // div for on style
   this.init2done = false;
 
+  this.globalInit = function() {
+  };
 
   // one time initialization
   this.init = function(cell, x, y, clickfun) {
@@ -3286,55 +3305,10 @@ function sameDevice(x, y, dir) {
   return false;
 }
 
-// TODO: to be faster in firefox, do not create a tiny canvas for every single cell,
-// instead create 1 big canvas (or multiple big tiles if larger than max canvas size)
-// and copy/blit graphics on them from elsewhere. This way fix two things at once:
-// the speed in firefox, and, by making more separate graphics pieces allow one wire grey
-// and one wire black at the same time in wire crossings.
-/** @implements Renderer */
-function RendererImg() { // RendererCanvas RendererGraphical
-  this.fallback = new RendererText();
-
-  this.canvas0 = null;
-  this.canvas1 = null;
-  this.ctx0 = null;
-  this.ctx1 = null;
-  //this.data0 = null;
-  //this.data1 = null;
-  this.prevvalue = null;
-  this.usefallback = false;
-  this.init2done = false;
-  this.text0 = null;
-  this.text1 = null;
-
-  // one time initialization
-  this.init = function(cell, x, y, clickfun) {
-    this.fallback.init(cell, x, y, clickfun);
-    if(!cell.comment && cell.circuitsymbol != ' ') {
-      this.canvas0 = makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div0*/);
-      this.canvas0.width = parseInt(tw);
-      this.canvas0.height = parseInt(th);
-      this.canvas1 = makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div1*/);
-      this.canvas1.width = parseInt(tw);
-      this.canvas1.height = parseInt(th);
-      this.ctx0 = this.canvas0.getContext('2d');
-      this.ctx1 = this.canvas1.getContext('2d');
-      this.fallback.div0.appendChild(this.canvas0);
-      this.fallback.div1.appendChild(this.canvas1);
-      this.text0 = makeDiv(0, 0, tw, th, this.fallback.div0);
-      this.text1 = makeDiv(0, 0, tw, th, this.fallback.div1);
-      var fs = tw - 2;
-      if (fs < 7) fs = 7;
-      this.text0.style.color = '#999';
-      this.text0.style.textAlign = 'center';
-      this.text0.style.fontSize = fs + 'px';
-      this.text0.style.fontFamily = 'monospace';
-      this.text1.style.color = 'black';
-      this.text1.style.textAlign = 'center';
-      this.text1.style.fontSize = fs + 'px';
-      this.text1.style.fontFamily = 'monospace';
-    }
-  };
+/** @constructor */
+function RendererDrawer() {
+  this.tx = 0;
+  this.ty = 0;
 
   this.drawLineCore_ = function(ctx, x0, y0, x1, y1) {
     var x0b = Math.floor(x0 * tw);
@@ -3345,15 +3319,15 @@ function RendererImg() { // RendererCanvas RendererGraphical
     // canvas is THAT kind of drawing engine :( the sub pixel blurry kind
     if(x0b == x1b) {
       if(x0b == tw) { x0b--; x1b--; }
-      ctx.moveTo(x0b + 0.5, y0b);
-      ctx.lineTo(x1b + 0.5, y1b);
+      ctx.moveTo(this.tx + x0b + 0.5, this.ty + y0b);
+      ctx.lineTo(this.tx + x1b + 0.5, this.ty + y1b);
     } if(y0b == y1b) {
       if(y0b == th) { y0b--; y1b--; }
-      ctx.moveTo(x0b, y0b + 0.5);
-      ctx.lineTo(x1b, y1b + 0.5);
+      ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5);
+      ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5);
     } else {
-      ctx.moveTo(x0b, y0b);
-      ctx.lineTo(x1b, y1b);
+      ctx.moveTo(this.tx + x0b, this.ty + y0b);
+      ctx.lineTo(this.tx + x1b, this.ty + y1b);
     }
   };
 
@@ -3443,7 +3417,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
     var xb = Math.floor(x * tw);
     var yb = Math.floor(y * th);
     var rb = Math.floor(radius * th);
-    ctx.arc(xb, yb, rb, 0, Math.PI * 2, true);
+    ctx.arc(this.tx + xb, this.ty + yb, rb, 0, Math.PI * 2, true);
   };
 
   this.drawCircle_ = function(ctx, x, y, radius) {
@@ -3457,7 +3431,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
     var yb = Math.floor(y * th);
     var rb = Math.floor(radius * th);
     ctx.beginPath();
-    ctx.arc(xb, yb, rb, Math.PI * 2 * a0, Math.PI * 2 * a1, false);
+    ctx.arc(this.tx + xb, this.ty + yb, rb, Math.PI * 2 * a0, Math.PI * 2 * a1, false);
     ctx.stroke();
   };
 
@@ -3475,7 +3449,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
     if(connected2g(cell.x, cell.y, 7)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 0); }
     ctx.stroke();
     if(num >= 3) {
-      ctx.fillRect((tw >> 1) - 1.5, (th >> 1) - 1.5, 3.5, 3.5);
+      ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + (th >> 1) - 1.5, 3.5, 3.5);
     }
   };
 
@@ -3487,7 +3461,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
     if(connected2g(cell.x, cell.y, 6)) { num++; this.drawLine_(ctx, 0.5, 0.5, 0, 1); }
     if(connected2g(cell.x, cell.y, 7)) { num++; this.drawLine_(ctx, 0.5, 0.5, 0, 0); }
     if(num >= 3) {
-      ctx.fillRect((tw >> 1) - 1.5, (th >> 1) - 1.5, 3.5, 3.5);
+      ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + (th >> 1) - 1.5, 3.5, 3.5);
     }
     return num;
   };
@@ -3505,8 +3479,15 @@ function RendererImg() { // RendererCanvas RendererGraphical
     if(connected2g(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 0); }
     ctx.stroke();
     if(num >= 3) {
-      ctx.fillRect((tw >> 1) - 1.5, (th >> 1) - 1.5, 3.5, 3.5);
+      ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + (th >> 1) - 1.5, 3.5, 3.5);
     }
+  };
+
+  this.fillBg_ = function(ctx, color) {
+    var origStyle = ctx.fillStyle;
+    ctx.fillStyle = color;
+    ctx.fillRect(this.tx, this.ty, tw, th);
+    if(origStyle != color) ctx.fillStyle = origStyle;
   };
 
   // The '+' wire crossing can still connect a particular one of its wires to a diagonal crossing input. The graphics for that
@@ -3569,12 +3550,190 @@ function RendererImg() { // RendererCanvas RendererGraphical
       }
     }
     ctx.stroke();
-    if(rect0) ctx.fillRect((tw >> 1) - 1.5, (th >> 1) - 1.5, 3.5, 3.5);
-    if(rect1) ctx.fillRect((tw >> 1) - 1.5, 0, 3.5, 3.5);
-    if(rect2) ctx.fillRect((tw >> 1) - 1.5, th - 4, 3.5, 3.5);
+    if(rect0) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + (th >> 1) - 1.5, 3.5, 3.5);
+    if(rect1) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + 0, 3.5, 3.5);
+    if(rect2) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + th - 4, 3.5, 3.5);
 
     return rect0;
-  }
+  };
+}
+
+// Browsers have certain limits to canvas size (e.g. max 8192 pixels wide, ...), and for large
+// circuits larger than 16384 height can easily be reached, so break it up into smaller pieces
+function MultiCanvas() {
+  this.MAX_S = 4096; // max size
+
+  this.S = 0;
+
+  this.canvases = null;
+  this.contexts = null;
+
+  this.make = function(x, y, w, h, parent) {
+    this.S = Math.floor(this.MAX_S / tw) * tw; // such that size is multiple of cell size so there's no visible edges
+
+    var numx = Math.ceil(w  / this.S);
+    var numy = Math.ceil(h  / this.S);
+
+    this.canvases = [];
+    this.contexts = [];
+
+    for(var y2 = 0; y2 < numy; y2++) {
+      this.canvases[y2] = [];
+      this.contexts[y2] = [];
+      for(var x2 = 0; x2 < numx; x2++) {
+        var h2 = Math.min(this.S, h - y2 * this.S);
+        var w2 = Math.min(this.S, w - x2 * this.S);
+        this.canvases[y2][x2] = makeAbsElement('canvas', x + x2 * this.S, y + y2 * this.S, w2, h2, parent);
+        this.canvases[y2][x2].width = w2;
+        this.canvases[y2][x2].height = h2;
+        this.contexts[y2][x2] = this.canvases[y2][x2].getContext('2d');
+      }
+    }
+  };
+
+  this.remove = function() {
+    if(!this.canvases) return;
+
+    for(var y2 = 0; y2 < this.canvases.length; y2++) {
+      for(var x2 = 0; x2 < this.canvases[y2].length; x2++) {
+        removeElement(this.canvases[y2][x2]);
+      }
+    }
+    this.canvases = null;
+    this.contexts = null;
+  };
+
+  this.getCanvasAt = function(x, y) {
+    var x2 = Math.floor(x / this.S);
+    var y2 = Math.floor(y / this.S);
+    return this.canvases[y2][x2];
+  };
+
+  this.getCanvasForCell = function(cell) {
+    return this.getCanvasAt(cell.x * tw, cell.y * th);
+  };
+
+  this.getContextAt = function(x, y) {
+    var x2 = Math.floor(x / this.S);
+    var y2 = Math.floor(y / this.S);
+    return this.contexts[y2][x2];
+  };
+
+  this.getContextForCell = function(cell) {
+    return this.getContextAt(cell.x * tw, cell.y * th);
+  };
+
+  // how much must you add to your x co to draw to this canvas correctly (since it has its own corner)
+  this.getXOffsetAt = function(x) {
+    var x2 = Math.floor(x / this.S);
+    return (-x2 * this.S) | 0;
+  };
+
+  this.getYOffsetAt = function(y) {
+    var y2 = Math.floor(y / this.S);
+    return (-y2 * this.S) | 0;
+  };
+
+  this.getXOffsetForCell = function(cell) {
+    return this.getXOffsetAt(cell.x * tw);
+  };
+
+  this.getYOffsetForCell = function(cell) {
+    return this.getYOffsetAt(cell.y * th);
+  };
+
+  // e.g. to set a CSS style on them
+  this.forEachCanvas = function(fun) {
+    for(var y2 = 0; y2 < this.canvases.length; y2++) {
+      for(var x2 = 0; x2 < this.canvases[y2].length; x2++) {
+        fun(this.canvases[y2][x2]);
+      }
+    }
+  };
+}
+
+/** @constructor */
+function RendererImgGlobal() {
+  this.maincanvas = new MultiCanvas();
+  this.offcanvas0 = new MultiCanvas();
+  this.offcanvas1 = new MultiCanvas();
+
+  this.init = function() {
+    var parent = worldDiv;
+
+    this.maincanvas.remove();
+    this.offcanvas0.remove();
+    this.offcanvas1.remove();
+
+    this.maincanvas.make(0, 0, tw * w, th * h, parent);
+    this.offcanvas0.make(0, 0, tw * w, th * h, parent);
+    this.offcanvas1.make(0, 0, tw * w, th * h, parent);
+
+    this.offcanvas0.forEachCanvas(function(canvas) {
+      canvas.style.display = 'none';
+    });
+    this.offcanvas1.forEachCanvas(function(canvas) {
+      canvas.style.display = 'none';
+    });
+  };
+};
+
+var rglobal = new RendererImgGlobal();
+
+// TODO: to be faster in firefox, do not create a tiny canvas for every single cell,
+// instead create 1 big canvas (or multiple big tiles if larger than max canvas size)
+// and copy/blit graphics on them from elsewhere. This way fix two things at once:
+// the speed in firefox, and, by making more separate graphics pieces allow one wire grey
+// and one wire black at the same time in wire crossings.
+/** @implements Renderer */
+function RendererImg() { // RendererCanvas RendererGraphical
+  this.fallback = new RendererText();
+
+  this.canvas0 = null;
+  this.canvas1 = null;
+  this.ctx0 = null;
+  this.ctx1 = null;
+  //this.data0 = null;
+  //this.data1 = null;
+  this.prevvalue = null;
+  this.usefallback = false;
+  this.init2done = false;
+  this.text0 = null;
+  this.text1 = null;
+
+  this.globalInit = function() {
+    rglobal.init();
+  };
+
+  // one time initialization
+  this.init = function(cell, x, y, clickfun) {
+    this.fallback.init(cell, x, y, clickfun);
+    if(!cell.comment && cell.circuitsymbol != ' ') {
+      this.canvas0 = rglobal.offcanvas0.getCanvasForCell(cell); //makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div0*/);
+      //this.canvas0.width = parseInt(tw);
+      //this.canvas0.height = parseInt(th);
+      this.canvas1 = rglobal.offcanvas1.getCanvasForCell(cell); //makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div1*/);
+      //this.canvas1.width = parseInt(tw);
+      //this.canvas1.height = parseInt(th);
+      this.ctx0 = rglobal.offcanvas0.getContextForCell(cell); //this.canvas0.getContext('2d');
+      this.ctx1 = rglobal.offcanvas1.getContextForCell(cell); //this.canvas1.getContext('2d');
+      this.fallback.div0.appendChild(this.canvas0);
+      this.fallback.div1.appendChild(this.canvas1);
+      this.text0 = makeDiv(0, 0, tw, th, this.fallback.div0);
+      this.text1 = makeDiv(0, 0, tw, th, this.fallback.div1);
+      var fs = tw - 2;
+      if (fs < 7) fs = 7;
+      this.text0.style.color = '#999';
+      this.text0.style.textAlign = 'center';
+      this.text0.style.fontSize = fs + 'px';
+      this.text0.style.fontFamily = 'monospace';
+      this.text1.style.color = 'black';
+      this.text1.style.textAlign = 'center';
+      this.text1.style.fontSize = fs + 'px';
+      this.text1.style.fontFamily = 'monospace';
+    }
+  };
+
 
   // specific initialization, can be re-done if cell changed on click
   this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
@@ -3582,6 +3741,442 @@ function RendererImg() { // RendererCanvas RendererGraphical
       this.fallback.init2(cell, symbol, virtualsymbol, opt_title);
       return;
     }
+
+    var drawer = new RendererDrawer();
+    drawer.tx = tw * cell.x + rglobal.offcanvas0.getXOffsetForCell(cell);
+    drawer.ty = th * cell.y + rglobal.offcanvas0.getYOffsetForCell(cell);
+
+    if (this.init2done) {
+      this.ctx0.clearRect(0, 0, tw, th);
+      this.ctx1.clearRect(0, 0, tw, th);
+    }
+    this.init2done = true;
+
+    // white instead of transparent background
+    // so that when using 'drawImage' to blit, it fully covers it rather than draw semitranslucent edges more and more over each other
+    drawer.fillBg_(this.ctx0, 'white');
+    drawer.fillBg_(this.ctx1, 'white');
+
+    this.ctx0.strokeStyle = '#aaa';
+    this.ctx1.strokeStyle = 'black';
+    this.ctx0.fillStyle = '#aaa';
+    this.ctx1.fillStyle = 'black';
+    //this.ctx0.lineWidth = 0.5;
+    //this.ctx1.lineWidth = 0.5;
+    this.ctx0.lineWidth = 1;
+    this.ctx1.lineWidth = 1;
+    var error = false;
+    if(cell.components[0] && cell.components[0].error) {
+      error = true;
+      this.markError(cell, cell.components[0].errormessage);
+      drawer.fillBg_(this.ctx0, 'yellow');
+      drawer.fillBg_(this.ctx1, 'yellow');
+    } else if(opt_title) {
+      //this.text0.title = opt_title;
+      //this.text1.title = opt_title;
+      this.fallback.div0.title = opt_title;
+      this.fallback.div1.title = opt_title;
+    }
+    var c = cell.circuitsymbol;
+    // This avoids blurry lines that take up other amounts of pixels with lighter colors than desired
+    //this.ctx0.translate(0.5, 0.5);
+    //this.ctx1.translate(0.5, 0.5);
+    for (var i = 0; i < 2; i++) {
+      var ctx = (i == 0) ? this.ctx0 : this.ctx1;
+      var canvas = (i == 0) ? this.canvas0 : this.canvas1;
+      var textel = (i == 0) ? this.text0 : this.text1;
+
+      if(c == '-') {
+        drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+        drawer.drawSplitDiag_(cell, ctx, 2);
+      } else if(c == '|') {
+        drawer.drawLine_(ctx, 0.5, 0, 0.5, 1);
+        drawer.drawSplitDiag_(cell, ctx, 2);
+      } else if(c == '/') {
+        drawer.drawLine_(ctx, 0, 1, 1, 0);
+      } else if(c == '\\') {
+        drawer.drawLine_(ctx, 0, 0, 1, 1);
+      } else if(c == 'x') {
+        //drawer.drawLine_(ctx, 0, 0, 1, 1);
+        if(isInterestingComponent(cell, 1) && !isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 0, 1, 1);
+        if(isInterestingComponent(cell, 1)) { drawer.drawLine_(ctx, 0, 0, 0.4, 0.4); drawer.drawLine_(ctx, 0.6, 0.6, 1, 1); }
+        if(isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 1, 1, 0);
+      } else if(c == '+') {
+        var centerfull = drawer.drawPlusDiagSplit_(cell, ctx);
+        var shift = centerfull ? 0.3 : 0.2;
+        drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+        //drawer.drawLine(ctx, 0.5, 0, 0.5, 1);
+        drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+        drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      } else if(c == '*' || c == ',') {
+        drawer.drawSplit_(cell, ctx);
+      } else if(c == '^') {
+        if(cell.circuitextra == 2) {
+          if(hasDevice(cell.x, cell.y, 7)) drawer.drawArrow_(ctx, 1, 1, 0, 0);
+          if(hasDevice(cell.x, cell.y, 4)) drawer.drawArrow_(ctx, 0, 1, 1, 0);
+        } else {
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0);
+        }
+      } else if(c == '>') {
+        if(cell.circuitextra == 2) {
+          if(hasDevice(cell.x, cell.y, 4)) drawer.drawArrow_(ctx, 0, 1, 1, 0);
+          if(hasDevice(cell.x, cell.y, 5)) drawer.drawArrow_(ctx, 0, 0, 1, 1);
+        } else {
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5);
+        }
+      } else if(c == 'v') {
+        if(cell.circuitextra == 2) {
+          if(hasDevice(cell.x, cell.y, 6)) drawer.drawArrow_(ctx, 1, 0, 0, 1);
+          if(hasDevice(cell.x, cell.y, 5)) drawer.drawArrow_(ctx, 0, 0, 1, 1);
+        } else {
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1);
+        }
+      } else if(c == '<') {
+        if(cell.circuitextra == 2) {
+          if(hasDevice(cell.x, cell.y, 7)) drawer.drawArrow_(ctx, 1, 1, 0, 0);
+          if(hasDevice(cell.x, cell.y, 6)) drawer.drawArrow_(ctx, 1, 0, 0, 1);
+        } else {
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5);
+        }
+      } else if(c == 'm') {
+        if(cell.circuitextra == 2) {
+          if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
+          if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
+        } else {
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
+        }
+      } else if(c == ']') {
+        if(cell.circuitextra == 2) {
+          if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
+          if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
+        } else {
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
+        }
+      } else if(c == 'w') {
+        if(cell.circuitextra == 2) {
+          if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
+          if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
+        } else {
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
+        }
+      } else if(c == '[') {
+        if(cell.circuitextra == 2) {
+          if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
+          if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
+        } else {
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
+        }
+      } else if(c == 'z') {
+        var num = 0;
+        if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);}
+        if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);}
+        if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);}
+        if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);}
+        drawer.drawSplit_(cell, ctx, num);
+      } else if(c == 'Z') {
+        var num = 0;
+        if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);}
+        if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);}
+        if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);}
+        if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);}
+        drawer.drawSplit_(cell, ctx, num);
+      } else if(c == 'h') {
+        drawer.drawSplit_h_(cell, ctx, -8);
+        if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);
+        if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);
+        if(hasDevice(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);
+        if(hasDevice(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);
+        if(hasDevice(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0, 0.19);
+        if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1, 0.19);
+        if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1, 0.19);
+        if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0, 0.19);
+      } else if(c == 'H') {
+        drawer.drawSplit_h_(cell, ctx, -8);
+        // no "isInterestingComponent" checks for H, unlike h, because H can affect things, it's negating (for h any effect, like as AND input, is negated if it's a dummy, but not for H)
+        if(hasDevice(cell.x, cell.y, 0)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
+        if(hasDevice(cell.x, cell.y, 1)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
+        if(hasDevice(cell.x, cell.y, 2)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
+        if(hasDevice(cell.x, cell.y, 3)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
+        if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0);
+        if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 1);
+        if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 1);
+        if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0);
+      } else if(c == 'X') {
+        // TODO: better also have a little gap like '+' does
+        drawer.drawSplit_(cell, ctx, -8);
+      } else if(c == '&') {
+        var draw1 = connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 1);
+        var draw0 = connected2g(cell.x, cell.y, 2) && connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0);
+        if(draw0 && draw1) {
+          var r = 0.3;
+          drawer.drawLine_(ctx, 0, 0.5, r, 0.5);
+          drawer.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
+          drawer.drawLine_(ctx, r, 0.5, 0.5, 1 - r);
+          drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0, 0.5, r);
+          drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, r);
+        }
+        else if(draw0) {
+          drawer.drawLine_(ctx, 0.5, 0.5, 0, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 1);
+        }
+        else if(draw1) {
+          drawer.drawLine_(ctx, 0.5, 0.5, 1, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 0);
+        }
+      } else if(c == '%') {
+        var draw1 = connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 1);
+        var draw0 = connected2g(cell.x, cell.y, 1) && connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 0);
+        if(draw0 && draw1) {
+          var r = 0.3;
+          drawer.drawLine_(ctx, 0, 0.5, r, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0, 0.5, r);
+          drawer.drawLine_(ctx, r, 0.5, 0.5, r);
+          drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
+          drawer.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
+          drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, 1 - r);
+        }
+        else if(draw0) {
+          drawer.drawLine_(ctx, 0.5, 0.5, 1, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 1);
+        }
+        else if(draw1) {
+          drawer.drawLine_(ctx, 0.5, 0.5, 0, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 0);
+        }
+      } else if(antennamap[c]) {
+        drawer.fillBg_(ctx, ctx.fillStyle);
+        this.ctx0.strokeStyle = this.ctx0.fillStyle = 'white';
+        if(c == ')') {
+          drawer.drawArc_(ctx, -0.3, 0.5, 0.75, 0.1, 0.8);
+        } else if(c == '(') {
+          drawer.drawArc_(ctx, 1.3, 0.5, 0.4, 0.75, 0.8);
+        } else if(c == 'u') {
+          drawer.drawArc_(ctx, 0.5, -0.3, 0.65, 0.35, 0.8);
+        } else if(c == 'n') {
+          drawer.drawArc_(ctx, 0.5, 1.3, 0.65, 0.85, 0.8);
+        }
+      } else if(c == 'y') {
+        var ygroup = cell.ygroup;
+        if(ygroup) {
+          // color some buses slightly differently to allow to distinguish them visually
+          var cc = (ygroup.index & 7);
+          var color = '#aaa';
+          if(cc == 1) color = '#aab';
+          if(cc == 2) color = '#aba';
+          if(cc == 3) color = '#baa';
+          if(cc == 4) color = '#bba';
+          if(cc == 5) color = '#bab';
+          if(cc == 6) color = '#abb';
+          if(cc == 7) color = '#bbb';
+          drawer.fillBg_(ctx, color);
+        }
+        if(digitmap[symbol]) {
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = '' + tw + 'px serif';
+          this.ctx0.strokeStyle = this.ctx0.fillStyle = 'white';
+          ctx.fillText(symbol, drawer.tx + (tw >> 1), drawer.ty + (th >> 1));
+        }
+      } else if(c == 'T') {
+        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
+      } else if(virtualsymbol == 'L') {
+        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
+      } else if(cell.comment) {
+        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
+      } else if(c == 'toc') {
+        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
+      } else {
+        var alreadybg = error;
+        if(!error) {
+          if(virtualsymbol == 's' || virtualsymbol == 'S' || virtualsymbol == 'p' || virtualsymbol == 'P' || virtualsymbol == 'r' || virtualsymbol == 'R') {
+            alreadybg = true;
+            drawer.fillBg_(ctx, i == 0 ? '#fafffa' : '#afa');
+            this.ctx0.strokeStyle = this.ctx0.fillStyle = '#5c5';//'#6d6';
+            this.ctx1.strokeStyle = this.ctx1.fillStyle = 'green';
+            this.text0.style.color = '#6d6';
+            this.text1.style.color = 'green';
+          }
+          if(virtualsymbol == 'l') {
+            alreadybg = true;
+            var color = cell.components[0] ? cell.components[0].number : 0;
+            if(color == -1) color = 0;
+            if(color > led_off_colors.length) color = 0; // not more colors than that supported
+            drawer.fillBg_(ctx, i == 0 ? led_light_bg_colors[color] : led_bg_colors[color]);
+
+            this.ctx0.strokeStyle = this.ctx0.fillStyle = led_light_fg_colors[color];
+            this.ctx1.strokeStyle = this.ctx1.fillStyle = led_fg_colors[color];
+            this.text0.style.color = led_off_colors[color];
+            this.text1.style.color = led_fg_colors[color];
+          }
+        }
+        if(devicemap[c] || c == '#' || c == '$') {
+          if(!alreadybg) {
+            drawer.fillBg_(ctx, '#f7f7f7');
+          }
+          if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
+          if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
+          if(!sameDevice(cell.x, cell.y, 2)) drawer.drawLine_(ctx, 1, 1, 0, 1);
+          if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
+        }
+        var okdraw = true;
+        if(c == '#' || c == '$') okdraw = false;
+        if(c == 'i' && !(cell.drawchip || digitmap[cell.metasymbol])) okdraw = false;
+        if(okdraw) {
+          /*ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = '' + tw + 'px serif';
+          ctx.fillText(symbol, tw >> 1, th >> 1);*/
+          textel.innerText = symbol;
+        }
+      }
+    }
+  };
+
+  this.markError = function(cell, errortext) {
+    if(this.usefallback) {
+      this.fallback.markError(cell, errortext);
+    } else {
+      //this.canvas0.style.backgroundColor = 'yellow';
+      //this.canvas1.style.backgroundColor = 'yellow';
+      this.ctx0.strokeStyle = 'red';
+      this.ctx1.strokeStyle = 'red';
+      this.ctx0.fillStyle = 'red';
+      this.ctx1.fillStyle = 'red';
+      this.fallback.div0.style.color = 'red';
+      this.fallback.div1.style.color = 'red';
+      this.fallback.div0.title = errortext;
+      this.fallback.div1.title = errortext;
+    }
+  };
+
+  this.setCursorPointer = function() {
+    this.fallback.div0.style.cursor = 'pointer';
+    this.fallback.div1.style.cursor = 'pointer';
+    this.text0.style.cursor = 'pointer';
+    this.text1.style.cursor = 'pointer';
+  };
+
+  this.setValue = function(cell, value, type) {
+    if(this.usefallback) {
+      this.fallback.setValue(cell, value, type);
+      return;
+    }
+    if(value != this.prevvalue) { // changing visibility is slow in case of lots of elements, so only do if it changed
+      var dest = rglobal.maincanvas.getContextForCell(cell);
+      var offsetx = rglobal.maincanvas.getXOffsetForCell(cell);
+      var offsety = rglobal.maincanvas.getYOffsetForCell(cell);
+      if(value) {
+        this.fallback.div0.style.visibility = 'hidden';
+        this.fallback.div1.style.visibility = 'visible';
+        var source = rglobal.offcanvas1.getCanvasForCell(cell);
+        dest.drawImage(source, offsetx + cell.x * tw, offsety + cell.y * th, tw, th, offsetx + cell.x * tw, offsety + cell.y * th, tw, th);
+      } else {
+        this.fallback.div0.style.visibility = 'visible';
+        this.fallback.div1.style.visibility = 'hidden';
+        var source = rglobal.offcanvas0.getCanvasForCell(cell);
+        dest.drawImage(source, offsetx + cell.x * tw, offsety + cell.y * th, tw, th, offsetx + cell.x * tw, offsety + cell.y * th, tw, th);
+      }
+    }
+    this.prevvalue = value;
+  };
+
+  this.setLook = function(cell, type) {
+    /* see the RendererText setLook function for comment about styles and types */
+    if(type == TYPE_TIMER_ON || type == TYPE_TIMER_OFF) {
+      var clocked = cell.components[0].clocked;
+      var user = (type == TYPE_TIMER_ON);
+      if(this.text0.innerText != 'R' && user) this.text0.innerText = 'R';
+      if(this.text0.innerText != 'r' && !user) this.text0.innerText = 'r';
+      if(this.text1.innerText != 'R' && user) this.text1.innerText = 'R';
+      if(this.text1.innerText != 'r' && !user) this.text1.innerText = 'r';
+    }
+    if(type == TYPE_SWITCH_ON || type == TYPE_SWITCH_OFF) {
+      var user = (type == TYPE_SWITCH_ON);
+      if(this.text0.innerText != 'S' && user) this.text0.innerText = 'S';
+      if(this.text0.innerText != 's' && !user) this.text0.innerText = 's';
+      if(this.text1.innerText != 'S' && user) this.text1.innerText = 'S';
+      if(this.text1.innerText != 's' && !user) this.text1.innerText = 's';
+    }
+    if(type == TYPE_PUSHBUTTON_ON || type == TYPE_PUSHBUTTON_OFF) {
+      var user = (type == TYPE_PUSHBUTTON_ON);
+      if(this.text0.innerText != 'P' && user) this.text0.innerText = 'P';
+      if(this.text0.innerText != 'p' && !user) this.text0.innerText = 'p';
+      if(this.text1.innerText != 'P' && user) this.text1.innerText = 'P';
+      if(this.text1.innerText != 'p' && !user) this.text1.innerText = 'p';
+    }
+  };
+
+  this.setTerminal = function(char, blink) {
+    this.fallback.setTerminal(char, blink);
+  };
+};
+
+
+/** @implements Renderer */
+function RendererImgOLD() { // RendererCanvas RendererGraphical
+  this.fallback = new RendererText();
+
+  this.canvas0 = null;
+  this.canvas1 = null;
+  this.ctx0 = null;
+  this.ctx1 = null;
+  //this.data0 = null;
+  //this.data1 = null;
+  this.prevvalue = null;
+  this.usefallback = false;
+  this.init2done = false;
+  this.text0 = null;
+  this.text1 = null;
+
+  this.globalInit = function() {
+  };
+
+  // one time initialization
+  this.init = function(cell, x, y, clickfun) {
+    this.fallback.init(cell, x, y, clickfun);
+    if(!cell.comment && cell.circuitsymbol != ' ') {
+      this.canvas0 = makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div0*/);
+      this.canvas0.width = parseInt(tw);
+      this.canvas0.height = parseInt(th);
+      this.canvas1 = makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div1*/);
+      this.canvas1.width = parseInt(tw);
+      this.canvas1.height = parseInt(th);
+      this.ctx0 = this.canvas0.getContext('2d');
+      this.ctx1 = this.canvas1.getContext('2d');
+      this.fallback.div0.appendChild(this.canvas0);
+      this.fallback.div1.appendChild(this.canvas1);
+      this.text0 = makeDiv(0, 0, tw, th, this.fallback.div0);
+      this.text1 = makeDiv(0, 0, tw, th, this.fallback.div1);
+      var fs = tw - 2;
+      if (fs < 7) fs = 7;
+      this.text0.style.color = '#999';
+      this.text0.style.textAlign = 'center';
+      this.text0.style.fontSize = fs + 'px';
+      this.text0.style.fontFamily = 'monospace';
+      this.text1.style.color = 'black';
+      this.text1.style.textAlign = 'center';
+      this.text1.style.fontSize = fs + 'px';
+      this.text1.style.fontFamily = 'monospace';
+    }
+  };
+
+  // specific initialization, can be re-done if cell changed on click
+  this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
+    if(!this.canvas0) {
+      this.fallback.init2(cell, symbol, virtualsymbol, opt_title);
+      return;
+    }
+
+    var drawer = new RendererDrawer();
 
     if (this.init2done) {
       this.ctx0.clearRect(0, 0, tw, th);
@@ -3615,182 +4210,182 @@ function RendererImg() { // RendererCanvas RendererGraphical
       var ctx = (i == 0) ? this.ctx0 : this.ctx1;
       var textel = (i == 0) ? this.text0 : this.text1;
       if(c == '-') {
-        this.drawLine_(ctx, 0, 0.5, 1, 0.5);
-        this.drawSplitDiag_(cell, ctx, 2);
+        drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+        drawer.drawSplitDiag_(cell, ctx, 2);
       } else if(c == '|') {
-        this.drawLine_(ctx, 0.5, 0, 0.5, 1);
-        this.drawSplitDiag_(cell, ctx, 2);
+        drawer.drawLine_(ctx, 0.5, 0, 0.5, 1);
+        drawer.drawSplitDiag_(cell, ctx, 2);
       } else if(c == '/') {
-        this.drawLine_(ctx, 0, 1, 1, 0);
+        drawer.drawLine_(ctx, 0, 1, 1, 0);
       } else if(c == '\\') {
-        this.drawLine_(ctx, 0, 0, 1, 1);
+        drawer.drawLine_(ctx, 0, 0, 1, 1);
       } else if(c == 'x') {
-        //this.drawLine_(ctx, 0, 0, 1, 1);
-        if(isInterestingComponent(cell, 1) && !isInterestingComponent(cell, 0)) this.drawLine_(ctx, 0, 0, 1, 1);
-        if(isInterestingComponent(cell, 1)) { this.drawLine_(ctx, 0, 0, 0.4, 0.4); this.drawLine_(ctx, 0.6, 0.6, 1, 1); }
-        if(isInterestingComponent(cell, 0)) this.drawLine_(ctx, 0, 1, 1, 0);
+        //drawer.drawLine_(ctx, 0, 0, 1, 1);
+        if(isInterestingComponent(cell, 1) && !isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 0, 1, 1);
+        if(isInterestingComponent(cell, 1)) { drawer.drawLine_(ctx, 0, 0, 0.4, 0.4); drawer.drawLine_(ctx, 0.6, 0.6, 1, 1); }
+        if(isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 1, 1, 0);
       } else if(c == '+') {
-        var centerfull = this.drawPlusDiagSplit_(cell, ctx);
+        var centerfull = drawer.drawPlusDiagSplit_(cell, ctx);
         var shift = centerfull ? 0.3 : 0.2;
-        this.drawLine_(ctx, 0, 0.5, 1, 0.5);
-        //this.drawLine(ctx, 0.5, 0, 0.5, 1);
-        this.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-        this.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+        drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+        //drawer.drawLine(ctx, 0.5, 0, 0.5, 1);
+        drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+        drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
       } else if(c == '*' || c == ',') {
-        this.drawSplit_(cell, ctx);
+        drawer.drawSplit_(cell, ctx);
       } else if(c == '^') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) this.drawArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 4)) this.drawArrow_(ctx, 0, 1, 1, 0);
+          if(hasDevice(cell.x, cell.y, 7)) drawer.drawArrow_(ctx, 1, 1, 0, 0);
+          if(hasDevice(cell.x, cell.y, 4)) drawer.drawArrow_(ctx, 0, 1, 1, 0);
         } else {
-          this.drawSplit_(cell, ctx, 1);
-          this.drawArrow_(ctx, 0.5, 0.5, 0.5, 0);
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0);
         }
       } else if(c == '>') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 4)) this.drawArrow_(ctx, 0, 1, 1, 0);
-          if(hasDevice(cell.x, cell.y, 5)) this.drawArrow_(ctx, 0, 0, 1, 1);
+          if(hasDevice(cell.x, cell.y, 4)) drawer.drawArrow_(ctx, 0, 1, 1, 0);
+          if(hasDevice(cell.x, cell.y, 5)) drawer.drawArrow_(ctx, 0, 0, 1, 1);
         } else {
-          this.drawSplit_(cell, ctx, 1);
-          this.drawArrow_(ctx, 0.5, 0.5, 1, 0.5);
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5);
         }
       } else if(c == 'v') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 6)) this.drawArrow_(ctx, 1, 0, 0, 1);
-          if(hasDevice(cell.x, cell.y, 5)) this.drawArrow_(ctx, 0, 0, 1, 1);
+          if(hasDevice(cell.x, cell.y, 6)) drawer.drawArrow_(ctx, 1, 0, 0, 1);
+          if(hasDevice(cell.x, cell.y, 5)) drawer.drawArrow_(ctx, 0, 0, 1, 1);
         } else {
-          this.drawSplit_(cell, ctx, 1);
-          this.drawArrow_(ctx, 0.5, 0.5, 0.5, 1);
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1);
         }
       } else if(c == '<') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) this.drawArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 6)) this.drawArrow_(ctx, 1, 0, 0, 1);
+          if(hasDevice(cell.x, cell.y, 7)) drawer.drawArrow_(ctx, 1, 1, 0, 0);
+          if(hasDevice(cell.x, cell.y, 6)) drawer.drawArrow_(ctx, 1, 0, 0, 1);
         } else {
-          this.drawSplit_(cell, ctx, 1);
-          this.drawArrow_(ctx, 0.5, 0.5, 0, 0.5);
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5);
         }
       } else if(c == 'm') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) this.drawAntiArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 4)) this.drawAntiArrow_(ctx, 0, 1, 1, 0);
+          if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
+          if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
         } else {
-          this.drawSplit_(cell, ctx, 1);
-          this.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
         }
       } else if(c == ']') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 4)) this.drawAntiArrow_(ctx, 0, 1, 1, 0);
-          if(hasDevice(cell.x, cell.y, 5)) this.drawAntiArrow_(ctx, 0, 0, 1, 1);
+          if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
+          if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
         } else {
-          this.drawSplit_(cell, ctx, 1);
-          this.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
         }
       } else if(c == 'w') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 6)) this.drawAntiArrow_(ctx, 1, 0, 0, 1);
-          if(hasDevice(cell.x, cell.y, 5)) this.drawAntiArrow_(ctx, 0, 0, 1, 1);
+          if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
+          if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
         } else {
-          this.drawSplit_(cell, ctx, 1);
-          this.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
         }
       } else if(c == '[') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) this.drawAntiArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 6)) this.drawAntiArrow_(ctx, 1, 0, 0, 1);
+          if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
+          if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
         } else {
-          this.drawSplit_(cell, ctx, 1);
-          this.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
+          drawer.drawSplit_(cell, ctx, 1);
+          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
         }
       } else if(c == 'z') {
         var num = 0;
-        if(hasDevice(cell.x, cell.y, 0)) {num++; this.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);}
-        if(hasDevice(cell.x, cell.y, 1)) {num++; this.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);}
-        if(hasDevice(cell.x, cell.y, 2)) {num++; this.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);}
-        if(hasDevice(cell.x, cell.y, 3)) {num++; this.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);}
-        this.drawSplit_(cell, ctx, num);
+        if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);}
+        if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);}
+        if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);}
+        if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);}
+        drawer.drawSplit_(cell, ctx, num);
       } else if(c == 'Z') {
         var num = 0;
-        if(hasDevice(cell.x, cell.y, 0)) {num++; this.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);}
-        if(hasDevice(cell.x, cell.y, 1)) {num++; this.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);}
-        if(hasDevice(cell.x, cell.y, 2)) {num++; this.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);}
-        if(hasDevice(cell.x, cell.y, 3)) {num++; this.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);}
-        this.drawSplit_(cell, ctx, num);
+        if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);}
+        if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);}
+        if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);}
+        if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);}
+        drawer.drawSplit_(cell, ctx, num);
       } else if(c == 'h') {
-        this.drawSplit_h_(cell, ctx, -8);
-        if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) this.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);
-        if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) this.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);
-        if(hasDevice(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) this.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);
-        if(hasDevice(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) this.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);
-        if(hasDevice(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) this.drawArrow_(ctx, 0.5, 0.5, 1, 0, 0.19);
-        if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) this.drawArrow_(ctx, 0.5, 0.5, 1, 1, 0.19);
-        if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) this.drawArrow_(ctx, 0.5, 0.5, 0, 1, 0.19);
-        if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) this.drawArrow_(ctx, 0.5, 0.5, 0, 0, 0.19);
+        drawer.drawSplit_h_(cell, ctx, -8);
+        if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);
+        if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);
+        if(hasDevice(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);
+        if(hasDevice(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);
+        if(hasDevice(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0, 0.19);
+        if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1, 0.19);
+        if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1, 0.19);
+        if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0, 0.19);
       } else if(c == 'H') {
-        this.drawSplit_h_(cell, ctx, -8);
+        drawer.drawSplit_h_(cell, ctx, -8);
         // no "isInterestingComponent" checks for H, unlike h, because H can affect things, it's negating (for h any effect, like as AND input, is negated if it's a dummy, but not for H)
-        if(hasDevice(cell.x, cell.y, 0)) this.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
-        if(hasDevice(cell.x, cell.y, 1)) this.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
-        if(hasDevice(cell.x, cell.y, 2)) this.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
-        if(hasDevice(cell.x, cell.y, 3)) this.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
-        if(hasDevice(cell.x, cell.y, 4)) this.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0);
-        if(hasDevice(cell.x, cell.y, 5)) this.drawAntiArrow_(ctx, 0.5, 0.5, 1, 1);
-        if(hasDevice(cell.x, cell.y, 6)) this.drawAntiArrow_(ctx, 0.5, 0.5, 0, 1);
-        if(hasDevice(cell.x, cell.y, 7)) this.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0);
+        if(hasDevice(cell.x, cell.y, 0)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
+        if(hasDevice(cell.x, cell.y, 1)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
+        if(hasDevice(cell.x, cell.y, 2)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
+        if(hasDevice(cell.x, cell.y, 3)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
+        if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0);
+        if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 1);
+        if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 1);
+        if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0);
       } else if(c == 'X') {
         // TODO: better also have a little gap like '+' does
-        this.drawSplit_(cell, ctx, -8);
+        drawer.drawSplit_(cell, ctx, -8);
       } else if(c == '&') {
         var draw1 = connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 1);
         var draw0 = connected2g(cell.x, cell.y, 2) && connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0);
         if(draw0 && draw1) {
           var r = 0.3;
-          this.drawLine_(ctx, 0, 0.5, r, 0.5);
-          this.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
-          this.drawLine_(ctx, r, 0.5, 0.5, 1 - r);
-          this.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
-          this.drawLine_(ctx, 0.5, 0, 0.5, r);
-          this.drawLine_(ctx, 1 - r, 0.5, 0.5, r);
+          drawer.drawLine_(ctx, 0, 0.5, r, 0.5);
+          drawer.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
+          drawer.drawLine_(ctx, r, 0.5, 0.5, 1 - r);
+          drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0, 0.5, r);
+          drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, r);
         }
         else if(draw0) {
-          this.drawLine_(ctx, 0.5, 0.5, 0, 0.5);
-          this.drawLine_(ctx, 0.5, 0.5, 0.5, 1);
+          drawer.drawLine_(ctx, 0.5, 0.5, 0, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 1);
         }
         else if(draw1) {
-          this.drawLine_(ctx, 0.5, 0.5, 1, 0.5);
-          this.drawLine_(ctx, 0.5, 0.5, 0.5, 0);
+          drawer.drawLine_(ctx, 0.5, 0.5, 1, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 0);
         }
       } else if(c == '%') {
         var draw1 = connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 1);
         var draw0 = connected2g(cell.x, cell.y, 1) && connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 0);
         if(draw0 && draw1) {
           var r = 0.3;
-          this.drawLine_(ctx, 0, 0.5, r, 0.5);
-          this.drawLine_(ctx, 0.5, 0, 0.5, r);
-          this.drawLine_(ctx, r, 0.5, 0.5, r);
-          this.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
-          this.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
-          this.drawLine_(ctx, 1 - r, 0.5, 0.5, 1 - r);
+          drawer.drawLine_(ctx, 0, 0.5, r, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0, 0.5, r);
+          drawer.drawLine_(ctx, r, 0.5, 0.5, r);
+          drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
+          drawer.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
+          drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, 1 - r);
         }
         else if(draw0) {
-          this.drawLine_(ctx, 0.5, 0.5, 1, 0.5);
-          this.drawLine_(ctx, 0.5, 0.5, 0.5, 1);
+          drawer.drawLine_(ctx, 0.5, 0.5, 1, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 1);
         }
         else if(draw1) {
-          this.drawLine_(ctx, 0.5, 0.5, 0, 0.5);
-          this.drawLine_(ctx, 0.5, 0.5, 0.5, 0);
+          drawer.drawLine_(ctx, 0.5, 0.5, 0, 0.5);
+          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 0);
         }
       } else if(antennamap[c]) {
         ctx.fillRect(0, 0, tw, th);
         this.ctx0.strokeStyle = this.ctx0.fillStyle = 'white';
         if(c == ')') {
-          this.drawArc_(ctx, -0.3, 0.5, 0, 1, 0.8);
+          drawer.drawArc_(ctx, -0.3, 0.5, 0, 1, 0.8);
         } else if(c == '(') {
-          this.drawArc_(ctx, 1.3, 0.5, 0, 1, 0.8);
+          drawer.drawArc_(ctx, 1.3, 0.5, 0, 1, 0.8);
         } else if(c == 'u') {
-          this.drawArc_(ctx, 0.5, -0.3, 0, 1, 0.8);
+          drawer.drawArc_(ctx, 0.5, -0.3, 0, 1, 0.8);
         } else if(c == 'n') {
-          this.drawArc_(ctx, 0.5, 1.3, 0, 1, 0.8);
+          drawer.drawArc_(ctx, 0.5, 1.3, 0, 1, 0.8);
         }
       } else if(c == 'y') {
         var ygroup = cell.ygroup;
@@ -3853,10 +4448,10 @@ function RendererImg() { // RendererCanvas RendererGraphical
             this.canvas0.style.backgroundColor = '#f7f7f7';
             this.canvas1.style.backgroundColor = '#f7f7f7';
           }
-          if(!sameDevice(cell.x, cell.y, 0)) this.drawLine_(ctx, 0, 0, 1, 0);
-          if(!sameDevice(cell.x, cell.y, 1)) this.drawLine_(ctx, 1, 0, 1, 1);
-          if(!sameDevice(cell.x, cell.y, 2)) this.drawLine_(ctx, 1, 1, 0, 1);
-          if(!sameDevice(cell.x, cell.y, 3)) this.drawLine_(ctx, 0, 1, 0, 0);
+          if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
+          if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
+          if(!sameDevice(cell.x, cell.y, 2)) drawer.drawLine_(ctx, 1, 1, 0, 1);
+          if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
         }
         var okdraw = true;
         if(c == '#' || c == '$') okdraw = false;
@@ -3936,6 +4531,8 @@ function RendererImg() { // RendererCanvas RendererGraphical
     this.fallback.setTerminal(char, blink);
   };
 };
+
+
 
 document.body.onmouseup = function(e) {
   if(lastmousedowncomponent) {
@@ -6204,6 +6801,9 @@ function parseComponents() {
 function initDivs() {
   worldDiv.style.display = 'none'; // making it invisible while rendering makes it faster in some browsers
   worldDiv.innerText = '';
+
+  getNewRenderer().globalInit();
+
   // y in opposite order: reason: fonts usually have attachments at the bottom, not the top. And sometimes the bottom attachment spills over into the cell below. If the cell below has a background color, it would come on top of the font, clipping it. Doing bottom to to porder makes higher cells be on top of lower cells, fixing that.
   for(var y = h - 1; y >= 0; y--) {
     for(var x = line0[y]; x < line1[y]; x++) {
@@ -6680,6 +7280,7 @@ rendererDropdown.onchange = function() {
 };
 makeElement('option', rendererDropdown).innerText = 'text';
 makeElement('option', rendererDropdown).innerText = 'graphical';
+makeElement('option', rendererDropdown).innerText = '(old graphical renderer, slower, fallback)';
 rendererDropdown.selectedIndex = graphics_mode;
 
 /*

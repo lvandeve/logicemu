@@ -4731,395 +4731,8 @@ s**>i**>l
 
 
 
-registerTitle('Other');
+registerTitle('Relays');
 
-registerCircuit('NAND logic II', `
-
-0"Here we have even more NAND logic, but first the original gates again:"
-
-s****>A****>l"NOT"
-
-
-s**>A>A****>l"AND"
-    ^
-s****
-
-
-s**>A>A****>l"OR"
-      ^
-s**>A**
-
-
-s**>A**
-  v ^ v
-  A** A****>l"XOR"
-  ^ v ^
-s**>A**
-
-
-s**>A******>l"NAND"
-    ^
-s****
-
-
-s**>A>A>A**>l "NOR"
-      ^
-s**>A**
-
-
-  *****>A
-  *     v
-s*+**>A>A
-  * v   v
-s**>A**>A**>l"XNOR"
-
-
-
-0"NAND logic emulating 3-input gates"
-0"smallest possible amount of gates used"
-
-
-s********
-        v
-s**>A>A>A>A******>l      "and"
-    ^
-s****
-
-
-s**>A******
-          v
-s**>A>A>A>A******>l      "or"
-      ^
-s**>A**
-
-
-s********>A**
-        v ^ v
-s**>A** A** A*****>l     "xor"
-  v ^ v ^ v ^
-  A** A**>A**
-  ^ v ^
-s**>A**
-
-
-s********
-        v
-s**>A>A>A*****>l         "nand"
-    ^
-s****
-
-
-s**>A******
-          v
-s**>A>A>A>A>A***>l       "nor"
-      ^
-s**>A**
-
-
-s*************
-             *
-    *****>A  *>A**
-    *     v  v ^ v
-s***+**>A>A  A** A***>l  "xnor"
-    * v   v  ^ v ^
-s****>A**>A***>A**
-
-
-"a"s****>A****
-         ^   v
-"s"s****>A   A***>l      "mux"
-       v     ^
-"b"s**>A******
-
-
-  **>A***
-  *  ^  *
-s*+***v v
-  *   A>A>A>A***>l  "majority"
-s*+***^     ^
-  *  v      *
-s***>A*******
-
-0"wire crossing with 10 NANDs (various shapes)"
-
-                                           s
-   ***>A****        s**>A**>A**>l          *
-   *   ^   v          * ^   ^            *******
-s***>A**>A>A***>l     *>A**>A            v v   v
-   v ^ v ^            v ^ v ^          *>A>A**>A
-   A** A**            A** A**          * v v v v
-   ^ v ^ v            ^ v ^ v        s**>A>A>A>A**>l
-s***>A**>A>A***>l     *>A**>A          * * v
-   *   v   ^          * v   v          * *>A
-   ***>A****        s**>A**>A**>l      * v v
-                                       *>A>A
-                                           *
-                                           *
-                                           v
-                                           l
-
-0"SR latch (inputs corrected to be not inverted)"
-
-  "S"s***>A>A*****>l "Q"
-            ^ *
-  "R"s***>A>A<*
-
-0"JK flip-flop (edge triggered, from D flip-flop, stable)"
-
-
-"J" s*****>A>A>A**>A**>A**>A*****>l
-           ^ ^ ^ v ^ * ^ v ^   *
-"K" s*****>A>A A>A>A<* *>A>A   *
-           ^ ^ ^       *   ^   *
-"C" s******+*+**********   *   *
-           * *             *   *
-           *********************
-
-0"half adder"
-
-    *****v
-    *    A**
-s****v   ^ v
-     A**** A****>l
-s****^ * v ^
-    *  * A**
-    ***+*^
-       *
-       ***>A****>l
-
-
-0"full adder"
-
-    *****v   ******v
-    *    A** * *   A**
-s****v   ^ v * v   ^ v
-     A**** A** A**** A*****>l
-s****^ * v ^   ^ * v ^
-    *  * A**   * * A**
-    ***+*^     **+*^
-       *       * *
-s******+******** *
-       *         v
-       *********>A*********>l
-
-
-`, 'nand_logic_2');
-
-registerCircuit('NAND logic III: no wire crossings', `
-
-0"Here we make circuits only from NAND, and without any wire crossings"
-0"either. So purely NAND in 2-dimensional plane (because a wire crossing"
-0"is in fact 3-dimensional). Of course there is the 10-NAND wire crossing"
-0"and sometimes it will have to be used, but for most circuits below"
-0"more minimal solutions were found."
-
-
-0"All logic gates from NAND"
-
-s****>A****>l"NOT"
-
-
-s**>A>A****>l"AND"
-    ^
-s****
-
-
-s**>A>A****>l"OR"
-      ^
-s**>A**
-
-
-s**>A**
-  v ^ v
-  A** A****>l"XOR"
-  ^ v ^
-s**>A**
-
-
-s**>A******>l"NAND"
-    ^
-s****
-
-
-s**>A>A>A**>l "NOR"
-      ^
-s**>A**
-
-
-s**>A**
-  v ^ v
-  A** A>A**>l"XNOR"
-  ^ v ^
-s**>A**
-
-
-0"wire crossing with 10 NANDs, various shapes"
-
-                                           s
-   ***>A****        s**>A**>A**>l          *
-   *   ^   v          * ^   ^            *******
-s***>A**>A>A***>l     *>A**>A            v v   v
-   v ^ v ^            v ^ v ^          *>A>A**>A
-   A** A**            A** A**          * v v v v
-   ^ v ^ v            ^ v ^ v        s**>A>A>A>A**>l
-s***>A**>A>A***>l     *>A**>A          * * v
-   *   v   ^          * v   v          * *>A
-   ***>A****        s**>A**>A**>l      * v v
-                                       *>A>A
-                                           *
-                                           *
-                                           v
-                                           l
-
-0"Note that in electron mode, there are some flickering garbage signals"
-0"in the wire crossing due to different path lengths. This is never fixable"
-0"with NAND gates. This can only be fixed with buffers (delays)."
-0"We can use LEDs as such buffers (after all, we're allowed to use l,"
-0"but not o which you'd normally use for that). The longest path goes"
-0"through 5 gates, so LEDs are added such that every possible path from"
-0"input to output is 5 devices long."
-
-s****>l>l>A>l>A****>l
-    *     ^   ^
-    *>l>A**>l>A
-    v   ^ v   ^
-    A**** A****
-    ^   v ^   v
-    *>l>A**>l>A
-    *     v   v
-s****>l>l>A>l>A****>l
-
-
-
-0"Half adder without wire crossings:"
-
-s*****>A>A*******>l
-     * ^ ^ v
-     *>A>A A
-       ^ ^ v
-s*********>A>A***>l
-
-
-0"Full adder without wire crossings:"
-
-s*********>A>A****>l
-       v v ^ ^
-     *>A>A A *
-     * v v ^ *
-s*****>A>A**>A
-         v v ^
-       *>A>A A
-       * v v ^
-s*******>A>A******>l
-
-
-
-        "carry"
-           s
-           *
-           *
-           *
-s********* *****
-     v   v v   v
-     A**>A A**>A
-     ^ v v ^ v v
-s*****>A>A**>A>A******>l
-     *   v v   v
-     *   A A<**A
-     *   v v
-     ***>A>A
-           *
-           v
-           l
-        "carry"
-
-0"The adders also suffer a lot from garbage flickering in electron mode,"
-0"so here is a version with delay-LEDs in between:"
-
-
-s*******>l>l>l>l>A>l>l>l**>A******>l
-       v v       ^         ^
-   ***>A>A       A         *
-   *   v v       ^         *
-s***>l>A>A********>l>l>l>l>A
-                 v v       ^
-             ***>A>A       A
-             *   v v       ^
-s*************>l>A>A**************>l
-
-
-0"SR latch (inputs corrected to be not inverted)"
-
-  "S"s***>A>A*****>l "Q"
-            ^ *
-  "R"s***>A>A<*
-
-
-0"JK latch"
-
-          *****
-          *   v
-  "J"s***>A<*>A*****>l "Q"
-          v * *
-  "K"s***>A>A<*
-
-
-0"Gated D Latch"
-
- "D" s**>A**>A*****>l
-         ^ v ^ *
- "E" s****>A>A<*
-
-
-0"D flipflop with NAND and no wire crossings:"
-
-
- "D"s**********>A**>A**>A**>A*****>l
-                ^ v ^ * ^ v ^ *
-                A>A>A<* *>A>A<*
-                ^       *
- "C"s********************
-
-
-0"T flip flop"
-
-
-          *********************
-          v v                 *
-        *>A>A *>A**>A**>A**>A*****>l
-        * v v * ^ v ^ * ^ v ^ *
- "T"s****>A>A** A>A>A<* *>A>A<*
-                ^       *
- "C"s********************
-
-
-0"single-input T flip flop"
-
-
-                *************
-                v           *
-                A**>A<*>A**>A<*
-                ^ v v * ^ v v *
-                A>A>A** *>A>A**
-                ^       *     *
-    s********************     ****>l
-
-
-
-
-0"JK flipflop with NAND and no wire crossings:"
-
-
-          *******************
-          v v               *
-"K"s*****>A>A *>A**>A**>A**>A*****>l
-          v v * ^ v ^ * ^ v ^ *
-"J"s*****>A>A** A>A>A<* *>A>A<*
-                ^       *
-"C"s*********************
-
-
-`, 'nowirecross');
 
 
 registerCircuit('Relay Logic', `
@@ -5252,7 +4865,7 @@ s**   *                      * *>l
 0"It is in fact an NO and an NC SPST with shared coil."
 
 0"So now the coil will connect the common contact to either one, or the other, contact"
-0"on the other side. It acts like a MUX or a DEMUX (depending on which side you use as input)
+0"on the other side. It acts like a MUX or a DEMUX (depending on which side you use as input)"
 
 0"Remember that we need to define two IC's here because the simulation requires an"
 0"input/output direction, but in real life this is the same relay flipped around."
@@ -5856,6 +5469,400 @@ s**>4
 0"RENDER:graphical"
 0"MODE:sequential"
 `, 'relay_logic');
+
+
+registerTitle('Other');
+
+registerCircuit('NAND logic II', `
+
+0"Here we have even more NAND logic, but first the original gates again:"
+
+s****>A****>l"NOT"
+
+
+s**>A>A****>l"AND"
+    ^
+s****
+
+
+s**>A>A****>l"OR"
+      ^
+s**>A**
+
+
+s**>A**
+  v ^ v
+  A** A****>l"XOR"
+  ^ v ^
+s**>A**
+
+
+s**>A******>l"NAND"
+    ^
+s****
+
+
+s**>A>A>A**>l "NOR"
+      ^
+s**>A**
+
+
+  *****>A
+  *     v
+s*+**>A>A
+  * v   v
+s**>A**>A**>l"XNOR"
+
+
+
+0"NAND logic emulating 3-input gates"
+0"smallest possible amount of gates used"
+
+
+s********
+        v
+s**>A>A>A>A******>l      "and"
+    ^
+s****
+
+
+s**>A******
+          v
+s**>A>A>A>A******>l      "or"
+      ^
+s**>A**
+
+
+s********>A**
+        v ^ v
+s**>A** A** A*****>l     "xor"
+  v ^ v ^ v ^
+  A** A**>A**
+  ^ v ^
+s**>A**
+
+
+s********
+        v
+s**>A>A>A*****>l         "nand"
+    ^
+s****
+
+
+s**>A******
+          v
+s**>A>A>A>A>A***>l       "nor"
+      ^
+s**>A**
+
+
+s*************
+             *
+    *****>A  *>A**
+    *     v  v ^ v
+s***+**>A>A  A** A***>l  "xnor"
+    * v   v  ^ v ^
+s****>A**>A***>A**
+
+
+"a"s****>A****
+         ^   v
+"s"s****>A   A***>l      "mux"
+       v     ^
+"b"s**>A******
+
+
+  **>A***
+  *  ^  *
+s*+***v v
+  *   A>A>A>A***>l  "majority"
+s*+***^     ^
+  *  v      *
+s***>A*******
+
+0"wire crossing with 10 NANDs (various shapes)"
+
+                                           s
+   ***>A****        s**>A**>A**>l          *
+   *   ^   v          * ^   ^            *******
+s***>A**>A>A***>l     *>A**>A            v v   v
+   v ^ v ^            v ^ v ^          *>A>A**>A
+   A** A**            A** A**          * v v v v
+   ^ v ^ v            ^ v ^ v        s**>A>A>A>A**>l
+s***>A**>A>A***>l     *>A**>A          * * v
+   *   v   ^          * v   v          * *>A
+   ***>A****        s**>A**>A**>l      * v v
+                                       *>A>A
+                                           *
+                                           *
+                                           v
+                                           l
+
+0"SR latch (inputs corrected to be not inverted)"
+
+  "S"s***>A>A*****>l "Q"
+            ^ *
+  "R"s***>A>A<*
+
+0"JK flip-flop (edge triggered, from D flip-flop, stable)"
+
+
+"J" s*****>A>A>A**>A**>A**>A*****>l
+           ^ ^ ^ v ^ * ^ v ^   *
+"K" s*****>A>A A>A>A<* *>A>A   *
+           ^ ^ ^       *   ^   *
+"C" s******+*+**********   *   *
+           * *             *   *
+           *********************
+
+0"half adder"
+
+    *****v
+    *    A**
+s****v   ^ v
+     A**** A****>l
+s****^ * v ^
+    *  * A**
+    ***+*^
+       *
+       ***>A****>l
+
+
+0"full adder"
+
+    *****v   ******v
+    *    A** * *   A**
+s****v   ^ v * v   ^ v
+     A**** A** A**** A*****>l
+s****^ * v ^   ^ * v ^
+    *  * A**   * * A**
+    ***+*^     **+*^
+       *       * *
+s******+******** *
+       *         v
+       *********>A*********>l
+
+
+`, 'nand_logic_2');
+
+registerCircuit('NAND logic III: no wire crossings', `
+
+0"Here we make circuits only from NAND, and without any wire crossings"
+0"either. So purely NAND in 2-dimensional plane (because a wire crossing"
+0"is in fact 3-dimensional). Of course there is the 10-NAND wire crossing"
+0"and sometimes it will have to be used, but for most circuits below"
+0"more minimal solutions were found."
+
+
+0"All logic gates from NAND"
+
+s****>A****>l"NOT"
+
+
+s**>A>A****>l"AND"
+    ^
+s****
+
+
+s**>A>A****>l"OR"
+      ^
+s**>A**
+
+
+s**>A**
+  v ^ v
+  A** A****>l"XOR"
+  ^ v ^
+s**>A**
+
+
+s**>A******>l"NAND"
+    ^
+s****
+
+
+s**>A>A>A**>l "NOR"
+      ^
+s**>A**
+
+
+s**>A**
+  v ^ v
+  A** A>A**>l"XNOR"
+  ^ v ^
+s**>A**
+
+
+0"wire crossing with 10 NANDs, various shapes"
+
+                                           s
+   ***>A****        s**>A**>A**>l          *
+   *   ^   v          * ^   ^            *******
+s***>A**>A>A***>l     *>A**>A            v v   v
+   v ^ v ^            v ^ v ^          *>A>A**>A
+   A** A**            A** A**          * v v v v
+   ^ v ^ v            ^ v ^ v        s**>A>A>A>A**>l
+s***>A**>A>A***>l     *>A**>A          * * v
+   *   v   ^          * v   v          * *>A
+   ***>A****        s**>A**>A**>l      * v v
+                                       *>A>A
+                                           *
+                                           *
+                                           v
+                                           l
+
+0"Note that in electron mode, there are some flickering garbage signals"
+0"in the wire crossing due to different path lengths. This is never fixable"
+0"with NAND gates. This can only be fixed with buffers (delays)."
+0"We can use LEDs as such buffers (after all, we're allowed to use l,"
+0"but not o which you'd normally use for that). The longest path goes"
+0"through 5 gates, so LEDs are added such that every possible path from"
+0"input to output is 5 devices long."
+
+s****>l>l>A>l>A****>l
+    *     ^   ^
+    *>l>A**>l>A
+    v   ^ v   ^
+    A**** A****
+    ^   v ^   v
+    *>l>A**>l>A
+    *     v   v
+s****>l>l>A>l>A****>l
+
+
+
+0"Half adder without wire crossings:"
+
+s*****>A>A*******>l
+     * ^ ^ v
+     *>A>A A
+       ^ ^ v
+s*********>A>A***>l
+
+
+0"Full adder without wire crossings:"
+
+s*********>A>A****>l
+       v v ^ ^
+     *>A>A A *
+     * v v ^ *
+s*****>A>A**>A
+         v v ^
+       *>A>A A
+       * v v ^
+s*******>A>A******>l
+
+
+
+        "carry"
+           s
+           *
+           *
+           *
+s********* *****
+     v   v v   v
+     A**>A A**>A
+     ^ v v ^ v v
+s*****>A>A**>A>A******>l
+     *   v v   v
+     *   A A<**A
+     *   v v
+     ***>A>A
+           *
+           v
+           l
+        "carry"
+
+0"The adders also suffer a lot from garbage flickering in electron mode,"
+0"so here is a version with delay-LEDs in between:"
+
+
+s*******>l>l>l>l>A>l>l>l**>A******>l
+       v v       ^         ^
+   ***>A>A       A         *
+   *   v v       ^         *
+s***>l>A>A********>l>l>l>l>A
+                 v v       ^
+             ***>A>A       A
+             *   v v       ^
+s*************>l>A>A**************>l
+
+
+0"SR latch (inputs corrected to be not inverted)"
+
+  "S"s***>A>A*****>l "Q"
+            ^ *
+  "R"s***>A>A<*
+
+
+0"JK latch"
+
+          *****
+          *   v
+  "J"s***>A<*>A*****>l "Q"
+          v * *
+  "K"s***>A>A<*
+
+
+0"Gated D Latch"
+
+ "D" s**>A**>A*****>l
+         ^ v ^ *
+ "E" s****>A>A<*
+
+
+0"D flipflop with NAND and no wire crossings:"
+
+
+ "D"s**********>A**>A**>A**>A*****>l
+                ^ v ^ * ^ v ^ *
+                A>A>A<* *>A>A<*
+                ^       *
+ "C"s********************
+
+
+0"T flip flop"
+
+
+          *********************
+          v v                 *
+        *>A>A *>A**>A**>A**>A*****>l
+        * v v * ^ v ^ * ^ v ^ *
+ "T"s****>A>A** A>A>A<* *>A>A<*
+                ^       *
+ "C"s********************
+
+
+0"single-input T flip flop"
+
+
+                *************
+                v           *
+                A**>A<*>A**>A<*
+                ^ v v * ^ v v *
+                A>A>A** *>A>A**
+                ^       *     *
+    s********************     ****>l
+
+
+
+
+0"JK flipflop with NAND and no wire crossings:"
+
+
+          *******************
+          v v               *
+"K"s*****>A>A *>A**>A**>A**>A*****>l
+          v v * ^ v ^ * ^ v ^ *
+"J"s*****>A>A** A>A>A<* *>A>A<*
+                ^       *
+"C"s*********************
+
+
+`, 'nowirecross');
+
+
+
 
 registerCircuit('mirror bits', `
      l l l l l l l l      llllllll
