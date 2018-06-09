@@ -65,6 +65,10 @@ function removeElement(el) {
   }
 }
 
+function removeAllChildren(el) {
+  while(el.firstChild) el.removeChild(el.firstChild);
+}
+
 function makeDiv(x, y, w, h, opt_parent) {
   var el =  makeAbsElement('div', x, y, w, h, opt_parent);
   return el;
@@ -117,9 +121,6 @@ function makeUISpacer(width, el) {
   s.style.width = width + 'px';
   s.style.display = 'inline-block';
 }
-
-var worldDiv = makeDiv(10, 128, 0, 0);
-var renderingMessageDiv = makeDiv(10, 128, 0, 0);
 
 //bind a single argument to a function
 function bind(f, arg) {
@@ -265,6 +266,9 @@ Good combinations of AUTOUPDATE and UPDATE_ALGORITHM are as follows:
 -when working on circuits where exact timing through wire is important with loops etc...: AUTOUPDATE=0, UPDATE_ALGORITHM=2
 */
 
+var worldDiv = makeDiv(10, 128, 0, 0);
+var renderingMessageDiv = makeDiv(10, 128, 0, 0);
+
 var AUTOUPDATE = 1; // 0: only update on manual tick, 1: update once whenever user switch or real time timer event happened, 2: update all the time, every so many ticks
 var UPDATE_ALGORITHM = 2; // 0=scanline, 1=fast recursive, 2=slow, 3=slow with infinite metastability fix
 
@@ -280,10 +284,11 @@ var BACKSLASH_ALTERNATIVE = ';'; // because backslash in `` type strings does no
 var DQUOT_ALTERNATIVE = '`'; // JS strings can use `, in other languages " is already the string quotes
 var ASTERIX_ALTERNATIVE = '.'; // because . is easier to write on paper than *
 
-var is_chrome = (navigator.userAgent.indexOf('Chrom') != -1); // 'Chrom' as substring of Chrome/Chromium
-var graphics_mode = 1; // 0=text, 1=canvas, 2=old canvas (the one with many little canvases)
+var graphics_mode = 1; // 0=text, 1=canvas
 var graphics_mode_browser = graphics_mode; //is_chrome ? graphics_mode : 0;
 var graphics_mode_actual = graphics_mode_browser;
+
+var use_bresenham = true; // if true, use bresenham for diagonal lines to ensure they are not blurry (not antialiased as it looks choppier instead of better here)
 
 /*
 AUTOUPDATE values:
@@ -2550,6 +2555,7 @@ function Component() {
       return;
     }
     if(changeMode) {
+      changeDropdown.selectedIndex = 0; // so that "onchange" works again even if choosing the same one ...
       var value = this.value;
       var type = changeMode;
       var symbol = typesymbols[type];
@@ -2562,6 +2568,9 @@ function Component() {
         type = this.inputs.length ? TYPE_COUNTER : TYPE_CONSTANT;
         value = true;
         symbol = 'C';
+      }
+      if(type == TYPE_RANDOM) {
+        value = Math.random() < 0.5;
       }
       this.type = type;
       this.value = value;
@@ -2738,8 +2747,6 @@ function getNewRenderer() {
     return new RendererText();
   } else if(graphics_mode_actual == 1) {
     return new RendererImg();
-  } else {
-    return new RendererImgOLD();
   }
 }
 
@@ -2905,6 +2912,9 @@ function Cell() {
     // make one on the last row though, if user added empty rows they want some scrolling space there
     if(this.displaysymbol == ' ' && !(x == 0 && y == h - 1)) return;
 
+    if(this.renderer) {
+      this.renderer.cleanup();
+    }
     this.renderer = getNewRenderer();
 
     //toggleMode aka clickFun
@@ -2946,6 +2956,10 @@ function Cell() {
 function Renderer() {
   // one time initialization for all cells
   this.globalInit = function() {
+  };
+
+  // only needed if you redraw something different on existing cell, like when changing it to different type
+  this.cleanup = function() {
   };
 
   // one time initialization for this cell
@@ -3015,6 +3029,10 @@ function RendererText() {
   this.init2done = false;
 
   this.globalInit = function() {
+  };
+
+  this.cleanup = function() {
+    // nothing to do here
   };
 
   // one time initialization
@@ -3321,13 +3339,59 @@ function RendererDrawer() {
       if(x0b == tw) { x0b--; x1b--; }
       ctx.moveTo(this.tx + x0b + 0.5, this.ty + y0b);
       ctx.lineTo(this.tx + x1b + 0.5, this.ty + y1b);
-    } if(y0b == y1b) {
+    } else if(y0b == y1b) {
       if(y0b == th) { y0b--; y1b--; }
       ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5);
       ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5);
     } else {
-      ctx.moveTo(this.tx + x0b, this.ty + y0b);
-      ctx.lineTo(this.tx + x1b, this.ty + y1b);
+      if(use_bresenham) {
+        var dx = Math.abs(x1b - x0b);
+        var dy = Math.abs(y1b - y0b);
+        var xinc0 = 0, xinc1 = 0, yinc0 = 0, yinc1 = 0, den, numinc;
+        if(dx >= dy) {
+          xinc1 = (x1b >= x0b) ? 1 : -1;
+          yinc0 = (y1b >= y0b) ? 1 : -1;
+          den = dx;
+          numinc = dy;
+        } else {
+          xinc0 = (x1b >= x0b) ? 1 : -1;
+          yinc1 = (y1b >= y0b) ? 1 : -1;
+          den = dy;
+          numinc = dx;
+        }
+        var num = (den / 2) | 0;
+        var numpixels = den;
+        var x = x0b;
+        var y = y0b;
+        for(var i = 0; i <= numpixels; i++) {
+          ctx.fillRect(this.tx + x, this.ty + y, 1, 1);
+          num += numinc;
+          if (num >= den) {
+            num -= den;
+            x += xinc0;
+            y += yinc0;
+          }
+          x += xinc1;
+          y += yinc1;
+        }
+      } else {
+        // if 45 degree line intended but the Math.floor above skewed it
+        // make it exact 45 degree again: that renders better on pixels
+        if(Math.abs(x1 - x0) == Math.abs(y1 - y0) && Math.abs(x1b - x0b) != Math.abs(y1b - y0b)) {
+          /*var d = Math.max(Math.abs(x1b - x0b), Math.abs(y1b - y0b));
+          x1b = (x1b > x0b) ? (x0b + d) : (x0b - d);
+          y1b = (y1b > y0b) ? (y0b + d) : (y0b - d);*/
+          x0b = x0 * tw;
+          y0b = y0 * th;
+          x1b = x1 * tw;
+          y1b = y1 * th;
+        }
+        // This is super unreliable. I want to not have antialiasing and canvas has no
+        // way to disable it. It depends on browser how it looks based on various settings/tricks set
+        // elsewhere.
+        ctx.moveTo(this.tx + x0b, this.ty + y0b);
+        ctx.lineTo(this.tx + x1b, this.ty + y1b);
+      }
     }
   };
 
@@ -3561,7 +3625,15 @@ function RendererDrawer() {
 // Browsers have certain limits to canvas size (e.g. max 8192 pixels wide, ...), and for large
 // circuits larger than 16384 height can easily be reached, so break it up into smaller pieces
 function MultiCanvas() {
-  this.MAX_S = 4096; // max size
+  if(use_bresenham) {
+    this.MAX_S = 4096; // max size
+  } else {
+    // 4096 would be a great max size to use. However, Chrome (at least on my system) makes the
+    // 45-degree diagonal lines horribly antialiased for large canvas, while for any canvas smaller than 256
+    // it makes the diagonal lines like I want (= non smooth). So depending on this super brittle
+    // trick now, until HTML gives reliable way to disable smoothing for lines on canvas in the future?
+    this.MAX_S = 255; // max size
+  }
 
   this.S = 0;
 
@@ -3586,6 +3658,7 @@ function MultiCanvas() {
         this.canvases[y2][x2] = makeAbsElement('canvas', x + x2 * this.S, y + y2 * this.S, w2, h2, parent);
         this.canvases[y2][x2].width = w2;
         this.canvases[y2][x2].height = h2;
+        this.canvases[y2][x2].style.display = 'block';
         this.contexts[y2][x2] = this.canvases[y2][x2].getContext('2d');
       }
     }
@@ -3650,9 +3723,18 @@ function MultiCanvas() {
       }
     }
   };
+
+  this.forEachContext = function(fun) {
+    for(var y2 = 0; y2 < this.contexts.length; y2++) {
+      for(var x2 = 0; x2 < this.contexts[y2].length; x2++) {
+        fun(this.contexts[y2][x2]);
+      }
+    }
+  };
 }
 
 /** @constructor */
+/* global info shared by renderer for every cell */
 function RendererImgGlobal() {
   this.maincanvas = new MultiCanvas();
   this.offcanvas0 = new MultiCanvas();
@@ -3675,16 +3757,28 @@ function RendererImgGlobal() {
     this.offcanvas1.forEachCanvas(function(canvas) {
       canvas.style.display = 'none';
     });
+
+    // attempt at disabling antialiazing. It doesn't actually work, since
+    // this does not apply to lines but image, but let's just tell the context
+    // that we want non-AA in as many ways as possible
+    this.maincanvas.forEachContext(function(context) {
+      context.imageSmoothingEnabled = false;
+    });
+    this.offcanvas0.forEachContext(function(context) {
+      context.imageSmoothingEnabled = false;
+    });
+    this.offcanvas1.forEachContext(function(context) {
+      context.imageSmoothingEnabled = false;
+    });
   };
 };
 
 var rglobal = new RendererImgGlobal();
 
-// TODO: to be faster in firefox, do not create a tiny canvas for every single cell,
-// instead create 1 big canvas (or multiple big tiles if larger than max canvas size)
-// and copy/blit graphics on them from elsewhere. This way fix two things at once:
-// the speed in firefox, and, by making more separate graphics pieces allow one wire grey
-// and one wire black at the same time in wire crossings.
+// TODO: Fix graphical issue where a wire crossing that has 1 wire on,
+// 1 wire off, is still rendered as if both wires are on. This because
+// we only make two possible pictures per cell, while a wire crossing
+// would need 4 for this.
 /** @implements Renderer */
 function RendererImg() { // RendererCanvas RendererGraphical
   this.fallback = new RendererText();
@@ -3693,32 +3787,39 @@ function RendererImg() { // RendererCanvas RendererGraphical
   this.canvas1 = null;
   this.ctx0 = null;
   this.ctx1 = null;
-  //this.data0 = null;
-  //this.data1 = null;
   this.prevvalue = null;
   this.usefallback = false;
   this.init2done = false;
   this.text0 = null;
   this.text1 = null;
+  this.tx = 0;
+  this.ty = 0;
 
   this.globalInit = function() {
     rglobal.init();
   };
 
+  this.cleanup = function() {
+    if(this.text0) {
+      removeElement(this.text0);
+      removeElement(this.text1);
+    }
+  };
+
   // one time initialization
   this.init = function(cell, x, y, clickfun) {
     this.fallback.init(cell, x, y, clickfun);
+    this.tx = tw * cell.x + rglobal.offcanvas0.getXOffsetForCell(cell);
+    this.ty = th * cell.y + rglobal.offcanvas0.getYOffsetForCell(cell);
     if(!cell.comment && cell.circuitsymbol != ' ') {
       this.canvas0 = rglobal.offcanvas0.getCanvasForCell(cell); //makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div0*/);
-      //this.canvas0.width = parseInt(tw);
-      //this.canvas0.height = parseInt(th);
       this.canvas1 = rglobal.offcanvas1.getCanvasForCell(cell); //makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div1*/);
-      //this.canvas1.width = parseInt(tw);
-      //this.canvas1.height = parseInt(th);
-      this.ctx0 = rglobal.offcanvas0.getContextForCell(cell); //this.canvas0.getContext('2d');
-      this.ctx1 = rglobal.offcanvas1.getContextForCell(cell); //this.canvas1.getContext('2d');
-      this.fallback.div0.appendChild(this.canvas0);
-      this.fallback.div1.appendChild(this.canvas1);
+      this.ctx0 = rglobal.offcanvas0.getContextForCell(cell);
+      this.ctx1 = rglobal.offcanvas1.getContextForCell(cell);
+      if(this.text0) removeElement(this.text0);
+      if(this.text1) removeElement(this.text1);
+      this.fallback.div0.innerHTML = '';
+      this.fallback.div1.innerHTML = '';
       this.text0 = makeDiv(0, 0, tw, th, this.fallback.div0);
       this.text1 = makeDiv(0, 0, tw, th, this.fallback.div1);
       var fs = tw - 2;
@@ -3743,8 +3844,8 @@ function RendererImg() { // RendererCanvas RendererGraphical
     }
 
     var drawer = new RendererDrawer();
-    drawer.tx = tw * cell.x + rglobal.offcanvas0.getXOffsetForCell(cell);
-    drawer.ty = th * cell.y + rglobal.offcanvas0.getYOffsetForCell(cell);
+    drawer.tx = this.tx;
+    drawer.ty = this.ty;
 
     if (this.init2done) {
       this.ctx0.clearRect(0, 0, tw, th);
@@ -4074,428 +4175,17 @@ function RendererImg() { // RendererCanvas RendererGraphical
       var dest = rglobal.maincanvas.getContextForCell(cell);
       var offsetx = rglobal.maincanvas.getXOffsetForCell(cell);
       var offsety = rglobal.maincanvas.getYOffsetForCell(cell);
+      var extra = 1;
       if(value) {
         this.fallback.div0.style.visibility = 'hidden';
         this.fallback.div1.style.visibility = 'visible';
         var source = rglobal.offcanvas1.getCanvasForCell(cell);
-        dest.drawImage(source, offsetx + cell.x * tw, offsety + cell.y * th, tw, th, offsetx + cell.x * tw, offsety + cell.y * th, tw, th);
+        dest.drawImage(source, offsetx + cell.x * tw, offsety + cell.y * th, tw + extra, th + extra, offsetx + cell.x * tw, offsety + cell.y * th, tw + extra, th + extra);
       } else {
         this.fallback.div0.style.visibility = 'visible';
         this.fallback.div1.style.visibility = 'hidden';
         var source = rglobal.offcanvas0.getCanvasForCell(cell);
-        dest.drawImage(source, offsetx + cell.x * tw, offsety + cell.y * th, tw, th, offsetx + cell.x * tw, offsety + cell.y * th, tw, th);
-      }
-    }
-    this.prevvalue = value;
-  };
-
-  this.setLook = function(cell, type) {
-    /* see the RendererText setLook function for comment about styles and types */
-    if(type == TYPE_TIMER_ON || type == TYPE_TIMER_OFF) {
-      var clocked = cell.components[0].clocked;
-      var user = (type == TYPE_TIMER_ON);
-      if(this.text0.innerText != 'R' && user) this.text0.innerText = 'R';
-      if(this.text0.innerText != 'r' && !user) this.text0.innerText = 'r';
-      if(this.text1.innerText != 'R' && user) this.text1.innerText = 'R';
-      if(this.text1.innerText != 'r' && !user) this.text1.innerText = 'r';
-    }
-    if(type == TYPE_SWITCH_ON || type == TYPE_SWITCH_OFF) {
-      var user = (type == TYPE_SWITCH_ON);
-      if(this.text0.innerText != 'S' && user) this.text0.innerText = 'S';
-      if(this.text0.innerText != 's' && !user) this.text0.innerText = 's';
-      if(this.text1.innerText != 'S' && user) this.text1.innerText = 'S';
-      if(this.text1.innerText != 's' && !user) this.text1.innerText = 's';
-    }
-    if(type == TYPE_PUSHBUTTON_ON || type == TYPE_PUSHBUTTON_OFF) {
-      var user = (type == TYPE_PUSHBUTTON_ON);
-      if(this.text0.innerText != 'P' && user) this.text0.innerText = 'P';
-      if(this.text0.innerText != 'p' && !user) this.text0.innerText = 'p';
-      if(this.text1.innerText != 'P' && user) this.text1.innerText = 'P';
-      if(this.text1.innerText != 'p' && !user) this.text1.innerText = 'p';
-    }
-  };
-
-  this.setTerminal = function(char, blink) {
-    this.fallback.setTerminal(char, blink);
-  };
-};
-
-
-/** @implements Renderer */
-function RendererImgOLD() { // RendererCanvas RendererGraphical
-  this.fallback = new RendererText();
-
-  this.canvas0 = null;
-  this.canvas1 = null;
-  this.ctx0 = null;
-  this.ctx1 = null;
-  //this.data0 = null;
-  //this.data1 = null;
-  this.prevvalue = null;
-  this.usefallback = false;
-  this.init2done = false;
-  this.text0 = null;
-  this.text1 = null;
-
-  this.globalInit = function() {
-  };
-
-  // one time initialization
-  this.init = function(cell, x, y, clickfun) {
-    this.fallback.init(cell, x, y, clickfun);
-    if(!cell.comment && cell.circuitsymbol != ' ') {
-      this.canvas0 = makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div0*/);
-      this.canvas0.width = parseInt(tw);
-      this.canvas0.height = parseInt(th);
-      this.canvas1 = makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div1*/);
-      this.canvas1.width = parseInt(tw);
-      this.canvas1.height = parseInt(th);
-      this.ctx0 = this.canvas0.getContext('2d');
-      this.ctx1 = this.canvas1.getContext('2d');
-      this.fallback.div0.appendChild(this.canvas0);
-      this.fallback.div1.appendChild(this.canvas1);
-      this.text0 = makeDiv(0, 0, tw, th, this.fallback.div0);
-      this.text1 = makeDiv(0, 0, tw, th, this.fallback.div1);
-      var fs = tw - 2;
-      if (fs < 7) fs = 7;
-      this.text0.style.color = '#999';
-      this.text0.style.textAlign = 'center';
-      this.text0.style.fontSize = fs + 'px';
-      this.text0.style.fontFamily = 'monospace';
-      this.text1.style.color = 'black';
-      this.text1.style.textAlign = 'center';
-      this.text1.style.fontSize = fs + 'px';
-      this.text1.style.fontFamily = 'monospace';
-    }
-  };
-
-  // specific initialization, can be re-done if cell changed on click
-  this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
-    if(!this.canvas0) {
-      this.fallback.init2(cell, symbol, virtualsymbol, opt_title);
-      return;
-    }
-
-    var drawer = new RendererDrawer();
-
-    if (this.init2done) {
-      this.ctx0.clearRect(0, 0, tw, th);
-      this.ctx1.clearRect(0, 0, tw, th);
-    }
-    this.init2done = true;
-
-    this.ctx0.strokeStyle = '#aaa';
-    this.ctx1.strokeStyle = 'black';
-    this.ctx0.fillStyle = '#aaa';
-    this.ctx1.fillStyle = 'black';
-    //this.ctx0.lineWidth = 0.5;
-    //this.ctx1.lineWidth = 0.5;
-    this.ctx0.lineWidth = 1;
-    this.ctx1.lineWidth = 1;
-    var error = false;
-    if(cell.components[0] && cell.components[0].error) {
-      error = true;
-      this.markError(cell, cell.components[0].errormessage);
-    } else if(opt_title) {
-      //this.text0.title = opt_title;
-      //this.text1.title = opt_title;
-      this.fallback.div0.title = opt_title;
-      this.fallback.div1.title = opt_title;
-    }
-    var c = cell.circuitsymbol;
-    // This avoids blurry lines that take up other amounts of pixels with lighter colors than desired
-    //this.ctx0.translate(0.5, 0.5);
-    //this.ctx1.translate(0.5, 0.5);
-    for (var i = 0; i < 2; i++) {
-      var ctx = (i == 0) ? this.ctx0 : this.ctx1;
-      var textel = (i == 0) ? this.text0 : this.text1;
-      if(c == '-') {
-        drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
-        drawer.drawSplitDiag_(cell, ctx, 2);
-      } else if(c == '|') {
-        drawer.drawLine_(ctx, 0.5, 0, 0.5, 1);
-        drawer.drawSplitDiag_(cell, ctx, 2);
-      } else if(c == '/') {
-        drawer.drawLine_(ctx, 0, 1, 1, 0);
-      } else if(c == '\\') {
-        drawer.drawLine_(ctx, 0, 0, 1, 1);
-      } else if(c == 'x') {
-        //drawer.drawLine_(ctx, 0, 0, 1, 1);
-        if(isInterestingComponent(cell, 1) && !isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 0, 1, 1);
-        if(isInterestingComponent(cell, 1)) { drawer.drawLine_(ctx, 0, 0, 0.4, 0.4); drawer.drawLine_(ctx, 0.6, 0.6, 1, 1); }
-        if(isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 1, 1, 0);
-      } else if(c == '+') {
-        var centerfull = drawer.drawPlusDiagSplit_(cell, ctx);
-        var shift = centerfull ? 0.3 : 0.2;
-        drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
-        //drawer.drawLine(ctx, 0.5, 0, 0.5, 1);
-        drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-        drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
-      } else if(c == '*' || c == ',') {
-        drawer.drawSplit_(cell, ctx);
-      } else if(c == '^') {
-        if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) drawer.drawArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 4)) drawer.drawArrow_(ctx, 0, 1, 1, 0);
-        } else {
-          drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0);
-        }
-      } else if(c == '>') {
-        if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 4)) drawer.drawArrow_(ctx, 0, 1, 1, 0);
-          if(hasDevice(cell.x, cell.y, 5)) drawer.drawArrow_(ctx, 0, 0, 1, 1);
-        } else {
-          drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5);
-        }
-      } else if(c == 'v') {
-        if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 6)) drawer.drawArrow_(ctx, 1, 0, 0, 1);
-          if(hasDevice(cell.x, cell.y, 5)) drawer.drawArrow_(ctx, 0, 0, 1, 1);
-        } else {
-          drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1);
-        }
-      } else if(c == '<') {
-        if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) drawer.drawArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 6)) drawer.drawArrow_(ctx, 1, 0, 0, 1);
-        } else {
-          drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5);
-        }
-      } else if(c == 'm') {
-        if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
-        } else {
-          drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
-        }
-      } else if(c == ']') {
-        if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
-          if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
-        } else {
-          drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
-        }
-      } else if(c == 'w') {
-        if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
-          if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
-        } else {
-          drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
-        }
-      } else if(c == '[') {
-        if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
-        } else {
-          drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
-        }
-      } else if(c == 'z') {
-        var num = 0;
-        if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);}
-        if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);}
-        if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);}
-        if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);}
-        drawer.drawSplit_(cell, ctx, num);
-      } else if(c == 'Z') {
-        var num = 0;
-        if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);}
-        if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);}
-        if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);}
-        if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);}
-        drawer.drawSplit_(cell, ctx, num);
-      } else if(c == 'h') {
-        drawer.drawSplit_h_(cell, ctx, -8);
-        if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);
-        if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);
-        if(hasDevice(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);
-        if(hasDevice(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);
-        if(hasDevice(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0, 0.19);
-        if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1, 0.19);
-        if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1, 0.19);
-        if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0, 0.19);
-      } else if(c == 'H') {
-        drawer.drawSplit_h_(cell, ctx, -8);
-        // no "isInterestingComponent" checks for H, unlike h, because H can affect things, it's negating (for h any effect, like as AND input, is negated if it's a dummy, but not for H)
-        if(hasDevice(cell.x, cell.y, 0)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
-        if(hasDevice(cell.x, cell.y, 1)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
-        if(hasDevice(cell.x, cell.y, 2)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
-        if(hasDevice(cell.x, cell.y, 3)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
-        if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0);
-        if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 1);
-        if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 1);
-        if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0);
-      } else if(c == 'X') {
-        // TODO: better also have a little gap like '+' does
-        drawer.drawSplit_(cell, ctx, -8);
-      } else if(c == '&') {
-        var draw1 = connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 1);
-        var draw0 = connected2g(cell.x, cell.y, 2) && connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0);
-        if(draw0 && draw1) {
-          var r = 0.3;
-          drawer.drawLine_(ctx, 0, 0.5, r, 0.5);
-          drawer.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
-          drawer.drawLine_(ctx, r, 0.5, 0.5, 1 - r);
-          drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
-          drawer.drawLine_(ctx, 0.5, 0, 0.5, r);
-          drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, r);
-        }
-        else if(draw0) {
-          drawer.drawLine_(ctx, 0.5, 0.5, 0, 0.5);
-          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 1);
-        }
-        else if(draw1) {
-          drawer.drawLine_(ctx, 0.5, 0.5, 1, 0.5);
-          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 0);
-        }
-      } else if(c == '%') {
-        var draw1 = connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 1);
-        var draw0 = connected2g(cell.x, cell.y, 1) && connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 0);
-        if(draw0 && draw1) {
-          var r = 0.3;
-          drawer.drawLine_(ctx, 0, 0.5, r, 0.5);
-          drawer.drawLine_(ctx, 0.5, 0, 0.5, r);
-          drawer.drawLine_(ctx, r, 0.5, 0.5, r);
-          drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
-          drawer.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
-          drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, 1 - r);
-        }
-        else if(draw0) {
-          drawer.drawLine_(ctx, 0.5, 0.5, 1, 0.5);
-          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 1);
-        }
-        else if(draw1) {
-          drawer.drawLine_(ctx, 0.5, 0.5, 0, 0.5);
-          drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 0);
-        }
-      } else if(antennamap[c]) {
-        ctx.fillRect(0, 0, tw, th);
-        this.ctx0.strokeStyle = this.ctx0.fillStyle = 'white';
-        if(c == ')') {
-          drawer.drawArc_(ctx, -0.3, 0.5, 0, 1, 0.8);
-        } else if(c == '(') {
-          drawer.drawArc_(ctx, 1.3, 0.5, 0, 1, 0.8);
-        } else if(c == 'u') {
-          drawer.drawArc_(ctx, 0.5, -0.3, 0, 1, 0.8);
-        } else if(c == 'n') {
-          drawer.drawArc_(ctx, 0.5, 1.3, 0, 1, 0.8);
-        }
-      } else if(c == 'y') {
-        var ygroup = cell.ygroup;
-        if(ygroup) {
-          // color some buses slightly differently to allow to distinguish them visually
-          var cc = (ygroup.index & 7);
-          var color = '#aaa';
-          if(cc == 1) color = '#aab';
-          if(cc == 2) color = '#aba';
-          if(cc == 3) color = '#baa';
-          if(cc == 4) color = '#bba';
-          if(cc == 5) color = '#bab';
-          if(cc == 6) color = '#abb';
-          if(cc == 7) color = '#bbb';
-          ctx.fillStyle = color;
-        }
-        ctx.fillRect(0, 0, tw, th);
-        if(digitmap[symbol]) {
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.font = '' + tw + 'px serif';
-          this.ctx0.strokeStyle = this.ctx0.fillStyle = 'white';
-          ctx.fillText(symbol, tw >> 1, th >> 1);
-        }
-      } else if(c == 'T') {
-        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
-      } else if(virtualsymbol == 'L') {
-        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
-      } else if(cell.comment) {
-        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
-      } else if(c == 'toc') {
-        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
-      } else {
-        var alreadybg = error;
-        if(!error) {
-          if(virtualsymbol == 's' || virtualsymbol == 'S' || virtualsymbol == 'p' || virtualsymbol == 'P' || virtualsymbol == 'r' || virtualsymbol == 'R') {
-            alreadybg = true;
-            this.canvas0.style.backgroundColor = '#fafffa';
-            this.canvas1.style.backgroundColor = '#afa';
-            this.ctx0.strokeStyle = this.ctx0.fillStyle = '#5c5';//'#6d6';
-            this.ctx1.strokeStyle = this.ctx1.fillStyle = 'green';
-            this.text0.style.color = '#6d6';
-            this.text1.style.color = 'green';
-          }
-          if(virtualsymbol == 'l') {
-            alreadybg = true;
-            var color = cell.components[0] ? cell.components[0].number : 0;
-            if(color == -1) color = 0;
-            if(color > led_off_colors.length) color = 0; // not more colors than that supported
-            this.canvas0.style.backgroundColor = led_light_bg_colors[color];
-            this.canvas1.style.backgroundColor = led_bg_colors[color];
-            this.ctx0.strokeStyle = this.ctx0.fillStyle = led_light_fg_colors[color];
-            this.ctx1.strokeStyle = this.ctx1.fillStyle = led_fg_colors[color];
-            this.text0.style.color = led_off_colors[color];
-            this.text1.style.color = led_fg_colors[color];
-          }
-        }
-        if(devicemap[c] || c == '#' || c == '$') {
-          if(!alreadybg) {
-            this.canvas0.style.backgroundColor = '#f7f7f7';
-            this.canvas1.style.backgroundColor = '#f7f7f7';
-          }
-          if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
-          if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
-          if(!sameDevice(cell.x, cell.y, 2)) drawer.drawLine_(ctx, 1, 1, 0, 1);
-          if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
-        }
-        var okdraw = true;
-        if(c == '#' || c == '$') okdraw = false;
-        if(c == 'i' && !(cell.drawchip || digitmap[cell.metasymbol])) okdraw = false;
-        if(okdraw) {
-          /*ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.font = '' + tw + 'px serif';
-          ctx.fillText(symbol, tw >> 1, th >> 1);*/
-          textel.innerText = symbol;
-        }
-      }
-    }
-  };
-
-  this.markError = function(cell, errortext) {
-    this.fallback.markError(cell, errortext);
-    this.canvas0.style.backgroundColor = 'yellow';
-    this.canvas1.style.backgroundColor = 'yellow';
-    this.ctx0.strokeStyle = 'red';
-    this.ctx1.strokeStyle = 'red';
-    this.ctx0.fillStyle = 'red';
-    this.ctx1.fillStyle = 'red';
-  };
-
-  this.setCursorPointer = function() {
-    this.fallback.div0.style.cursor = 'pointer';
-    this.fallback.div1.style.cursor = 'pointer';
-    this.text0.style.cursor = 'pointer';
-    this.text1.style.cursor = 'pointer';
-  };
-
-  this.setValue = function(cell, value, type) {
-    if(this.usefallback) {
-      this.fallback.setValue(cell, value, type);
-      return;
-    }
-    if(value != this.prevvalue) { // changing visibility is slow in case of lots of elements, so only do if it changed
-      if(value) {
-        this.fallback.div0.style.visibility = 'hidden';
-        this.fallback.div1.style.visibility = 'visible';
-      } else {
-        this.fallback.div0.style.visibility = 'visible';
-        this.fallback.div1.style.visibility = 'hidden';
+        dest.drawImage(source, offsetx + cell.x * tw, offsety + cell.y * th, tw + extra, th + extra, offsetx + cell.x * tw, offsety + cell.y * th, tw + extra, th + extra);
       }
     }
     this.prevvalue = value;
@@ -7271,7 +6961,7 @@ ticksCounterEl.style.display = 'inline-block';
 
 
 var rendererDropdown = makeUIElement('select', menuRow2El);
-rendererDropdown.title = 'Choose renderer: graphical or text. Graphical is with HTML5 canvas and has better looking wire connections but may be slow in some browsers for large circuits. Text mode is faster and is more closely related to how you edit circuits with ASCII text.';
+rendererDropdown.title = 'Choose renderer: graphical or text. Graphical is with HTML5 canvas and has better looking wire connections but may be slower for huge circuits. Text mode is faster and is more closely related to how you edit circuits with ASCII text.';
 rendererDropdown.onchange = function() {
   graphics_mode = rendererDropdown.selectedIndex;
   graphics_mode_actual = rendererDropdown.selectedIndex;
@@ -7280,7 +6970,6 @@ rendererDropdown.onchange = function() {
 };
 makeElement('option', rendererDropdown).innerText = 'text';
 makeElement('option', rendererDropdown).innerText = 'graphical';
-makeElement('option', rendererDropdown).innerText = '(old graphical renderer, slower, fallback)';
 rendererDropdown.selectedIndex = graphics_mode;
 
 /*
@@ -7331,7 +7020,6 @@ changeDropdown.title = 'A simpler more primitive form of edit, but it works whil
     ' unexpected behavior. Changes in IC templates have no effect on instances. Changes are not saved and not visible under the edit button. To do full editing, use the edit button instead.';
 changeDropdown.onchange = function() {
   changeMode = changeDropdownElements[changeDropdown.selectedIndex];
-  changeDropdown.selectedIndex = 0; // so that "onchange" works again even if choosing the same one ...
 };
 
 function registerChangeDropdownElement(type) {
@@ -7669,6 +7357,18 @@ if(getCGIParameterByName('id')) {
     parseText(introText, introTitle)
   };
 }
+
+var helpLink = makeElement('span', menuRow1El);
+helpLink.innerHTML = 'help';
+helpLink.style.paddingLeft = '10px';
+helpLink.style.color = '#00e';
+helpLink.style.textDecoration = 'underline';
+helpLink.style.cursor = 'pointer';
+helpLink.onclick = function() {
+  var circuit = linkableCircuits['helpindex'];
+
+  parseText(circuit.text, circuit.id)
+};
 
 
 /*var directLinkSpan = makeElement('span', menuRow1El);

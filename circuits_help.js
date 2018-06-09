@@ -949,24 +949,15 @@ registerCircuit('Rendering Modes', `
 
 0"The graphical mode draws nice wires, boxes around components, device"
 0"inputs as neatly drawn arrows and negated inputs as little circles."
+0"This is the default mode."
 
 0"The text mode on the other hand draws everything with ASCII characters,"
 0"matching how you edit circuits. Gates use the similar letters as the graphical"
 0"mode, but now every cell uses some ASCII character, e.g. wires are broken up"
 0"into different characters (depending on direction, how to connect, ...)."
-0"To learn the meaning of these, see the editing tutorials instead."
+0"To learn the meaning of the characters, see the editing tutorials instead."
 
-0"Normally the graphical mode is easiest to use and selected by default,"
-0"but on huge circuits it may be too slow, and in some browsers it"
-0"automatically select the text mode then."
-
-0"BROWSER NOTE: Currently the graphics mode is fast in Chrome but slow in some"
-0"other browsers, so for very large circuits it will automatically change"
-0"to text mode in those browsers. The reason is: every cell uses its own"
-0"little HTML5 canvas (rather than having one big canvas), and for Chrome"
-0"that seems to be no problem while apparently for Firefox it is not good"
-0"to have many little canvases."
-0"This may be fixed later but will require a rewrite of the rendering."
+0"The text mode may render faster in some browsers, especially for huge circuits."
 
 0"Try out the two modes on the circuit below by changing the dropdown at"
 0"the top between 'graphical' and 'text'":
