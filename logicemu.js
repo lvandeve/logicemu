@@ -183,8 +183,7 @@ function getFragmentParameterByName(name, opt_url) {
   return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-// set value to null or undefined to remove it
-// currently overwrites all, but that's fine for now since we don't have multiple values in it
+// sets fragment with this value. Supports only max 1 fragment in total.
 function setFragment(name, value) {
   if(history && history.replaceState) {
     // using history to NOT have history!
@@ -205,6 +204,10 @@ function setFragment(name, value) {
       window.location.hash = '#' + name + '=' + value;
     }
   }
+}
+
+function clearFragment() {
+  setFragment('', null);
 }
 
 // removes queries and fragments
@@ -243,7 +246,6 @@ function getLocalStorage(name) {
   if(!localStorageSupported()) return undefined;
   return localStorage[name];
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -2993,7 +2995,7 @@ function setTocHTML(toc, el) {
   var html = '';
   var j = 0;
   for(var i = 0; i < allRegisteredCircuits.length; i++) {
-    if(toc == 1 && (allRegisteredCircuits[i].group != 0 || allRegisteredCircuits[i].linkid == 'helpindex' || allRegisteredCircuits[i].title == 'Welcome')) continue;
+    if(toc == 1 && (allRegisteredCircuits[i].group != 0 || allRegisteredCircuits[i].linkid == 'helpindex' || allRegisteredCircuits[i].linkid == introId)) continue;
     if(toc == 2 && allRegisteredCircuits[i].group != 1 && allRegisteredCircuits[i].linkid != 'helpindex') continue;
     //var div = makeDiv(0, (i * th), w * tw, th, el);
     var div = makeDiv(0, (j * th), tw, th, el);
@@ -6524,9 +6526,10 @@ function setDocumentTitle(text) {
 
 var firstParse = true; // to keep scrolled down if you were scrolled down before refresh
 
-function parseText(text, opt_title, opt_registeredCircuit) {
+//opt_fragmentAction: 0=use id if possible else clear, 1=set from code if possible else clear, 2=keep as-is (e.g. if it's already #code)
+function parseText(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
   if(firstParse) {
-    parseText2(text, opt_title, opt_registeredCircuit);
+    parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction);
     return;
   }
   renderingMessageDiv.innerText = 'rendering';
@@ -6536,10 +6539,10 @@ function parseText(text, opt_title, opt_registeredCircuit) {
   // may force a redraw
   var dummy = worldDiv.offsetHeight;
   worldDiv.style.display = 'none';
-  window.setTimeout(bind(parseText2, text, opt_title, opt_registeredCircuit), 0);
+  window.setTimeout(bind(parseText2, text, opt_title, opt_registeredCircuit, opt_fragmentAction), 0);
 }
 
-function parseText2(text, opt_title, opt_registeredCircuit) {
+function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
   // for the very first parse, do NOT scroll up, it is handy if you have
   // a big edited circuit open and refresh the browser to still see the
   // same one
@@ -6555,13 +6558,21 @@ function parseText2(text, opt_title, opt_registeredCircuit) {
 
   var opt_id = opt_registeredCircuit ? opt_registeredCircuit.linkid : undefined;
 
-  if(opt_id && opt_id != 'welcome') {
-    //directLink.href = getUrlWithoutQueries() + '#id=' + opt_id;
-    //directLink.style.visibility = 'visible';
-    setFragment('id', opt_id);
-  } else {
-    //directLink.style.visibility = 'hidden';
-    setFragment('id', null);
+  if(!opt_fragmentAction) {
+    if(opt_id && opt_id != introId) {
+      setFragment('id', opt_id);
+    } else {
+      clearFragment();
+    }
+  }
+
+  if(opt_fragmentAction == 1) {
+    var encoded = encodeBoard(text);
+    if(encoded.length < 2000) {
+      setFragment('code', encoded);
+    } else {
+      clearFragment();
+    }
   }
 
   updateCircuitDropdowns(opt_registeredCircuit);
@@ -7089,17 +7100,21 @@ editButton.onclick = function() {
     var newtext = editarea.value;
     document.body.removeChild(editarea);
     editButton.innerText = 'edit';
-    if(newtext != textbeforeedit) setLocalStorage(newtext, 'circuit_text');
     editmode = false;
-    parseText(newtext, 'edited circuit');
+    if(newtext != textbeforeedit) {
+      setLocalStorage(newtext, 'circuit_text');
+      parseText(newtext, 'edited circuit', undefined, 1);
+    } else {
+      parseText(newtext, 'edited circuit', undefined, 2);
+    }
   }
 };
 
 
 var forgetButton = makeUIElement('button', menuRow2El);
 forgetButton.innerText = 'forget';
-forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button,' +
-                     'you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
+forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button' +
+                     'and also remove URL fragments (#id=... or #code=...), you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
                      'if you want to keep your circuit, make sure you save it to disk first! That can be done by' +
                      'copypasting it from the edit field into a text editor and saving to your disk, e.g. as a .txt file.';
 forgetButton.onclick = function() {
@@ -7239,7 +7254,7 @@ function transform(text, op) {
 // 0=none, 1=rot90, 2=rot180, 3=rot270, 4=transpose, 5=flipver, 6=antitranpose, 7=fliphor
 function applyTransform(op) {
   var text = transform(origtext, op);
-  parseText(text, 'transformed circuit');
+  parseText(text, 'transformed circuit', undefined, 1);
 }
 
 // extreme debugging! makes size 8x bigger so use with care!
@@ -7248,7 +7263,7 @@ function applyAllTransforms() {
   for(var i = 0; i < 8; i++) {
     text += transform(origtext, i) + '\n';
   }
-  parseText(text, 'transformed circuit');
+  parseText(text, 'transformed circuit', undefined, 1);
 }
 
 function printTransform(text, op) {
@@ -7334,7 +7349,7 @@ importButton.onclick = function() {
     document.body.removeChild(editdiv);
     importButton.innerText = 'import';
     editmode = false;
-    parseText(newtext, 'imported circuit');
+    parseText(newtext, 'imported circuit', undefined, 1);
   }
 };
 
@@ -7354,7 +7369,7 @@ if(getCGIParameterByName('id')) {
   indexLink.style.cursor = 'pointer';
   indexLink.onclick = function() {
     if(origtext == introText) return;
-    parseText(introText, introTitle)
+    parseText(introText, introTitle, linkableCircuits[introId]);
   };
 }
 
@@ -7367,7 +7382,7 @@ helpLink.style.cursor = 'pointer';
 helpLink.onclick = function() {
   var circuit = linkableCircuits['helpindex'];
 
-  parseText(circuit.text, circuit.id)
+  parseText(circuit.text, circuit.id, circuit)
 };
 
 
@@ -7416,6 +7431,7 @@ function maybeLoadFromLocalStorage() {
   if (stored_text != '' && !!stored_text) {
     initialCircuitText = stored_text;
     initialTitle = 'stored circuit';
+    initialId = null;
   }
 }
 
@@ -7433,8 +7449,443 @@ function maybeLoadFromLinkId() {
   } else {
     initialCircuitText = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
     initialTitle = introTitle;
+    initialId = introId;
   }
 }
+
+// called by footer.js
+function maybeLoadFromUrlCode() {
+  var code = getFragmentParameterByName('code');
+  if(!code) return;
+  var text = decodeBoard(code);
+
+  if(text) {
+    initialCircuitText = text;
+    initialTitle = 'Decoded circuit';
+    initialId = undefined;
+  } else {
+    initialCircuitText = 'R>l 1"Invalid #code in the URL" l<R\n\n' + introText;
+    initialTitle = introTitle;
+    initialId = introId;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// To URL-compatible base64 (https://tools.ietf.org/html/rfc7515#appendix-C)
+function toBase64(text) {
+  var result = btoa(text);
+  // remove padding, and use -_ instead of +/
+  result = result.split('=')[0];
+  result = result.replace(new RegExp('\\+', 'g'), '-');
+  result = result.replace(new RegExp('/', 'g'), '_');
+  return result;
+}
+
+// From URL-compatible base64 (https://tools.ietf.org/html/rfc7515#appendix-C)
+function fromBase64(enc) {
+  enc = enc.replace(new RegExp('-', 'g'), '+');
+  enc = enc.replace(new RegExp('_', 'g'), '/');
+  if((enc.length & 3) == 2) enc += '==';
+  else if((enc.length & 3) == 3) enc += '=';
+  return atob(enc);
+}
+
+
+// converts array of unicode codepoints to JS string
+function arrayToString(a) {
+  var s = '';
+  for(var i = 0; i < a.length; i++) {
+    //s += String.fromCharCode(a[i]);
+    var c = a[i];
+    if (c < 0x10000) {
+       s += String.fromCharCode(c);
+    } else if (c <= 0x10FFFF) {
+      s += String.fromCharCode((c >> 10) + 0xD7C0);
+      s += String.fromCharCode((c & 0x3FF) + 0xDC00);
+    } else {
+      s += ' ';
+    }
+  }
+  return s;
+}
+
+// ignores the utf-32 unlike arrayToString but that's ok for now
+function arrayToStringPart(a, pos, len) {
+  var s = '';
+  for(var i = pos; i < pos + len; i++) {
+    s += String.fromCharCode(a[i]);
+  }
+  return s;
+}
+
+// converts JS string to array of unicode codepoints
+function stringToArray(s) {
+  var a = [];
+  for(var i = 0; i < s.length; i++) {
+    //a.push(s.charCodeAt(i));
+    var c = s.charCodeAt(i);
+    if (c >= 0xD800 && c <= 0xDBFF && i + 1 < s.length) {
+      var c2 = s.charCodeAt(i + 1);
+      if (c2 >= 0xDC00 && c2 <= 0xDFFF) {
+        c = (c << 10) + c2 - 0x35FDC00;
+        i++;
+      }
+    }
+    a.push(c);
+  }
+  return a;
+}
+
+/** @constructor */
+function LZ77Coder() {
+  this.lz77MatchLen = function(text, i0, i1) {
+    var l = 0;
+    while(i1 + l < text.length && text[i1 + l] == text[i0 + l] && l < 255) {
+      l++;
+    }
+    return l;
+  };
+
+  this.encodeString = function(text) {
+    return arrayToString(this.encode(stringToArray(text)));
+  };
+
+  this.decodeString = function(text) {
+    return arrayToString(this.decode(stringToArray(text)));
+  };
+
+  // Designed mainly for 7-bit ASCII text. Although the text array may contain values
+  // above 127 (e.g. unicode codepoints), only values 0-127 are encoded efficiently.
+  this.encode = function(text) {
+    var result = [];
+    var map = {};
+
+    var encodeVarint = function(i, arr) {
+      if(i < 128) {
+        arr.push(i);
+      } else if(i < 16384) {
+        arr.push(128 | (i & 127));
+        arr.push(i >> 7);
+      } else {
+        arr.push(128 | (i & 127));
+        arr.push(128 | ((i >> 7) & 127));
+        arr.push((i >> 14) & 127);
+      }
+    };
+
+    for(var i = 0; i < text.length; i++) {
+      var len = 0;
+      var dist = 0;
+
+      var sub = arrayToStringPart(text, i, 4);
+      var s = map[sub];
+      if(s) {
+        for(var j = s.length - 1; j >= 0; j--) {
+          var i2 = s[j];
+          var d = i - i2;
+          if(d > 2097151) break;
+          var l = this.lz77MatchLen(text, i2, i);
+          if(l > len) {
+            len = l;
+            dist = d;
+            if(l > 255) break; // good enough, stop search
+          }
+        }
+      }
+
+      if(len > 2097151) len = 2097151;
+
+      if(!(len > 5 || (len > 4 && dist < 16383) || (len > 3 && dist < 127))) {
+        len = 1;
+      }
+
+      for(var j = 0; j < len; j++) {
+        var sub = arrayToStringPart(text, i + j, 4);
+        if(!map[sub]) map[sub] = [];
+        if(map[sub].length > 1000) map[sub] = []; // prune
+        map[sub].push(i + j);
+      }
+      i += len - 1;
+
+      if(len >= 3) {
+        if(len < 130) {
+          result.push(128 + len - 3);
+        } else {
+          var len2 = len - 128;
+          result.push(255);
+          encodeVarint(len2, result);
+        }
+        encodeVarint(dist, result);
+      } else {
+        var c = text[i];
+        if(c < 128) {
+          result.push(c);
+        } else {
+          // Above-ascii character, encoded as unicode codepoint (not UTF-16).
+          // Normally such character does not appear in circuits, but it could in comments.
+          result.push(255);
+          encodeVarint(c - 128, result);
+          result.push(0);
+        }
+      }
+    }
+    return result;
+  };
+
+  this.decode = function(encoded) {
+    var result = [];
+    var temp;
+    for(var i = 0; i < encoded.length;) {
+      var c = encoded[i++];
+      if(c > 127) {
+        var len = c + 3 - 128;
+        if(c == 255) {
+          len = encoded[i++];
+          if(len > 127) len += (encoded[i++] << 7) - 128;
+          if(len > 16383) len += (encoded[i++] << 14) - 16384;
+          len += 128;
+        }
+        dist = encoded[i++];
+        if(dist > 127) dist += (encoded[i++] << 7) - 128;
+        if(dist > 16383) dist += (encoded[i++] << 14) - 16384;
+
+        if(dist == 0) {
+          result.push(len);
+        } else {
+          for(var j = 0; j < len; j++) {
+            result.push(result[result.length - dist]);
+          }
+        }
+      } else {
+        result.push(c);
+      }
+    }
+    return result;
+  };
+}
+
+
+/** @constructor */
+function RangeCoder() {
+  this.base = 256;
+  this.high = 1 << 24;
+  this.low = 1 << 16;
+  this.num = 256;
+  this.values = [];
+  this.inc = 8;
+
+  this.reset = function() {
+    this.values = [];
+    for(var i = 0; i <= this.num; i++) {
+      this.values.push(i);
+    }
+  };
+
+  this.floordiv = function(a, b) {
+    return Math.floor(a / b);
+  };
+
+  // Javascript numbers are doubles with 53 bits of integer precision so can
+  // represent unsigned 32-bit ints, but logic operators like & and >> behave as
+  // if on 32-bit signed integers (31-bit unsigned). Mask32 makes the result
+  // positive again. Use e.g. after multiply to simulate unsigned 32-bit overflow.
+  this.mask32 = function(a) {
+    return ((a >> 1) & 0x7fffffff) * 2 + (a & 1);
+  };
+
+  this.update = function(symbol) {
+    // too large denominator
+    if(this.getTotal() + this.inc >= this.low) {
+      var last = this.values[0];
+      for(var i = 0; i < this.num; i++) {
+        var d = this.values[i + 1] - last;
+        d = (d > 1) ? this.floordiv(d, 2) : d;
+        last = this.values[i + 1];
+        this.values[i + 1] = this.values[i] + d;
+      }
+    }
+    for(var i = symbol + 1; i < this.values.length; i++) {
+      this.values[i] += this.inc;
+    }
+  };
+
+  this.getProbability = function(symbol) {
+    return [this.values[symbol], this.values[symbol + 1]];
+  };
+
+  this.getSymbol = function(scaled_value) {
+    var symbol = this.binSearch(this.values, scaled_value);
+    var p = this.getProbability(symbol);
+    p.push(symbol);
+    return p;
+  };
+
+  this.getTotal = function() {
+    return this.values[this.values.length - 1];
+  };
+
+  // returns last index in values that contains entry that is <= value
+  this.binSearch = function(values, value) {
+    var high = values.length - 1, low = 0, result = 0;
+    if(value > values[high]) return high;
+    while(low <= high) {
+      var mid = this.floordiv(low + high, 2);
+      if(values[mid] >= value) {
+        result = mid;
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+    if(result > 0 && values[result] > value) result--;
+    return result;
+  };
+
+  this.encodeString = function(text) {
+    return arrayToString(this.encode(stringToArray(text)));
+  };
+
+  this.decodeString = function(text) {
+    return arrayToString(this.decode(stringToArray(text)));
+  };
+
+  this.encode = function(data) {
+    this.reset();
+
+    var result = [1];
+    var low = 0;
+    var range = 0xffffffff;
+
+    result.push(data.length & 255);
+    result.push((data.length >> 8) & 255);
+    result.push((data.length >> 16) & 255);
+    result.push((data.length >> 24) & 255);
+
+    for(var i = 0; i < data.length; i++) {
+      var c = data[i];
+      var p = this.getProbability(c);
+      var total = this.getTotal();
+      var start = p[0];
+      var size = p[1] - p[0];
+      this.update(c);
+      range = this.floordiv(range, total);
+      low = this.mask32(start * range + low);
+      range = this.mask32(range * size);
+
+      for(;;) {
+        if(low == 0 && range == 0) {
+          return null; // something went wrong, avoid hanging
+        }
+        if(this.mask32(low ^ (low + range)) >= this.high) {
+          if(range >= this.low) break;
+          range = this.mask32((-low) & (this.low - 1));
+        }
+        result.push((this.floordiv(low, this.high)) & (this.base - 1));
+        range = this.mask32(range * this.base);
+        low = this.mask32(low * this.base);
+      }
+    }
+
+    for(var i = this.high; i > 0; i = this.floordiv(i, this.base)) {
+      result.push(this.floordiv(low, this.high) & (this.base - 1));
+      low = this.mask32(low * this.base);
+    }
+
+    if(result.length > data.length) {
+      result = [0];
+      for(var i = 0; i < data.length; i++) result[i + 1] = data[i];
+    }
+
+    return result;
+  };
+
+  this.decode = function(data) {
+    if(data.length < 1) return null;
+    var result = [];
+    if(data[0] == 0) {
+      for(var i = 1; i < data.length; i++) result[i - 1] = data[i];
+      return result;
+    }
+    if(data[0] != 1) return null;
+    if(data.length < 5) return null;
+
+    this.reset();
+
+    var code = 0;
+    var low = 0;
+    var range = 0xffffffff;
+    var pos = 1;
+    var symbolsize = data[pos++];
+    symbolsize |= (data[pos++] << 8);
+    symbolsize |= (data[pos++] << 16);
+    symbolsize |= (data[pos++] << 24);
+    symbolsize = this.mask32(symbolsize);
+
+    for(var i = this.high; i > 0; i = this.floordiv(i, this.base)) {
+      var d = pos >= data.length ? 0 : data[pos++];
+      code = this.mask32(code * this.base + d);
+    }
+    for(var i = 0; i < symbolsize; i++) {
+      var total = this.getTotal();
+      var scaled_value = this.floordiv(code - low, (this.floordiv(range, total)));
+      var p = this.getSymbol(scaled_value);
+      var c = p[2];
+      result.push(c);
+      var start = p[0];
+      var size = p[1] - p[0];
+      this.update(c);
+
+      range = this.floordiv(range, total);
+      low = this.mask32(start * range + low);
+      range = this.mask32(range * size);
+      for(;;) {
+        if(low == 0 && range == 0) {
+          return null; // something went wrong, avoid hanging
+        }
+        if(this.mask32(low ^ (low + range)) >= this.high) {
+          if(range >= this.low) break;
+          range = this.mask32((-low) & (this.low - 1));
+        }
+        var d = pos >= data.length ? 0 : data[pos++];
+        code = this.mask32(code * this.base + d);
+        range = this.mask32(range * this.base);
+        low = this.mask32(low * this.base);
+      }
+    }
+
+    return result;
+  };
+}
+
+
+function encodeBoard(text) {
+  var lz77 = (new LZ77Coder).encodeString(text);
+  var range = (new RangeCoder).encodeString(lz77);
+  return '0' + toBase64(range); // '0' = format version
+}
+
+function decodeBoard(enc) {
+  if(enc[0] != '0') return null; // '0' = format version
+  enc = enc.substr(1);
+  var range = fromBase64(enc);
+  var lz77 = (new RangeCoder).decodeString(range);
+  if(!lz77 && lz77 != '') return null;
+  return (new LZ77Coder).decodeString(lz77);
+}
+
+
+function testCompression(o) {
+  if(!o && o != '') o = origtext;
+  var e = encodeBoard(o);
+  var d = decodeBoard(e);
+  var ok = (d == o);
+  console.log('o size: ' + Math.ceil(o.length * 8 / 6) + ', e size: ' + e.length + ', ok: ' + ok);
+  if(!ok) console.log('ERROR! not equal!');
+  return ok;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 function updateCircuitDropdowns(opt_registeredCircuit) {
   if(!opt_registeredCircuit) {
@@ -7572,6 +8023,8 @@ var introText = `
 `;
 
 var introTitle = 'Browser-Based Logic Simulator';
+
+var introId = 'welcome';
 
 function printComponentsDebug() {
   for(var i = 0; i < components.length; i++) {

@@ -29,7 +29,7 @@ and injects them into a dropdown from logicemu.js
 
 registerCircuitGroup('help');
 
-registerCircuit('Welcome', introText, 'welcome');
+registerCircuit('Welcome', introText, introId);
 
 registerCircuit('Help Index', `0"List of help circuits. If this is your first time, the first one ('Help' under 'Viewing') is recommended."\n\nINSERT:toc_help`, 'helpindex');
 
@@ -763,6 +763,67 @@ l<----*
 `, 'mainhelp');
 
 
+
+registerCircuit('Loading Circuits', `
+0"For loading circuits, there are multiple options:"
+
+0"1. Navigation"
+0"-------------"
+
+0"First of all, you can load the built-in circuits, like this help one right"
+0"here, with the dropdowns navigation at the top, or the welcome page links."
+
+
+0"2. Importing"
+0"------------"
+
+0"A second method, to load other's circuits, is to load a circuit with 'import'"
+0"(or 'edit'). Then you need to get the source code from a circuit and paste it"
+0"in the box. You can view the source code of circuits yourself with the 'edit'"
+0"button (see the editing tutorials for that)."
+0"Source code of a circuit looks for example like this:"
+
+0"s--->a---->l"
+0"     ^      "
+0"s----*      "
+
+
+0"3. base64 URL code"
+0"------------------"
+
+0"A third method is through a base64 code in the URL. This uses a fragment '#code=...'"
+0"in the URL, and will decompress that base64 string to a circuit. For example something"
+0"like this (all those characters after 'code=' are the base64 code):"
+
+0"lodev.org/logicemu/#code=0AHMtLS0-YS2BBmwKIIEBXgqBFC0qCg"
+
+0"Note that those codes contain the entire circuit encoded inside of them and are decoded"
+0"locally in the browser, these are *not* codes used by a web server or the cloud (since"
+0"LogicEmu doesn't use those) and they do not require online connectivity. Those 'fragments'"
+0"aka 'hashes' (#) of URLs are *not* sent to the server by the browser."
+
+0"Sharing this URL is also a way to share your own edited circuits, although it looks"
+0"worse (no nice circuit shape visible) and there may be limitations on URL length (it's"
+0"capped, huge circuits and especially those with lots of text instead of circuitry will"
+0"not compress well)"
+
+
+0"4. URL id"
+0"---------"
+
+0"A fourth method is through an id in the URL. This works only for built-in circuits."
+0"If you see '#id=....' in the URL, it means you can load that circuit directly"
+0"from that URL, rather than see the main welcome page first. For example:"
+
+0"lodev.org/logicemu/#id=logic_gates"
+
+0"Again, these ids are built-in and known offline by LogicEmu, they are not sent"
+0"to any web servers or cloud and require no internet connectivity."
+
+0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
+`, 'loadinghelp');
+
+
 registerCircuit('Ticks and Emulation Algorithms', `
 0"Ticks and Emulation Algorithms"
 0"------------------------------"
@@ -1032,6 +1093,12 @@ s****
 0"Note that local storage is unreliable, save circuits to your disk"
 0"with a text editor instead to safely keep them."
 
+0"In addition, when you edited a map, there will be a '#code=...' code in the URL."
+0"This is a local-only (not on a server) base64 code containing the entire circuit compressed"
+0"inside of it. You can use this URL as an alternative way to share circuits (it is less"
+0"nice than sharing the original nicely shaped source code of the circuit though)."
+0"The code is not present if the circuit is too big for a reasonable URL length."
+
 0"Input/Output/Wires"
 0"------------------"
 
@@ -1076,7 +1143,7 @@ s******>l
     v
     l
 
-0"Wire crossing:
+0"Wire crossing:"
 
     s
     *
@@ -1303,12 +1370,23 @@ s**>a**>l
     ^
 s****
 
-0"Once you edited a map, it is saved in local storage in your browser"
-0"(but not sent to the internet nor shared, it's just local on your machine). Everytime"
-0"you reload the page you will see your last edited circuit. To get rid"
-0"of that and see the default instead, save an emtpy string with the"
-0"edit tool, that is, select all and press delete."
-0"Scroll down to go through the full tutorial as it introduces more and more parts."
+0"Once you edited a map using the 'edit' button, it is saved in local"
+0"storage in your browser (but not sent to the internet nor shared,"
+0"it's just local on your machine). Everytime you reload the page you"
+0"will see your last edited circuit. To get rid of that and see the"
+0"default welcome page again, use the 'forget' button. The 'import'"
+0"button is a simpler version of the 'edit' button and will not remember."
+0"If you have '?id=...' in the URL then that overrides the local storage,"
+0"remove it or press the 'index' link if you want to autoload the edited circuit."
+
+0"Note that local storage is unreliable, save circuits to your disk"
+0"with a text editor instead to safely keep them."
+
+0"In addition, when you edited a map, there will be a '#code=...' code in the URL."
+0"This is a local-only (not on a server) base64 code containing the entire circuit compressed"
+0"inside of it. You can use this URL as an alternative way to share circuits (it is less"
+0"nice than sharing the original nicely shaped source code of the circuit though)."
+0"The code is not present if the circuit is too big for a reasonable URL length."
 
 0"The rest of this tutorial describes all the different parts and ASCII characters"
 
@@ -2451,10 +2529,15 @@ s   s   s
 
 0". and *: the . has the same functionality as * (wire)"
 0"--> this helps with drawing circuits on paper"
+`, 'editing');
 
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"SECTION VIII: Style used in built-in circuits"
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+
+registerCircuit('Editing Extra Tips', `
+
+0"A few extra tips for editing"
+
+0"Style used in built-in circuits"
+0"-------------------------------"
 
 0"Most built-in circuits use a certain style that is not optimally compact but looks better. It works as follows:"
 
@@ -2529,9 +2612,8 @@ s**>c#Q**>l        s**>cQ**>l
 0"to make nicer looking circuits than trying to make everything as small as possible"
 0"with compaction tricks. However, there's no need to follow this in your own editing."
 
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"SECTION IX: Editing in the Geany Text Editor"
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"Editing in the Geany Text Editor"
+0"--------------------------------"
 
 0"Editing is best done in a good plain text editor, at least it must support a fixed"
 0"width font and provide block selection, allowing to paste a rectangular selected"

@@ -29,13 +29,14 @@ been initialized and registered.
 
 var initialCircuitText = introText;
 var initialTitle = introTitle;
-var initialId = 'welcome';
+var initialId = introId;
 var initialRegisteredCircuit = undefined;
 
 maybeLoadFromLocalStorage();
 maybeLoadFromLinkId();
+maybeLoadFromUrlCode();
 
 if(initialCircuitText) {
-  parseText(initialCircuitText, initialTitle, linkableCircuits[initialId]);
+  parseText(initialCircuitText, initialTitle, initialId ? linkableCircuits[initialId] : null, 2);
 }
 
