@@ -3034,7 +3034,8 @@ function RendererText() {
   };
 
   this.cleanup = function() {
-    // nothing to do here
+    removeElement(this.div0);
+    removeElement(this.div1);
   };
 
   // one time initialization
@@ -3806,6 +3807,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
       removeElement(this.text0);
       removeElement(this.text1);
     }
+    this.fallback.cleanup();
   };
 
   // one time initialization

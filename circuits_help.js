@@ -1315,6 +1315,22 @@ s**>d**>l
 
 s**>d**>d**>d**>d**>d**>d**>d**>d**>l
 
+0"Note: the data (j,k,d,t) inputs of a flip-flop must already be set before the"
+0"clock signal ('setup time'). Enabling the clock and data signal at the exact same time does not work."
+0"This is expected behavior, otherwise shift registers wouldn't work. For example this d"
+0"flip-flop cannot be toggled on due to the d input arriving at same time as clock which is too late:"
+
+s**>d**>l
+  * #
+  *>c
+
+0"Putting a delay at the clock input solves this (note that in this silly example"
+0"once on it can't be turned off):"
+
+s******>d**>l
+  *     #
+  *>d**>c
+
 0"Text Comments"
 0"-------------"
 
@@ -1841,6 +1857,22 @@ s**>d**>l
  p**>d>c**>l
      1
      6
+
+0"Note: the data (j,k,d,t) inputs of a flip-flop must already be set before the"
+0"clock signal ('setup time'). Enabling the clock and data signal at the exact same time does not work."
+0"This is expected behavior, otherwise shift registers wouldn't work. For example this d"
+0"flip-flop cannot be toggled on due to the d input arriving at same time as clock which is too late:"
+
+s**>d**>l
+  * #
+  *>c
+
+0"Putting a delay at the clock input solves this (note that in this silly example"
+0"once on it can't be turned off):"
+
+s******>d**>l
+  *     #
+  *>d**>c
 
 0"NEW PART: memory"
 
