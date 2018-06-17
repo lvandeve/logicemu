@@ -280,7 +280,7 @@ var AUTO_CHOOSE_MODE = true; // automatically choose AUTOUPDATE and UPDATE_ALGOR
 var numticks = 0;
 
 var origtext = ''; // the currently loaded circuit original text
-var origtitle = undefined;
+var origtitle = null;
 
 var BACKSLASH_ALTERNATIVE = ';'; // because backslash in `` type strings does not work
 var DQUOT_ALTERNATIVE = '`'; // JS strings can use `, in other languages " is already the string quotes
@@ -531,7 +531,7 @@ function DefSub() {
     this.collectComponents(this.index, components);
     if(this.error) this.markError(undefined); // something else marked this as error
   };
-};
+}
 
 // for TYPE_IC (i and I)
 // This one is for small i, see DefSub for the other one
@@ -664,6 +664,7 @@ function CallSub(id) {
     if(this.components.length) this.components[0].callsub = this;
 
     for(var i = 0; i < this.components.length; i++) {
+      var component = this.components[i];
       var v = defsub.components[i];
       if(v.callsub) {
         var callsub = new CallSub();
@@ -731,10 +732,10 @@ function CallSub(id) {
     }
 
     var defsub = defsubs[this.subindex];
-    if(!defsub) { this.markError('called defsub does not exist, id: ' + this.subindex); return false; };
-    if(defsub.error) { this.markError(defsub.errormessage); return false; };
+    if(!defsub) { this.markError('called defsub does not exist, id: ' + this.subindex); return false; }
+    if(defsub.error) { this.markError(defsub.errormessage); return false; }
     this.defsub = defsub;
-    if(!this.copyComponents(parent)) { this.markError('copyComponents failed'); return false; };
+    if(!this.copyComponents(parent)) { this.markError('copyComponents failed'); return false; }
 
     var dirdiff = 0;
     if(this.chipdir >= 0) {
@@ -2242,7 +2243,7 @@ function Component() {
       }
     }
     return false;
-  }
+  };
 
   /*
   numon: num inputs that are on
@@ -2906,7 +2907,7 @@ function Cell() {
       if(pointer) this.renderer.setCursorPointer();
 
     }
-  }
+  };
 
   // must be called after components are parsed
   this.initDiv = function(x, y) {
@@ -2986,7 +2987,7 @@ function Renderer() {
 
   this.setTerminal = function(char, blink) {
   };
-};
+}
 
 
 
@@ -3250,7 +3251,7 @@ function RendererText() {
     }
     else if(this.div1.style.animation != undefined) this.div1.style.animation = undefined;
   };
-};
+}
 
 // checks if neighbor at given direction from x,y is device
 function hasDevice(x, y, dir) {
@@ -3471,14 +3472,14 @@ function RendererDrawer() {
       this.drawCircleCore_(ctx, x1 + r, y1 + r, r);
       this.drawLineCore_(ctx, x0, y0, x1 + d1, y1 + d1);
     }
-  }
+  };
 
   // this one has a circle instead of arrow head (for negated inputs)
   this.drawAntiArrow_ = function(ctx, x0, y0, x1, y1, opt_r) {
     ctx.beginPath();
     this.drawAntiArrowCore_(ctx, x0, y0, x1, y1, opt_r);
     ctx.stroke();
-  }
+  };
 
   this.drawCircleCore_ = function(ctx, x, y, radius) {
     var xb = Math.floor(x * tw);
@@ -3774,7 +3775,7 @@ function RendererImgGlobal() {
       context.imageSmoothingEnabled = false;
     });
   };
-};
+}
 
 var rglobal = new RendererImgGlobal();
 
@@ -4224,7 +4225,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
   this.setTerminal = function(char, blink) {
     this.fallback.setTerminal(char, blink);
   };
-};
+}
 
 
 
@@ -4910,9 +4911,9 @@ function toposort(graph) {
       }
     }
     return true;
-  }
+  };
 
-  for(k in graph) {
+  for(var k in graph) {
     if(!mark[k] && !visit(k)) return null;
   }
 
@@ -5116,7 +5117,7 @@ function parseSubs() {
     }
   }
 
-  defsubs_order = toposort(sub_tree)
+  defsubs_order = toposort(sub_tree);
   if(!defsubs_order) {
     //for(var i = 0; i < components.length; i++) {
     //  if(components[i].callsub) components[i].markError();
@@ -5496,7 +5497,8 @@ function resetForParse() {
   components = [];
   components_order = [];
   world = [];
-  w = 0, h = 0;
+  w = 0;
+  h = 0;
   ygroups = [];
   defsubs = {};
   callsubs = [];
@@ -6847,7 +6849,7 @@ function getMode() {
     if(UPDATE_ALGORITHM == modes[i][1] && AUTOUPDATE == modes[i][2]) {
       return i;
     }
-  };
+  }
   return -1;
 }
 
@@ -7040,7 +7042,7 @@ function registerChangeDropdownElement(type) {
   if(type == 'c' || type == 'C') text = type;
   var el = makeElement('option', changeDropdown).innerText = text;
   changeDropdownElements.push(type);
-};
+}
 
 registerChangeDropdownElement('change');
 registerChangeDropdownElement(TYPE_SWITCH_ON);
@@ -7072,9 +7074,9 @@ var editdiv;
 var editarea;
 var editButton = makeUIElement('button', menuRow2El);
 editButton.innerText = 'edit';
-editButton.title = 'Opens text field to edit the map. Press this button again to stop editing and run the new circuit. Read the editing tutorial under "help" first. Advice: for large projects, do not actually edit in the text field because that is fiddly, use a good text editor (that has block selection), or copypaste a circuit in here from an external source. '
-                 + 'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead. Note that nothing gets sent to any server or cloud, everything is'
-                 + 'local to your computer only.';
+editButton.title = 'Opens text field to edit the map. Press this button again to stop editing and run the new circuit. Read the editing tutorial under "help" first. Advice: for large projects, do not actually edit in the text field because that is fiddly, use a good text editor (that has block selection), or copypaste a circuit in here from an external source. ' +
+                   'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead. Note that nothing gets sent to any server or cloud, everything is' +
+                   'local to your computer only.';
 editButton.onclick = function() {
   if(!editmode) {
     textbeforeedit = origtext;
@@ -7121,7 +7123,7 @@ forgetButton.title = 'If you have edited a circuit, this removes the saved circu
                      'copypasting it from the edit field into a text editor and saving to your disk, e.g. as a .txt file.';
 forgetButton.onclick = function() {
   setLocalStorage('', 'circuit_text');
-}
+};
 
 // utility functions to mirror/rotate a whole circuit
 // does NOT yet support comments and possibly other things correctly: manual tuning may be needed afterwards
@@ -7384,7 +7386,7 @@ helpLink.style.cursor = 'pointer';
 helpLink.onclick = function() {
   var circuit = linkableCircuits['helpindex'];
 
-  parseText(circuit.text, circuit.id, circuit)
+  parseText(circuit.text, circuit.id, circuit);
 };
 
 
@@ -7862,8 +7864,8 @@ function RangeCoder() {
 
 
 function encodeBoard(text) {
-  var lz77 = (new LZ77Coder).encodeString(text);
-  var range = (new RangeCoder).encodeString(lz77);
+  var lz77 = (new LZ77Coder()).encodeString(text);
+  var range = (new RangeCoder()).encodeString(lz77);
   return '0' + toBase64(range); // '0' = format version
 }
 
@@ -7871,9 +7873,9 @@ function decodeBoard(enc) {
   if(enc[0] != '0') return null; // '0' = format version
   enc = enc.substr(1);
   var range = fromBase64(enc);
-  var lz77 = (new RangeCoder).decodeString(range);
+  var lz77 = (new RangeCoder()).decodeString(range);
   if(!lz77 && lz77 != '') return null;
-  return (new LZ77Coder).decodeString(lz77);
+  return (new LZ77Coder()).decodeString(lz77);
 }
 
 
