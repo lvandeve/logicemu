@@ -6575,7 +6575,9 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
     if(encoded.length < 2000) {
       setFragment('code', encoded);
     } else {
-      clearFragment();
+      if(getFragmentParameterByName('code')) {
+        clearFragment();
+      }
     }
   }
 
