@@ -787,6 +787,12 @@ registerCircuit('Loading Circuits', `
 0"     ^      "
 0"s----*      "
 
+0"It becomes this when loaded:"
+
+s--->a---->l
+     ^
+s----*
+
 
 0"3. base64 URL code"
 0"------------------"
@@ -2307,9 +2313,77 @@ s   s   s
 `, 'editing');
 
 
-registerCircuit('Editing Extra Tips', `
+registerCircuit('ASCII symbol summary (for editing)', `
+0"Summary of characters. See the other tutorials for the full explanation."
 
-0"A few extra tips for editing"
+0"BASIC"
+0"-----"
+
+0"(space): isolator"
+0"(newline): next line of the 2D drawing"
+0"(quote): comment"
+
+0"*: wire, wire split"
+0"+: wire crossing"
+0"x: diagonal wire crossing"
+
+0"^>v<: device/gate inputs"
+0"m]w[: inverted device/gate inputs"
+
+0"l: LED, lamp or light: user output"
+0"sS: switch: user input"
+0"pP: push button"
+
+0"a: AND gate"
+0"o: OR gate"
+0"e: XOR gate"
+0"A: NAND gate"
+0"O: NOR gate, NOT gate"
+0"E: XNOR gate"
+
+0"#: extend the surface area of devices"
+
+0"cC: flip-flop clock, counter"
+0"jkdt: flip-flop inputs"
+0"qQ: flip-flop outputs/asynch inputs"
+
+0"EXTENDED"
+0"--------"
+
+0" @: isolator"
+
+0"-|: compact wires"
+0",: wire corner that doesn't interact with itself"
+0"/\\: diagonal wires"
+0"&%: double wire corners"
+0"g: global backplane wires"
+0"y: bus (bundle of wires)"
+0"()un: straight connected backplane wires, 'antennas'"
+
+0"I: IC template"
+0"i: IC instance"
+
+0"zZ: normal/inverted device inputs that work in 4 directions"
+0"hH: normal/inverted wire crossing device input (works diagonally too)"
+
+0"V: tri-state buffer"
+
+0"L: RGB LED: 3 inputs, red, green and blue"
+0"rR: real-time timer"
+
+0"bB: ROM/RAM bits"
+0"T: terminal (ASCII keyboard/screen)"
+0"?: random generator"
+
+0"$: extend the surface area of devices without input/output interaction"
+0"0123456789: modifiers: LED color, timer speed, bus/ic/backplane id"
+
+`, 'symbols');
+
+
+registerCircuit('Editing Side Notes', `
+
+0"A few extra side notes for editing"
 
 0"Interchangeable ASCII characters"
 0"--------------------------------"
@@ -2514,74 +2588,6 @@ s     s     s     s
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `, 'editingextra');
-
-
-registerCircuit('ASCII symbol summary (for editing)', `
-0"Summary of characters. See the other tutorials for the full explanation."
-
-0"BASIC"
-0"-----"
-
-0"(space): isolator"
-0"(newline): next line of the 2D drawing"
-0"(quote): comment"
-
-0"*: wire, wire split"
-0"+: wire crossing"
-0"x: diagonal wire crossing"
-
-0"^>v<: device/gate inputs"
-0"m]w[: inverted device/gate inputs"
-
-0"l: LED, lamp or light: user output"
-0"sS: switch: user input"
-0"pP: push button"
-
-0"a: AND gate"
-0"o: OR gate"
-0"e: XOR gate"
-0"A: NAND gate"
-0"O: NOR gate, NOT gate"
-0"E: XNOR gate"
-
-0"#: extend the surface area of devices"
-
-0"cC: flip-flop clock, counter"
-0"jkdt: flip-flop inputs"
-0"qQ: flip-flop outputs/asynch inputs"
-
-0"EXTENDED"
-0"--------"
-
-0" @: isolator"
-
-0"-|: compact wires"
-0",: wire corner that doesn't interact with itself"
-0"/\\: diagonal wires"
-0"&%: double wire corners"
-0"g: global backplane wires"
-0"y: bus (bundle of wires)"
-0"()un: straight connected backplane wires, 'antennas'"
-
-0"I: IC template"
-0"i: IC instance"
-
-0"zZ: normal/inverted device inputs that work in 4 directions"
-0"hH: normal/inverted wire crossing device input (works diagonally too)"
-
-0"V: tri-state buffer"
-
-0"L: RGB LED: 3 inputs, red, green and blue"
-0"rR: real-time timer"
-
-0"bB: ROM/RAM bits"
-0"T: terminal (ASCII keyboard/screen)"
-0"?: random generator"
-
-0"$: extend the surface area of devices without input/output interaction"
-0"0123456789: modifiers: LED color, timer speed, bus/ic/backplane id"
-
-`, 'symbols');
 
 registerCircuit('Electronic Diagram', `
 0"comparison with real electrical diagrams. On the left real life notation, on the right our ASCII notation"

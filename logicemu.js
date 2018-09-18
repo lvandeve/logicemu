@@ -3053,7 +3053,6 @@ function RendererText() {
     if(symbol == ' ') return;
 
     if (!this.init2done) {
-      // setting innerText is noticably faster than setting innerHTML!
       this.div0.style.color = '#999';
       this.div0.style.textAlign = 'center';
       this.div0.style.fontSize = tw + 'px';
@@ -3067,8 +3066,11 @@ function RendererText() {
       this.div1.style.backgroundColor = '';
     }
 
-    this.div0.innerText = symbol;
-    this.div1.innerText = symbol;
+    if(!cell.comment) {
+      // setting innerText is noticably faster than setting innerHTML!
+      this.div0.innerText = symbol;
+      this.div1.innerText = symbol;
+    }
 
     if(cell.comment) {
       var fgcolor = '#000'; // '#940';
@@ -3099,6 +3101,8 @@ function RendererText() {
         if(cell.commentalign == 0) this.div0.style.textAlign = 'left';
         else if(cell.commentalign == 1) this.div0.style.textAlign = 'center';
         else if(cell.commentalign == 2) this.div0.style.textAlign = 'right';
+      } else {
+        this.div0.innerText = symbol;
       }
 
       // allow text selection of those
