@@ -32,9 +32,10 @@ var initialTitle = introTitle;
 var initialId = introId;
 var initialRegisteredCircuit = undefined;
 
-maybeLoadFromLocalStorage();
-maybeLoadFromLinkId();
-maybeLoadFromUrlCode();
+var loaded = false;
+if(!loaded) loaded = maybeLoadFromLinkId();
+if(!loaded) loaded = maybeLoadFromUrlCode();
+if(!loaded) loaded = maybeLoadFromLocalStorage();
 
 if(initialCircuitText) {
   parseText(initialCircuitText, initialTitle, initialId ? linkableCircuits[initialId] : null, 2);
