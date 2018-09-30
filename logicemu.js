@@ -3562,8 +3562,8 @@ function RendererDrawer() {
     if(origStyle != color) ctx.fillStyle = origStyle;
   };
 
-  // The '+' wire crossing can still connect a particular one of its wires to a diagonal crossing input. The graphics for that
-  // are handled here.
+  // The '+' wire crossing can still connect a particular one of its wires to a diagonal crossing input.
+  // The graphics for that are handled here.
   // returns true if it drew a dot in the center
   this.drawPlusDiagSplit_ = function(cell, ctx) {
     var num = 0;
@@ -3626,7 +3626,7 @@ function RendererDrawer() {
     if(rect1) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + 0, 3.5, 3.5);
     if(rect2) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + th - 4, 3.5, 3.5);
 
-    return rect0;
+    return [rect0, rect0 || rect1 || rect2];
   };
 }
 
@@ -3648,8 +3648,14 @@ function MultiCanvas() {
   this.canvases = null;
   this.contexts = null;
 
+  this.w = 0;
+  this.h = 0;
+
   this.make = function(x, y, w, h, parent) {
     this.S = Math.floor(this.MAX_S / tw) * tw; // such that size is multiple of cell size so there's no visible edges
+
+    this.w = w;
+    this.h = h;
 
     var numx = Math.ceil(w  / this.S);
     var numy = Math.ceil(h  / this.S);
@@ -3747,6 +3753,7 @@ function RendererImgGlobal() {
   this.maincanvas = new MultiCanvas();
   this.offcanvas0 = new MultiCanvas();
   this.offcanvas1 = new MultiCanvas();
+  this.extracanvas = new MultiCanvas();
 
   this.init = function() {
     var parent = worldDiv;
@@ -3754,15 +3761,20 @@ function RendererImgGlobal() {
     this.maincanvas.remove();
     this.offcanvas0.remove();
     this.offcanvas1.remove();
+    this.extracanvas.remove();
 
     this.maincanvas.make(0, 0, tw * w, th * h, parent);
     this.offcanvas0.make(0, 0, tw * w, th * h, parent);
     this.offcanvas1.make(0, 0, tw * w, th * h, parent);
+    this.extracanvas.make(0, 0, tw * 32, th * 4, parent);
 
     this.offcanvas0.forEachCanvas(function(canvas) {
       canvas.style.display = 'none';
     });
     this.offcanvas1.forEachCanvas(function(canvas) {
+      canvas.style.display = 'none';
+    });
+    this.extracanvas.forEachCanvas(function(canvas) {
       canvas.style.display = 'none';
     });
 
@@ -3776,6 +3788,9 @@ function RendererImgGlobal() {
       context.imageSmoothingEnabled = false;
     });
     this.offcanvas1.forEachContext(function(context) {
+      context.imageSmoothingEnabled = false;
+    });
+    this.extracanvas.forEachContext(function(context) {
       context.imageSmoothingEnabled = false;
     });
   };
@@ -3802,9 +3817,15 @@ function RendererImg() { // RendererCanvas RendererGraphical
   this.text1 = null;
   this.tx = 0;
   this.ty = 0;
+  // if false: avoid using the few fixed graphics from the 'extra' canvas for 2+ connection things if their graphics are too custom
+  // if true: see the drawGlobalExtras_ function for more info
+  this.drawextra = false;
+   // if non-0, only use "on" drawing if a wire with that particular numerical direction is on
+  this.drawonly = 0;
 
   this.globalInit = function() {
     rglobal.init();
+    this.drawGlobalExtras_();
   };
 
   this.cleanup = function() {
@@ -3907,12 +3928,18 @@ function RendererImg() { // RendererCanvas RendererGraphical
       } else if(c == '\\') {
         drawer.drawLine_(ctx, 0, 0, 1, 1);
       } else if(c == 'x') {
+        this.drawextra = isInterestingComponent(cell, 0) && isInterestingComponent(cell, 1);
         //drawer.drawLine_(ctx, 0, 0, 1, 1);
         if(isInterestingComponent(cell, 1) && !isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 0, 1, 1);
-        if(isInterestingComponent(cell, 1)) { drawer.drawLine_(ctx, 0, 0, 0.4, 0.4); drawer.drawLine_(ctx, 0.6, 0.6, 1, 1); }
+        if(isInterestingComponent(cell, 1)) {
+          drawer.drawLine_(ctx, 0, 0, 0.4, 0.4);
+          drawer.drawLine_(ctx, 0.6, 0.6, 1, 1);
+        }
         if(isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 1, 1, 0);
       } else if(c == '+') {
-        var centerfull = drawer.drawPlusDiagSplit_(cell, ctx);
+        var extras = drawer.drawPlusDiagSplit_(cell, ctx);
+        var centerfull = extras[0];
+        this.drawextra = !extras[1]; // if the + has extra connections, the special 'ON'-leak avoiding drawing is not supported
         var shift = centerfull ? 0.3 : 0.2;
         drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
         //drawer.drawLine(ctx, 0.5, 0, 0.5, 1);
@@ -3922,64 +3949,80 @@ function RendererImg() { // RendererCanvas RendererGraphical
         drawer.drawSplit_(cell, ctx);
       } else if(c == '^') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) drawer.drawArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 4)) drawer.drawArrow_(ctx, 0, 1, 1, 0);
+          var num = 0;
+          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawArrow_(ctx, 1, 1, 0, 0); num++; }
+          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawArrow_(ctx, 0, 1, 1, 0); num++; }
+          if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0);
         }
       } else if(c == '>') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 4)) drawer.drawArrow_(ctx, 0, 1, 1, 0);
-          if(hasDevice(cell.x, cell.y, 5)) drawer.drawArrow_(ctx, 0, 0, 1, 1);
+          var num = 0;
+          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawArrow_(ctx, 0, 1, 1, 0); num++; }
+          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawArrow_(ctx, 0, 0, 1, 1); num++; }
+          if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5);
         }
       } else if(c == 'v') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 6)) drawer.drawArrow_(ctx, 1, 0, 0, 1);
-          if(hasDevice(cell.x, cell.y, 5)) drawer.drawArrow_(ctx, 0, 0, 1, 1);
+          var num = 0;
+          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawArrow_(ctx, 1, 0, 0, 1); num++; }
+          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawArrow_(ctx, 0, 0, 1, 1); num++; }
+          if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1);
         }
       } else if(c == '<') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) drawer.drawArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 6)) drawer.drawArrow_(ctx, 1, 0, 0, 1);
+          var num = 0;
+          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawArrow_(ctx, 1, 1, 0, 0); num++; }
+          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawArrow_(ctx, 1, 0, 0, 1); num++; }
+          if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5);
         }
       } else if(c == 'm') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
+          var num = 0;
+          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, 1, 1, 0, 0); num++; }
+          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, 0, 1, 1, 0); num++; }
+          if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
         }
       } else if(c == ']') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
-          if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
+          var num = 0;
+          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, 0, 1, 1, 0); num++; }
+          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, 0, 0, 1, 1); num++; }
+          if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
         }
       } else if(c == 'w') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
-          if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
+          var num = 0;
+          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, 1, 0, 0, 1); num++; }
+          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, 0, 0, 1, 1); num++; }
+          if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
         }
       } else if(c == '[') {
         if(cell.circuitextra == 2) {
-          if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
-          if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
+          var num = 0;
+          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, 1, 1, 0, 0); num++; }
+          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, 1, 0, 0, 1); num++; }
+          if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
@@ -4033,14 +4076,17 @@ function RendererImg() { // RendererCanvas RendererGraphical
           drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
           drawer.drawLine_(ctx, 0.5, 0, 0.5, r);
           drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, r);
+          this.drawextra = true;
         }
         else if(draw0) {
           drawer.drawLine_(ctx, 0.5, 0.5, 0, 0.5);
           drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 1);
+          this.drawonly = 1;
         }
         else if(draw1) {
           drawer.drawLine_(ctx, 0.5, 0.5, 1, 0.5);
           drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 0);
+          this.drawonly = 2;
         }
       } else if(c == '%') {
         var draw1 = connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 1);
@@ -4053,14 +4099,17 @@ function RendererImg() { // RendererCanvas RendererGraphical
           drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
           drawer.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
           drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, 1 - r);
+          this.drawextra = true;
         }
         else if(draw0) {
           drawer.drawLine_(ctx, 0.5, 0.5, 1, 0.5);
           drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 1);
+          this.drawonly = 1;
         }
         else if(draw1) {
           drawer.drawLine_(ctx, 0.5, 0.5, 0, 0.5);
           drawer.drawLine_(ctx, 0.5, 0.5, 0.5, 0);
+          this.drawonly = 2;
         }
       } else if(antennamap[c]) {
         drawer.fillBg_(ctx, ctx.fillStyle);
@@ -4151,6 +4200,203 @@ function RendererImg() { // RendererCanvas RendererGraphical
     }
   };
 
+  /*
+  Some cell types can have multiple independent signals through them, like wire
+  crossings. However, for most cell types, only two graphics are created: off and on.
+  Some cell types can have 4 signals through them, giving up to 16 instead of 2 combinations.
+  But it would be a bit too much to make 16 different full graphics planes, and render all
+  those combinations.
+  So instead, for a few very common cell types, we support up to 4 graphics, by adding two more
+  here, such as a + with one leg gray and the other black and vice versa.
+  */
+  this.drawGlobalExtras_ = function() {
+    var ctx = rglobal.extracanvas.getContextAt(0, 0);
+    var drawer = new RendererDrawer();
+    ctx.strokeStyle = 'white';
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, rglobal.extracanvas.w, rglobal.extracanvas.h);
+
+    for(var i = 0; i < 2; i++) {
+      var color0, color1;
+      if(i == 0) {
+        color0 = '#aaa';
+        color1 = 'black';
+      } else {
+        color0 = 'black';
+        color1 = '#aaa';
+      }
+
+      drawer.ty = th * ((i == 0) ? 0 : 2);
+
+      // leaving one gap open between each tile so that some border graphics don't overlap each other
+
+      // '+'
+      drawer.tx = tw * 0;
+      var shift = 0.2;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+
+      // 'x'
+      drawer.tx = tw * 2;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0, 0.4, 0.4);
+      drawer.drawLine_(ctx, 0.6, 0.6, 1, 1);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0, 1, 1, 0);
+
+      // 'diagonal crossing ^'
+      drawer.tx = tw * 4;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawArrow_(ctx, 1, 1, 0, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawArrow_(ctx, 0, 1, 1, 0);
+
+      // 'diagonal crossing >'
+      drawer.tx = tw * 6;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawArrow_(ctx, 0, 1, 1, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawArrow_(ctx, 0, 0, 1, 1)
+
+      // 'diagonal crossing v'
+      drawer.tx = tw * 8;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawArrow_(ctx, 1, 0, 0, 1);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawArrow_(ctx, 0, 0, 1, 1);
+
+      // 'diagonal crossing <'
+      drawer.tx = tw * 10;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawArrow_(ctx, 1, 1, 0, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawArrow_(ctx, 1, 0, 0, 1);
+
+      // 'diagonal crossing m'
+      drawer.tx = tw * 12;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
+
+      // 'diagonal crossing ]'
+      drawer.tx = tw * 14;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawAntiArrow_(ctx, 0, 0, 1, 1)
+
+      // 'diagonal crossing w'
+      drawer.tx = tw * 16;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
+
+      // 'diagonal crossing ['
+      drawer.tx = tw * 18;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
+
+      // '&'
+      drawer.tx = tw * 20;
+      var r = 0.3;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, r, 0.5);
+      drawer.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
+      drawer.drawLine_(ctx, r, 0.5, 0.5, 1 - r);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, r);
+      drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, r);
+
+      // '%'
+      drawer.tx = tw * 22;
+      r = 0.3;
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, r, 0.5);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, r);
+      drawer.drawLine_(ctx, r, 0.5, 0.5, r);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
+      drawer.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
+      drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, 1 - r);
+    }
+  };
+
+  this.setValue = function(cell, value, type) {
+    if(this.usefallback) {
+      this.fallback.setValue(cell, value, type);
+      return;
+    }
+
+    if(value != this.prevvalue) { // changing visibility is slow in case of lots of elements, so only do if it changed
+      var dest = rglobal.maincanvas.getContextForCell(cell);
+      var offsetx = rglobal.maincanvas.getXOffsetForCell(cell);
+      var offsety = rglobal.maincanvas.getYOffsetForCell(cell);
+      var sx = offsetx + cell.x * tw;
+      var sy = offsety + cell.y * th;
+      var dx = offsetx + cell.x * tw;
+      var dy = offsety + cell.y * th;
+      var tweak = 1; // a few graphics are not perfectly aligned to the cell. This is a quick fix for that... TODO: this too gives issues. Fix all rendering above to let each symbol stay only inside of its own cell (not as easy as it seems near borders).
+      var source;
+
+      if(value && this.drawonly) {
+        value &= this.drawonly;
+      }
+
+      if(value) {
+        this.fallback.div0.style.visibility = 'hidden';
+        this.fallback.div1.style.visibility = 'visible';
+        source = rglobal.offcanvas1.getCanvasForCell(cell);
+        if(this.drawextra) {
+          var c = cell.circuitsymbol;
+          var isextra = true;
+          if(c == '+' && value == 1)      { sx = tw * 0; sy = th * 2;  }
+          else if(c == '+' && value == 2) { sx = tw * 0; sy = th * 0;  }
+          else if(c == 'x' && value == 1) { sx = tw * 2; sy = th * 0;  }
+          else if(c == 'x' && value == 2) { sx = tw * 2; sy = th * 2;  }
+          else if(c == '^' && value == 1) { sx = tw * 4; sy = th * 2;  }
+          else if(c == '^' && value == 2) { sx = tw * 4; sy = th * 0;  }
+          else if(c == '>' && value == 1) { sx = tw * 6; sy = th * 2;  }
+          else if(c == '>' && value == 2) { sx = tw * 6; sy = th * 0;  }
+          else if(c == 'v' && value == 1) { sx = tw * 8; sy = th * 0;  }
+          else if(c == 'v' && value == 2) { sx = tw * 8; sy = th * 2;  }
+          else if(c == '<' && value == 1) { sx = tw * 10; sy = th * 0; }
+          else if(c == '<' && value == 2) { sx = tw * 10; sy = th * 2; }
+          else if(c == 'm' && value == 1) { sx = tw * 12; sy = th * 2; }
+          else if(c == 'm' && value == 2) { sx = tw * 12; sy = th * 0; }
+          else if(c == ']' && value == 1) { sx = tw * 14; sy = th * 2; }
+          else if(c == ']' && value == 2) { sx = tw * 14; sy = th * 0; }
+          else if(c == 'w' && value == 1) { sx = tw * 16; sy = th * 0; }
+          else if(c == 'w' && value == 2) { sx = tw * 16; sy = th * 2; }
+          else if(c == '[' && value == 1) { sx = tw * 18; sy = th * 0; }
+          else if(c == '[' && value == 2) { sx = tw * 18; sy = th * 2; }
+          else if(c == '&' && value == 1) { sx = tw * 20; sy = th * 2; }
+          else if(c == '&' && value == 2) { sx = tw * 20; sy = th * 0; }
+          else if(c == '%' && value == 1) { sx = tw * 22; sy = th * 0; }
+          else if(c == '%' && value == 2) { sx = tw * 22; sy = th * 2; }
+          else isextra = false;
+          if(isextra) {
+            source = rglobal.extracanvas.getCanvasAt(0, 0);
+            tweak = 0;
+          }
+        }
+      } else {
+        this.fallback.div0.style.visibility = 'visible';
+        this.fallback.div1.style.visibility = 'hidden';
+        source = rglobal.offcanvas0.getCanvasForCell(cell);
+      }
+      dest.drawImage(source, sx, sy, tw + tweak, th + tweak, dx, dy, tw + tweak, th + tweak);
+    }
+    this.prevvalue = value;
+  };
+
   this.markError = function(cell, errortext) {
     if(this.usefallback) {
       this.fallback.markError(cell, errortext);
@@ -4173,31 +4419,6 @@ function RendererImg() { // RendererCanvas RendererGraphical
     this.fallback.div1.style.cursor = 'pointer';
     this.text0.style.cursor = 'pointer';
     this.text1.style.cursor = 'pointer';
-  };
-
-  this.setValue = function(cell, value, type) {
-    if(this.usefallback) {
-      this.fallback.setValue(cell, value, type);
-      return;
-    }
-    if(value != this.prevvalue) { // changing visibility is slow in case of lots of elements, so only do if it changed
-      var dest = rglobal.maincanvas.getContextForCell(cell);
-      var offsetx = rglobal.maincanvas.getXOffsetForCell(cell);
-      var offsety = rglobal.maincanvas.getYOffsetForCell(cell);
-      var extra = 1;
-      if(value) {
-        this.fallback.div0.style.visibility = 'hidden';
-        this.fallback.div1.style.visibility = 'visible';
-        var source = rglobal.offcanvas1.getCanvasForCell(cell);
-        dest.drawImage(source, offsetx + cell.x * tw, offsety + cell.y * th, tw + extra, th + extra, offsetx + cell.x * tw, offsety + cell.y * th, tw + extra, th + extra);
-      } else {
-        this.fallback.div0.style.visibility = 'visible';
-        this.fallback.div1.style.visibility = 'hidden';
-        var source = rglobal.offcanvas0.getCanvasForCell(cell);
-        dest.drawImage(source, offsetx + cell.x * tw, offsety + cell.y * th, tw + extra, th + extra, offsetx + cell.x * tw, offsety + cell.y * th, tw + extra, th + extra);
-      }
-    }
-    this.prevvalue = value;
   };
 
   this.setLook = function(cell, type) {
@@ -4256,15 +4477,15 @@ function render() {
     for(var x = line0[y]; x < line1[y]; x++) {
       var cell = world[y][x];
       if(!cell.renderer) continue;
-      var value = false;
+      var value = 0;
       if(cell.components[0]) value |= cell.components[0].value;
-      if(cell.components[1]) value |= cell.components[1].value;
-      if(cell.components[2]) value |= cell.components[2].value;
-      if(cell.components[3]) value |= cell.components[3].value;
-      if(cell.components[4]) value |= cell.components[4].value;
-      if(cell.components[5]) value |= cell.components[5].value;
-      if(cell.components[6]) value |= cell.components[6].value;
-      if(cell.components[7]) value |= cell.components[7].value;
+      if(cell.components[1]) value |= (cell.components[1].value << 1);
+      if(cell.components[2]) value |= (cell.components[2].value << 2);
+      if(cell.components[3]) value |= (cell.components[3].value << 3);
+      if(cell.components[4]) value |= (cell.components[4].value << 4);
+      if(cell.components[5]) value |= (cell.components[5].value << 5);
+      if(cell.components[6]) value |= (cell.components[6].value << 6);
+      if(cell.components[7]) value |= (cell.components[7].value << 7);
       cell.setValue(value);
     }
   }
@@ -6738,6 +6959,7 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   if(t < 9) t = 9;
   if(t > 32) t = 32;
   if(h > 80 && t > 24) t = 24;
+  if(t & 1) t--; // some diagonal wires possibly look worse for some odd sizes
   th = tw = t;
 
 
@@ -7078,7 +7300,7 @@ var editmode = false;
 var textbeforeedit = '';
 var editdiv;
 var editarea;
-var editButton = makeUIElement('button', menuRow2El);
+var editButton = makeUIElement('button', menuRow2El, 3);
 editButton.innerText = 'edit';
 editButton.title = 'Opens text field to edit the map. Press this button again to stop editing and run the new circuit. Read the editing tutorial under "help" first. Advice: for large projects, do not actually edit in the text field because that is fiddly, use a good text editor (that has block selection), or copypaste a circuit in here from an external source. ' +
                    'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead. Note that nothing gets sent to any server or cloud, everything is' +
@@ -7121,15 +7343,27 @@ editButton.onclick = function() {
 };
 
 
-var forgetButton = makeUIElement('button', menuRow2El);
-forgetButton.innerText = 'forget';
-forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button' +
-                     'and also remove URL fragments (#id=... or #code=...), you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
-                     'if you want to keep your circuit, make sure you save it to disk first! That can be done by' +
-                     'copypasting it from the edit field into a text editor and saving to your disk, e.g. as a .txt file.';
-forgetButton.onclick = function() {
-  setLocalStorage('', 'circuit_text');
-};
+if(getLocalStorage('circuit_text')) {
+  var restoreButton = makeUIElement('button', menuRow2El, 3);
+  restoreButton.innerText = 'restore';
+  restoreButton.title = 'Restore circuit you created before with edit. Only works if an actual circuit was found in local storage.';
+  restoreButton.onclick = function() {
+    if(maybeLoadFromLocalStorage()) {
+      parseText(initialCircuitText, initialTitle, initialId ? linkableCircuits[initialId] : null, 1);
+    }
+  };
+
+  var forgetButton = makeUIElement('button', menuRow2El, 3);
+  forgetButton.innerText = 'forget';
+  forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button' +
+                       'and also remove URL fragments (#id=... or #code=...), you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
+                       'if you want to keep your circuit, make sure you save it to disk first! That can be done by' +
+                       'copypasting it from the edit field into a text editor and saving to your disk, e.g. as a .txt file.';
+  forgetButton.onclick = function() {
+    setLocalStorage('', 'circuit_text');
+    clearFragment();
+  };
+}
 
 // utility functions to mirror/rotate a whole circuit
 // does NOT yet support comments and possibly other things correctly: manual tuning may be needed afterwards
@@ -7438,17 +7672,20 @@ exportButton.onclick = function() {
 function maybeLoadFromLocalStorage() {
   // the text you last edited is remembered. To remove the memory, use the edit button, clear the string, and save
   var stored_text = getLocalStorage('circuit_text');
+  if(!stored_text) return false;
   if (stored_text != '' && !!stored_text) {
     initialCircuitText = stored_text;
     initialTitle = 'stored circuit';
     initialId = null;
   }
+
+  return true;
 }
 
 // called by footer.js
 function maybeLoadFromLinkId() {
   var link_id = getFragmentParameterByName('id');
-  if(!link_id) return;
+  if(!link_id) return false;
 
   var linkableCircuit = linkableCircuits[link_id];
   if(linkableCircuit) {
@@ -7461,12 +7698,14 @@ function maybeLoadFromLinkId() {
     initialTitle = introTitle;
     initialId = introId;
   }
+
+  return true;
 }
 
 // called by footer.js
 function maybeLoadFromUrlCode() {
   var code = getFragmentParameterByName('code');
-  if(!code) return;
+  if(!code) return false;
   var text = decodeBoard(code);
 
   if(text) {
@@ -7478,6 +7717,8 @@ function maybeLoadFromUrlCode() {
     initialTitle = introTitle;
     initialId = introId;
   }
+
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

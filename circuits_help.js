@@ -2323,7 +2323,8 @@ registerCircuit('ASCII symbol summary (for editing)', `
 0"(newline): next line of the 2D drawing"
 0"(quote): comment"
 
-0"*: wire, wire split"
+0"*: wire, wire split, wire corner"
+0"-|: straight wires"
 0"+: wire crossing"
 0"x: diagonal wire crossing"
 
@@ -2352,7 +2353,6 @@ registerCircuit('ASCII symbol summary (for editing)', `
 
 0" @: isolator"
 
-0"-|: compact wires"
 0",: wire corner that doesn't interact with itself"
 0"/\\: diagonal wires"
 0"&%: double wire corners"
