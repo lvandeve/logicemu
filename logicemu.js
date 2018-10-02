@@ -2771,7 +2771,7 @@ function setColorScheme(index) {
     TERMINALFGCOLOR = '#0d0';
   } else if(index == 1) {
     ONCOLOR = '#f44';
-    OFFCOLOR = '#0a0';
+    OFFCOLOR = '#080';
     BGCOLOR = 'black';
     TEXTFGCOLOR = '#da0'; // '#0c0'; //'#fff';
     TEXTBGCOLOR = '#210'; // '#020'; //'#040';
@@ -2790,8 +2790,8 @@ function setColorScheme(index) {
 
     SWITCHON_FGCOLOR = ONCOLOR;
     SWITCHON_BGCOLOR = led_on_bg_colors[3];
-    SWITCHOFF_FGCOLOR = OFFCOLOR;
-    SWITCHOFF_BGCOLOR = led_off_bg_colors[3];
+    SWITCHOFF_FGCOLOR = '#0e0';
+    SWITCHOFF_BGCOLOR = 'black';
     SWITCHON_BORDERCOLOR = SWITCHON_FGCOLOR;
     SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
@@ -2802,7 +2802,7 @@ function setColorScheme(index) {
 
     TERMINALBGCOLOR = '#00f';
     TERMINALFGCOLOR = '#fff';
-  } else {
+  } else if(index == 2) {
     setColorScheme(0);
 
     BGCOLOR = '#aaa';
@@ -2828,8 +2828,39 @@ function setColorScheme(index) {
 
     BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
 
-    TEXTBGCOLOR = BGCOLOR;
+    TEXTBGCOLOR = 'none';
     GATEBGCOLOR = '#9b9b9b'; // '#b4b4b4';
+  } else {
+    setColorScheme(0);
+
+    BGCOLOR = '#008';
+
+    ONCOLOR = '#fff';
+    OFFCOLOR = '#aaf';
+    TEXTFGCOLOR = '#aaa';
+
+    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#00d', '#a0d', '#f99', '#eee'];
+    led_off_bg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
+    led_off_border_colors = led_off_fg_colors;
+    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
+    led_on_bg_colors = led_off_fg_colors;
+    led_on_border_colors = led_on_fg_colors;
+
+    SWITCHON_FGCOLOR = 'white';
+    SWITCHON_BGCOLOR = '#0e0';
+    SWITCHOFF_FGCOLOR = '#0e0';
+    SWITCHOFF_BGCOLOR = '#028';
+    //TODO: use switch border colors, and use them to not have invisible border around swithc in gray color scheme switch on
+    SWITCHON_BORDERCOLOR = 'white';
+    SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
+
+    BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
+
+    TEXTBGCOLOR = 'none';
+    GATEBGCOLOR = '#228';
+
+    LINKCOLOR = 'yellow';
+    TITLECOLOR = 'white';
   }
 }
 
@@ -7367,6 +7398,7 @@ colorDropdown.onchange = function() {
 makeElement('option', colorDropdown).innerText = 'light';
 makeElement('option', colorDropdown).innerText = 'dark';
 makeElement('option', colorDropdown).innerText = 'gray';
+makeElement('option', colorDropdown).innerText = 'blue';
 colorDropdown.selectedIndex = colorscheme;
 
 /*
