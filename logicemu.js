@@ -2700,17 +2700,131 @@ var changeMode = null;
 
 
 // red, orange, yellow, green, blue, violet, pink, white
-var led_off_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
-var led_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
-var led_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
-var led_light_bg_colors = ['#fffafa', '#fffcfa', '#fffff4', '#fafffa', '#fbfdff', '#faf8ff', '#fffdfd', '#fcfcfc'];
-var led_light_fg_colors = ['#fcc', '#fa8', '#cc2', '#afa', '#ddf', '#d8f', 'fac', '#fff'];
+var led_off_colors;
+var led_fg_colors;
+var led_bg_colors;
+var led_light_bg_colors;
+var led_light_fg_colors;
 
 // RGB order: bit 1: red, bit 2: green, bit 4: blue
 // black, red, green, yellow, blue, magenta, cyan, white
 // the RGB led can make cyan, magenta and black, regular leds can make orange, violet and pink
-var rgb_led_fg_colors = ['#333', '#f88', '#8f8', '#ff8', '#ccf', '#f8f', '#8ff', '#000'];
-var rgb_led_bg_colors = ['#000', '#f00', '#0f0', '#ff0', '#00f', '#f0f', '#0ff', '#eee'];
+var rgb_led_fg_colors;
+var rgb_led_bg_colors;
+
+var ONCOLOR;
+var OFFCOLOR;
+var BGCOLOR;
+var TEXTFGCOLOR;
+var TEXTBGCOLOR;
+
+var SWITCHON_FGCOLOR;
+var SWITCHON_BGCOLOR;
+var SWITCHOFF_FGCOLOR;
+var SWITCHOFFB_GCOLOR;
+
+var GATEBGCOLOR;
+
+var LINKCOLOR;
+var TITLECOLOR;
+var TERMINALBGCOLOR;
+var TERMINALFGCOLOR;
+
+var BUSCOLORS;
+
+function setColorScheme(index) {
+  if(index == 0) {
+    ONCOLOR = 'black';
+    OFFCOLOR = '#aaa';
+    BGCOLOR = 'white';
+    TEXTFGCOLOR = '#000'; // '#940';
+    TEXTBGCOLOR = '#fff6ea';
+
+    led_off_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
+    led_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
+    led_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
+    led_light_bg_colors = ['#fffafa', '#fffcfa', '#fffff4', '#fafffa', '#fbfdff', '#faf8ff', '#fffdfd', '#fcfcfc'];
+    led_light_fg_colors = ['#fcc', '#fa8', '#cc2', '#afa', '#ddf', '#d8f', '#fac', '#fff'];
+
+    rgb_led_fg_colors = ['#888', '#f77', '#dfd', '#dd0', '#ccf', '#f8f', '#0dd', '#888'];
+    rgb_led_bg_colors = ['#000', '#f00', '#0f0', '#ff0', '#00f', '#f0f', '#0ff', '#eee'];
+
+    BUSCOLORS = ['#aaa', '#aab', '#aba', '#baa', '#bba', '#bab', '#abb', '#bbb'];
+
+    SWITCHON_FGCOLOR = led_fg_colors[3];
+    SWITCHON_BGCOLOR = led_bg_colors[3];
+    SWITCHOFF_FGCOLOR = led_off_colors[3];
+    SWITCHOFF_BGCOLOR = led_light_bg_colors[3];
+
+    GATEBGCOLOR = '#f7f7f7';
+
+    LINKCOLOR = '#00e';
+    TITLECOLOR = 'black';
+
+    TERMINALBGCOLOR = 'black';
+    TERMINALFGCOLOR = '#0d0';
+  } else if(index == 1) {
+    ONCOLOR = '#f44';
+    OFFCOLOR = '#0a0';
+    BGCOLOR = 'black';
+    TEXTFGCOLOR = '#da0'; // '#0c0'; //'#fff';
+    TEXTBGCOLOR = '#210'; // '#020'; //'#040';
+
+    led_off_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
+    led_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
+    led_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
+    led_light_bg_colors = ['#400', '#420', '#440', '#040', '#004', '#204', '#422', '#444'];
+    led_light_fg_colors = ['#800', '#840', '#880', '#080', '#008', '#408', '#844', '#888'];
+
+    rgb_led_fg_colors = ['#888', '#f77', '#dfd', '#dd0', '#ccf', '#f8f', '#0dd', '#888'];
+    rgb_led_bg_colors = ['#222', '#f00', '#0f0', '#ff0', '#00f', '#f0f', '#0ff', '#fff'];
+
+    BUSCOLORS = ['#aaa', '#aab', '#aba', '#baa', '#bba', '#bab', '#abb', '#bbb'];
+
+    SWITCHON_FGCOLOR = ONCOLOR;
+    SWITCHON_BGCOLOR = led_bg_colors[3];
+    SWITCHOFF_FGCOLOR = OFFCOLOR;
+    SWITCHOFF_BGCOLOR = led_light_bg_colors[3];
+
+    GATEBGCOLOR = '#020';
+
+    LINKCOLOR = 'yellow';
+    TITLECOLOR = 'white';
+
+    TERMINALBGCOLOR = '#00f';
+    TERMINALFGCOLOR = '#fff';
+  } else {
+    setColorScheme(0);
+
+    BGCOLOR = '#aaa';
+
+    ONCOLOR = 'white';
+    OFFCOLOR = 'black';
+    TEXTFGCOLOR = '#00a';
+
+    led_off_colors = ['#f00', '#f80', '#dd0', '#0d0', '#00d', '#a0d', '#f99', '#fff'];
+    led_fg_colors = [BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
+    led_bg_colors = led_off_colors;
+    led_light_bg_colors = led_fg_colors;
+    led_light_fg_colors = led_off_colors;
+
+    SWITCHON_FGCOLOR = BGCOLOR;
+    SWITCHON_BGCOLOR = '#0d0';
+    SWITCHOFF_FGCOLOR = '#0d0';
+    SWITCHOFF_BGCOLOR = BGCOLOR;
+
+    BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
+
+    TEXTBGCOLOR = BGCOLOR;
+    GATEBGCOLOR = BGCOLOR;
+  }
+}
+
+var colorscheme = getLocalStorage('color_scheme') || 0;
+
+
+setColorScheme(colorscheme);
+
 
 
 // I wanted to use CSS animation instead of this javascript solution, but it turns out the CSS animation uses extreme amount of CPU, at least so much that a flash game in a different window of chrome goes slower.
@@ -2719,7 +2833,7 @@ function registerBlinkingCursor(div) {
   if (div == globalSingleBlinkingCursor) return;
 
   if (globalSingleBlinkingCursor) {
-    globalSingleBlinkingCursor.style.backgroundColor = '#000';
+    globalSingleBlinkingCursor.style.backgroundColor = TERMINALBGCOLOR;
   }
 
 
@@ -2730,10 +2844,10 @@ function registerBlinkingCursor(div) {
     }
 
     if(globalSingleBlinkingCursor.blinkOn) {
-      globalSingleBlinkingCursor.style.backgroundColor = '#000';
+      globalSingleBlinkingCursor.style.backgroundColor = TERMINALBGCOLOR;
       globalSingleBlinkingCursor.blinkOn = false;
     } else {
-      globalSingleBlinkingCursor.style.backgroundColor = '#0a0';
+      globalSingleBlinkingCursor.style.backgroundColor = TERMINALFGCOLOR;
       globalSingleBlinkingCursor.blinkOn = true;
     }
 
@@ -3008,9 +3122,9 @@ function setTocHTML(toc, el) {
     span.innerText = title;
     div.style.textAlign = 'left';
     if(allRegisteredCircuits[i].istitle/* == 1*/) {
-      span.style.color = '#000';
+      span.style.color = TITLECOLOR;
     } else {
-      span.style.color = '#00e';
+      span.style.color = LINKCOLOR;
       span.style.textDecoration = 'underline';
       span.style.cursor = 'pointer';
       span.onclick = bind(function(circuit, title, id, index) {
@@ -3023,6 +3137,7 @@ function setTocHTML(toc, el) {
 }
 
 
+
 /** @implements Renderer */
 function RendererText() {
   this.prevvalue = -1;
@@ -3032,6 +3147,7 @@ function RendererText() {
   this.init2done = false;
 
   this.globalInit = function() {
+    document.body.style.backgroundColor = BGCOLOR;
   };
 
   this.cleanup = function() {
@@ -3053,11 +3169,11 @@ function RendererText() {
     if(symbol == ' ') return;
 
     if (!this.init2done) {
-      this.div0.style.color = '#999';
+      this.div0.style.color = OFFCOLOR;
       this.div0.style.textAlign = 'center';
       this.div0.style.fontSize = tw + 'px';
       this.div0.style.fontFamily = 'monospace';
-      this.div1.style.color = 'black';
+      this.div1.style.color = ONCOLOR;
       this.div1.style.textAlign = 'center';
       this.div1.style.fontSize = tw + 'px';
       this.div1.style.fontFamily = 'monospace';
@@ -3073,8 +3189,8 @@ function RendererText() {
     }
 
     if(cell.comment) {
-      var fgcolor = '#000'; // '#940';
-      var bgcolor = '#fff6ea';
+      var fgcolor = TEXTFGCOLOR;
+      var bgcolor = TEXTBGCOLOR;
       //this.div0.style.fontWeight = 'bold';
 
       this.div0.style.color = fgcolor;
@@ -3130,19 +3246,22 @@ function RendererText() {
         this.div1.style.visibility = 'hidden';
       }
       if(virtualsymbol == 's' || virtualsymbol == 'S') {
-        this.div0.style.color = '#6d6';
-        this.div1.style.color = 'green';
-        this.div1.style.backgroundColor = '#afa';
+        this.div0.style.color = SWITCHOFF_FGCOLOR;
+        this.div1.style.color = SWITCHON_FGCOLOR;
+        this.div0.style.backgroundColor = SWITCHOFF_BGCOLOR;
+        this.div1.style.backgroundColor = SWITCHON_BGCOLOR;
       }
       if(virtualsymbol == 'p' || virtualsymbol == 'P') {
-        this.div0.style.color = '#6d6';
-        this.div1.style.color = 'green';
-        this.div1.style.backgroundColor = '#afa';
+        this.div0.style.color = SWITCHOFF_FGCOLOR;
+        this.div1.style.color = SWITCHON_FGCOLOR;
+        this.div0.style.backgroundColor = SWITCHOFF_BGCOLOR;
+        this.div1.style.backgroundColor = SWITCHON_BGCOLOR;
       }
       if(virtualsymbol == 'r' || virtualsymbol == 'R') {
-        this.div0.style.color = '#6d6';
-        this.div1.style.color = 'green';
-        this.div1.style.backgroundColor = '#afa';
+        this.div0.style.color = SWITCHOFF_FGCOLOR;
+        this.div1.style.color = SWITCHON_FGCOLOR;
+        this.div0.style.backgroundColor = SWITCHOFF_BGCOLOR;
+        this.div1.style.backgroundColor = SWITCHON_BGCOLOR;
       }
       if(symbol == 'b' || symbol == 'B') {
         //this.div1.style.color = this.div0.style.color;
@@ -3150,8 +3269,8 @@ function RendererText() {
       if(symbol == 'T') {
         this.div0.style.visibility = 'hidden';
         this.div1.style.visibility = 'visible';
-        this.div1.style.backgroundColor = 'black';
-        this.div1.style.color = '#0d0';
+        this.div1.style.backgroundColor = TERMINALBGCOLOR;
+        this.div1.style.color = TERMINALFGCOLOR;
         this.div1.innerText = ' ';
         // The font characters are normally slightly bigger than a cell, but don't do that for the terminal, or bottom of letters gets obscured by the black cell below them, hiding bottom of j, underscores, etc
         this.div1.style.fontSize = Math.floor(tw * 0.9) + 'px';
@@ -3341,6 +3460,7 @@ function RendererDrawer() {
     var y0b = Math.floor(y0 * th);
     var x1b = Math.floor(x1 * tw);
     var y1b = Math.floor(y1 * th);
+
     // the 0.5 makes line take up actual pixel rather than blurry multipixel mess.
     // canvas is THAT kind of drawing engine :( the sub pixel blurry kind
     if(x0b == x1b) {
@@ -3352,7 +3472,20 @@ function RendererDrawer() {
       ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5);
       ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5);
     } else {
+      // with use_bresenham, the blurry pixel mess is avoided
       if(use_bresenham) {
+        // temp fix for something else that's wrong below.
+        if(x1b - x0b == y0b - y1b) {
+          if(x1b < x0b) {
+            var t = x0b; x0b = x1b; x1b = t;
+            t = y0b; y0b = y1b; y1b = t;
+          }
+          for(var i = 0; i < (x1b - x0b); i++) {
+            ctx.fillRect(this.tx + x0b + i, this.ty + y0b - i - 1, 1, 1);
+          }
+          return;
+        }
+
         var dx = Math.abs(x1b - x0b);
         var dy = Math.abs(y1b - y0b);
         var xinc0 = 0, xinc1 = 0, yinc0 = 0, yinc1 = 0, den, numinc;
@@ -3383,6 +3516,8 @@ function RendererDrawer() {
           y += yinc1;
         }
       } else {
+        // bresenham not used, guaranteed blurry, at least in some browsers :(
+
         // if 45 degree line intended but the Math.floor above skewed it
         // make it exact 45 degree again: that renders better on pixels
         if(Math.abs(x1 - x0) == Math.abs(y1 - y0) && Math.abs(x1b - x0b) != Math.abs(y1b - y0b)) {
@@ -3798,12 +3933,9 @@ function RendererImgGlobal() {
 
 var rglobal = new RendererImgGlobal();
 
-// TODO: Fix graphical issue where a wire crossing that has 1 wire on,
-// 1 wire off, is still rendered as if both wires are on. This because
-// we only make two possible pictures per cell, while a wire crossing
-// would need 4 for this.
+// TODO: Fix a few pixel leak through glitches because some things render a few pixels outside their cell.
 /** @implements Renderer */
-function RendererImg() { // RendererCanvas RendererGraphical
+function RendererImg() { // RendererCanvas RendererGraphical RendererImage
   this.fallback = new RendererText();
 
   this.canvas0 = null;
@@ -3824,6 +3956,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
   this.drawonly = 0;
 
   this.globalInit = function() {
+    this.fallback.globalInit();
     rglobal.init();
     this.drawGlobalExtras_();
   };
@@ -3854,11 +3987,11 @@ function RendererImg() { // RendererCanvas RendererGraphical
       this.text1 = makeDiv(0, 0, tw, th, this.fallback.div1);
       var fs = tw - 2;
       if (fs < 7) fs = 7;
-      this.text0.style.color = '#999';
+      this.text0.style.color =  OFFCOLOR;
       this.text0.style.textAlign = 'center';
       this.text0.style.fontSize = fs + 'px';
       this.text0.style.fontFamily = 'monospace';
-      this.text1.style.color = 'black';
+      this.text1.style.color = ONCOLOR;
       this.text1.style.textAlign = 'center';
       this.text1.style.fontSize = fs + 'px';
       this.text1.style.fontFamily = 'monospace';
@@ -3885,13 +4018,13 @@ function RendererImg() { // RendererCanvas RendererGraphical
 
     // white instead of transparent background
     // so that when using 'drawImage' to blit, it fully covers it rather than draw semitranslucent edges more and more over each other
-    drawer.fillBg_(this.ctx0, 'white');
-    drawer.fillBg_(this.ctx1, 'white');
+    drawer.fillBg_(this.ctx0, BGCOLOR);
+    drawer.fillBg_(this.ctx1, BGCOLOR);
 
-    this.ctx0.strokeStyle = '#aaa';
-    this.ctx1.strokeStyle = 'black';
-    this.ctx0.fillStyle = '#aaa';
-    this.ctx1.fillStyle = 'black';
+    this.ctx0.strokeStyle = OFFCOLOR;
+    this.ctx1.strokeStyle = ONCOLOR;
+    this.ctx0.fillStyle = OFFCOLOR;
+    this.ctx1.fillStyle = ONCOLOR;
     //this.ctx0.lineWidth = 0.5;
     //this.ctx1.lineWidth = 0.5;
     this.ctx0.lineWidth = 1;
@@ -4113,7 +4246,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
         }
       } else if(antennamap[c]) {
         drawer.fillBg_(ctx, ctx.fillStyle);
-        this.ctx0.strokeStyle = this.ctx0.fillStyle = 'white';
+        this.ctx0.strokeStyle = this.ctx0.fillStyle = BGCOLOR;
         if(c == ')') {
           drawer.drawArc_(ctx, -0.3, 0.5, 0.75, 0.1, 0.8);
         } else if(c == '(') {
@@ -4128,21 +4261,13 @@ function RendererImg() { // RendererCanvas RendererGraphical
         if(ygroup) {
           // color some buses slightly differently to allow to distinguish them visually
           var cc = (ygroup.index & 7);
-          var color = '#aaa';
-          if(cc == 1) color = '#aab';
-          if(cc == 2) color = '#aba';
-          if(cc == 3) color = '#baa';
-          if(cc == 4) color = '#bba';
-          if(cc == 5) color = '#bab';
-          if(cc == 6) color = '#abb';
-          if(cc == 7) color = '#bbb';
-          drawer.fillBg_(ctx, color);
+          drawer.fillBg_(ctx, BUSCOLORS[cc]);
         }
         if(digitmap[symbol]) {
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.font = '' + tw + 'px serif';
-          this.ctx0.strokeStyle = this.ctx0.fillStyle = 'white';
+          this.ctx0.strokeStyle = this.ctx0.fillStyle = BGCOLOR;
           ctx.fillText(symbol, drawer.tx + (tw >> 1), drawer.ty + (th >> 1));
         }
       } else if(c == 'T') {
@@ -4158,11 +4283,11 @@ function RendererImg() { // RendererCanvas RendererGraphical
         if(!error) {
           if(virtualsymbol == 's' || virtualsymbol == 'S' || virtualsymbol == 'p' || virtualsymbol == 'P' || virtualsymbol == 'r' || virtualsymbol == 'R') {
             alreadybg = true;
-            drawer.fillBg_(ctx, i == 0 ? '#fafffa' : '#afa');
-            this.ctx0.strokeStyle = this.ctx0.fillStyle = '#5c5';//'#6d6';
-            this.ctx1.strokeStyle = this.ctx1.fillStyle = 'green';
-            this.text0.style.color = '#6d6';
-            this.text1.style.color = 'green';
+            drawer.fillBg_(ctx, i == 0 ? SWITCHOFF_BGCOLOR : SWITCHON_BGCOLOR);
+            this.ctx0.strokeStyle = this.ctx0.fillStyle = SWITCHOFF_FGCOLOR;
+            this.ctx1.strokeStyle = this.ctx1.fillStyle = SWITCHON_FGCOLOR;
+            this.text0.style.color = SWITCHOFF_FGCOLOR;
+            this.text1.style.color = SWITCHON_FGCOLOR;
           }
           if(virtualsymbol == 'l') {
             alreadybg = true;
@@ -4179,7 +4304,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
         }
         if(devicemap[c] || c == '#' || c == '$') {
           if(!alreadybg) {
-            drawer.fillBg_(ctx, '#f7f7f7');
+            drawer.fillBg_(ctx, GATEBGCOLOR);
           }
           if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
           if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
@@ -4212,18 +4337,18 @@ function RendererImg() { // RendererCanvas RendererGraphical
   this.drawGlobalExtras_ = function() {
     var ctx = rglobal.extracanvas.getContextAt(0, 0);
     var drawer = new RendererDrawer();
-    ctx.strokeStyle = 'white';
-    ctx.fillStyle = 'white';
+    ctx.strokeStyle = BGCOLOR;
+    ctx.fillStyle = BGCOLOR;
     ctx.fillRect(0, 0, rglobal.extracanvas.w, rglobal.extracanvas.h);
 
     for(var i = 0; i < 2; i++) {
       var color0, color1;
       if(i == 0) {
-        color0 = '#aaa';
-        color1 = 'black';
+        color0 = OFFCOLOR;
+        color1 = ONCOLOR;
       } else {
-        color0 = 'black';
-        color1 = '#aaa';
+        color0 = ONCOLOR;
+        color1 = OFFCOLOR;
       }
 
       drawer.ty = th * ((i == 0) ? 0 : 2);
@@ -4343,7 +4468,7 @@ function RendererImg() { // RendererCanvas RendererGraphical
       var sy = offsety + cell.y * th;
       var dx = offsetx + cell.x * tw;
       var dy = offsety + cell.y * th;
-      var tweak = 1; // a few graphics are not perfectly aligned to the cell. This is a quick fix for that... TODO: this too gives issues. Fix all rendering above to let each symbol stay only inside of its own cell (not as easy as it seems near borders).
+      var tweak = 0; // set to 1 to fix a few graphics are not perfectly aligned to the cell. This is a quick fix for that... TODO: this too gives issues. Fix all rendering above to let each symbol stay only inside of its own cell (not as easy as it seems near borders).
       var source;
 
       if(value && this.drawonly) {
@@ -7193,9 +7318,6 @@ function updateTimeButtonBorders() {
 }
 
 
-
-
-
 var ticksCounterEl = makeElement('div', menuRow3El);
 ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
 ticksCounterEl.style.width = '95px';
@@ -7214,6 +7336,19 @@ rendererDropdown.onchange = function() {
 makeElement('option', rendererDropdown).innerText = 'text';
 makeElement('option', rendererDropdown).innerText = 'graphical';
 rendererDropdown.selectedIndex = graphics_mode;
+
+var colorDropdown = makeUIElement('select', menuRow2El, 3);
+colorDropdown.title = 'Choose color scheme';
+colorDropdown.onchange = function() {
+  setLocalStorage(colorDropdown.selectedIndex, 'color_scheme');
+  setColorScheme(colorDropdown.selectedIndex);
+  initDivs();
+  render();
+};
+makeElement('option', colorDropdown).innerText = 'light';
+makeElement('option', colorDropdown).innerText = 'dark';
+makeElement('option', colorDropdown).innerText = 'gray';
+colorDropdown.selectedIndex = colorscheme;
 
 /*
 var toggleButton = makeUIElement('button', menuRow2El);
@@ -7598,10 +7733,6 @@ importButton.onclick = function() {
 };
 
 
-
-var githubLink = makeElement('span', menuRow2El);
-githubLink.innerHTML = '&nbsp<a href="https://github.com/lvandeve/logicemu">github</a>';
-
 var indexLink = makeElement('span', menuRow1El);
 if(getCGIParameterByName('id')) {
   indexLink.innerHTML = '&nbsp;&nbsp;<a href="' + getUrlWithoutQueries() + '">index</a>';
@@ -7628,6 +7759,11 @@ helpLink.onclick = function() {
 
   parseText(circuit.text, circuit.id, circuit);
 };
+
+
+var githubLink = makeElement('span', menuRow1El);
+githubLink.style.paddingLeft = '10px';
+githubLink.innerHTML = '<a href="https://github.com/lvandeve/logicemu">github</a>';
 
 
 /*var directLinkSpan = makeElement('span', menuRow1El);

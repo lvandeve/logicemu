@@ -3159,6 +3159,12 @@ registerCircuit('colored LEDs', `
    | | | | | | | |   |||
    s s s s s s s s   sss
 
+   0 1 2 3 4 5 6 7
+   l l l l l l l l   >L<
+   ^ ^ ^ ^ ^ ^ ^ ^   |^|
+   | | | | | | | |   |||
+   S S S S S S S S   SSS
+
 
   >L< >L[ >L< >L[ ]L< ]L[ ]L< ]L[
   *^* *^* *m* *m* *^* *^* *m* *m*
