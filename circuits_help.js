@@ -1043,7 +1043,7 @@ s---->a-****-->a>l** *|*>l1
              ; /
               *
 
-0"You can also zoom in and out with the - and + buttons"
+0"You can also zoom in and out with the - and + buttons, and change the color scheme"
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 

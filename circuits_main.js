@@ -4779,6 +4779,7 @@ s**   *
 0"The relay described above was a simple controlled switch that was open or closed, and that is called an SPST relay."
 0"You can also make the switch connect to a different contact in both of its states. Then you have a SPDT relay. You can"
 0"also make the magnet control two (or more) independent switches. That gives a DPST or DPDT relay, or 4PDT etc..."
+0"The diagram above is a DPDT relay."
 
 0"Important note about the simulation!"
 0"------------------------------------"
@@ -4799,11 +4800,12 @@ s**   *
 0"   'V' is used a lot in the circuits below. In real life, any V with two inputs is either a"
 0"   tristate buffer or a mechanical controlled switch, and any V with one input can be completely removed"
 0"   (but removing it in the simulation would give 'multiple devices outputting to same wire' error)."
-0"   In the simulation, any V with multiple inputs acts as an AND, and any V's that output to the same wire"
-0"   act as OR. We could have implemented them with 'a' and 'o' in fact, but using the V's makes it more"
-0"   explicit what we're doing here, it's purely a notational thing. Do read the 'Full Help' for more about"
+0"   In the simulation, multiple inputs to the same V act as AND, and multiple V's outputting to the same"
+0"   wire act as OR."
+0"   We could have implemented them with 'a' and 'o' in fact, but using the V's makes it more explicit
+0"   what we're doing here, it's purely a notational thing. Read the 'Full Help' for more about"
 0"   the V's if that was not clear, it's somewhat important to understand the circuits below. The V's are"
-0"   basically our poor man's tristate workaround."
+0"   basically our poor man's tristate workaround and act as OR of ANDs."
 0"*) fully closed circuits: In real life, the relay's coil is activated with current, which requires two"
 0"   endpoints of the coil connected to a wire. In this simulation, voltage/current sources are not present"
 0"   since they are implicit. Because as you know in LogicEmu a switch to a LED looks like this: 's-->l',"
@@ -4813,10 +4815,12 @@ s**   *
 0"   difference between them and current flowing to operate the coil."
 
 
-0"All relays are defined as IC templates below, so they can be used more compactly. The naming of IC's"
-0"is a vertical number. The first digit is the amount of inputs (other than the coil), the second is the"
-0"amount of outputs. So for example i12 is a relay with 1 input (plus additionally the coil input) and 2 outputs,"
-0"in other words an 'SPDT' relay. And i21 is that same relay flipped around (the workdaround described above)."
+0"All relays are defined as IC templates below, so their full form is visible here, and further down their"
+0"compact IC versions will be used.
+0"The naming of IC's chosen here is a vertical number (at capital I in the templates, at small i in the usages)"
+0"The first digit is the amount of inputs (other than the coil), the second is the amount of outputs. So for
+0"example i12 is a relay with 1 input (plus additionally the coil input) and 2 outputs, in other words an 'SPDT'"
+0"relay. And i21 is that same relay flipped around (the workdaround described above)."
 
 0"SPST (NO) relay"
 0"---------------"
@@ -4879,26 +4883,26 @@ s**   *                      * *>l
 0"input/output direction, but in real life this is the same relay flipped around."
 
 
-0"DPDT relay"  0"DPDT relay flipped around"   0"DPDT relay one side flipped"
-0"----------"  0"-------------------------"   0"---------------------------"
+0"DPDT relay"   0"DPDT relay flipped around"0"DPDT relay one side flipped"
+0"----------"   0"-------------------------"0"---------------------------"
 
-   Is                     Is                         Is
-   2*                     4*                         3*
-   4***                   2***                       3***
-    v *                    v *                        v *
-  *>V*+**>l            s**>V*+**                    *>V*+**>l
-  *   *                      * *                    *   *
-s** ***                    *** *>l                s** ***
-  * * w                    * w *                    * * w
-  **+>V**>l            s***+>V**                    **+>V**>l
-    *                      *                          *
-    ***                    ***                        ***
-    v *                    v *                        v *
-  *>V*+**>l            s**>V*+**                    **V<+***s
-  *   *                      * *                    *   *
-s**   *                      * *>l                l<*   *
-  *   w                      w *                    *   w
-  ***>V**>l            s****>V**                    ****V<**s
+   Is                  Is                         Is
+   2*                  4*                         3*
+   4***                2***                       3***
+    v *                 v *                        v *
+  *>V*+**>l         s**>V*+**                    *>V*+**>l
+  *   *                   * *                    *   *
+s** ***                 *** *>l                s** ***
+  * * w                 * w *                    * * w
+  **+>V**>l         s***+>V**                    **+>V**>l
+    *                   *                          *
+    ***                 ***                        ***
+    v *                 v *                        v *
+  *>V*+**>l         s**>V*+**                    **V<+***s
+  *   *                   * *                    *   *
+s**   *                   * *>l                l<*   *
+  *   w                   w *                    *   w
+  ***>V**>l         s****>V**                    ****V<**s
 
 0"The DPDT relay (double pole, double throw) is in fact two SPDT relays controlled by"
 0"the same coil."
@@ -4976,29 +4980,41 @@ s*    w                    w *>l
  s>1>l     s>1>l
    1         9
 
-   s         s             s         s
-   v         v             v         v
-   i>l     s>i             i>l     s>i
- s>1         2>l         s>i         i>l
-   2>l     s>1             i>l     s>i
-                           i         i
-                           i>l     s>i
-   s         s           s>i         i>l
-   v         v             i>l     s>i
-   i>l     s>i             i         i
- s>i         i>l           i>l     s>i
-   i>l     s>i           s>i         i>l
-   i         i             i>l     s>i
-   i>l     s>i             i         i
- s>2         4>l           i>l     s>i
-   4>l     s>2           s>4         8>l
-                           8>l     s>4
+   s         s         s         s
+   v         v         v         v
+   i>l     s>i         i>l     s>i
+ s>1         2>l     s>i         i>l
+   2>l     s>1         i>l     s>i
+                       i         i
+                       i>l     s>i
+   s         s       s>i         i>l
+   v         v         i>l     s>i
+   i>l     s>i         i         i
+ s>i         i>l       i>l     s>i
+   i>l     s>i       s>i         i>l
+   i         i         i>l     s>i
+   i>l     s>i         i         i
+ s>2         4>l       i>l     s>i
+   4>l     s>2       s>4         8>l
+                       8>l     s>4
 
    s         s
    v         v
  s>i>l     s>i>l
    2         2
  s>2>l     s>8>l
+
+
+   s
+   v
+ s>i>l
+   i
+ s>i>l
+   3
+ s>3>l
+
+
+
 
 
 0"Making logic gates from relays"

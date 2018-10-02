@@ -2700,11 +2700,12 @@ var changeMode = null;
 
 
 // red, orange, yellow, green, blue, violet, pink, white
-var led_off_colors;
-var led_fg_colors;
-var led_bg_colors;
-var led_light_bg_colors;
-var led_light_fg_colors;
+var led_off_fg_colors;
+var led_off_bg_colors;
+var led_off_border_colors;
+var led_on_fg_colors;
+var led_on_bg_colors;
+var led_on_border_colors;
 
 // RGB order: bit 1: red, bit 2: green, bit 4: blue
 // black, red, green, yellow, blue, magenta, cyan, white
@@ -2720,8 +2721,10 @@ var TEXTBGCOLOR;
 
 var SWITCHON_FGCOLOR;
 var SWITCHON_BGCOLOR;
+var SWITCHON_BORDERCOLOR;
 var SWITCHOFF_FGCOLOR;
-var SWITCHOFFB_GCOLOR;
+var SWITCHOFF_BGCOLOR;
+var SWITCHOFF_BORDERCOLOR;
 
 var GATEBGCOLOR;
 
@@ -2740,21 +2743,24 @@ function setColorScheme(index) {
     TEXTFGCOLOR = '#000'; // '#940';
     TEXTBGCOLOR = '#fff6ea';
 
-    led_off_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
-    led_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
-    led_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
-    led_light_bg_colors = ['#fffafa', '#fffcfa', '#fffff4', '#fafffa', '#fbfdff', '#faf8ff', '#fffdfd', '#fcfcfc'];
-    led_light_fg_colors = ['#fcc', '#fa8', '#cc2', '#afa', '#ddf', '#d8f', '#fac', '#fff'];
+    led_off_fg_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
+    led_off_bg_colors = ['#fffafa', '#fffcfa', '#fffff4', '#fafffa', '#fbfdff', '#faf8ff', '#fffdfd', '#fcfcfc'];
+    led_off_border_colors = ['#fcc', '#fa8', '#cc2', '#afa', '#ddf', '#d8f', '#fac', '#fff'];
+    led_on_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
+    led_on_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
+    led_on_border_colors = led_on_fg_colors;
 
     rgb_led_fg_colors = ['#888', '#f77', '#dfd', '#dd0', '#ccf', '#f8f', '#0dd', '#888'];
     rgb_led_bg_colors = ['#000', '#f00', '#0f0', '#ff0', '#00f', '#f0f', '#0ff', '#eee'];
 
     BUSCOLORS = ['#aaa', '#aab', '#aba', '#baa', '#bba', '#bab', '#abb', '#bbb'];
 
-    SWITCHON_FGCOLOR = led_fg_colors[3];
-    SWITCHON_BGCOLOR = led_bg_colors[3];
-    SWITCHOFF_FGCOLOR = led_off_colors[3];
-    SWITCHOFF_BGCOLOR = led_light_bg_colors[3];
+    SWITCHON_FGCOLOR = led_on_fg_colors[3];
+    SWITCHON_BGCOLOR = led_on_bg_colors[3];
+    SWITCHOFF_FGCOLOR = led_off_fg_colors[3];
+    SWITCHOFF_BGCOLOR = led_off_bg_colors[3];
+    SWITCHON_BORDERCOLOR = SWITCHON_FGCOLOR;
+    SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
     GATEBGCOLOR = '#f7f7f7';
 
@@ -2770,11 +2776,12 @@ function setColorScheme(index) {
     TEXTFGCOLOR = '#da0'; // '#0c0'; //'#fff';
     TEXTBGCOLOR = '#210'; // '#020'; //'#040';
 
-    led_off_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
-    led_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
-    led_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
-    led_light_bg_colors = ['#400', '#420', '#440', '#040', '#004', '#204', '#422', '#444'];
-    led_light_fg_colors = ['#800', '#840', '#880', '#080', '#008', '#408', '#844', '#888'];
+    led_off_fg_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
+    led_off_bg_colors = ['#400', '#420', '#440', '#040', '#004', '#204', '#422', '#444'];
+    led_off_border_colors = ['#800', '#840', '#880', '#080', '#008', '#408', '#844', '#888'];
+    led_on_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
+    led_on_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
+    led_on_border_colors = led_on_fg_colors;
 
     rgb_led_fg_colors = ['#888', '#f77', '#dfd', '#dd0', '#ccf', '#f8f', '#0dd', '#888'];
     rgb_led_bg_colors = ['#222', '#f00', '#0f0', '#ff0', '#00f', '#f0f', '#0ff', '#fff'];
@@ -2782,9 +2789,11 @@ function setColorScheme(index) {
     BUSCOLORS = ['#aaa', '#aab', '#aba', '#baa', '#bba', '#bab', '#abb', '#bbb'];
 
     SWITCHON_FGCOLOR = ONCOLOR;
-    SWITCHON_BGCOLOR = led_bg_colors[3];
+    SWITCHON_BGCOLOR = led_on_bg_colors[3];
     SWITCHOFF_FGCOLOR = OFFCOLOR;
-    SWITCHOFF_BGCOLOR = led_light_bg_colors[3];
+    SWITCHOFF_BGCOLOR = led_off_bg_colors[3];
+    SWITCHON_BORDERCOLOR = SWITCHON_FGCOLOR;
+    SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
     GATEBGCOLOR = '#020';
 
@@ -2802,21 +2811,25 @@ function setColorScheme(index) {
     OFFCOLOR = 'black';
     TEXTFGCOLOR = '#00a';
 
-    led_off_colors = ['#f00', '#f80', '#dd0', '#0d0', '#00d', '#a0d', '#f99', '#fff'];
-    led_fg_colors = [BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
-    led_bg_colors = led_off_colors;
-    led_light_bg_colors = led_fg_colors;
-    led_light_fg_colors = led_off_colors;
+    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#00d', '#a0d', '#f99', '#eee'];
+    led_off_bg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
+    led_off_border_colors = led_off_fg_colors;
+    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
+    led_on_bg_colors = led_off_fg_colors;
+    led_on_border_colors = led_on_fg_colors;
 
-    SWITCHON_FGCOLOR = BGCOLOR;
-    SWITCHON_BGCOLOR = '#0d0';
-    SWITCHOFF_FGCOLOR = '#0d0';
-    SWITCHOFF_BGCOLOR = BGCOLOR;
+    SWITCHON_FGCOLOR = 'white';
+    SWITCHON_BGCOLOR = '#0e0';
+    SWITCHOFF_FGCOLOR = '#0e0';
+    SWITCHOFF_BGCOLOR = 'black';
+    //TODO: use switch border colors, and use them to not have invisible border around swithc in gray color scheme switch on
+    SWITCHON_BORDERCOLOR = 'white';
+    SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
     BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
 
     TEXTBGCOLOR = BGCOLOR;
-    GATEBGCOLOR = BGCOLOR;
+    GATEBGCOLOR = '#9b9b9b'; // '#b4b4b4';
   }
 }
 
@@ -3229,12 +3242,13 @@ function RendererText() {
       if(virtualsymbol == 'l') {
         var color = cell.components[0] ? cell.components[0].number : 0;
         if(color == -1) color = 0;
-        if(color > led_off_colors.length) color = 0; // not more colors than that supported
+        if(color > led_off_fg_colors.length) color = 0; // not more colors than that supported
         //this.div0.innerText = 'l';
         //this.div1.innerText = 'L';
-        this.div0.style.color = led_off_colors[color];
-        this.div1.style.color = led_fg_colors[color];
-        this.div1.style.backgroundColor = led_bg_colors[color];
+        this.div0.style.color = led_off_fg_colors[color];
+        this.div0.style.backgroundColor = led_off_bg_colors[color];
+        this.div1.style.color = led_on_fg_colors[color];
+        this.div1.style.backgroundColor = led_on_bg_colors[color];
       }
       if(virtualsymbol == 'L') {
         var color = 0;
@@ -3274,6 +3288,11 @@ function RendererText() {
         this.div1.innerText = ' ';
         // The font characters are normally slightly bigger than a cell, but don't do that for the terminal, or bottom of letters gets obscured by the black cell below them, hiding bottom of j, underscores, etc
         this.div1.style.fontSize = Math.floor(tw * 0.9) + 'px';
+      }
+      if(symbol == '|') {
+        // The | ascii character renders a bit low compared to others. Tweak that here. TODO: find better way to keep characters properly centered in their cell
+        this.div0.style.marginTop = '-' + (th >> 2) + 'px';
+        this.div1.style.marginTop = '-' + (th >> 2) + 'px';
       }
     }
 
@@ -4284,8 +4303,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
           if(virtualsymbol == 's' || virtualsymbol == 'S' || virtualsymbol == 'p' || virtualsymbol == 'P' || virtualsymbol == 'r' || virtualsymbol == 'R') {
             alreadybg = true;
             drawer.fillBg_(ctx, i == 0 ? SWITCHOFF_BGCOLOR : SWITCHON_BGCOLOR);
-            this.ctx0.strokeStyle = this.ctx0.fillStyle = SWITCHOFF_FGCOLOR;
-            this.ctx1.strokeStyle = this.ctx1.fillStyle = SWITCHON_FGCOLOR;
+            this.ctx0.strokeStyle = this.ctx0.fillStyle = SWITCHOFF_BORDERCOLOR;
+            this.ctx1.strokeStyle = this.ctx1.fillStyle = SWITCHON_BORDERCOLOR;
             this.text0.style.color = SWITCHOFF_FGCOLOR;
             this.text1.style.color = SWITCHON_FGCOLOR;
           }
@@ -4293,13 +4312,13 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
             alreadybg = true;
             var color = cell.components[0] ? cell.components[0].number : 0;
             if(color == -1) color = 0;
-            if(color > led_off_colors.length) color = 0; // not more colors than that supported
-            drawer.fillBg_(ctx, i == 0 ? led_light_bg_colors[color] : led_bg_colors[color]);
+            if(color > led_off_fg_colors.length) color = 0; // not more colors than that supported
+            drawer.fillBg_(ctx, i == 0 ? led_off_bg_colors[color] : led_on_bg_colors[color]);
 
-            this.ctx0.strokeStyle = this.ctx0.fillStyle = led_light_fg_colors[color];
-            this.ctx1.strokeStyle = this.ctx1.fillStyle = led_fg_colors[color];
-            this.text0.style.color = led_off_colors[color];
-            this.text1.style.color = led_fg_colors[color];
+            this.ctx0.strokeStyle = this.ctx0.fillStyle = led_off_border_colors[color];
+            this.ctx1.strokeStyle = this.ctx1.fillStyle = led_on_border_colors[color];
+            this.text0.style.color = led_off_fg_colors[color];
+            this.text1.style.color = led_on_fg_colors[color];
           }
         }
         if(devicemap[c] || c == '#' || c == '$') {
@@ -7081,7 +7100,7 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   if(fitwidth && fitheight) t = Math.min(tw, th);
   else if(fitwidth) t = tw;
   else if(fitheight) t = th;
-  if(t < 9) t = 9;
+  if(t < 10) t = 10;
   if(t > 32) t = 32;
   if(h > 80 && t > 24) t = 24;
   if(t & 1) t--; // some diagonal wires possibly look worse for some odd sizes
