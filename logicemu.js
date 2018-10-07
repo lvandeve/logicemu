@@ -4179,8 +4179,11 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
       if(i == 1 && cell.components[0]) {
         var type = cell.components[0].type;
         if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM) {
-          ctx.strokeStyle = OFFCOLOR;
-          ctx.fillStyle = OFFCOLOR;
+          // only for the solid parts, wires part of this component must still use on color
+          if(devicemap[c] || c == '#' || c == '$') {
+            ctx.strokeStyle = OFFCOLOR;
+            ctx.fillStyle = OFFCOLOR;
+          }
         }
       }
 
