@@ -36,36 +36,39 @@ registerCircuit('Help Index', `0"List of help circuits. If this is your first ti
 registerTitle('Viewing');
 
 registerCircuit('Main Help', `
-0"LogicEmu Help"
-0"-------------"
+0"LogicEmu Main Help"
+0"------------------"
 
 0"First of all, what is LogicEmu? It emulates logic circuits. It has a whole"
-0"bunch of circuits included to play with, including binary adders, multipliers,"
-0"flip-flops, NAND-only logic, and so on."
+0"bunch of circuits included to play with, including binary adders,"
+0"multipliers, flip-flops, NAND-only logic, and so on."
 
-0"LogicEmu also allows creating new circuits, see the editing tutorials"
-0"for more on that."
+0"LogicEmu also allows creating new circuits, see the editing tutorials for"
+0"more on that."
 
 0"What is different from many other logic simulators it that this one is"
 0"cell-based. This has as a side effect that the notation is not standard"
-0"notation. On the other hand, this has as advantage that a lot of logic"
-0"fits on a single screen and it's quite flexible. Also, each cell is an"
-0"ASCII character, which has advantages for editing and sharing circuits."
+0"notation. On the other hand, this has as advantage that a lot of logic fits"
+0"on a single screen and it's quite flexible. Also, each cell is an ASCII"
+0"character, which has advantages for editing and sharing circuits."
 
-0"It's a digital logic emulator, but not an electrical simulator."
-0"Power sources and voltages are abstracted away. Every component (gates, LEDs, even switches)"
-0"implicitely have two connections to a power source with positive voltage and ground terminals,"
-0"but these are not shown. The only wires shown are signals between components,"
-0"which are always either 0 (false) or 1 (true). Whether these have voltages or"
-0"ground associated with them does not matter for the digital logic."
+0"It's a digital logic emulator, but not an electrical simulator. Power sources"
+0"and voltages are abstracted away. Every component (gates, LEDs, even"
+0"switches) implicitely have two connections to a power source with positive"
+0"voltage and ground terminals, but these are not shown. The only wires shown"
+0"are signals between components, which are always either 0 (false) or 1"
+0"(true). Whether these have voltages or ground associated with them does not"
+0"matter for the digital logic."
 
-0"This help tutorial explains how to view and interact with circuits and all parts."
-0"See the next tutorials for different topics such as emulation algorithms, rendering and editing."
+0"This help tutorial explains how to view and interact with circuits and all"
+0"parts. See the next tutorials for different topics such as emulation"
+0"algorithms, rendering and editing."
 
 0"Note that this tutorial is multiple screens long, so scroll down to see all"
 
-0"Input/Output/Wires"
-0"------------------"
+
+0"Input / Output / Wires"
+0"----------------------"
 
 0"In general, a circuit has input switches, some processing logic, possibly"
 0"some state, and finally output LEDs. So the simplest circuit has a switch"
@@ -763,137 +766,98 @@ l<----*
 `, 'mainhelp');
 
 
-
-registerCircuit('Loading Circuits', `
-0"For loading circuits, there are multiple options:"
-
-0"1. Navigation"
-0"-------------"
-
-0"First of all, you can load the built-in circuits, like this help one right"
-0"here, with the dropdowns navigation at the top, or the welcome page links."
-
-
-0"2. Importing"
-0"------------"
-
-0"A second method, to load other's circuits, is to load a circuit with 'import'"
-0"(or 'edit'). Then you need to get the source code from a circuit and paste it"
-0"in the box. You can view the source code of circuits yourself with the 'edit'"
-0"button (see the editing tutorials for that)."
-0"Source code of a circuit looks for example like this:"
-
-0"s--->a---->l"
-0"     ^      "
-0"s----*      "
-
-0"It becomes this when loaded:"
-
-s--->a---->l
-     ^
-s----*
-
-
-0"3. base64 URL code"
-0"------------------"
-
-0"A third method is through a base64 code in the URL. This uses a fragment '#code=...'"
-0"in the URL, and will decompress that base64 string to a circuit. For example something"
-0"like this (all those characters after 'code=' are the base64 code):"
-
-0"lodev.org/logicemu/#code=0AHMtLS0-YS2BBmwKIIEBXgqBFC0qCg"
-
-0"Note that those codes contain the entire circuit encoded inside of them and are decoded"
-0"locally in the browser, these are *not* codes used by a web server or the cloud (since"
-0"LogicEmu doesn't use those) and they do not require online connectivity. Those 'fragments'"
-0"aka 'hashes' (#) of URLs are *not* sent to the server by the browser."
-
-0"Sharing this URL is also a way to share your own edited circuits, although it looks"
-0"worse (no nice circuit shape visible) and there may be limitations on URL length (it's"
-0"capped, huge circuits and especially those with lots of text instead of circuitry will"
-0"not compress well)"
-
-
-0"4. URL id"
-0"---------"
-
-0"A fourth method is through an id in the URL. This works only for built-in circuits."
-0"If you see '#id=....' in the URL, it means you can load that circuit directly"
-0"from that URL, rather than see the main welcome page first. For example:"
-
-0"lodev.org/logicemu/#id=logic_gates"
-
-0"Again, these ids are built-in and known offline by LogicEmu, they are not sent"
-0"to any web servers or cloud and require no internet connectivity."
-
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`, 'loadinghelp');
-
-
 registerCircuit('Ticks and Emulation Algorithms', `
 0"Ticks and Emulation Algorithms"
 0"------------------------------"
 
-0"The simulation is based on ticks: Each tick, components update their"
-0"value based on their input components. Normally, the ticks run"
-0"automatically. You can pause the simulation by pressing the pause"
-0"button. If the simulation is paused, you can do a single tick with the"
-0"tick button. If the simulation is not paused, ticks happen automatically"
-0"every so many milliseconds. If there are realtime timers in the circuit,"
-0"those will also cause a tick whenever they toggle. Clicking switches"
-0"and pushbuttons with the mouse will also give an immediate tick, even"
-0"if the simulation is paused."
+0"It matters how you emulate circuits: when, how and how fast gates read their"
+0"inputs. For some circuits, it's interesting to look at the signal propagating"
+0"through individual gates, for others global fast response is more desired."
+0"For that reason there are multiple emulation algorithms."
+
+0"E.g. the following circuit is most interesting in 'electron mode'. If you hit"
+0"the button, you see the signal go round and round. In a fast mode, that would"
+0"not be visible, but this circuit will initially load in electron mode."
+
+
+p**>e>e>e>e>e>e>e>e
+    ^             v
+    e             e
+    ^             v
+    e             e
+    ^             v
+    e<e<e<e<e<e<e<e
+
+0"The simulation is based on ticks: Each tick, components update their value"
+0"based on their input components. Normally, the ticks run automatically. You"
+0"can pause the simulation by pressing the pause button. If the simulation is"
+0"paused, you can do a single tick with the tick button. If the simulation is"
+0"not paused, ticks happen automatically every so many milliseconds. If there"
+0"are realtime timers in the circuit, those will also cause a tick whenever"
+0"they toggle. Clicking switches and pushbuttons with the mouse will also give"
+0"an immediate tick, even if the simulation is paused."
 
 0"Note that if the simulation is paused, and you press a switch or pushbutton,"
 0"it may happen that you don't see the full effect you expected of your click."
 0"This happens if multiple ticks are needed to update all due to gate delays"
 0"while clicking a switch causes only one tick if the simulation is paused."
-0"Press the tick button a few times, or unpause, or choose a different emulation"
-0"algorithm (see below) to fix that."
+0"Press the tick button a few times, or unpause, or choose a different"
+0"emulation algorithm (see below) to fix that."
 
-0"There are different emulation algorithms available for circuits (aka update modes,"
-0"what it does per tick). These can be selected by the dropdown with the following choices:"
-0"*) combinational: a single update propagating through all components in a sorted order"
-0"   is done only once when you press a switch or button or when a timer ticks. This mode"
-0"   works well for circuits that do not have any loops (that is, components whose input"
-0"   might be determined directly or indirectly through other components by this component's"
-0"   output state) nor delays"
-0"*) sequential: an update propagating through all components is done automatically every"
-0"   so many milliseconds. This mode is needed when there are loops or delays, because in"
-0"   both these cases a single update is not sufficient to reach the final state. Some circuits"
-0"   may even change state forever, and the sequential mode is perfect for that."
-0"*) electron: updates are done every so many milliseconds, but this update is different than"
-0"   the update done for combinational/sequential. Instead, every component updates only based"
-0"   on the previous state of its input components. This means signals propagage more slowly,"
-0"   as if you can follow the electric signal itself. This mode is good for circuits that"
-0"   build flip-flops from primitive components (rather than using the built-in ideal flip-flops)"
-0"   This mode also adds one more extra igredient: it adds some randomness to a particular kind of"
-0"   double-linked loop as you find in an SR latch, and this is loosely based on realistic physics"
-0"   of a flip-flop in metastable state eventually reaching a stable state anyway. So indeed"
-0"   the electron mode is mainly designed to simulate such behavior in a realistic way. The"
-0"   sequential mode is good and fast but can't simulate matastability, hence the reason to provide the"
-0"   slower 'nanosecond level' electron mode."
-0"*) investigate: similar to electron, but it only updates when you press the tick button,"
-0"   which allows to see how everything updates at any pace. Note that investigate is to electron"
-0"   mode what combinational is to sequential mode. You can use combinational mode as a way to"
-0"   investigate sequential circuits. The randomness feature of electron mode is disabled for investigate."
+0"There are different emulation algorithms available for circuits (aka update"
+0"modes, what it does per tick). These can be selected by the dropdown with the"
+0"following choices:"
+0"*) combinational: a single update propagating through all components in a"
+0"   sorted order is done only once when you press a switch or button or when a"
+0"   timer ticks. This mode works well for circuits that do not have any loops"
+0"   (that is, components whose input might be determined directly or"
+0"   indirectly through other components by this component's output state) nor"
+0"   delays"
+0"*) sequential: an update propagating through all components is done"
+0"   automatically every so many milliseconds. This mode is needed when there"
+0"   are loops or delays, because in both these cases a single update is not"
+0"   sufficient to reach the final state. Some circuits may even change state"
+0"   forever, and the sequential mode is perfect for that."
+0"*) electron: updates are done every so many milliseconds, but this update is"
+0"   different than the update done for combinational/sequential. Instead,"
+0"   every component updates only based on the previous state of its input"
+0"   components. This means signals propagage more slowly, as if you can follow"
+0"   the electric signal itself. This mode is good for circuits that build"
+0"   flip-flops from primitive components (rather than using the built-in ideal"
+0"   flip-flops) This mode also adds one more extra igredient: it adds some"
+0"   randomness to a particular kind of double-linked loop as you find in an SR"
+0"   latch, and this is loosely based on realistic physics of a flip-flop in"
+0"   metastable state eventually reaching a stable state anyway. So indeed the"
+0"   electron mode is mainly designed to simulate such behavior in a realistic"
+0"   way. The sequential mode is good and fast but can't simulate"
+0"   matastability, hence the reason to provide the slower 'nanosecond level'"
+0"   electron mode."
+0"*) investigate: similar to electron, but it only updates when you press the"
+0"   tick button, which allows to see how everything updates at any pace. Note"
+0"   that investigate is to electron mode what combinational is to sequential"
+0"   mode. You can use combinational mode as a way to investigate sequential"
+0"   circuits. The randomness feature of electron mode is disabled for"
+0"   investigate."
 
-0"A circuit, when just loaded, will automatically be in one of the modes that is most suitable"
-0"for the circuit: if there are no loops, it'll choose combinational mode. If"
-0"there are particular types of short loops, electron mode. In other cases with loops, sequential"
-0"mode. A mode may also be enforced with a comment like this, which in this circuit sets it"
-0"to sequential initially:"
 
-0"MODE:sequential"
+0"A circuit, when just loaded, will automatically be in one of the modes that"
+0"is most suitable for the circuit: if there are no loops, it'll choose"
+0"combinational mode. If there are particular types of short loops, electron"
+0"mode. In other cases with loops, sequential mode. A mode may also be enforced"
+0"with a comment like this, which in this circuit sets it to electron"
+0"initially:"
+
+"MODE:electron"
 
 0"Now for some demonstrations of the difference between the modes. Use the"
 0"dropdown to switch to the algorithm applicable for each example as explained"
 0"by its description:"
 
 0"With the circuit below, try the 4 modes: with combinational and sequential,"
-0"the LED updates immediately to the state of the switch. With electron, you can"
-0"see the signal propagate through the gates. With investigate, you must manually"
-0"press the tick button to have the signal propagate through each gate"
+0"the LED updates immediately to the state of the switch. With electron, you"
+0"can see the signal propagate through the gates. With investigate, you must"
+0"manually press the tick button to have the signal propagate through each gate"
+
 
 s->o->o->o->o->o->o->o->o->l
 
@@ -905,13 +869,14 @@ s->o->o->o->o->o->o->o->o->l
 
 s->d->d->d->d->d->d->d->d->l
 
-0"Below is a 4-bit adder circuit. A circuit like this works in combinational mode"
-0"and does not need the more expensive sequential mode. There are some long connections"
-0"that go through many gates, but none of them are loops."
-0"Try it in all 4 modes to see what happens: combinational and sequential"
-0"work the same. Electron gives slower updates so you can see the adder operating"
-0"but it'll reach the correct answer soon. Investigate requires pressing tick"
+0"Below is a 4-bit adder circuit. A circuit like this works in combinational"
+0"mode and does not need the more expensive sequential mode. There are some"
+0"long connections that go through many gates, but none of them are loops. Try"
+0"it in all 4 modes to see what happens: combinational and sequential work the"
+0"same. Electron gives slower updates so you can see the adder operating but"
+0"it'll reach the correct answer soon. Investigate requires pressing tick"
 0"several times yourself before you get the correct sum:"
+
 
                   "8       4       2       1"
                    l       l       l       l
@@ -965,7 +930,7 @@ p****>o**]a**>l
 0"ticking, the 'investigate' mode here preserves the signal better than"
 0"'combinational' mode."
 
-s**>e>e>e>e>e>e>e>e
+p**>e>e>e>e>e>e>e>e
     ^             v
     e             e
     ^             v
@@ -973,20 +938,21 @@ s**>e>e>e>e>e>e>e>e
     ^             v
     e<e<e<e<e<e<e<e
 
-0"Here is a circuit that shows the most interesting behavior in electron"
-0"mode. The two NOR gates each want the opposite, so the circuit keeps"
-0"blinking. If you enable the switch, you end the conflict. You may notice"
-0"that when enabling the switch, the circuit 'settles' for a while and then"
-0"ends up at a random result (enable electron mode to see it, try a few times and"
-0"it'll settle to different random results). This random result does not depend"
-0"purely on the time you press the switch. There is some true randomness built in"
-0"the simulation (only in electron mode) to resolve this circuit. This circuit"
-0"here just demonstrates it. The real purpose of this feature is to make flip-flops"
-0"made from primitive gates to work as they do in real life. Without the random"
-0"settling, such flip-flops would not work but keep blinking between two states."
-0"But in real life, such ideal behavior does not happen and the flip-flops settle"
-0"to some arbitrary state, and that is emulated with the randomness here"
-0"too."
+0"Here is a circuit that shows the most interesting behavior in electron mode."
+0"The two NOR gates each want the opposite, so the circuit keeps blinking. If"
+0"you enable the switch, you end the conflict. You may notice that when"
+0"enabling the switch, the circuit 'settles' for a while and then ends up at a"
+0"random result (enable electron mode to see it, try a few times and it'll"
+0"settle to different random results). This random result does not depend"
+0"purely on the time you press the switch. There is some true randomness built"
+0"in the simulation (only in electron mode) to resolve this circuit. This"
+0"circuit here just demonstrates it. The real purpose of this feature is to"
+0"make flip-flops made from primitive gates to work as they do in real life."
+0"Without the random settling, such flip-flops would not work but keep blinking"
+0"between two states. But in real life, such ideal behavior does not happen and"
+0"the flip-flops settle to some arbitrary state, and that is emulated with the"
+0"randomness here too."
+
 
           O-*
           ^ |
@@ -998,8 +964,6 @@ s**>e>e>e>e>e>e>e>e
 0"way those algorithms work, such loopy circuits settle to a well defined state"
 0"immediately. The electron mode is physically more realistic, but slower."
 
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 0"FIT:x"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
@@ -1027,7 +991,7 @@ registerCircuit('Rendering Modes', `
 0"The text mode may render faster in some browsers, especially for huge circuits."
 
 0"Try out the two modes on the circuit below by changing the dropdown at"
-0"the top between 'graphical' and 'text'":
+0"the top between 'graphical' and 'text':"
 
       l   lll
       m  lzzZl
@@ -1043,17 +1007,89 @@ s---->a-****-->a>l** *|*>l1
              ; /
               *
 
-0"You can also zoom in and out with the - and + buttons, and change the color scheme"
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+0"You can also zoom in and out with the - and + buttons, and change the color scheme."
+0"These controls, too, are in the top bar."
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `, 'renderhelp');
 
 
+registerCircuit('Loading Circuits', `
+0"For loading circuits, there are multiple options:"
+
+0"1. Navigation"
+0"-------------"
+
+0"First of all, you can load the built-in circuits, like this help one right"
+0"here, with the dropdowns navigation at the top, or the welcome page links."
+
+
+0"2. Importing (Source Code)"
+0"--------------------------"
+
+0"A second method, to load external circuits, is to load a circuit with 'import'"
+0"(or 'edit'). Then you need to get the source code from a circuit and paste it"
+0"in the box. You can view the source code of circuits yourself with the 'edit'"
+0"button (see the editing tutorials for that)."
+0"Source code of a circuit looks for example like this:"
+
+0"s--->a---->l"
+0"     ^      "
+0"s----*      "
+
+0"It becomes this when loaded:"
+
+s--->a---->l
+     ^
+s----*
+
+
+0"3. base64 URL code"
+0"------------------"
+
+0"A third method is through a base64 code in the URL. This uses a fragment"
+0"'#code=...' in the URL, and will decompress that base64 string to a circuit."
+0"For example something like this (all those characters after 'code=' are the"
+0"base64 code):"
+
+0"lodev.org/logicemu/#code=0AHMtLS0-YS2BBmwKIIEBXgqBFC0qCg"
+
+0"Note that those codes contain the entire circuit encoded inside of them and"
+0"are decoded locally in the browser, these are not codes used by a web server"
+0"or cloud (since LogicEmu doesn't use those) and they do not require online"
+0"connectivity. Those 'fragments' aka 'hashes' (#) of URLs are not sent to any"
+0"server by the browser."
+
+0"Sharing this URL is also a way to share your own edited circuits, although it"
+0"looks worse (no nice circuit shape visible) and there may be limitations on"
+0"URL length (it's capped, huge circuits and especially those with lots of text"
+0"instead of circuitry will not compress well)"
+
+
+
+0"4. URL id"
+0"---------"
+
+0"A fourth method is through an id in the URL. This works only for built-in circuits."
+0"If you see '#id=....' in the URL, it means you can load that circuit directly"
+0"from that URL, rather than see the main welcome page first. For example:"
+
+0"lodev.org/logicemu/#id=logic_gates"
+
+0"These ids are built-in and known offline by LogicEmu (for the offline built-in"
+0"circuits), they are not sent to any web server or cloud and require no internet"
+0"connectivity."
+
+0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
+`, 'loadinghelp');
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 registerTitle('Editing');
-
-
 
 registerCircuit('Editing Tutorial', `
 0"This tutorial introduces all the parts and cell characters for editing."
@@ -2494,25 +2530,32 @@ s**>c#Q**>l        s**>cQ**>l
 0"notepad2, code::blocks, etc... Another type of editor that might be useful instead, could"
 0"be one designed for making 2D ASCII art drawings."
 
-0"-Make sure to set a fixed width font. Geany is an editor for programming so likely it already is by default."
-0" without a fixed width font, characters will not line up correctly below each other, and that is quite important"
-0" since circuits are 2-dimensional."
+0"-Make sure to set a fixed width font. Geany is an editor for programming so"
+0" likely it already is by default. without a fixed width font, characters will"
+0" not line up correctly below each other, and that is quite important since"
+0" circuits are 2-dimensional."
 0"-Turn off line wrapping, only then you can see the 2D layout correctly."
-0"-The insert key is useful. Normally the 'insert' mode of text editors is rarely used,"
-0" but for editing 2-dimensional diagrams it's awesome if you are changing something in the middle:"
-0" it allows to overwrite characters without moving stuff to the right of your cursor. Unfortunately,"
-0" backspace will still move said stuff to the left so instead of backspace, use left arrow then"
-0" space to remove something to the left of the cursor. Also, if you have no insert mode, then pressing"
-0" delete after each keystroke will be needed instead."
-0"-CTRL+d duplicates a line, which is handy sometimes e.g. to make vertical wires longer."
-0"-If you have a circuit without any other circuitry to the left or right of it, then"
-0" copypasting it to another location above or below is quite easy: just select it, copy (CTRL+C)"
-0" and paste it on a different line (CTRL+V). So copypasting circuits multiple times vertically is"
-0" easy in any text editor is easy."
-0"-If you want to copypaste something horizontally, or something that is in between some stuff on its"
-0" left and/or right, then you need block selection, to select the characters in the rectangle"
-0" around the part you want to copy. For example if you want to copypaste only the middle or gate"
-0" below but not the and/xor gates left/right of it:"
+0"-The insert key is useful. Normally the 'insert' mode of text editors is"
+0" rarely used, but for editing 2-dimensional diagrams it's awesome if you are"
+0" changing something in the middle: it allows to overwrite characters without"
+0" moving stuff to the right of your cursor. Unfortunately, backspace will"
+0" still move said stuff to the left so instead of backspace, use left arrow"
+0" then space to remove something to the left of the cursor. Also, if you have"
+0" no insert mode, then pressing delete after each keystroke will be needed"
+0" instead."
+0"-CTRL+d duplicates a line, which is handy sometimes e.g. to make vertical"
+0" wires longer."
+0"-If you have a circuit without any other circuitry to the left or right of"
+0" it, then copypasting it to another location above or below is quite easy:"
+0" just select it, copy (CTRL+C) and paste it on a different line (CTRL+V). So"
+0" copypasting circuits multiple times vertically is easy in any text editor is"
+0" easy."
+0"-If you want to copypaste something horizontally, or something that is in"
+0" between some stuff on its left and/or right, then you need block selection,"
+0" to select the characters in the rectangle around the part you want to copy."
+0" For example if you want to copypaste only the middle or gate below but not"
+0" the and/xor gates left/right of it:"
+
 
       l      l      l
       ^      ^      ^
@@ -2526,34 +2569,43 @@ s**>c#Q**>l        s**>cQ**>l
 s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s
 
 0"So how to do the block selection in geany:"
-0"-To do it with arrow keys: first place the cursor in one corner of the rectangle you want to select."
-0" Then hold down alt+shift and press the arrow keys up/down and left/right to select a rectangle."
-0"-To do it with the mouse: first place the cursor in one corner of the rectangle you want to select."
-0" Then hold down ctrl+shift, or in alt+shift (depends on OS), and click the mouse to the"
-0" other corner of the rectangle. Or hold down just ctrl, and drag the mouse to any rectangle shape."
-0"-Now you have a rectangle selected. Press ctrl+c to copy it. Then place the cursor where you want to"
-0" paste it, and press ctrl+v there."
-0"-Important: make sure the rectangle you selected has all characters filled. If there were lines that"
-0" were not filled up to the end, fill them all up with spaces first. Only then, when you paste the block,"
-0" will all content to the right of where you pasted shift by the same amount, which is very likely what"
-0" you want to not completely disaling other parts of the circuit."
-0"-To easily get spaces to the right of everything, place the cursor somewhere very far on the right (add"
-0" spaces to 1 line for this if needed). Then use mouse block selection and click elsewhere on the right"
-0" to get a very long cursor. Then type any letter, e.g. '@', to type a vertical wall of @ symbols on the"
-0" right. Everything to the left of them will be automatically filled with spaces! Which makes editing of"
-0" the 2D circuit much easier."
-0"-You can also use the block selection as multicursor. Instead of a rectangle, select a vertical line to"
-0" get a long cursor. Then you can insert multiple spaces, *'s, or any other character by typing it. Similarly"
-0" using the delete key deletes all characters to the right of the cursor, good for selectively deleting a part"
-0" of the circuit."
-0"-If you paste a block, it will insert itself into all content below. So if you have some"
-0" circuitry below that you don't want affected, first add enough newlines below where you will"
-0" paste, only then paste."
-0"-Don't use the backspace key with multicursor, instead use the delete key. The delete key guarantees"
-0" it will delete one character on each line to the right of the cursor. With backspace, however, geany"
-0" may backspace a different amount of spaces on each line (it tries to be helpful in a way that fails here)"
-0" which will disalign the circuit to the right of the multicursor."
-0"-Similarly, the tab key is kind of unreliable for multicursor, so use space to remain evenly spaced."
+0"-To do it with arrow keys: first place the cursor in one corner of the"
+0" rectangle you want to select. Then hold down alt+shift and press the arrow"
+0" keys up/down and left/right to select a rectangle."
+0"-To do it with the mouse: first place the cursor in one corner of the"
+0" rectangle you want to select. Then hold down ctrl+shift, or in alt+shift"
+0" (depends on OS), and click the mouse to the other corner of the rectangle."
+0" Or hold down just ctrl, and drag the mouse to any rectangle shape."
+0"-Now you have a rectangle selected. Press ctrl+c to copy it. Then place the"
+0" cursor where you want to paste it, and press ctrl+v there."
+0"-Important: make sure the rectangle you selected has all characters filled."
+0" If there were lines that were not filled up to the end, fill them all up"
+0" with spaces first. Only then, when you paste the block, will all content to"
+0" the right of where you pasted shift by the same amount, which is very likely"
+0" what you want to not completely disaling other parts of the circuit."
+0"-To easily get spaces to the right of everything, place the cursor somewhere"
+0" very far on the right (add spaces to 1 line for this if needed). Then use"
+0" mouse block selection and click elsewhere on the right to get a very long"
+0" cursor. Then type any letter, e.g. '@', to type a vertical wall of @ symbols"
+0" on the right. Everything to the left of them will be automatically filled"
+0" with spaces! Which makes editing of the 2D circuit much easier."
+0"-You can also use the block selection as multicursor. Instead of a"
+0" rectangle, select a vertical line to get a long cursor. Then you can insert"
+0" multiple spaces, *'s, or any other character by typing it. Similarly using"
+0" the delete key deletes all characters to the right of the cursor, good for"
+0" selectively deleting a part of the circuit."
+0"-If you paste a block, it will insert itself into all content below. So if"
+0" you have some circuitry below that you don't want affected, first add enough"
+0" newlines below where you will paste, only then paste."
+0"-Don't use the backspace key with multicursor, instead use the delete key."
+0" The delete key guarantees it will delete one character on each line to the"
+0" right of the cursor. With backspace, however, geany may backspace a"
+0" different amount of spaces on each line (it tries to be helpful in a way"
+0" that fails here) which will disalign the circuit to the right of the"
+0" multicursor."
+0"-Similarly, the tab key is kind of unreliable for multicursor, so use space"
+0" to remain evenly spaced."
+
 
 0"As an example of the spaces problem:"
 
@@ -2583,7 +2635,8 @@ o**>l o**>l o**>l o**>l
 ^     ^     ^     ^
 s     s     s     s
 
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"RENDER:text"
+
 0"FIT:x"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"

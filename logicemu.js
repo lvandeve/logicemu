@@ -2797,8 +2797,8 @@ function setColorScheme(index) {
 
     GATEBGCOLOR = '#020';
 
-    LINKCOLOR = 'yellow';
-    TITLECOLOR = 'white';
+    LINKCOLOR = '#880';
+    TITLECOLOR = TEXTFGCOLOR;
 
     TERMINALBGCOLOR = '#00f';
     TERMINALFGCOLOR = '#fff';
@@ -2811,17 +2811,20 @@ function setColorScheme(index) {
     OFFCOLOR = 'black';
     TEXTFGCOLOR = '#00a';
 
+    GATEBGCOLOR = '#9b9b9b'; // '#b4b4b4';
+    var offbg = GATEBGCOLOR;
+
     led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#00d', '#a0d', '#f99', '#eee'];
-    led_off_bg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
+    led_off_bg_colors = [offbg, offbg, offbg, offbg, offbg, offbg, offbg, offbg];
     led_off_border_colors = led_off_fg_colors;
     led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
     led_on_bg_colors = led_off_fg_colors;
-    led_on_border_colors = led_on_fg_colors;
+    led_on_border_colors = led_off_border_colors;//led_on_fg_colors;
 
     SWITCHON_FGCOLOR = 'white';
     SWITCHON_BGCOLOR = '#0e0';
     SWITCHOFF_FGCOLOR = '#0e0';
-    SWITCHOFF_BGCOLOR = 'black';
+    SWITCHOFF_BGCOLOR = offbg;
     //TODO: use switch border colors, and use them to not have invisible border around swithc in gray color scheme switch on
     SWITCHON_BORDERCOLOR = 'white';
     SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
@@ -2829,7 +2832,6 @@ function setColorScheme(index) {
     BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
 
     TEXTBGCOLOR = 'none';
-    GATEBGCOLOR = '#9b9b9b'; // '#b4b4b4';
   } else {
     setColorScheme(0);
 
@@ -2844,7 +2846,7 @@ function setColorScheme(index) {
     led_off_border_colors = led_off_fg_colors;
     led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
     led_on_bg_colors = led_off_fg_colors;
-    led_on_border_colors = led_on_fg_colors;
+    led_on_border_colors = led_off_border_colors;//led_on_fg_colors;
 
     SWITCHON_FGCOLOR = 'white';
     SWITCHON_BGCOLOR = '#0e0';
@@ -2859,8 +2861,8 @@ function setColorScheme(index) {
     TEXTBGCOLOR = 'none';
     GATEBGCOLOR = '#228';
 
-    LINKCOLOR = 'yellow';
-    TITLECOLOR = 'white';
+    LINKCOLOR = '#880';
+    TITLECOLOR = TEXTFGCOLOR;
   }
 }
 
@@ -2940,6 +2942,7 @@ function Cell() {
   this.drawchip = false; // when drawing the 'i' of a chip in canvas mode, only do it if this is true, it indicates a good looking "core" cell for it (next to number, ...)
 
   this.renderer = null;
+  this.clickFun = null;
 
   // Update the style based on current value in the component
   this.setValue = function(value) {
@@ -3109,6 +3112,8 @@ function Cell() {
       return false;
     }, this.components[0], x, y);
 
+    this.clickFun = f;
+
     this.renderer.init(this, x, y, f);
     this.initDiv2();
   };
@@ -3180,7 +3185,41 @@ function setTocHTML(toc, el) {
   }
 }
 
+// x, y must be pixel coordinates relative to worldDiv
+function findNearestSwitch(x, y, x0, y0, x1, y1) {
+  var bx0 = Math.floor(x0 / tw);
+  var by0 = Math.floor(y0 / th);
+  var bx1 = Math.ceil(x1 / tw);
+  var by1 = Math.ceil(y1 / th);
 
+  var bestdist = Infinity;
+  var best = null;
+  for(var by = by0; by < by1; by++) {
+    for(var bx = bx0; bx < bx1; bx++) {
+      if(bx < 0 || by < 0 || bx >= w || by >= h) continue;
+      var cell = world[by][bx];
+      var c = cell.circuitsymbol;
+      if(c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R') {
+        var cx = bx * tw + (tw >> 1);
+        var cy = by * th + (th >> 1);
+        var dx = cx - x;
+        var dy = cy - y;
+        var d = dx * dx + dy * dy;
+        if(d < bestdist) {
+          bestdist = d;
+          best = cell;
+        }
+      }
+    }
+  }
+  return best;
+}
+
+// For mouse zone extension around buttons
+var AROUNDBUTTONRADIUS = 32;
+var MAINZINDEX = 2;
+var AROUNDZINDEX = 1;
+var BGZINDEX = 0;
 
 /** @implements Renderer */
 function RendererText() {
@@ -3189,9 +3228,27 @@ function RendererText() {
   this.div0 = null; // div for off style
   this.div1 = null; // div for on style
   this.init2done = false;
+  this.clickDiv = null;
 
   this.globalInit = function() {
     document.body.style.backgroundColor = BGCOLOR;
+    //worldDiv.style.zIndex = -50;
+
+    //worldDiv.style.width = (tw * w) + 'px';
+    //worldDiv.style.height = (th * h) + 'px';
+    //worldDiv.style.border = '1px solid yellow';
+
+    worldDiv.onmousedown = function(e) {
+      var x = e.pageX - worldDiv.offsetLeft;
+      var y = e.pageY - worldDiv.offsetTop;
+      var button = findNearestSwitch(x, y, x - AROUNDBUTTONRADIUS - tw, y - AROUNDBUTTONRADIUS - th,
+                                     x + AROUNDBUTTONRADIUS + tw, y + AROUNDBUTTONRADIUS + th);
+      if(button) button.clickFun(e);
+
+      /*e.stopPropagation();
+      e.preventDefault();
+      return false;*/
+    };
   };
 
   this.cleanup = function() {
@@ -3206,6 +3263,17 @@ function RendererText() {
 
     this.div0.onmousedown = clickfun;
     this.div1.onmousedown = clickfun;
+
+    var c = cell.circuitsymbol;
+    if(c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R') {
+      // This clickDiv is actually only used for mouse cursor graphic, the actual click event is set on worldDiv.
+      var x0 = x * tw + (tw >> 1)- AROUNDBUTTONRADIUS - tw;
+      var y0 = y * th + (th >> 1) - AROUNDBUTTONRADIUS - th;
+      this.clickDiv = makeDiv(x0, y0, AROUNDBUTTONRADIUS * 2 + tw * 2, AROUNDBUTTONRADIUS * 2 + th * 2, worldDiv);
+      this.clickDiv.style.zIndex = AROUNDZINDEX;
+    } else {
+      this.clickDiv = null;
+    }
   };
 
   // specific initialization, can be re-done if cell changed on click
@@ -3224,6 +3292,8 @@ function RendererText() {
       this.div1.style.fontWeight = 'bold';
       this.div0.style.backgroundColor = '';
       this.div1.style.backgroundColor = '';
+      this.div0.style.zIndex = MAINZINDEX;
+      this.div1.style.zIndex = MAINZINDEX;
     }
 
     if(!cell.comment) {
@@ -3352,6 +3422,7 @@ function RendererText() {
   this.setCursorPointer = function() {
     this.div0.style.cursor = 'pointer';
     this.div1.style.cursor = 'pointer';
+    if(this.clickDiv) this.clickDiv.style.cursor = 'pointer';
   };
 
   this.setValue = function(cell, value, type) {
@@ -4041,10 +4112,12 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
       this.text0.style.textAlign = 'center';
       this.text0.style.fontSize = fs + 'px';
       this.text0.style.fontFamily = 'monospace';
+      this.text0.style.zIndex = MAINZINDEX;
       this.text1.style.color = ONCOLOR;
       this.text1.style.textAlign = 'center';
       this.text1.style.fontSize = fs + 'px';
       this.text1.style.fontFamily = 'monospace';
+      this.text1.style.zIndex = MAINZINDEX;
     }
   };
 
@@ -4099,6 +4172,17 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
       var ctx = (i == 0) ? this.ctx0 : this.ctx1;
       var canvas = (i == 0) ? this.canvas0 : this.canvas1;
       var textel = (i == 0) ? this.text0 : this.text1;
+
+      // for big devices like IC and FlipFlop with multiple possible output values, it's
+      // ugly if borders get different colors for 'on' and 'off' sub-parts of it, so set to
+      // off (the letter character will still get on color)
+      if(i == 1 && cell.components[0]) {
+        var type = cell.components[0].type;
+        if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM) {
+          ctx.strokeStyle = OFFCOLOR;
+          ctx.fillStyle = OFFCOLOR;
+        }
+      }
 
       if(c == '-') {
         drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
@@ -4594,6 +4678,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
     this.fallback.div1.style.cursor = 'pointer';
     this.text0.style.cursor = 'pointer';
     this.text1.style.cursor = 'pointer';
+    this.fallback.setCursorPointer();
   };
 
   this.setLook = function(cell, type) {
@@ -7072,10 +7157,14 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   var nonthinw = 0;
   for(var y = 0; y < h; y++) {
     for(var x = 0; x < w; x++) {
-      if(world[y][x].circuitsymbol != ' ') nonthinw = Math.max(nonthinw, x);
-      if(world[y][x].symbol == '"' && world[y][x].commentalign != 0) nonthinw = Math.max(nonthinw, x);
-      if(world[y][x].commentlength > 0) {
-        nonthinw = Math.max(nonthinw, x + (world[y][x].commentlength * 0.66));
+      if(world[y][x].circuitsymbol != ' ' && world[y][x].circuitsymbol != '"') nonthinw = Math.max(nonthinw, x);
+      if(world[y][x].symbol == '"' && world[y][x].commentalign == -1) nonthinw = Math.max(nonthinw, x);
+      if(world[y][x].commentlength > 0 && world[y][x].commentalign != -1) {
+        var l = 0;
+        if(world[y][x].commentalign == 0) l = Math.ceil(world[y][x].commentlength * 0.66);
+        if(world[y][x].commentalign == 1) l = Math.ceil(world[y][x].commentlength * 0.825); // centered, so bit more space used to the right
+        if(world[y][x].commentalign == 2) l = world[y][x].commentlength;
+        nonthinw = Math.max(nonthinw, x + l);
       }
     }
   }
@@ -7104,7 +7193,7 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   var docwidth = /*document.body.clientWidth*/window.innerWidth - 8;
   var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8;
   if(!docwidth) docwidth = 1000;
-  if(!docheight) docwidth = 800;
+  if(!docheight) docheight = 800;
   var h2 = h;
   if(h2 * 9 > docheight) {
     if(fity > 0) {
@@ -7132,9 +7221,9 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   else if(fitwidth) t = tw;
   else if(fitheight) t = th;
   if(t < 10) t = 10;
-  if(t > 32) t = 32;
-  if(h > 80 && t > 24) t = 24;
-  if(t & 1) t--; // some diagonal wires possibly look worse for some odd sizes
+  if(t > 40) t = 40;
+  if(h > 80 && t > 28) t = 28;
+  if(t & 1) t--; // some diagonal wires possibly look worse for some odd sizes. TODO: fix renderer
   th = tw = t;
 
 
@@ -8409,37 +8498,49 @@ function registerTitle(title) {
 var fallbackhelptext = '0"Load any circuit from the dropdowns above, or press edit to make a new one."\n0"Use help if this is your first time"';
 
 var introText = `
-0"Welcome to LogicEmu, a digital logic simulator running in your browser."
+0"Welcome to LogicEmu, a digital logic simulator!"
 
 0"In circuits, press the green 's' inputs with the mouse to change values."
-0"Read results from the red 'l' outputs. For example, below is an AND gate"
-0"(The 'a', this simulator comes with its own letter based notation)."
+0"Read results from the red 'l' outputs. For example, below is an AND gate 'a'."
 0"Only if both switches are on, the LED will go on. Try enabling both"
 0"switches by clicking them:""
 
-   s****>a****>l
-         ^
-   s******
+               s****>a****>l
+ "AND GATE:"         ^
+               s******
 
 0"There are much more types of gates and devices available: logic gates,"
 0"flip-flops, integrated circuits, ROMs, displays, ... Explore the circuits"
-0"index below or read the help circuits first to learn more!
+0"index below or read the help circuits first to learn more!"
 
-                  s**>a**>o**>l"carry"
-   s-->jq->l         >    ^
-   s-->c#         s**>e**>a
-   s-->kQ->l             >
-                  s******>e**>l"sum"
+               s**>a**>o**>l"carry"
+                  >    ^
+ "ADDER:"      s**>e**>a
+                      >
+               s******>e**>l"sum"
 
-0"Circuits index. You can also use the 'help' and 'circuits' dropdowns"
-0"and the prev/next buttons in the top bar to navigate to these. You can also"
-0"edit or create your own circuits instead."
+
+               s-->jq->l
+ "JK FLIPFLOP:"s-->c#
+               s-->kQ->l
+
+
+
+0"Circuits Index"
+0"--------------"
 
 0"INSERT:toc_main"
 
-0"Note that even this welcome page itself is a circuit, named 'Welcome'"
+0"You can also use the 'help' and 'circuits' dropdowns"
+0"and the prev/next buttons in the top bar to navigate to these. You can also"
+0"edit or create your own circuits instead."
+
+0"Even this welcome page itself is a circuit, named 'Welcome'"
 0"in the 'help' dropdown but hidden in the list and help index above on"
 0"purpose to avoid such redundancy."
+
+0"A note about running in the browser"
+0"-----------------------------------"
 
 0"LogicEmu runs completely offline, even though it uses JavaScript in a"
 0"web browser. Once the HTML and JS got fetched, it does not make any"
@@ -8450,15 +8551,15 @@ var introText = `
 0"without internet."
 
 0"All circuits listed above are already loaded since they are hardcoded"
-0"in LogicEmu's source code."
+0"in LogicEmu's source code (all of them, no dynamic requests are done)."
 
 0"If you edit your own circuit, it's only stored in your browsers local"
-0"storage (not cookie), it's not sent anywhere. To share a circuit with"
-0"others, you must post its source somewhere yourself."
+0"storage (not a cookie), it's not sent anywhere. To share a circuit with"
+0"others, you must post its source or base64 URL code somewhere yourself."
 
+0"FIT:x"
 
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"                     .
-`;
+0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"`;
 
 var introTitle = 'Browser-Based Logic Simulator';
 
