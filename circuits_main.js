@@ -33,13 +33,13 @@ registerTitle('Binary Logic');
 
 registerCircuit('Logic Gates Tutorial', `
 
-0"A logic gate is a device that implements a boolean function on some amount"
-0"of inputs, typically one or two"
+0"A logic gate is a device that implements a boolean function on some amount of"
+0"inputs, typically one or two"
 
-0"The OR gate outputs 1 whenever input a OR input b (or both) are on."
-0"An OR gate is denoted with an 'o' in this simulation (but not in real electronics)"
-0"Click the switches with the mouse to toggle them on or off and observe the effect"
-0"on the output LED:"
+0"The OR gate outputs 1 whenever input a OR input b (or both) are on. An OR"
+0"gate is denoted with an 'o' in this simulation (but not in real electronics)"
+0"Click the switches with the mouse to toggle them on or off and observe the"
+0"effect on the output LED:"
 
  "a"s**>o**>l"out"
         ^
@@ -54,8 +54,8 @@ registerCircuit('Logic Gates Tutorial', `
 0"  1  0 |  1  "
 0"  1  1 |  1  "
 
-0"The AND gate outputs 1 only when input a AND input b are on:"
-0"An AND gate is denoted with an 'a' in this simulation (again, not in real electronics)"
+0"The AND gate outputs 1 only when input a AND input b are on: An AND gate is"
+0"denoted with an 'a' in this simulation (again, not in real electronics)"
 
  "a"s**>a**>l"out"
         ^
@@ -71,8 +71,8 @@ registerCircuit('Logic Gates Tutorial', `
 0"  1  1 |  1   "
 
 0"The XOR gate or EXCLUSIVE OR gate outputs 1 whenever exclusively input a OR"
-0"exclusively input b (but not both) are on."
-0"A XOR gate is denoted with an 'e' from 'e'xclusive in this simulation (but not in real electronics)"
+0"exclusively input b (but not both) are on. A XOR gate is denoted with an 'e'"
+0"from 'e'xclusive in this simulation (but not in real electronics)"
 
  "a"s**>e**>l"out"
         ^
@@ -87,9 +87,9 @@ registerCircuit('Logic Gates Tutorial', `
 0"  1  0 |  1  "
 0"  1  1 |  0  "
 
-0"The NOT gate has a single input and inverts it, so outputs 1 if the switch is off,"
-0"and outputs 0 if the switch is on"
-0"A NOT gate is denoted with an 'O' in this simulation (but not in real electronics)"
+0"The NOT gate has a single input and inverts it, so outputs 1 if the switch is"
+0"off, and outputs 0 if the switch is on. A NOT gate is denoted with an 'O' in"
+0"this simulation (but not in real electronics)"
 
  "a"s**>O**>l"out"
 
@@ -100,11 +100,12 @@ registerCircuit('Logic Gates Tutorial', `
 0"  0 |  1  "
 0"  1 |  0  "
 
-0"A NOR gate is an OR gate with a NOT behind it (so an OR with inverted output),"
-0"integrated together as a single gate. The NOR gate outputs 1 only if both inputs are off."
-0"A NOR gate is denoted with an 'O' in this simulation (again, not in real electronics),"
-0"in general in this simulation, capital letters are used as inverted version of the gate"
-0"(in real life electronics a little circle at the output is used instead)"
+0"A NOR gate is an OR gate with a NOT behind it (so an OR with inverted"
+0"output), integrated together as a single gate. The NOR gate outputs 1 only if"
+0"both inputs are off. A NOR gate is denoted with an 'O' in this simulation"
+0"(again, not in real electronics), in general in this simulation, capital"
+0"letters are used as inverted version of the gate (in real life electronics a"
+0"little circle at the output is used instead)"
 
  "a"s**>O**>l"out"
         ^
@@ -119,8 +120,9 @@ registerCircuit('Logic Gates Tutorial', `
 0"  1  0 |  0   "
 0"  1  1 |  0   "
 
-0"The NAND gate is an AND gate with a NOT behind it, integrated into a single gate"
-0"A NAND gate is denoted with an 'A' in this simulation (but not in real electronics)"
+0"The NAND gate is an AND gate with a NOT behind it, integrated into a single"
+0"gate A NAND gate is denoted with an 'A' in this simulation (but not in real"
+0"electronics)"
 
  "a"s**>A**>l"out"
         ^
@@ -135,11 +137,11 @@ registerCircuit('Logic Gates Tutorial', `
 0"  1  0 |   1  "
 0"  1  1 |   0  "
 
-0"The XNOR gate is a XOR gate with a NOT behind it, integrated into a single gate."
-0"XNOR is sometimes also called EQV from equivalence, because it outputs 1 if both"
-0"inputs are equal (but this no longer holds true for multi-input gates, where it"
-0"instead acts as an inverted parity [odd/even] gate)"
-0"An XNOR gate is denoted with an 'E' in this simulation (but not in real electronics)"
+0"The XNOR gate is a XOR gate with a NOT behind it, integrated into a single"
+0"gate. XNOR is sometimes also called EQV from equivalence, because it outputs"
+0"1 if both inputs are equal (but this no longer holds true for multi-input"
+0"gates, where it instead acts as an inverted parity [odd/even] gate). An XNOR"
+0"gate is denoted with an 'E' in this simulation (but not in real electronics)"
 
  "a"s**>E**>l"out"
         ^
@@ -154,19 +156,19 @@ registerCircuit('Logic Gates Tutorial', `
 0"  1  0 |   0  "
 0"  1  1 |   1  "
 
-0"An IMPLY gate outputs 1 except when input a is true and input b is false."
-0"Its name means 'a implies b', and since 'a=true, b=false' is the only combination"
-0"that violates that statement, that is the only one where it outputs 0."
-0"An IMPLY gate does not have its own letter notation in this simulation, instead"
+0"An IMPLY gate outputs 1 except when input a is true and input b is false. Its"
+0"name means 'a implies b', and since 'a=true, b=false' is the only combination"
+0"that violates that statement, that is the only one where it outputs 0. An"
+0"IMPLY gate does not have its own letter notation in this simulation, instead"
 0"it can be made with an OR gate with the a input inverted. The inverted input"
-0"is denoted with a little circle in this simulation, for once like real electronics"
-0"notation actually does it. Real electronics also uses an OR gate with inverted input"
-0"as notation for IMPLY, and also uses a little circle at the input to invert inputs."
-0"(note: ensure the render mode is 'graphical' to see the little circle,"
-0"in text mode you see a square bracket ']' instead)."
-0"Note that this gate is less common compared to the others and is really more commonly"
-0"seen as an OR gate with an inverted input, in fact the main goal here is to demonstrate"
-0"inverted inputs."
+0"is denoted with a little circle in this simulation, for once like real"
+0"electronics notation actually does it. Real electronics also uses an OR gate"
+0"with inverted input as notation for IMPLY, and also uses a little circle at"
+0"the input to invert inputs. (note: ensure the render mode is 'graphical' to"
+0"see the little circle, in text mode you see a square bracket ']' instead)."
+0"Note that this gate is less common compared to the others and is really more"
+0"commonly seen as an OR gate with an inverted input, in fact the main goal"
+0"here is to demonstrate inverted inputs."
 
  "a"s**]o**>l"out"
         ^
@@ -181,10 +183,11 @@ registerCircuit('Logic Gates Tutorial', `
 0"  1  0 |   0   "
 0"  1  1 |   1   "
 
-0"There are more gates you can make by inverting different inputs or outputs of any of the gates"
-0"above, e.g. AND with one inverted input gives NIMPLY. Some combinations are redundant. In fact,"
-0"there are 16 possible behaviors in total for 2-input gates. However the rest are"
-0"less well established and not discussed here, you can view them all in the '16 gates' circuit."
+0"There are more gates you can make by inverting different inputs or outputs of"
+0"any of the gates above, e.g. AND with one inverted input gives NIMPLY. Some"
+0"combinations are redundant. In fact, there are 16 possible behaviors in total"
+0"for 2-input gates. However the rest are less well established and not"
+0"discussed here, you can view them all in the '16 gates' circuit."
 
 0"As a final recap, here is the truth table of all gates seen here:"
 
@@ -199,21 +202,21 @@ registerCircuit('Logic Gates Tutorial', `
 
 registerCircuit('Binary Numbers Tutorial', `
 
-0"In logic circuits, we use binary instead of decimal counting. Decimal"
-0"uses ten different digits. Binary uses a similar counting system, but"
-0"with only 2 digits: 0 and 1. This is because in electronic circuits,"
-0"it is much simpler to make a switch with two states than with ten states."
-0"Computers typically do all math and other operations with binary numbers,"
-0"and only convert the results to decimal when presenting them to the user."
+0"In logic circuits, we use binary instead of decimal counting. Decimal uses"
+0"ten different digits. Binary uses a similar counting system, but with only 2"
+0"digits: 0 and 1. This is because in electronic circuits, it is much simpler"
+0"to make a switch with two states than with ten states. Computers typically do"
+0"all math and other operations with binary numbers, and only convert the"
+0"results to decimal when presenting them to the user."
 
 0"So to be prepared for math circuits coming up later, this is an introduction"
 0"to binary numbers and binary counting"
 
-0"Decimal counts up with 10 possible symbols, from 0 to 0. Whenever 9 is reached, a next"
-0"digit is incremented (if that next digit is a hidden zero, since prefix"
-0"zeroes are usually not shown, it becomes a 1 and thus visible)"
-0"With binary, it's just the same, except there are only two possible values, so"
-0"next bits get added much faster"
+0"Decimal counts up with 10 possible symbols, from 0 to 0. Whenever 9 is"
+0"reached, a next digit is incremented (if that next digit is a hidden zero,"
+0"since prefix zeroes are usually not shown, it becomes a 1 and thus visible)"
+0"With binary, it's just the same, except there are only two possible values,"
+0"so next bits get added much faster"
 
 0"Here are the first few decimal and binary numbers:"
 
@@ -239,25 +242,24 @@ registerCircuit('Binary Numbers Tutorial', `
 "            ^^^^
 "            8421"
 
-0"Prefix zeroes of a binary number are often shown. For example when"
-0"one speaks of an 8-bit binary number, all 8 bits are shown, even"
-0"zeroes in front. E.g. the number 1 as an 8-bit number is:"
+0"Prefix zeroes of a binary number are often shown. For example when one speaks"
+0"of an 8-bit binary number, all 8 bits are shown, even zeroes in front. E.g."
+0"the number 1 as an 8-bit number is:"
 
 "00000001"
 
-0"To input and output binary numbers, set bits to 1 such that the sum"
-0"of their values is the number you want. The value of each bit is a"
-0"power of two. The least significant bit has value 1. The more"
-0"significant bits have higher powers of two, for example 2 for the second"
-0"bit, 4 for the third bit, 8 for the fourth bit, etc..."
+0"To input and output binary numbers, set bits to 1 such that the sum of their"
+0"values is the number you want. The value of each bit is a power of two. The"
+0"least significant bit has value 1. The more significant bits have higher"
+0"powers of two, for example 2 for the second bit, 4 for the third bit, 8 for"
+0"the fourth bit, etc..."
 
-0"Form any number you want below. For example, to form the number hundred,"
-0"set the bits with values 64, 32 and 4 to 1. The sum of those is 100,"
-0"and that is the only possible way to form the number 100. Note that"
-0"the circuit below does not actually do anything, it just allows you to"
-0"toggle some switches and LEDs to try to form numbers. The sum of all"
-0"values below is 255 so that is the highest number you can make, it is"
-0"the highest unsigned 8-bit value."
+0"Form any number you want below. For example, to form the number hundred, set"
+0"the bits with values 64, 32 and 4 to 1. The sum of those is 100, and that is"
+0"the only possible way to form the number 100. Note that the circuit below"
+0"does not actually do anything, it just allows you to toggle some switches and"
+0"LEDs to try to form numbers. The sum of all values below is 255 so that is"
+0"the highest number you can make, it is the highest unsigned 8-bit value."
 
 
    "128 64 32 16 8  4  2  1"
@@ -270,11 +272,11 @@ registerCircuit('Binary Numbers Tutorial', `
 0"Most circuits operating on numbers will have such switches and LEDs like"
 0"above, except some processing with logic gates will happen in-between"
 
-0"We can also add a built-in binary-to-decimal display to switches to"
-0"allow you to experiment more easily with binary numbers. The display"
-0"shows your binary number in decimal. Try to make '21' for example."
-0"You can make all numbers from 0 to 255, and there is exactly one combination"
-0"of input switches to make each number."
+0"We can also add a built-in binary-to-decimal display to switches to allow you"
+0"to experiment more easily with binary numbers. The display shows your binary"
+0"number in decimal. Try to make '21' for example. You can make all numbers"
+0"from 0 to 255, and there is exactly one combination of input switches to make"
+0"each number."
 
 
      TTTTTTTTTTTTTTTTTTTTTT"decimal"
@@ -299,9 +301,10 @@ registerCircuit('Binary Numbers Tutorial', `
 
 registerCircuit('16 gates', `
 
-0"Because a 2-input gate has 4 combinations of inputs, and for each input combination"
-0"has some output, there are in total 2^4 = 16 different possible behaviours of 16-input"
-0"gate. Here, all 16 are implemented and their properties and names from logic shown"
+0"Because a 2-input gate has 4 combinations of inputs, and for each input"
+0"combination has some output, there are in total 2^4 = 16 different possible"
+0"behaviours of 16-input gate. Here, all 16 are implemented and their"
+0"properties and names from logic shown"
 
 
           "gate name     value      properties              logic name"
@@ -415,11 +418,11 @@ registerCircuit('16 gates', `
 registerCircuit('3-input logic gates', `
 
 0"Gates with 3 or more inputs work similarly to their 2-input counterparts."
-0"Multi-input AND only goes on if all inputs are on. Multi-input OR goes on if any input is on."
-0"Multi-input XOR, however, acts differently, it acts as a parity gate (odd/even),"
-0"it does not act as a 'one-hot-detector' gate. The behavior is that of"
-0"chaining multiple 2-input gates together and that gives parity gate"
-0"in case of XOR."
+0"Multi-input AND only goes on if all inputs are on. Multi-input OR goes on if"
+0"any input is on. Multi-input XOR, however, acts differently, it acts as a"
+0"parity gate (odd/even), it does not act as a 'one-hot-detector' gate. The"
+0"behavior is that of chaining multiple 2-input gates together and that gives"
+0"parity gate in case of XOR."
 
   s****      s****      s****      s****      s****      s****
       v          v          v          v          v          v
@@ -911,7 +914,8 @@ registerTitle('Arithmetic');
 registerCircuit('half adder', `
 
 0"The half adder adds two 1-bit values. The output can represent 0, 1 or 2. The"
-0"bit output by the XOR gate has value 1, the bit output by the AND gate has value 2."
+0"bit output by the XOR gate has value 1, the bit output by the AND gate has"
+0"value 2."
 
  l l
  ^ ^
@@ -938,10 +942,10 @@ l<**a e a e a e a e **S
 
 registerCircuit('full adder', `
 
-0"The full adder is made from two half adders (each pair of a+e gate is"
-0"a half adder). It sums 3 1-bit numbers (or 2 bits of a 1-bit number, and"
-0"the third bit being the carry, see the ripple carry circuit for that),"
-0"and outputs a 2-bit number"
+0"The full adder is made from two half adders (each pair of a+e gate is a half"
+0"adder). It sums 3 1-bit numbers (or 2 bits of a 1-bit number, and the third"
+0"bit being the carry, see the ripple carry circuit for that), and outputs a"
+0"2-bit number"
 
  "c   s"                     "s"
   l   l                       l
@@ -976,10 +980,10 @@ registerCircuit('full adder', `
 
 registerCircuit('8-bit ripple carry adder', `
 
-0"The 8-bit ripple carry has 8 full adders, configured to pass on the"
-0"carry. If you add 1 to 255, you get the slowest possible ripple."
-0"The longest path is as long as the amount of bits, so this type of"
-0"adder is slow and not used in practice (see carry lookahead adder next)"
+0"The 8-bit ripple carry has 8 full adders, configured to pass on the carry. If"
+0"you add 1 to 255, you get the slowest possible ripple. The longest path is as"
+0"long as the amount of bits, so this type of adder is slow and not used in"
+0"practice (see carry lookahead adder next)"
 
 
             "128"  "64"  "32"  "16"  "8"   "4"   "2"   "1"
@@ -1020,30 +1024,37 @@ registerCircuit('4-bit carry lookahead adder', `
 0"MODE:electron (set to electron by default to show the gate delays)"
 
 0"The carry lookahead adder is faster than the ripple carry adder. A ripple"
-0"carry adder is slow because the longest path goes through all the full adders."
+0"carry adder is slow because the longest path goes through all the full"
+0"adders."
 
-0"Lookahead of the expected carry rather than letting it ripple through"
-0"makes the adder faster, at the cost of more logic (especially many multi-input AND/OR gates)"
+0"Lookahead of the expected carry rather than letting it ripple through makes"
+0"the adder faster, at the cost of more logic (especially many multi-input"
+0"AND/OR gates)"
 
-0"At the bottom are the standard full adders, except they are missing an AND and an OR (the"
-0"lookahead unit has many big ones of those instead), and the outputs of their first half adder is"
-0"given to the lookahead unit."
+0"At the bottom are the standard full adders, except they are missing an AND"
+0"and an OR (the lookahead unit has many big ones of those instead), and the"
+0"outputs of their first half adder is given to the lookahead unit."
 
-0"The left part computes things that are not needed for this 4-bit adder but can be used to"
-0"chain multiple CLA's together. pg,gg to make a recursively bigger CLA, or c4 to ripple CLA's instead."
-0"Note that there is some serious redundancy in the left part, since c4 can be computed as"
-0"(pg AND c0) OR gg, but that would add one more gate delay and this circuit is demonstrating"
-0"the absolute max speed"
+0"The left part computes things that are not needed for this 4-bit adder but"
+0"can be used to chain multiple CLA's together. pg,gg to make a recursively"
+0"bigger CLA, or c4 to ripple CLA's instead. Note that there is some serious"
+0"redundancy in the left part, since c4 can be computed as (pg AND c0) OR gg,"
+0"but that would add one more gate delay and this circuit is demonstrating the"
+0"absolute max speed"
 
-0"The one-input AND and OR gates represent buffers. Without them, some signals have different lengths of"
-0"gate delay and cause some garbage flickering. They cause no slowdown since only the longest path matters."
+0"The one-input AND and OR gates represent buffers. Without them, some signals"
+0"have different lengths of gate delay and cause some garbage flickering. They"
+0"cause no slowdown since only the longest path matters."
 
 0"CLA = carry lookahead adder: this whole circuit"
 0"LCU = lookahead carry unit: the logic excluding the full adders"
-0"c = carry, g = carry generator (from AND), p = carry propagator (from XOR), pg = group prop., gg = group gen."
+0"c = carry, g = carry generator (from AND), p = carry propagator (from XOR),"
+0"pg = group prop., gg = group gen."
 
-0"carry propagate will go on if adding 1 more bit to the input would cause a carry out."
-0"carry generate will go on if a carry got generated in this 4-bit sum itself, but not due to the external input carry"
+0"carry propagate will go on if adding 1 more bit to the input would cause a"
+0"carry out."
+0"carry generate will go on if a carry got generated in this 4-bit sum itself,"
+0"but not due to the external input carry"
 
  2"c0"--------------------------------------------*-------------------*------------*--------*-----*---s"c0"
  2"p0"--------*----------------------------------*+------------------*+-----------*+-------*+---* *
@@ -1072,12 +1083,14 @@ registerCircuit('4-bit carry lookahead adder', `
                                                       * *               * *          * *      * *
                                                       s s               s s          s s      s s
 
-0"There are many ways to extend this adder to more than 4 bits: Keep doing the same as above with"
-0"more and more and bigger and bigger AND and OR gates for every next bit. This is the fastest but most"
-0"expensive. Recursively create a 16-bit adder from 4 of the above CLA, and so on. This is the middle"
-0"ground in cost/speed. Ripple multiple of the above CLA's. This is slower but cheaper, and still faster than"
-0"rippling every single bit (which would be an even slower but even cheaper option). And then, even"
-0"more tradeoffs can be made by doing any of the above with other sizes than 4-bit CLA's."
+0"There are many ways to extend this adder to more than 4 bits: Keep doing the"
+0"same as above with more and more and bigger and bigger AND and OR gates for"
+0"every next bit. This is the fastest but most expensive. Recursively create a"
+0"16-bit adder from 4 of the above CLA, and so on. This is the middle ground in"
+0"cost/speed. Ripple multiple of the above CLA's. This is slower but cheaper,"
+0"and still faster than rippling every single bit (which would be an even"
+0"slower but even cheaper option). And then, even more tradeoffs can be made by"
+0"doing any of the above with other sizes than 4-bit CLA's."
 
 `, 'cla_adder');
 
@@ -1111,9 +1124,9 @@ registerCircuit('half subtractor', `
 
 registerCircuit('full subtractor', `
 
-0"Note: The full subtractor is similar to the adder, and in practice"
-0"you don't need a separate circuit like this to subtract, you can also"
-0"use a full adder, invert the bits of B and add 1 to B"
+0"Note: The full subtractor is similar to the adder, and in practice you don't"
+0"need a separate circuit like this to subtract, you can also use a full adder,"
+0"invert the bits of B and add 1 to B"
 
 "+-------+-----+"  "l=loan (borrow)"
 "| a b l | d l |"  "d=difference"
@@ -1165,9 +1178,9 @@ registerCircuit('full subtractor', `
 
 registerCircuit('8-bit comparator', `
 
-0"Note: in practice you don't need a separate circuit like this, you can"
-0"use the full adder, to subtract, and look at the carry bit of the result,"
-0"see the ALU circuit for more on that."
+0"Note: in practice you don't need a separate circuit like this, you can use"
+0"the full adder, to subtract, and look at the carry bit of the result, see the"
+0"ALU circuit for more on that."
 
 
 
@@ -1205,19 +1218,20 @@ registerCircuit('8-bit comparator', `
 registerCircuit('8-bit ALU from adder', `
 
 
-0"Earlier circuits demonstrated the adder, subtractor and comparator."
-0"You don't need all those three separate circuits to compute any of those"
-0"however, with just an adder you can do all those operations. An ALU"
-0"in a CPU, at a very basic level, does exactly that: It usually includes an adder to"
-0"do various different computations."
+0"Earlier circuits demonstrated the adder, subtractor and comparator. You don't"
+0"need all those three separate circuits to compute any of those however, with"
+0"just an adder you can do all those operations. An ALU in a CPU, at a very"
+0"basic level, does exactly that: It usually includes an adder to do various"
+0"different computations."
 
-0"In twos complement binary notation, subtracting a-b can be done by inverting the bits"
-0"of b and adding 1. So before the adder inputs, put a circuit that can optionally negate"
-0"b's bits (with xor gates), and adding 1 can be done with the carry input."
+0"In twos complement binary notation, subtracting a-b can be done by inverting"
+0"the bits of b and adding 1. So before the adder inputs, put a circuit that"
+0"can optionally negate b's bits (with xor gates), and adding 1 can be done"
+0"with the carry input."
 
-0"Comparing can be done by subtracting and then looking at the carry out:"
-0"when subtracting a-b, it will be high when a >= b, low when a < b. To"
-0"test for equality, use a many-input NOR gate to check if all out bits are zero."
+0"Comparing can be done by subtracting and then looking at the carry out: when"
+0"subtracting a-b, it will be high when a >= b, low when a < b. To test for"
+0"equality, use a many-input NOR gate to check if all out bits are zero."
 
 0"The build below does this, and is operated as follows:"
 0"The operation depends on the 3 input flags of the right side:"
@@ -1291,22 +1305,21 @@ registerCircuit('2-bit multiplier', `
 
 registerCircuit('4-bit multiplier', `
 
-0"Multiplication can be done with the shift-and-add algorithm:"
-0"To multiply number A with n-bit number B:"
-0"Initialize a result value at 0. Then n times, if the n-th bit of B"
-0"is 1, add A to the result, and always shift A left by 1."
-0"This can be done sequentially with an algorithm, but here it is done"
-0"as one entire combinational circuit in hardware, so with n layers"
-0"of adders. To multiply two 4-bit numbers, that gives 4 4-bit adders,"
-0"for a total of 16 full adders."
+0"Multiplication can be done with the shift-and-add algorithm: To multiply"
+0"number A with n-bit number B: Initialize a result value at 0. Then n times,"
+0"if the n-th bit of B is 1, add A to the result, and always shift A left by 1."
+0"This can be done sequentially with an algorithm, but here it is done as one"
+0"entire combinational circuit in hardware, so with n layers of adders. To"
+0"multiply two 4-bit numbers, that gives 4 4-bit adders, for a total of 16 full"
+0"adders."
 
-0"The main unit is the following 1-bit full adder with a few extra's."
-0"The carry c works as usual within a 4-bit adder."
-0"The bit 'b' is the bit matching the current stage from the second number we are multiplying. It"
-0"ANDs the 'a' input of the adder to disable it if 0."
-0"We also output 'a' again at the top to apply the left-shift for the next stage,"
-0"and pass 'b' through to the left because it must be applied to all adders of this stage."
-0"'r' will eventually become a final result bit after it went through all stages."
+0"The main unit is the following 1-bit full adder with a few extra's. The carry"
+0"c works as usual within a 4-bit adder. The bit 'b' is the bit matching the"
+0"current stage from the second number we are multiplying. It ANDs the 'a'"
+0"input of the adder to disable it if 0. We also output 'a' again at the top to"
+0"apply the left-shift for the next stage, and pass 'b' through to the left"
+0"because it must be applied to all adders of this stage. 'r' will eventually"
+0"become a final result bit after it went through all stages."
 
              "a     r"
               l     l
@@ -1327,13 +1340,14 @@ registerCircuit('4-bit multiplier', `
        "r     a"
 
 
-0"Note how the shifting is done: rather than physically shifting a left, instead in this"
-0"implementation 'a' goes up vertically and instead r shifts to the right. That boils down"
-0"to the exact same thing, but it allows the circuit to be square shaped rather than a parallellogram."
+0"Note how the shifting is done: rather than physically shifting a left,"
+0"instead in this implementation 'a' goes up vertically and instead r shifts to"
+0"the right. That boils down to the exact same thing, but it allows the circuit"
+0"to be square shaped rather than a parallellogram."
 
-0"To operate the circuit, enter a binary a at the bottom row, and a binary"
-0"b at the right column. Then read the output in the 8 output LEDs, the"
-0"ones in the right column are the 4 LSBs of the output, the top ones the 4 MSBs."
+0"To operate the circuit, enter a binary a at the bottom row, and a binary b at"
+0"the right column. Then read the output in the 8 output LEDs, the ones in the"
+0"right column are the 4 LSBs of the output, the top ones the 4 MSBs."
 0"Multiplying two 4-bit numbers can give an 8-bit result."
 
 
@@ -1514,15 +1528,14 @@ registerCircuit('4-bit divider', `
 
 
 0"Division of two binary n-bit numbers A/B to get quotient Q and remainder R"
-0"can be done with the following algorithm (long division):"
-0"Initialize Q and R at 0. Do n times (i=0..n-1): Left shift R by 1 bit."
-0"Set R's least significant bit to bit #i of A. If R >= B, then subtract"
-0"B from R and set bit #i of Q to 1."
+0"can be done with the following algorithm (long division): Initialize Q and R"
+0"at 0. Do n times (i=0..n-1): Left shift R by 1 bit. Set R's least significant"
+0"bit to bit #i of A. If R >= B, then subtract B from R and set bit #i of Q to"
+0"1."
 
-0"This can be computed sequentially as an algorithm, but here we build"
-0"a full combinational implementation with gates. Since there are n"
-0"subtractions (and n is 4 for 4-bit dividers) that means there will be"
-0"4 4-bit subtractors."
+0"This can be computed sequentially as an algorithm, but here we build a full"
+0"combinational implementation with gates. Since there are n subtractions (and"
+0"n is 4 for 4-bit dividers) that means there will be 4 4-bit subtractors."
 
 0"The base unit is a subtractor with a few extras:"
 
@@ -1545,26 +1558,27 @@ registerCircuit('4-bit divider', `
         s   s
        "b   r"
 
-0"This implements the algorithm as follows: the subtractor inputs are"
-0"the corresponding r and b bits of the R and B inputs. The l is the loan"
-0"and works as usual in the full 4-bit subtractor unit this is part of."
-0"On top, a multiplexer is added, which can choose between the subtractor"
-0"output r-b, or between copying the input r. The choice is made by the"
-0"q bit output by this 4-bit layer, and that q bit is the loan of the leftmost"
-0"(MSB) full adder of this 4-bit layer (the inverse of it will be output)."
-0"This matches the algorithm as follows: this leftmost load bit is true"
-0"if r < b, and by controlling the mux this implements the 'if R >= B' and"
-0"outputs R itself, or R with B subtracted, as seen in the algo, as the next R."
-0"The rightmost R bit will be set to the corresponding bit of A (adding 1 to R"
-0"where needed), and R is left shifted implicitely through the wiring between each layer."
+0"This implements the algorithm as follows: the subtractor inputs are the"
+0"corresponding r and b bits of the R and B inputs. The l is the loan and works"
+0"as usual in the full 4-bit subtractor unit this is part of. On top, a"
+0"multiplexer is added, which can choose between the subtractor output r-b, or"
+0"between copying the input r. The choice is made by the q bit output by this"
+0"4-bit layer, and that q bit is the loan of the leftmost (MSB) full adder of"
+0"this 4-bit layer (the inverse of it will be output). This matches the"
+0"algorithm as follows: this leftmost load bit is true if r < b, and by"
+0"controlling the mux this implements the 'if R >= B' and outputs R itself, or"
+0"R with B subtracted, as seen in the algo, as the next R. The rightmost R bit"
+0"will be set to the corresponding bit of A (adding 1 to R where needed), and R"
+0"is left shifted implicitely through the wiring between each layer."
 
-0"Here is one of the 4 layers. Note how a single bit of A is input from the right"
-0"as rightmost R bit, and all bits from B are used. Also note how the MUXes of all subtractors are"
-0"controlled by the result of the leftmost subtractor, making this algorithm slow"
-0"since this happens at every layer, so the computation has to cross every single"
-0"subtractor all the time (the multiplier did not suffer from such slowness). Also"
-0"note how the B inputs are passed through to the top, ready to go to the next layer."
-0"The output remainder bits will be left shifted (and r8 discarded) for the next layer."
+0"Here is one of the 4 layers. Note how a single bit of A is input from the"
+0"right as rightmost R bit, and all bits from B are used. Also note how the"
+0"MUXes of all subtractors are controlled by the result of the leftmost"
+0"subtractor, making this algorithm slow since this happens at every layer, so"
+0"the computation has to cross every single subtractor all the time (the"
+0"multiplier did not suffer from such slowness). Also note how the B inputs are"
+0"passed through to the top, ready to go to the next layer. The output"
+0"remainder bits will be left shifted (and r8 discarded) for the next layer."
 
                "r8           r4           r2           r1"
                 l            l            l            l
@@ -1586,10 +1600,10 @@ registerCircuit('4-bit divider', `
          "b8 r8        b4 r4        b2 r2        b1"
 
 
-0"Finally, combining all stages together, to get the full 4-bit divider."
-0"It computes a / b, and outputs the quotient on the left, and the remainder"
-0"at the top, all 4-bit numbers. Look carefully which of the bits are the"
-0"LSB (marked with 1) and MSB (marked with 8) of each of those 4 numbers..."
+0"Finally, combining all stages together, to get the full 4-bit divider. It"
+0"computes a / b, and outputs the quotient on the left, and the remainder at"
+0"the top, all 4-bit numbers. Look carefully which of the bits are the LSB"
+0"(marked with 1) and MSB (marked with 8) of each of those 4 numbers..."
 
 
                 l            l            l            l
@@ -1654,8 +1668,8 @@ registerCircuit('4-bit divider', `
 
 registerCircuit('8-bit divider', `
 
-0"8-bit divider. See the 4-bit divider circuit for the explanation."
-0"This one is simply bigger."
+0"8-bit divider. See the 4-bit divider circuit for the explanation. This one is"
+0"simply bigger."
 
 0"Enable electron mode to see how slow it operates!"
 
@@ -1771,10 +1785,10 @@ registerCircuit('8-bit divider', `
 registerCircuit('8-bit right barrel shifter', `
 
 
-0"A right barrel shifter can shift a binary number by a configurable"
-0"amount of bits. This is implemented with layers of multiplexers."
-0"The last layer, for 8+ bits of shifting, makes it always output 0, since"
-0"it means the number got shifted too far."
+0"A right barrel shifter can shift a binary number by a configurable amount of"
+0"bits. This is implemented with layers of multiplexers. The last layer, for 8+"
+0"bits of shifting, makes it always output 0, since it means the number got"
+0"shifted too far."
 
 0"Right shifting does the same as dividing through powers of two. For example"
 0"right shifting by 1 is like dividing through 2."
@@ -1842,13 +1856,13 @@ registerCircuit('8-bit right barrel shifter', `
 registerCircuit('8-bit left barrel shifter', `
 
 
-0"A left barrel shifter can shift a binary number by a configurable"
-0"amount of bits. This is implemented with layers of multiplexers."
-0"The last layer, for 8+ bits of shifting, makes it always output 0, since"
-0"it means the number got shifted too far."
+0"A left barrel shifter can shift a binary number by a configurable amount of"
+0"bits. This is implemented with layers of multiplexers. The last layer, for 8+"
+0"bits of shifting, makes it always output 0, since it means the number got"
+0"shifted too far."
 
-0"Left shifting does the same as multiplying by two. For example"
-0"left shifting by 1 is like multiplying with 2 (or adding the number to itself)."
+0"Left shifting does the same as multiplying by two. For example left shifting"
+0"by 1 is like multiplying with 2 (or adding the number to itself)."
 
 
       l     l     l     l     l     l     l     l
@@ -1916,9 +1930,9 @@ registerCircuit('8-bit fully customizable barrel shifter', `
 0"l=left (off: right)"
 0"m=mirror result"
 
-0"The choice of left/right is implemented by mirroring at input and then mirroring"
-0"back before the output. That way the internal right shifter has the effect of"
-0"shifting left."
+0"The choice of left/right is implemented by mirroring at input and then"
+0"mirroring back before the output. That way the internal right shifter has the"
+0"effect of shifting left."
 
 
                     l     l     l     l     l     l     l     l
@@ -2036,25 +2050,24 @@ registerCircuit('flip-flops tutorial', `
 0"Flip-Flop Types"
 0"---------------"
 
-0"There are 4 main flip-flop types: SR, D, T and JK. Before looking at"
-0"how they work at logic-gate level, let's first use the prebuilt"
-0"components that this simulation provides to look at their behavior."
+0"There are 4 main flip-flop types: SR, D, T and JK. Before looking at how they"
+0"work at logic-gate level, let's first use the prebuilt components that this"
+0"simulation provides to look at their behavior."
 
-0"All of these types have a clock input C. This clock is edge-triggered,"
-0"that is, only at that exact instant where it goes on,"
-0"it will update its state. At any other time, while the clock is high"
-0"or low, it will remember that state."
+0"All of these types have a clock input C. This clock is edge-triggered, that"
+0"is, only at that exact instant where it goes on, it will update its state. At"
+0"any other time, while the clock is high or low, it will remember that state."
 
 0"SR Flip-Flop"
 0"------------"
 
 
-0"The SR flip-flop set-reset flip-flop has two inputs: S and R. Whenever"
-0"the clock is edge-triggered, the output will go on if S is enabled,"
-0"of is R is enabled, or stay as-is if neither S nor R are enabled. Having"
-0"both S and R enabled is considered an invalid combination, and whichever"
-0"behavior it happens to show here does not matter as it is unspecified"
-0"and may violate assumptions"
+0"The SR flip-flop set-reset flip-flop has two inputs: S and R. Whenever the"
+0"clock is edge-triggered, the output will go on if S is enabled, of is R is"
+0"enabled, or stay as-is if neither S nor R are enabled. Having both S and R"
+0"enabled is considered an invalid combination, and whichever behavior it"
+0"happens to show here does not matter as it is unspecified and may violate"
+0"assumptions"
 
  "S"s**>j#q**>l"Q"
         ###
@@ -2062,9 +2075,9 @@ registerCircuit('flip-flops tutorial', `
         ###
  "C"s**>c##
 
-0"The truth table of the SR flip-flop is as follows. It shows the"
-0"transition (if any) that happens at each clock cycle: What is the"
-0"next Q depending on the D input and the current Q"
+0"The truth table of the SR flip-flop is as follows. It shows the transition"
+0"(if any) that happens at each clock cycle: What is the next Q depending on"
+0"the D input and the current Q"
 
 0"+---+---+-------+"
 0"| S | R | Qnext |"
@@ -2078,20 +2091,19 @@ registerCircuit('flip-flops tutorial', `
 0"D Flip-Flop"
 0"-----------"
 
-0"The D flip-flop or data flip-flop will remember the state of its D"
-0"input line whenever the clock goes from low to high. The clock is"
-0"edge-triggered, that is, only at that exact instant where it goes on,"
-0"it will update its state. Try it out: The way to get the output"
-0"enabled, is to first enable d, then turn the clock c from"
-0"off to on."
+0"The D flip-flop or data flip-flop will remember the state of its D input line"
+0"whenever the clock goes from low to high. The clock is edge-triggered, that"
+0"is, only at that exact instant where it goes on, it will update its state."
+0"Try it out: The way to get the output enabled, is to first enable d, then"
+0"turn the clock c from off to on."
 
  "D"s**>d#q**>l"Q"
         ###
  "C"s**>c##
 
-0"The truth table of the D flip-flop is as follows. It shows the"
-0"transition (if any) that happens at each clock cycle: What is the"
-0"next Q depending on the D input and the current Q"
+0"The truth table of the D flip-flop is as follows. It shows the transition (if"
+0"any) that happens at each clock cycle: What is the next Q depending on the D"
+0"input and the current Q"
 
 0"+---+-------+"
 0"| D | Qnext |"
@@ -2100,19 +2112,18 @@ registerCircuit('flip-flops tutorial', `
 0"| 1 |   1   |"
 0"+---+-------+"
 
-0"It looks as if the truth table shows that the state is just equal to"
-0"the input D, so it would seem as if it doesn't do much interesting?"
-0"Well, it remembers the state while the clock is off. A D flip-flop actually"
-0"delays the input by 1 clock cycle. By looping its output back to the"
-0"input with a multiplexer, this is a very useful component for registers in"
-0"CPU's"
+0"It looks as if the truth table shows that the state is just equal to the"
+0"input D, so it would seem as if it doesn't do much interesting? Well, it"
+0"remembers the state while the clock is off. A D flip-flop actually delays the"
+0"input by 1 clock cycle. By looping its output back to the input with a"
+0"multiplexer, this is a very useful component for registers in CPU's"
 
 0"T Flip-Flop"
 0"-----------"
 
-0"The T flip-flop or toggle flip-flop will toggle its state whenever the"
-0"T input is enabled and the clock is triggered. If T is off, it will."
-0"keep its state when the clock triggers."
+0"The T flip-flop or toggle flip-flop will toggle its state whenever the T"
+0"input is enabled and the clock is triggered. If T is off, it will. keep its"
+0"state when the clock triggers."
 
  "T"s**>t#q**>l"Q"
         ###
@@ -2131,10 +2142,10 @@ registerCircuit('flip-flops tutorial', `
 0"------------"
 
 
-0"The JK flip-flop is similar to the SR input, the J input behaves like"
-0"set and the k input like reset. But for the JK flip-flop, the combination"
-0"of having both j and k inputs enabled also has well defined behavior:"
-0"it toggles the output similar to a T flip-flop in that case."
+0"The JK flip-flop is similar to the SR input, the J input behaves like set and"
+0"the k input like reset. But for the JK flip-flop, the combination of having"
+0"both j and k inputs enabled also has well defined behavior: it toggles the"
+0"output similar to a T flip-flop in that case."
 
  "J"s**>j#q**>l"Q"
         ###
@@ -2142,9 +2153,9 @@ registerCircuit('flip-flops tutorial', `
         ###
  "C"s**>c##
 
-0"The truth table of the JK flip-flop is as follows. It shows the"
-0"transition (if any) that happens at each clock cycle: What is the"
-0"next Q depending on the D input and the current Q"
+0"The truth table of the JK flip-flop is as follows. It shows the transition"
+0"(if any) that happens at each clock cycle: What is the next Q depending on"
+0"the D input and the current Q"
 
 0"+---+---+-------+"
 0"| S | R | Qnext |"
@@ -2155,14 +2166,14 @@ registerCircuit('flip-flops tutorial', `
 0"| 1 | 1 |   Q'  |"
 0"+---+---+-------+"
 
-0"The JK flip-flop is universal, it can easily be configured to act as"
-0"SR, D or T flip-flop: T by connecting J and K together, D by making"
-0"K the inverse of J."
+0"The JK flip-flop is universal, it can easily be configured to act as SR, D or"
+0"T flip-flop: T by connecting J and K together, D by making K the inverse of"
+0"J."
 
-0"In practice, many flip-flops also come with an asynchronous reset"
-0"input (clear), and somtimes such asynchronous set input (preset),"
-0"and often also an inverted version of the output. Asynchronous means"
-0"it ignores the clock and overrides everything."
+0"In practice, many flip-flops also come with an asynchronous reset input"
+0"(clear), and somtimes such asynchronous set input (preset), and often also an"
+0"inverted version of the output. Asynchronous means it ignores the clock and"
+0"overrides everything."
 
       "preset"
           s
@@ -2197,12 +2208,13 @@ registerCircuit('flip-flops tutorial', `
 0"Epilogue"
 0"--------"
 
-0"This concludes the first flip-flop tutorial. Now enjoy using them in designs :)"
+0"This concludes the first flip-flop tutorial. Enjoy using them in designs :)"
 
 0"This tutorial was only a first introduction describing what they do."
 
 0"The next tutorial shows how to build flip-flops from logic gates, and shows"
-0"the difference between latches, gated latches and true edge-triggered flip-flops"
+0"the difference between latches, gated latches and true edge-triggered"
+0"flip-flops"
 
 `, 'flip_flops');
 
@@ -2210,17 +2222,16 @@ registerCircuit('flip-flops tutorial II: from gates', `
 0"Flip-flops from logic gates"
 0"---------------------------"
 
-0"See the previous tutorial for the explanation what flip-flops do and"
-0"what types exist."
+0"See the previous tutorial for the explanation what flip-flops do and what"
+0"types exist."
 
-0"Now let's make flip-flops from actual logic gates, rather than using"
-0"the idealized simulated devices. This section will look at the low"
-0"level timings in the gates, so make sure the update algorithm is"
-0"set to 'electron' mode"
+0"Now let's make flip-flops from actual logic gates, rather than using the"
+0"idealized simulated devices. This section will look at the low level timings"
+0"in the gates, so make sure the update algorithm is set to 'electron' mode"
 
-0"We will actually build up from latches towards true edge-triggered flip-flops."
-0"This because a latch is much simpler to make from gates, and the edge triggered"
-0"ones require more advanced circuits."
+0"We will actually build up from latches towards true edge-triggered"
+0"flip-flops. This because a latch is much simpler to make from gates, and the"
+0"edge triggered ones require more advanced circuits."
 
 0"SR NOR Latch"
 0"------------"
@@ -2251,8 +2262,8 @@ registerCircuit('flip-flops tutorial II: from gates', `
 
 0"Please carefully notice the wiring above: For convenience the LEDs are"
 0"connected to the opposite NOR gate so that the position matches the"
-0"corresponding switch. This same NOR latch will be reused many times"
-0"below, until a chapter about NAND logic much later."
+0"corresponding switch. This same NOR latch will be reused many times below,"
+0"until a chapter about NAND logic much later."
 
 0"A bit more compact representation of the same thing:"
 
@@ -2260,18 +2271,18 @@ registerCircuit('flip-flops tutorial II: from gates', `
          v *
  "R"s***>O**
 
-0"This latch can also be made from NAND gates instead of NOR gates, but"
-0"the inputs are then active-low."
+0"This latch can also be made from NAND gates instead of NOR gates, but the"
+0"inputs are then active-low."
 
 
 0"Gated SR Latch"
 0"--------------"
 
-0"An SR latch can be made 'gated' by adding an 'enable' input. Only when"
-0"the enable input is enabled, will the inputs have any effect. This"
-0"allows to control more easily when the state of the flip-flop should"
-0"update, even if the input signals are doing other things while enable"
-0"is off. This can be done by adding AND gates in front:"
+0"An SR latch can be made 'gated' by adding an 'enable' input. Only when the"
+0"enable input is enabled, will the inputs have any effect. This allows to"
+0"control more easily when the state of the flip-flop should update, even if"
+0"the input signals are doing other things while enable is off. This can be"
+0"done by adding AND gates in front:"
 
  "S"s**>a>O<*>l"Q  on"
         ^ * *
@@ -2283,10 +2294,10 @@ registerCircuit('flip-flops tutorial II: from gates', `
 0"-------------"
 
 0"A non-gated D-latch would not be too interesting, as it would simply"
-0"immediately output the same value as it input. Making it gates allows"
-0"it to remember the state while enable is off. A gated SR latch can"
-0"easily be modified into a gated D-latch: Connect the D input to S when"
-0"on, to R when off:"
+0"immediately output the same value as it input. Making it gates allows it to"
+0"remember the state while enable is off. A gated SR latch can easily be"
+0"modified into a gated D-latch: Connect the D input to S when on, to R when"
+0"off:"
 
  "D"s****>a>O<*>l"Q  on"
         * ^ * *
@@ -2298,12 +2309,11 @@ registerCircuit('flip-flops tutorial II: from gates', `
 0"JK and T Latch"
 0"--------------"
 
-0"Neither a T-latch nor a JK-latch make too much sense, the toggling"
-0"only works in stable ways with an edge-triggered clock input, without"
-0"it the signal would pulse rapidly and it would be quite random which"
-0"state it is in when disabling the enable input. So those only make"
-0"sense as flip-flops, see above as well as further below. Here's a"
-0"JK latch anyway:"
+0"Neither a T-latch nor a JK-latch make too much sense, the toggling only works"
+0"in stable ways with an edge-triggered clock input, without it the signal"
+0"would pulse rapidly and it would be quite random which state it is in when"
+0"disabling the enable input. So those only make sense as flip-flops, see above"
+0"as well as further below. Here's a JK latch anyway:"
 
 
          ***
@@ -2315,14 +2325,13 @@ registerCircuit('flip-flops tutorial II: from gates', `
          ***
 
 
-0"How the latch works: the right two NORs are an SR latch as seen above."
-0"The two inputs are AND-ed with the output of their corresponding NOR"
-0"(they could alternatively be AND-ed with the inverse of the output of"
-0"the opposite NOR), so the switch input will be seen by the NOR but"
-0"then immediately disable itself due to the NORs output going off. The"
-0"NOR keeps its state thanks to the opposite NOR though. But now if both"
-0"switches are active, this causes an eternal conflict between both NORs,"
-0"causing the blinking."
+0"How the latch works: the right two NORs are an SR latch as seen above. The"
+0"two inputs are AND-ed with the output of their corresponding NOR (they could"
+0"alternatively be AND-ed with the inverse of the output of the opposite NOR),"
+0"so the switch input will be seen by the NOR but then immediately disable"
+0"itself due to the NORs output going off. The NOR keeps its state thanks to"
+0"the opposite NOR though. But now if both switches are active, this causes an"
+0"eternal conflict between both NORs, causing the blinking."
 
 0"It can also be made from 4 NOR gates instead of NAND gates, but"
 0"the inputs are then active-low."
@@ -2384,12 +2393,12 @@ s****>d**]a**>l
     *******
 
 0"There is a small delay included in the above, and an AND gate with one"
-0"inverted input, so that it only outputs a short pulse when you just"
-0"enable the switch. Using this as enable gate of a gated SR or D latch"
-0"makes them behave more like an edge triggered flip-flop"
+0"inverted input, so that it only outputs a short pulse when you just enable"
+0"the switch. Using this as enable gate of a gated SR or D latch makes them"
+0"behave more like an edge triggered flip-flop"
 
-0"However, making sure the update algorithm is set to 'electron' mode,"
-0"try it out and you may notice a problem:"
+0"However, making sure the update algorithm is set to 'electron' mode, try it"
+0"out and you may notice a problem:"
 
   "S"s********>a>O<*>l"Q  on"
                ^ * *
@@ -2428,11 +2437,10 @@ s****>d**]a**>l
         *   *   ^ *
         *****   ***
 
-0"Often when enabling the clock, you may find the two output LEDs"
-0"blinking rapidly, and it sometimes even settles at the wrong output."
-0"This is because the pulse happens to be too short for the latch's"
-0"circuit to handle. Making the delay longer (2 ticks by adding a 2"
-0"at the d) helps in this case:"
+0"Often when enabling the clock, you may find the two output LEDs blinking"
+0"rapidly, and it sometimes even settles at the wrong output. This is because"
+0"the pulse happens to be too short for the latch's circuit to handle. Making"
+0"the delay longer (2 ticks by adding a 2 at the d) helps in this case:"
 
   "S"s********>a>O<*>l"Q  on"
          2     ^ * *
@@ -2471,30 +2479,30 @@ s****>d**]a**>l
         *   *   ^ *
         *****   ***
 
-0"A delay of 2 happens to work in this simulation because the paths in"
-0"the flip-flops are 2 ticks long (that is, in these NOR NOR latches,"
-0"the longest path goes through both NORs, which is 2 ticks), and the"
-0"2 at the delay happens to make it match those 2 ticks perfectly here"
+0"A delay of 2 happens to work in this simulation because the paths in the"
+0"flip-flops are 2 ticks long (that is, in these NOR NOR latches, the longest"
+0"path goes through both NORs, which is 2 ticks), and the 2 at the delay"
+0"happens to make it match those 2 ticks perfectly here"
 
-0"But that is always going to be fiddly. How much delay do you need in"
-0"high speed circuits to be optimally fast yet not too fast for it to?
-0"fail? In real life, especially for the toggling state of T and JK"
-0"flip-flops, it is very hard to get this right"
+0"But that is always going to be fiddly. How much delay do you need in high"
+0"speed circuits to be optimally fast yet not too fast for it to? fail? In real"
+0"life, especially for the toggling state of T and JK flip-flops, it is very"
+0"hard to get this right"
 
 0"Truly edge-triggered clocks"
 0"---------------------------"
 
-0"A more optimal edge-triggered clock, that does not rely on exact timing"
-0"of a short pulse, can be made by putting two gated D latches in a row, the"
-0"receiving the inverted enable (clock) signal, the second the regular"
-0"enable (clock) signal and with the output of the previous one as input."
-0"Then while the clock is low, your input can freely change the first one"
-0"but not the second one that gives the actual output. When the clock is high,"
-0"then the first one no longer responds to the input, but the second one will"
-0"update its state to that of the first one. As long as the clock remains high,"
-0"the first one cannot change, so after this update when the clock went high"
-0"nothing can affect the second one anymore either. That's how to get the perfect"
-0"positive edge-triggered effect. This is also called the 'master-slave' flip-flop."
+0"A more optimal edge-triggered clock, that does not rely on exact timing of a"
+0"short pulse, can be made by putting two gated D latches in a row, the"
+0"receiving the inverted enable (clock) signal, the second the regular enable"
+0"(clock) signal and with the output of the previous one as input. Then while"
+0"the clock is low, your input can freely change the first one but not the"
+0"second one that gives the actual output. When the clock is high, then the"
+0"first one no longer responds to the input, but the second one will update its"
+0"state to that of the first one. As long as the clock remains high, the first"
+0"one cannot change, so after this update when the clock went high nothing can"
+0"affect the second one anymore either. That's how to get the perfect positive"
+0"edge-triggered effect. This is also called the 'master-slave' flip-flop."
 0"(note: you could also avoid the invertor at an input of the second flip-flop"
 0"by using the inverted output from the first flip-flop)"
 
@@ -2507,20 +2515,19 @@ s****>d**]a**>l
         ^         *
   "C"s*************
 
-0"In the above circuit, moving the position where the invertor of the clock"
-0"is can make it negative edge-triggered instead of positive edge-triggered"
-
-
+0"In the above circuit, moving the position where the invertor of the clock is"
+0"can make it negative edge-triggered instead of positive edge-triggered"
 
 0"Similarly, using two gated JK latches can create a JK flip-flop in such"
 0"configuration, so that we get a useful toggle signal. Rather than two"
-0"independent JK latches, the output from the second one is fed back to"
-0"the first. If you enable both J and K, it will toggle state every time"
-0"the clock is positively edge triggered. Though this is not yet an actual perfect"
+0"independent JK latches, the output from the second one is fed back to the"
+0"first. If you enable both J and K, it will toggle state every time the clock"
+0"is positively edge triggered. Though this is not yet an actual perfect"
 0"edge-triggered JK flipflop yet in the strictest sense, see further."
 
-0"Note: Just like in real life, due to initial randomization of the states, the first clock"
-0"cycle may behave wrongly, and for convenience the switch was made initially on for that"
+0"Note: Just like in real life, due to initial randomization of the states, the"
+0"first clock cycle may behave wrongly, and for convenience the switch was made"
+0"initially on for that"
 
               ***********
               v         *
@@ -2534,24 +2541,23 @@ s****>d**]a**>l
             ^       *
     "C"S*************
 
-0"The above is useful but is not a truly perfect edge-triggered JK"
-0"flip-flop however. To be perfect, it should ONLY be affected by the"
-0"state of the inputs at the time the positive edge happens."
-0"But here you can try the following: Set its state to off first and turn"
-0"all three inputs off. Now turn J on and then off again (without"
-0"touching the clock). Now your inputs are still all off. Since J and K"
-0"are off, if you now enable to clock, a perfect JK flip-flop should not"
-0"turn on. But now enable to clock on the above one, and observe what"
-0"happens: it goes on anyway, because turning the J off and on again"
-0"managed to change the state of the first latch. The D-flip-flop did"
-0"not suffer from this problem, because the D was wired in such a way"
-0"that it always actively provides either a set or a reset to the inputs."
-0"But the extra freedom of the JK flip-flop introduces this bad behavior."
+0"The above is useful but is not a truly perfect edge-triggered JK flip-flop"
+0"however. To be perfect, it should ONLY be affected by the state of the inputs"
+0"at the time the positive edge happens. But here you can try the following:"
+0"Set its state to off first and turn all three inputs off. Now turn J on and"
+0"then off again (without touching the clock). Now your inputs are still all"
+0"off. Since J and K are off, if you now enable to clock, a perfect JK"
+0"flip-flop should not turn on. But now enable to clock on the above one, and"
+0"observe what happens: it goes on anyway, because turning the J off and on"
+0"again managed to change the state of the first latch. The D-flip-flop did not"
+0"suffer from this problem, because the D was wired in such a way that it"
+0"always actively provides either a set or a reset to the inputs. But the extra"
+0"freedom of the JK flip-flop introduces this bad behavior."
 
-0"For example, when making a T flip-flop from the above by wiring J and"
-0"K together, there is also a problem: when you disable T, there will"
-0"still be one more clock cycle that toggles the output anyway, which is"
-0"quite undesirable:"
+0"For example, when making a T flip-flop from the above by wiring J and K"
+0"together, there is also a problem: when you disable T, there will still be"
+0"one more clock cycle that toggles the output anyway, which is quite"
+0"undesirable:"
 
               ***********
               v         *
@@ -2565,10 +2571,10 @@ s****>d**]a**>l
             ^       *
     "C"S*************
 
-0"One way to solve it, is to take the D flip-flop from above, and instead"
-0"add additional combinational logic at the input to compute the desired"
-0"next state from the input and the current state. For T, we want next Q"
-0"on if and only if any of the following two conditions:"
+0"One way to solve it, is to take the D flip-flop from above, and instead add"
+0"additional combinational logic at the input to compute the desired next state"
+0"from the input and the current state. For T, we want next Q on if and only if"
+0"any of the following two conditions:"
 0"*) T is on and Q is off"
 0"*) T is off and Q is on"
 0"This logic can be compacted: Qnext = (T xor Q)"
@@ -2605,9 +2611,8 @@ s****>d**]a**>l
   "C"s*******************
 
 
-0"Adding asynchronous reset and set (clear and preset) can be done by"
-0"directly manipulating the second flip-flop with not much additional"
-0"logic needed:"
+0"Adding asynchronous reset and set (clear and preset) can be done by directly"
+0"manipulating the second flip-flop with not much additional logic needed:"
 
                     "preset"
                         s
@@ -2625,13 +2630,12 @@ s****>d**]a**>l
 0"-------"
 
 0"Above we saw latches (which are transparent), gated latches (which are"
-0"transparent if the gate is enabled), and flip-flops (which can change"
-0"only on a clock edge). And then we saw the types SR, D, T, JK. This"
-0"table summarizes the amount of inputs (including gate/clock but excluding"
-0"optional preset/clear inputs) of each of those types, or leaves the"
-0"table cell empty if there is no useful circuit (e.g. JK/T latch is not"
-0"because their toggle is chaotic, and D latch is not because it would be"
-0"simply a pass-through wire)"
+0"transparent if the gate is enabled), and flip-flops (which can change only on"
+0"a clock edge). And then we saw the types SR, D, T, JK. This table summarizes"
+0"the amount of inputs (including gate/clock but excluding optional"
+0"preset/clear inputs) of each of those types, or leaves the table cell empty"
+0"if there is no useful circuit (e.g. JK/T latch is not because their toggle is"
+0"chaotic, and D latch is not because it would be simply a pass-through wire)"
 
 0"    | latch | gated l. | flip-flop |"
 0"----+-------+----------+-----------+"
@@ -2649,9 +2653,9 @@ s****>d**]a**>l
 
 0"This showed how to build flip-flops from mixed gates."
 
-0"The next tutorial will build flip-flops from NAND gates only."
-0"It is also an important part since a few more canonical typical flip-flop circuits"
-0"are introduced."
+0"The next tutorial will build flip-flops from NAND gates only. It is also an"
+0"important part since a few more canonical typical flip-flop circuits are"
+0"introduced."
 
 0"Don't forget that you don't need to use all those logic gates if you don't"
 0"want to, there are simple built-in flip-flops available in the simulation"
@@ -2679,33 +2683,31 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"Flip-flops from NAND gates only"
 0"-------------------------------"
 
-0"The NAND gate is a universal gate so any circuit can be made from only"
-0"NAND."
-0"In the flip-flops tutorial we created perfect flip-flops from pure logic gates, but"
-0"it was a mix of different gates. In practice, it may be cheaper to"
+0"The NAND gate is a universal gate so any circuit can be made from only NAND."
+0"In the flip-flops tutorial we created perfect flip-flops from pure logic"
+0"gates, but it was a mix of different gates. In practice, it may be cheaper to"
 0"create circuits from only a single gate, the NAND gate. This argument"
-0"probably does not hold true today, where you can make any gates from"
-0"any transistors you want on the surfaces of chips, but the flip-flops"
-0"from NAND logic only are actually still quite cheap and elegant compared"
-0"to the ones from the previous tutorial, and often the canonical circuits, so the chapters"
+0"probably does not hold true today, where you can make any gates from any"
+0"transistors you want on the surfaces of chips, but the flip-flops from NAND"
+0"logic only are actually still quite cheap and elegant compared to the ones"
+0"from the previous tutorial, and often the canonical circuits, so the chapters"
 0"below are worth it for that."
 
-0"We could do something similar with NOR-only logic, in most circuits you"
-0"can keep all wiring the same and replace all NANDs with NORs and that"
-0"will often result in the same flip-flop except with active-low inputs"
-0"and outputs, and negative edge-triggered clock. But NAND is chosen in"
-0"this tutorial."
+0"We could do something similar with NOR-only logic, in most circuits you can"
+0"keep all wiring the same and replace all NANDs with NORs and that will often"
+0"result in the same flip-flop except with active-low inputs and outputs, and"
+0"negative edge-triggered clock. But NAND is chosen in this tutorial."
 
 0"NAND latches"
 0"------------"
 
-0"In the previous tutorial we saw the NOR latch. Now let's present the NAND latch, which"
-0"acts the same, except its inputs are active-low (so both switches off"
-0"is now the invalid combination, and you must set both switches on to"
-0"make it remember state)."
-0"NOTE: if you saw this latch flicker when just loading the circuit, that's normal, initially"
-0"a flip-flop is in a bistable state and takes time to settle to a random state,"
-0"this is emulated when we are in 'electron' mode, in real life this happens in nanoseconds."
+0"In the previous tutorial we saw the NOR latch. Now let's present the NAND"
+0"latch, which acts the same, except its inputs are active-low (so both"
+0"switches off is now the invalid combination, and you must set both switches"
+0"on to make it remember state). NOTE: if you saw this latch flicker when just"
+0"loading the circuit, that's normal, initially a flip-flop is in a bistable"
+0"state and takes time to settle to a random state, this is emulated when we"
+0"are in 'electron' mode, in real life this happens in nanoseconds."
 
  "S'"S**>A**>l"Q  on"
          ^ *
@@ -2713,13 +2715,13 @@ registerCircuit('flip-flops tutorial III: from NAND', `
          v *
  "R'"S**>A**>l"Q' off"
 
-0"Please look carefully at the wiring above: The arrows in the diagonal"
-0"wires are in the opposite direction as they were in the NOR latches"
-0"above, with as only reason to have the Q and Q' in more desirable"
-0"positions in the circuits below that use this same core."
+0"Please look carefully at the wiring above: The arrows in the diagonal wires"
+0"are in the opposite direction as they were in the NOR latches above, with as"
+0"only reason to have the Q and Q' in more desirable positions in the circuits"
+0"below that use this same core."
 
-0"To try it out more intuitivily with active-high input, here it is"
-0"with the inputs inverted at the cost of two extra NANDs:"
+0"To try it out more intuitivily with active-high input, here it is with the"
+0"inputs inverted at the cost of two extra NANDs:"
 
  "S"s**>A>A**>l"Q  on"
           ^ *
@@ -2727,17 +2729,16 @@ registerCircuit('flip-flops tutorial III: from NAND', `
           v *
  "R"s**>A>A**>l"Q' off"
 
-0"Note that most other circuits below will all be nicely active-high"
-0"while using the first active-low latch, because we'll be using NAND"
-0"gates at the input of this latch as well, which will invert the"
-0"inputs making them effectively active-high."
+0"Note that most other circuits below will all be nicely active-high while"
+0"using the first active-low latch, because we'll be using NAND gates at the"
+0"input of this latch as well, which will invert the inputs making them"
+0"effectively active-high."
 
-0"The JK latch can also be made with 4 NAND gates."
-0"Comparing this to the earlier JK latch: this is like using its SR"
-0"latch with NAND instead of NOR so their inputs become active-low,"
-0"replacing the input ANDs with NANDs to make them this active-low,"
-0"and connecting the opposite output to each input rather than inverse"
-0"of the corresponding output."
+0"The JK latch can also be made with 4 NAND gates. Comparing this to the"
+0"earlier JK latch: this is like using its SR latch with NAND instead of NOR so"
+0"their inputs become active-low, replacing the input ANDs with NANDs to make"
+0"them this active-low, and connecting the opposite output to each input rather"
+0"than inverse of the corresponding output."
 
        *****
        v v *
@@ -2760,10 +2761,9 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"gated NAND latches"
 0"------------------"
 
-0"Making the SR latch gated with NAND gates has the advantage it also"
-0"makes it active high instead of active low. Note that this configuration"
-0"isn't that different from the non-gated JK latch above, just different"
-0"wiring."
+0"Making the SR latch gated with NAND gates has the advantage it also makes it"
+0"active high instead of active low. Note that this configuration isn't that"
+0"different from the non-gated JK latch above, just different wiring."
 
 
 "S"s**>A**>A******>l"Q"
@@ -2809,11 +2809,11 @@ registerCircuit('flip-flops tutorial III: from NAND', `
        ^ ^   *
        *******
 
-0"However! Strictly speaking, NAND-logic only supports 2-input NAND gates."
-0"A 3-input NAND gate requires 3 2-input NANDs to create. So unfortunately"
-0"with only 2-input NAND gates (and 1-input which is a 2-input with the two"
-0"inputs connected), the JK latch looks a bit more expensive, with two regular"
-0"AND gates created from NAND+inverter at the front:"
+0"However! Strictly speaking, NAND-logic only supports 2-input NAND gates. A"
+0"3-input NAND gate requires 3 2-input NANDs to create. So unfortunately with"
+0"only 2-input NAND gates (and 1-input which is a 2-input with the two inputs"
+0"connected), the JK latch looks a bit more expensive, with two regular AND"
+0"gates created from NAND+inverter at the front:"
 
               *****
               v v *
@@ -2837,16 +2837,16 @@ registerCircuit('flip-flops tutorial III: from NAND', `
              ^ ^   *
              *******
 
-0"Note that, as in the previous tutorial, these JK and T latches are not useful due to the"
-0"uncontrolled toggling, even when it has an 'enable' input."
+0"Note that, as in the previous tutorial, these JK and T latches are not useful"
+0"due to the uncontrolled toggling, even when it has an 'enable' input."
 
-0"Of interest, also, is an alternative form of D latch, the Earle latch"
-0"It has a low and high enable input, for convenience they are both wired"
-0"to the same switch below (that leftmost NAND is not part of the normal Earle latch"
+0"Of interest, also, is an alternative form of D latch, the Earle latch It has"
+0"a low and high enable input, for convenience they are both wired to the same"
+0"switch below (that leftmost NAND is not part of the normal Earle latch"
 0"cicruit, it requires you to provide the two opposite enable inputs). Note"
-0"that this one also has a 3-input NAND in it, so purely with 2-input NANDs"
-0"it would take 6 NAND gates (7 including the negatino of the enable input)"
-0"Its advantage is that all paths are as long, rather than variable length"
+0"that this one also has a 3-input NAND in it, so purely with 2-input NANDs it"
+0"would take 6 NAND gates (7 including the negatino of the enable input) Its"
+0"advantage is that all paths are as long, rather than variable length"
 
 
      ***>A****
@@ -2875,9 +2875,9 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 "C"s***************
 
 
-0"There is also an entirely different D flip-flop from NAND gates possible,"
-0"the classical positive-edge-triggered D flip-flop. It requires either 6"
-0"NAND gates of which one is 3-input, or 8 2-input NAND gates."
+0"There is also an entirely different D flip-flop from NAND gates possible, the"
+0"classical positive-edge-triggered D flip-flop. It requires either 6 NAND"
+0"gates of which one is 3-input, or 8 2-input NAND gates."
 
       *******
       *     *
@@ -2900,10 +2900,10 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"the two D latches from transistors"
 
 
-0"Now let's add the master-slave JK flip-flop with two JK latches again,"
-0"though remember this one is not TRULY an edge triggered JK flip-flop, as"
-0"seen in the previous flip-flop tutorial (it's broken because, starting with"
-0"everything off, enable J, disable J, enable C. It toggles while it shouldn't)
+0"Now let's add the master-slave JK flip-flop with two JK latches again, though"
+0"remember this one is not TRULY an edge triggered JK flip-flop, as seen in the"
+0"previous flip-flop tutorial (it's broken because, starting with everything"
+0"off, enable J, disable J, enable C. It toggles while it shouldn't)"
 
 0"The version with 3-input NANDs:"
 
@@ -2950,12 +2950,12 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 "C"s*********************
 
 
-0"Fortunately, to make the JK flip-flop, we don't need any more NAND gates, the 4"
-0"NAND gates of the above XOR gate already serve perfectly well to implement the"
-0"logic. Just give it the two separate inputs. This is because XOR means the same as"
-0"as (T AND !Q) OR (!T AND Q), and for the JK flipflop we saw above that its input"
-0"logic is (J and !Q) OR (!K and Q), which looks similar except the !T is replaced"
-0"by a different input."
+0"Fortunately, to make the JK flip-flop, we don't need any more NAND gates, the"
+0"4 NAND gates of the above XOR gate already serve perfectly well to implement"
+0"the logic. Just give it the two separate inputs. This is because XOR means"
+0"the same as as (T AND !Q) OR (!T AND Q), and for the JK flipflop we saw above"
+0"that its input logic is (J and !Q) OR (!K and Q), which looks similar except"
+0"the !T is replaced by a different input."
 
             *******************
             *                 *
@@ -2998,8 +2998,8 @@ registerCircuit('flip-flops (from counters)', `
         v ^
 "E" s**>a**
 
-0"D flipflop. Two c's are needed to prevent anything from changing"
-0"except when clock goes from low to high."
+0"D flipflop. Two c's are needed to prevent anything from changing except when"
+0"clock goes from low to high."
 
 "D" s**>e<*>e<*
         v * v *
@@ -3007,11 +3007,11 @@ registerCircuit('flip-flops (from counters)', `
         m   ^
 "C" s********
 
-0"It's not possible to do the above or any of the next flip-flops with only"
-0"a single c, because when looping c's output back to the input, needed"
-0"for the control logic, it will disable itself the next tick, like below:"
-0"(if you've ever seen one of those amusing 'useless machines' that powers"
-0"off its own on switch, this does exactly the same)"
+0"It's not possible to do the above or any of the next flip-flops with only a"
+0"single c, because when looping c's output back to the input, needed for the"
+0"control logic, it will disable itself the next tick, like below: (if you've"
+0"ever seen one of those amusing 'useless machines' that powers off its own on"
+0"switch, this does exactly the same)"
 
     ***
     v *
@@ -3020,8 +3020,8 @@ s**>c****>l
 
 0"T flip-flop"
 
-0"Despite 'c' being a single-input T flip-flop, two c's are needed to use"
-0"it for one with separate T and clock input."
+0"Despite 'c' being a single-input T flip-flop, two c's are needed to use it"
+0"for one with separate T and clock input."
 
 "T" s**>e<*
         v *
@@ -3055,8 +3055,8 @@ s**>c****>l
 registerCircuit('flip-flops (from Qq)', `
 
 0"This one is just for interest in this simulation itself. The simulation"
-0"provides 'Qq' as an SR latch. Here we try to build all ideal flip-flops"
-0"from it."
+0"provides 'Qq' as an SR latch. Here we try to build all ideal flip-flops from"
+0"it."
 
 0"SR latch"
 
@@ -3135,10 +3135,12 @@ registerCircuit('edge detectors', `
       *  v
    s**>d>e**>l
 
-0"NOTE: in 'electron' mode, you can also make it with an or gate (serving as buffer/diode) instead of a 'd' gate."
-0"but in the 'fast' simulation algorithms, only the 'd' makes the 1-tick we need explicit"
+0"NOTE: in 'electron' mode, you can also make it with an or gate (serving as"
+0"buffer/diode) instead of a 'd' gate. but in the 'fast' simulation algorithms,"
+0"only the 'd' makes the 1-tick we need explicit"
 
-0"The single counter is a frequency halfer, so undos the effect of the frequency doubler:"
+0"The single counter is a frequency halfer, so undos the effect of the"
+0"frequency doubler:"
 
         l2
         ^
@@ -3312,7 +3314,8 @@ registerCircuit('Hello World terminal', `
 
 registerCircuit('Keyboard and screen', `
 
-0"The keyboard text typed fast at the bottom will slowly be transfered to the screen"
+0"The keyboard text typed fast at the bottom will slowly be transfered to the"
+0"screen"
 
 
    TTTTTTTTTTTTTT
@@ -3439,16 +3442,16 @@ registerCircuit('Synchronous up/down counter w. load', `
 
 
 registerCircuit('register', `
-0"A register can be made from a D flip-flop plus a mux. A D flip-flop is"
-0"in fact sufficient to have a working memory unit useful as a register,"
-0"but the addition of the mux allows to have an independent 'enable'"
-0"flag that will not interfere with the clock signal (if you would"
-0"try to AND an enable signal with the clock, then enabling it while"
-0"the clock is high would cause a positive edge that should not be there)."
-0"This is desirable because in a CPU you want registers to only be written"
-0"to when specifically enabled, and you do not want turning on enable"
-0"signals in between clock edges to mess up anything. The mux allows to"
-0"feed back the registers output to its input while not write-enabled."
+0"A register can be made from a D flip-flop plus a mux. A D flip-flop is in"
+0"fact sufficient to have a working memory unit useful as a register, but the"
+0"addition of the mux allows to have an independent 'enable' flag that will not"
+0"interfere with the clock signal (if you would try to AND an enable signal"
+0"with the clock, then enabling it while the clock is high would cause a"
+0"positive edge that should not be there). This is desirable because in a CPU"
+0"you want registers to only be written to when specifically enabled, and you"
+0"do not want turning on enable signals in between clock edges to mess up"
+0"anything. The mux allows to feed back the registers output to its input while"
+0"not write-enabled."
 
 
             l
@@ -3526,9 +3529,9 @@ registerCircuit('serial-in, serial-out shift register', `
 
 registerCircuit('serial-in, parallel-out shift register', `
 
-0"The serial-in, parallel-out (SIPO) shift register,"
-0"reads one input value per tick, and outputs all at the same time,"
-0"to the correct wires after the correct amount of shifts."
+0"The serial-in, parallel-out (SIPO) shift register, reads one input value per"
+0"tick, and outputs all at the same time, to the correct wires after the"
+0"correct amount of shifts."
 
 
         l  l  l  l  l  l  l  l
@@ -3544,8 +3547,8 @@ registerCircuit('serial-in, parallel-out shift register', `
 
 registerCircuit('parallel-in, serial-out shift register', `
 
-0"The parralel-in, serial-out (PISO) shift register,"
-0"reads all inputs at the same time, then outputs them one by one."
+0"The parralel-in, serial-out (PISO) shift register, reads all inputs at the"
+0"same time, then outputs them one by one."
 
 
 "W = write to the register"
@@ -3782,8 +3785,7 @@ registerCircuit('priority encoders', `
  "3 2 1 0"
 
 
-0"8-to-3 priority encoder, made from 2 4-to-2 priority encoders plus"
-0"glue logic"
+0"8-to-3 priority encoder, made from 2 4-to-2 priority encoders plus glue logic"
 
             "4 2 1"
              l l l
@@ -3814,9 +3816,9 @@ registerCircuit('priority encoders', `
 
 
 
-0"8-to-3 priority encoder, made from 5 4-to-2 priority encoders (the 5th
-0"is at the top) plus glue logic. Also has 'disable' input and ouptut"
-0"which allow making larger ones out of this."
+0"8-to-3 priority encoder, made from 5 4-to-2 priority encoders (the 5th is at"
+0"the top) plus glue logic. Also has 'disable' input and ouptut which allow"
+0"making larger ones out of this."
 
                               "8 4 2 1"
                                l l l l
@@ -3867,11 +3869,11 @@ registerCircuit('8-bit binary to BCD decoder', `
 
 0"8-bit binary to decimal (BCD), double dabble"
 
-0"BCD is a method of representing decimal numbers with 4 bits per"
-0"decimal digit (0-9)."
+0"BCD is a method of representing decimal numbers with 4 bits per decimal digit"
+0"(0-9)."
 
-0"This circuit converts a 8-bit binary number (0-255) into three"
-0"decimal digits."
+0"This circuit converts a 8-bit binary number (0-255) into three decimal"
+0"digits."
 
 0"For that it uses the 'double dabble' method. In this method, do 'add-3' for"
 0"multiple layers"
@@ -3900,11 +3902,11 @@ registerCircuit('8-bit binary to BCD decoder', `
     *   *   *   *
     s   s   s   s
 
-0"For 8-bit: 8 layers of add-3 modules. Not all are present since not"
-0"all input values have the ability to go above 5"
+0"For 8-bit: 8 layers of add-3 modules. Not all are present since not all input"
+0"values have the ability to go above 5"
 
-0"The ROM with B's is to turn the 4-bit decimal digits into the"
-0"segments for the 7-segment display."
+0"The ROM with B's is to turn the 4-bit decimal digits into the segments for"
+0"the 7-segment display."
 
 0"FIT:y"
 
@@ -4039,7 +4041,8 @@ registerCircuit('bcd to binary, 0-255', `
 0"to provide values 10-15 for digits, and it'll do what you'd expect from that"
 0"(That is, e.g. if giving 15 to the tens, it'll output 150)"
 
-0"The output here only goes to 255, so if you try to give larger input it'll overflow"
+0"The output here only goes to 255, so if you try to give larger input it'll"
+0"overflow"
 
                 "128    64    32    16    8     4     2     1"
                   l     l     l     l     l     l     l     l
@@ -4335,25 +4338,24 @@ registerTitle('Quantum Gates');
 registerCircuit('Quantum logic gates', `
 0"Here a few quantum logic gates are introduced in a handwavy way."
 
-0"Most useful quantum logic gates cannot be emulated here because they"
-0"involve negative, imaginary or complex numbers and superpositions. We"
-0"can only simulate the ones where inputs that are exactly True or False"
-0"only give outputs that are exactly True or False."
+0"Most useful quantum logic gates cannot be emulated here because they involve"
+0"negative, imaginary or complex numbers and superpositions. We can only"
+0"simulate the ones where inputs that are exactly True or False only give"
+0"outputs that are exactly True or False."
 
-0"The gates that are possible are emulated on classical bits here, but"
-0"do not be mislead, as in quantum physics each input and each output can"
-0"be much more, each can be associated with a normalized pair of complex"
-0"numbers with arbitrary precision to which a unitary complex matrix"
-0"operation is applied, and with multiple inputs and outputs this state"
-0"size (amount of complex numbers) grows exponentially larger."
+0"The gates that are possible are emulated on classical bits here, but do not"
+0"be mislead, as in quantum physics each input and each output can be much"
+0"more, each can be associated with a normalized pair of complex numbers with"
+0"arbitrary precision to which a unitary complex matrix operation is applied,"
+0"and with multiple inputs and outputs this state size (amount of complex"
+0"numbers) grows exponentially larger."
 
-0"So the gates shown below are classical gates simulating the behavior"
-0"of some quantum gates."
+0"So the gates shown below are classical gates simulating the behavior of some"
+0"quantum gates."
 
-0"Quantum gates all must have the property of being reversible: it has as"
-0"many inputs as outputs, and each input combination has a unique output"
-0"combination so you can tell from the output what the input was, and vice"
-0"versa."
+0"Quantum gates all must have the property of being reversible: it has as many"
+0"inputs as outputs, and each input combination has a unique output combination"
+0"so you can tell from the output what the input was, and vice versa."
 
 0"Pauli-X gate: acts like a NOT gate:"
 
@@ -4365,7 +4367,8 @@ s** **>l
    x
 s** **>l
 
-0"Controlled NOT gate: CNOT gate: acts like XOR plus lets the control input through."
+0"Controlled NOT gate: CNOT gate: acts like XOR plus lets the control input"
+0"through."
 
 s******>l
     v
@@ -4392,17 +4395,17 @@ s**>e**>l
 "c"s***>e******>l"(a AND b) XOR c"
 
 
-0"Fredkin and Toffoli are able to implement all classical logic gates,"
-0"they are universal classical logic gates (but they are not universal"
-0"quantum logic gates). See next circuits for examples of this."
+0"Fredkin and Toffoli are able to implement all classical logic gates, they are"
+0"universal classical logic gates (but they are not universal quantum logic"
+0"gates). See next circuits for examples of this."
 
-0"Other common quantum gates, such as Hadamard, Pauli-Y, Pauli-Z, roots of"
-0"the above, phase shift, ..., cannot be implemented here and so there is"
-0"not good reason to describe them here. But you need them to take the actual"
-0"advantage of quantum computing, you need gates that create superpositions."
-0"Also, we didn't use any of the notation normally used for quantum circuits"
-0"here. If interested check out literature on it and try out an online quantum"
-0"computer simulator."
+0"Other common quantum gates, such as Hadamard, Pauli-Y, Pauli-Z, roots of the"
+0"above, phase shift, ..., cannot be implemented here and so there is not good"
+0"reason to describe them here. But you need them to take the actual advantage"
+0"of quantum computing, you need gates that create superpositions. Also, we"
+0"didn't use any of the notation normally used for quantum circuits here. If"
+0"interested check out literature on it and try out an online quantum computer"
+0"simulator."
 
 `, 'quantum_gates');
 
@@ -4452,8 +4455,8 @@ s**>e**>l
   ^ v
 s**>e**>l
 
-0"control the AND gate (here implicitely in the middle switch, which only goes on when also its input is on)"
-0"to enable/disable the crossing:"
+0"control the AND gate (here implicitely in the middle switch, which only goes"
+0"on when also its input is on) to enable/disable the crossing:"
 
     s
     *
@@ -4463,12 +4466,12 @@ s***+>e**>l
   ^   v
 s****>e**>l
 
-0"Of course if no XOR gates are available, the AND/NOT/OR expressions given at the output labels above"
-0"can be used instead (requires 4 ands, 2 ors and an invertor)."
+0"Of course if no XOR gates are available, the AND/NOT/OR expressions given at"
+0"the output labels above can be used instead (requires 4 ands, 2 ors and an"
+0"invertor)."
 
-
-0"It's defined as a chip at the beginning so we can use it as follows now (with the"
-0"control input always at the top):"
+0"It's defined as a chip at the beginning so we can use it as follows now (with"
+0"the control input always at the top):"
 
 "c"s**>i**>l
        i
@@ -4477,7 +4480,8 @@ s****>e**>l
 "b"s**>i**>l
 
 
-0"The Fredkin gate can make all regular gates, but there are 'garbage' input and output signals to support the reversibility"
+0"The Fredkin gate can make all regular gates, but there are 'garbage' input"
+0"and output signals to support the reversibility"
 
 3"NOT"
 3"---"
@@ -4592,18 +4596,19 @@ registerCircuit('Toffoli gate', `
 
 0"The Toffoli gate is a reversible gate: every unique input has a unique output"
 
-0"It is a universal classical logic gate: all regular logic gates can be"
-0"built from it, as shown below."
+0"It is a universal classical logic gate: all regular logic gates can be built"
+0"from it, as shown below."
 
 0"It is also useful for quantum computing thanks to being reversible and"
-0"emulating classic gates. It is not a universal quantum gate though so"
-0"not sufficient. For more on that and its typical notation, see literature"
-0"or try out an online quantum computer simulator. Here we show a classical"
+0"emulating classic gates. It is not a universal quantum gate though so not"
+0"sufficient. For more on that and its typical notation, see literature or try"
+0"out an online quantum computer simulator. Here we show a classical"
 0"(non-quantum) Toffoli gate instead."
 
 0"It is also known as the controlled controlled not gate (CCNOT)"
 
-0"If both a and b are true, c gets inverted, else all outputs are the same as the inputs"
+0"If both a and b are true, c gets inverted, else all outputs are the same as"
+0"the inputs"
 
       *****
       *   *
@@ -4745,8 +4750,8 @@ registerTitle('Relays');
 
 registerCircuit('Relay Logic', `
 
-0"Here, we simulate different types of relays, and build logic gates out"
-0"of them."
+0"Here, we simulate different types of relays, and build logic gates out of"
+0"them."
 
     s
     *
@@ -4768,59 +4773,75 @@ s**   *
 
 
 
-0"What is a relay? It's a controlled switch. Optical versions exist, but the typical original version works"
-0"electromagnetically: It has is a coil and a mechanical switch. When you send current through the coil,"
-0"it becomes magnetic and attracts the switch. The switch, due to that, moves to close a contact. This makes"
-0"a connection between two terminal wires available at the relay. The magnetic (or optical) action ensures"
-0"there is no electrical contact between the electric circuit used to control the coil and the electric"
-0"circuit that goes through the switch. This isolation is very useful because it allows for example to control"
-0"a high power circuit safely with a low power electronic switch. Since they are controlled switches, relays can"
-0"also be used to make logic circuits."
-0"The relay described above was a simple controlled switch that was open or closed, and that is called an SPST relay."
-0"You can also make the switch connect to a different contact in both of its states. Then you have a SPDT relay. You can"
-0"also make the magnet control two (or more) independent switches. That gives a DPST or DPDT relay, or 4PDT etc..."
-0"The diagram above is a DPDT relay."
+0"What is a relay? It's a controlled switch. Optical versions exist, but the"
+0"typical original version works electromagnetically: It has is a coil and a"
+0"mechanical switch. When you send current through the coil, it becomes"
+0"magnetic and attracts the switch. The switch, due to that, moves to close a"
+0"contact. This makes a connection between two terminal wires available at the"
+0"relay. The magnetic (or optical) action ensures there is no electrical"
+0"contact between the electric circuit used to control the coil and the"
+0"electric circuit that goes through the switch. This isolation is very useful"
+0"because it allows for example to control a high power circuit safely with a"
+0"low power electronic switch. Since they are controlled switches, relays can"
+0"also be used to make logic circuits. The relay described above was a simple"
+0"controlled switch that was open or closed, and that is called an SPST relay."
+0"You can also make the switch connect to a different contact in both of its"
+0"states. Then you have a SPDT relay. You can also make the magnet control two"
+0"(or more) independent switches. That gives a DPST or DPDT relay, or 4PDT"
+0"etc... The diagram above is a DPDT relay."
 
 0"Important note about the simulation!"
 0"------------------------------------"
 
-0"Relays actually require physical things that LogicEmu cannot simulate."
-0"There are multiple different things we cannot simulate, but there are workarounds as described."
-0"*) the decoupling: Real relays physically decouple the 'coil' input from the switch,"
-0"   magnetically or optically. Here we'll just implement it as connected switches instead."
-0"   It has no real effect on the logic gates we make from the relays and we'll hide them in ICs anyway."
-0"*) 'open' switch state: LogicEmu does not support switches with regular two-directional wires."
-0"   Everything in the simulation is always uni-directional, like diodes. So the simulation can simulate"
-0"   a transistor, but it cannot simulate a controlled switch that has an open/closed state. And relays happen to be such"
-0"   controlled switches. The workaround is: for many relays defined below as IC templates, we make two versions:"
-0"   one for one direction, and another for the reversed direction (having the relay 180 degrees rotated)."
-0"*) tri-state logic: the open state of the relay switch creates a 'floating' state, the third"
-0"   state of tri-state logic. LogicEmu only supports two-state logic (0 and 1), but offers the 'V'"
-0"   device to simulate tristate buffers and to simulate multiple things outputting to the same wire. So"
-0"   'V' is used a lot in the circuits below. In real life, any V with two inputs is either a"
-0"   tristate buffer or a mechanical controlled switch, and any V with one input can be completely removed"
-0"   (but removing it in the simulation would give 'multiple devices outputting to same wire' error)."
-0"   In the simulation, multiple inputs to the same V act as AND, and multiple V's outputting to the same"
-0"   wire act as OR."
-0"   We could have implemented them with 'a' and 'o' in fact, but using the V's makes it more explicit
-0"   what we're doing here, it's purely a notational thing. Read the 'Full Help' for more about"
-0"   the V's if that was not clear, it's somewhat important to understand the circuits below. The V's are"
-0"   basically our poor man's tristate workaround and act as OR of ANDs."
-0"*) fully closed circuits: In real life, the relay's coil is activated with current, which requires two"
-0"   endpoints of the coil connected to a wire. In this simulation, voltage/current sources are not present"
-0"   since they are implicit. Because as you know in LogicEmu a switch to a LED looks like this: 's-->l',"
-0"   but in real life of course that electrical circuit must be closed, so implicitely there is a power"
-0"   supply between the switch and the LED. Similarly, in the simulation, we give only a single wire to"
-0"   the coil input of the relays. Just remember in real life there are two and there needs to be a voltage"
-0"   difference between them and current flowing to operate the coil."
+0"Relays actually require physical things that LogicEmu cannot simulate. There"
+0"are multiple different things we cannot simulate, but there are workarounds"
+0"as described."
+0"*) the decoupling: Real relays physically decouple the 'coil' input from the"
+0"   switch, magnetically or optically. Here we'll just implement it as"
+0"   connected switches instead. It has no real effect on the logic gates we"
+0"   make from the relays and we'll hide them in ICs anyway."
+0"*) 'open' switch state: LogicEmu does not support switches with regular"
+0"   two-directional wires. Everything in the simulation is always"
+0"   uni-directional, like diodes. So the simulation can simulate a transistor,"
+0"   but it cannot simulate a controlled switch that has an open/closed state."
+0"   And relays happen to be such controlled switches. The workaround is: for"
+0"   many relays defined below as IC templates, we make two versions: one for"
+0"   one direction, and another for the reversed direction (having the relay"
+0"   180 degrees rotated)."
+0"*) tri-state logic: the open state of the relay switch creates a 'floating'"
+0"   state, the third state of tri-state logic. LogicEmu only supports"
+0"   two-state logic (0 and 1), but offers the 'V' device to simulate tristate"
+0"   buffers and to simulate multiple things outputting to the same wire. So"
+0"   'V' is used a lot in the circuits below. In real life, any V with two"
+0"   inputs is either a tristate buffer or a mechanical controlled switch, and"
+0"   any V with one input can be completely removed (but removing it in the"
+0"   simulation would give 'multiple devices outputting to same wire' error)."
+0"   In the simulation, multiple inputs to the same V act as AND, and multiple"
+0"   V's outputting to the same wire act as OR. We could have implemented them"
+0"   with 'a' and 'o' in fact, but using the V's makes it more explicit what"
+0"   we're doing here, it's purely a notational thing. Read the 'Full Help' for"
+0"   more about the V's if that was not clear, it's somewhat important to"
+0"   understand the circuits below. The V's are basically our poor man's"
+0"   tristate workaround and act as OR of ANDs."
+0"*) fully closed circuits: In real life, the relay's coil is activated with"
+0"   current, which requires two endpoints of the coil connected to a wire. In"
+0"   this simulation, voltage/current sources are not present since they are"
+0"   implicit. Because as you know in LogicEmu a switch to a LED looks like"
+0"   this: 's-->l', but in real life of course that electrical circuit must be"
+0"   closed, so implicitely there is a power supply between the switch and the"
+0"   LED. Similarly, in the simulation, we give only a single wire to the coil"
+0"   input of the relays. Just remember in real life there are two and there"
+0"   needs to be a voltage difference between them and current flowing to"
+0"   operate the coil."
 
-
-0"All relays are defined as IC templates below, so their full form is visible here, and further down their"
-0"compact IC versions will be used.
-0"The naming of IC's chosen here is a vertical number (at capital I in the templates, at small i in the usages)"
-0"The first digit is the amount of inputs (other than the coil), the second is the amount of outputs. So for
-0"example i12 is a relay with 1 input (plus additionally the coil input) and 2 outputs, in other words an 'SPDT'"
-0"relay. And i21 is that same relay flipped around (the workdaround described above)."
+0"All relays are defined as IC templates below, so their full form is visible"
+0"here, and further down their compact IC versions will be used. The naming of"
+0"IC's chosen here is a vertical number (at capital I in the templates, at"
+0"small i in the usages) The first digit is the amount of inputs (other than"
+0"the coil), the second is the amount of outputs. So for example i12 is a relay"
+0"with 1 input (plus additionally the coil input) and 2 outputs, in other words"
+0"an 'SPDT' relay. And i21 is that same relay flipped around (the workdaround"
+0"described above)."
 
 0"SPST (NO) relay"
 0"---------------"
@@ -4831,32 +4852,35 @@ s**   *
 s**>V****>l
 
 0"The SPST (NO) relay (single pole, single throw, normally open) is a simple"
-0"controlled switch. The top input is the coil input."
-0"The left input is the input to the switch being controlled and the right is the switches output. In real"
-0"life, this relay has 4 terminals instead of 3 since you need two wires to send current through the coil."
-0"But as described above, this simulation makes that implicit."
+0"controlled switch. The top input is the coil input. The left input is the"
+0"input to the switch being controlled and the right is the switches output. In"
+0"real life, this relay has 4 terminals instead of 3 since you need two wires"
+0"to send current through the coil. But as described above, this simulation"
+0"makes that implicit."
 
 0"It may seem as if the above relay is basically just an AND gate of the two"
 0"switches, and maybe in the limited simulation here it is, but in practice"
 0"there's a big difference between the top input, and the other two terminals"
-0"which can connect any two things in any direction at any voltage, so"
-0"mentally treating it that way helps to understand real relays and"
-0"appreciate the below circuits better."
+0"which can connect any two things in any direction at any voltage, so mentally"
+0"treating it that way helps to understand real relays and appreciate the below"
+0"circuits better."
 
 
 0"SPST (NC) relay"
 0"---------------"
 
-0"The 'normally closed' SPST relay is similar, but the switch is wired such that"
-0"it makes contact by default, and when the coil is active it does not make contact"
+0"The 'normally closed' SPST relay is similar, but the switch is wired such"
+0"that it makes contact by default, and when the coil is active it does not"
+0"make contact"
 
    Is
    1*
    9w
 s**>V****>l
 
-0"NOTE: the IC id of this one breaks the rule of using #inputs, #outputs in the name."
-0"The 9 represents the fact that it's an inverted output (9 being decimal complement of -1)"
+0"NOTE: the IC id of this one breaks the rule of using #inputs, #outputs in the"
+0"name. The 9 represents the fact that it's an inverted output (9 being decimal"
+0"complement of -1)"
 
 
 0"SPDT relay"  0"SPDT relay flipped around"
@@ -4872,15 +4896,17 @@ s**   *                      * *>l
   *   w                      w *
   ***>V**>l            s****>V**
 
-0"The SPDT relay (single pole, double throw) is very similar to the SPST relay, except"
-0"the switch will also connect to a contact when in the 'off' position of the SPST relay."
-0"It is in fact an NO and an NC SPST with shared coil."
+0"The SPDT relay (single pole, double throw) is very similar to the SPST relay,"
+0"except the switch will also connect to a contact when in the 'off' position"
+0"of the SPST relay. It is in fact an NO and an NC SPST with shared coil."
 
-0"So now the coil will connect the common contact to either one, or the other, contact"
-0"on the other side. It acts like a MUX or a DEMUX (depending on which side you use as input)"
+0"So now the coil will connect the common contact to either one, or the other,"
+0"contact on the other side. It acts like a MUX or a DEMUX (depending on which"
+0"side you use as input)"
 
-0"Remember that we need to define two IC's here because the simulation requires an"
-0"input/output direction, but in real life this is the same relay flipped around."
+0"Remember that we need to define two IC's here because the simulation requires"
+0"an input/output direction, but in real life this is the same relay flipped"
+0"around."
 
 
 0"DPDT relay"   0"DPDT relay flipped around"0"DPDT relay one side flipped"
@@ -4904,8 +4930,8 @@ s**   *                   * *>l                l<*   *
   *   w                   w *                    *   w
   ***>V**>l         s****>V**                    ****V<**s
 
-0"The DPDT relay (double pole, double throw) is in fact two SPDT relays controlled by"
-0"the same coil."
+0"The DPDT relay (double pole, double throw) is in fact two SPDT relays"
+0"controlled by the same coil."
 
 
 0"4PDT relay"  0"4PDT relay flipped around"
@@ -4932,8 +4958,8 @@ s*    w                    w *>l
 
 
 
-0"The 4PDT relay (double pole, double throw) is in fact four SPDT relays controlled by"
-0"the same coil."
+0"The 4PDT relay (double pole, double throw) is in fact four SPDT relays"
+0"controlled by the same coil."
 
 0"DPST (NO) relay"
 0"---------------"
@@ -4964,12 +4990,12 @@ s*    w                    w *>l
 0"The DPST (normally closed) relay is two SPST relays to a single coil."
 
 
-0"Note: The SPST, SPDT, DPST, 4PDT, ... naming is also used for regular"
-0"(human controlled) switches and pushbuttons, not only for relays. The 's' switch of"
-0"LogicEmu is not directly one of those, as it's abstracted away which"
-0"physical build is used for it (it doesn't even have two poles in Logicemu),"
-0"the 's' of LogicEmu could be an SPST with a pullup or pulldown resistor, or"
-0"it could be an SPDT that can toggle between ground and positive voltage."
+0"Note: The SPST, SPDT, DPST, 4PDT, ... naming is also used for regular (human"
+0"controlled) switches and pushbuttons, not only for relays. The 's' switch of"
+0"LogicEmu is not directly one of those, as it's abstracted away which physical"
+0"build is used for it (it doesn't even have two poles in Logicemu), the 's' of"
+0"LogicEmu could be an SPST with a pullup or pulldown resistor, or it could be"
+0"an SPDT that can toggle between ground and positive voltage."
 
 0"Trying out the IC instances"
 0"---------------------------"
@@ -5020,22 +5046,25 @@ s*    w                    w *>l
 0"Making logic gates from relays"
 0"------------------------------"
 
-0"To make logic gates from relays, we control the coils (the top inputs) with the gate"
-0"input signals. The inputs from the left are passing through the constant '1' from the"
-0"left. Because when making logic gates with relays, the goal is actually to open/close"
-0"a switch network made from all the relays, controlled by their coils."
+0"To make logic gates from relays, we control the coils (the top inputs) with"
+0"the gate input signals. The inputs from the left are passing through the"
+0"constant '1' from the left. Because when making logic gates with relays, the"
+0"goal is actually to open/close a switch network made from all the relays,"
+0"controlled by their coils."
 
-0"So in the circuits below, usually the gate inputs are at the top and the outputs to the right."
+0"So in the circuits below, usually the gate inputs are at the top and the"
+0"outputs to the right."
 
-0"The minimal possible relay type is used everywhere below. In real life, if you want"
-0"to make such gates from a bunch of relays, it's likely you got a bunch of relays of all the same type,"
-0"That's usually fine, almost all the below circuits can be trivially be replaced with only"
-0"SPDT relays or only DPDT relays."
-0"If you have only SPDT's, DPDT can be made from two of them. If you have only DPDT's, an SPDT can be"
-0"made by not using some inputs/outputs."
-0"If you have only SPST (NO) relays, many gates below are not easily implementable."
-0"You can make an SPDT from two SPST's plus an invertor so you then need a way to make that invertor,"
-0"or use a normally open (NO) and a normally closed (NC) SPST if you have both types."
+0"The minimal possible relay type is used everywhere below. In real life, if"
+0"you want to make such gates from a bunch of relays, it's likely you got a"
+0"bunch of relays of all the same type, That's usually fine, almost all the"
+0"below circuits can be trivially be replaced with only SPDT relays or only"
+0"DPDT relays. If you have only SPDT's, DPDT can be made from two of them. If"
+0"you have only DPDT's, an SPDT can be made by not using some inputs/outputs."
+0"If you have only SPST (NO) relays, many gates below are not easily"
+0"implementable. You can make an SPDT from two SPST's plus an invertor so you"
+0"then need a way to make that invertor, or use a normally open (NO) and a"
+0"normally closed (NC) SPST if you have both types."
 
 0"AND gate"
 0"--------"
@@ -5048,10 +5077,9 @@ s*    w                    w *>l
 C>1**>1**>l
   1   1
 
-0"This is a two-input AND gate: only if the two coils are activates, will"
-0"the constant signal be able to pass through the LED (or in real life,"
-0"will the circuit containing the LED and a here hidden power supply be"
-0"closed)"
+0"This is a two-input AND gate: only if the two coils are activates, will the"
+0"constant signal be able to pass through the LED (or in real life, will the"
+0"circuit containing the LED and a here hidden power supply be closed)"
 
 0"Multi-input AND gate"
 0"--------------------"
@@ -5079,8 +5107,8 @@ C*****+**** *
         *************>l
 
 0"NOTE: remember those two V's on the bottom are not needed in real life. It's"
-0"just there due to a limitation of the simulation. The wires are connected, either"
-0"relay being closed will connect the power source and the LED"
+0"just there due to a limitation of the simulation. The wires are connected,"
+0"either relay being closed will connect the power source and the LED"
 
 0"Multi-input OR gate"
 0"-------------------"
@@ -5099,15 +5127,16 @@ C*****+*****+*****+*****+*********
 0"XOR gate"
 0"--------"
 
-0"A XOR gate can be made from two SPDT relays, one flipped compared to"
-0"the other and the wires crossed. This way, toggling one relay crosses"
-0"the signal in such a way that it connects from one output of the first"
-0"to a connected output of the other, but enabling both or no relays makes the"
-0"connection mismatch."
+0"A XOR gate can be made from two SPDT relays, one flipped compared to the"
+0"other and the wires crossed. This way, toggling one relay crosses the signal"
+0"in such a way that it connects from one output of the first to a connected"
+0"output of the other, but enabling both or no relays makes the connection"
+0"mismatch."
 
-0"This is similar to how a light in a home controlled by two classical wall switches works."
-0"Light switches in a room typically also behave like XOR, since that is the way you can get"
-0"each switch to function to toggle the light on and off."
+0"This is similar to how a light in a home controlled by two classical wall"
+0"switches works. Light switches in a room typically also behave like XOR,"
+0"since that is the way you can get each switch to function to toggle the light"
+0"on and off."
 
     s   s
     v   v
@@ -5118,18 +5147,18 @@ C**>1 x 2**>l
 0"Multi-input XOR gate"
 0"--------------------"
 
-0"Note that multi-input XOR gate works like parity (even/odd) gate, not"
-0"as one-hot (exactly one input) detector."
+0"Note that multi-input XOR gate works like parity (even/odd) gate, not as"
+0"one-hot (exactly one input) detector."
 
-0"This works once again like wall switches for lights in homes, for rooms"
-0"that have more than two wall switches. All the inner switches use a DPDT"
-0"to emulate a '4-way' home switch that crosses wires based on the signal,"
-0"and the two outer switches use the simpler SPDT's to emulate '3-way' home"
-0"switches. A wire crossing at the end is needed only if there's an even"
-0"amount of switches (at least in the configuration used here)."
+0"This works once again like wall switches for lights in homes, for rooms that"
+0"have more than two wall switches. All the inner switches use a DPDT to"
+0"emulate a '4-way' home switch that crosses wires based on the signal, and the"
+0"two outer switches use the simpler SPDT's to emulate '3-way' home switches. A"
+0"wire crossing at the end is needed only if there's an even amount of switches"
+0"(at least in the configuration used here)."
 
-0"Each inner relay will either swap or not swap two inputs, only if the"
-0"correct amount of swaps happens, the output will go on."
+0"Each inner relay will either swap or not swap two inputs, only if the correct"
+0"amount of swaps happens, the output will go on."
 
     s     s     s
     v     v     v
@@ -5175,8 +5204,8 @@ C**>1
 0"Two NOT gates"
 0"-------------"
 
-0"Two NOT gates in a row cancel each other out, but this shows how to connect multiple"
-0"to show that both need a power source input."
+0"Two NOT gates in a row cancel each other out, but this shows how to connect"
+0"multiple to show that both need a power source input."
 
     s
     *
@@ -5192,13 +5221,13 @@ C********
 0"NAND gate"
 0"---------"
 
-0"One way to make NAND is like the AND above and an extra invertor behind"
-0"it, but that would cost three relays."
+0"One way to make NAND is like the AND above and an extra invertor behind it,"
+0"but that would cost three relays."
 
-0"To make the NAND gate with two relays, the configuration of the OR gate"
-0"is used, but with the inputs inverted (by Morgan's law, this turns"
-0"OR into NAND), by using 'normally closed' SPST relays (or alternatively two"
-0"SPDT relays with the inverted output chosen)."
+0"To make the NAND gate with two relays, the configuration of the OR gate is"
+0"used, but with the inputs inverted (by Morgan's law, this turns OR into"
+0"NAND), by using 'normally closed' SPST relays (or alternatively two SPDT"
+0"relays with the inverted output chosen)."
 
       s     s
       *     *
@@ -5350,22 +5379,22 @@ C***>i    ***>i
       *****>2
             4*********>l"Q'"
 
-0"The first relay acts as an inverter for the first switch. So it's only"
-0"the second relay that is the essense of the latch. The set switch"
-0"enables its coil, and makes it go on thanks to the power from the"
-0"inverted R input. It then stays on thanks to the loop back of its output to"
-0"its own coil. When pressing the reset switch, since it's inverted this"
-0"disables the power input to the core relay, and turns off the latch."
-0"The main relay is a DPDT, so it's possible to use the second circuit for the external"
-0"outputs (rather than sharing the output that drives its coil), including an inverted Q'."
+0"The first relay acts as an inverter for the first switch. So it's only the"
+0"second relay that is the essense of the latch. The set switch enables its"
+0"coil, and makes it go on thanks to the power from the inverted R input. It"
+0"then stays on thanks to the loop back of its output to its own coil. When"
+0"pressing the reset switch, since it's inverted this disables the power input"
+0"to the core relay, and turns off the latch. The main relay is a DPDT, so it's"
+0"possible to use the second circuit for the external outputs (rather than"
+0"sharing the output that drives its coil), including an inverted Q'."
 
 
 0"In real life, it is also possible to let the coil of the main relay be"
-0"connected to the ground through the reset relay and to the positive"
-0"voltage through this relay itself. Then resetting happens by"
-0"disconnecting it from the ground. But we cannot simulate it here since"
-0"the simulation doesn't have two terminals for the coil and no way to distinguish"
-0"the disconnected and ground states."
+0"connected to the ground through the reset relay and to the positive voltage"
+0"through this relay itself. Then resetting happens by disconnecting it from"
+0"the ground. But we cannot simulate it here since the simulation doesn't have"
+0"two terminals for the coil and no way to distinguish the disconnected and"
+0"ground states."
 
 
 0"Fredkin gate"
@@ -5671,11 +5700,11 @@ s******+******** *
 
 registerCircuit('NAND logic III: no wire crossings', `
 
-0"Here we make circuits only from NAND, and without any wire crossings"
-0"either. So purely NAND in 2-dimensional plane (because a wire crossing"
-0"is in fact 3-dimensional). Of course there is the 10-NAND wire crossing"
-0"and sometimes it will have to be used, but for most circuits below"
-0"more minimal solutions were found."
+0"Here we make circuits only from NAND, and without any wire crossings either."
+0"So purely NAND in 2-dimensional plane (because a wire crossing is in fact"
+0"3-dimensional). Of course there is the 10-NAND wire crossing and sometimes it"
+0"will have to be used, but for most circuits below more minimal solutions were"
+0"found."
 
 
 0"All logic gates from NAND"
@@ -5735,13 +5764,12 @@ s***>A**>A>A***>l     *>A**>A          * * v
                                            v
                                            l
 
-0"Note that in electron mode, there are some flickering garbage signals"
-0"in the wire crossing due to different path lengths. This is never fixable"
-0"with NAND gates. This can only be fixed with buffers (delays)."
-0"We can use LEDs as such buffers (after all, we're allowed to use l,"
-0"but not o which you'd normally use for that). The longest path goes"
-0"through 5 gates, so LEDs are added such that every possible path from"
-0"input to output is 5 devices long."
+0"Note that in electron mode, there are some flickering garbage signals in the"
+0"wire crossing due to different path lengths. This is never fixable with NAND"
+0"gates. This can only be fixed with buffers (delays). We can use LEDs as such"
+0"buffers (after all, we're allowed to use l, but not o which you'd normally"
+0"use for that). The longest path goes through 5 gates, so LEDs are added such"
+0"that every possible path from input to output is 5 devices long."
 
 s****>l>l>A>l>A****>l
     *     ^   ^
@@ -6010,11 +6038,12 @@ registerCircuit('gray code', `
 
 registerCircuit('bit sorter', `
 
-0"The bit sorter sorts the input bits by value, putting all 0's left and all 1's right"
-
+0"The bit sorter sorts the input bits by value, putting all 0's left and all"
+0"1's right"
 
 0"slowest even if it looks small. Use electron mode to see speed difference"
-0"Note the single input gates on the sides, they are just buffers to make all path lengths the same."
+0"Note the single input gates on the sides, they are just buffers to make all"
+0"path lengths the same."
 
 
 l l l l l l l l
@@ -6219,9 +6248,10 @@ registerCircuit('4-bit majority gate', `
 registerCircuit('population count', `
 
 0"The population count circuit outputs in binary how many inputs bits are one."
-0"They can be made from half and full adders, with corresponding bits criss-cross connected to next layers."
-0"For example, the 2-bit population is a half adder, 3-bit population count is a full adder, and the higher"
-0"ones use more and more adders. Those circuits are not guaranteed to be optimal."
+0"They can be made from half and full adders, with corresponding bits"
+0"criss-cross connected to next layers. For example, the 2-bit population is a"
+0"half adder, 3-bit population count is a full adder, and the higher ones use"
+0"more and more adders. Those circuits are not guaranteed to be optimal."
 
 
      "1"
@@ -6377,11 +6407,12 @@ registerTitle('Cellular Automata');
 
 registerCircuit('Conway\'s game of life single cell', `
 
-0"A single cell of Conway's game of life. If the clock is activated,"
-0"it will go on if it has 3 neighbors, stay on if it was on and has 2 neighbors,"
-0"go off in all other cases. The neighbors here are the small switches on the sides"
+0"A single cell of Conway's game of life. If the clock is activated, it will go"
+0"on if it has 3 neighbors, stay on if it was on and has 2 neighbors, go off in"
+0"all other cases. The neighbors here are the small switches on the sides"
 
-0"Internally, half and full adders are used for population count to do that computation."
+0"Internally, half and full adders are used for population count to do that"
+0"computation."
 
 0"For compactness, a wire bus from all inputs to the core is used."
 
@@ -7020,15 +7051,15 @@ registerTitle('Large');
 registerCircuit('16-bit carry lookahead adder', `
 0"MODE:electron (set to electron by default to show the gate delays)"
 
-0"This circuit combines 4 4-bit CLA's to form a fast 16-bit adder."
-0"Read the description of the 4-bit CLA first before this one."
+0"This circuit combines 4 4-bit CLA's to form a fast 16-bit adder. Read the"
+0"description of the 4-bit CLA first before this one."
 
-0"An IC (I0) is used in the circuit at the bottom to define the 4-bit CLA. Then the IC is"
-0"used 4 times (the boxes with i0) to get the 16-bit adder."
+0"An IC (I0) is used in the circuit at the bottom to define the 4-bit CLA. Then"
+0"the IC is used 4 times (the boxes with i0) to get the 16-bit adder."
 
-0"Note that the CLU logic (the logic with the large AND and OR gates) for the 16-bit unit"
-0"is the exact same logic as the CLU logic in the 4-bit unit. We just replaced the"
-0"1-bit full adders with 4-bit CLAs."
+0"Note that the CLU logic (the logic with the large AND and OR gates) for the"
+0"16-bit unit is the exact same logic as the CLU logic in the 4-bit unit. We"
+0"just replaced the 1-bit full adders with 4-bit CLAs."
 
 0"A 64-bit adder can be made recursively from this again, and so on."
 
@@ -7097,12 +7128,12 @@ registerCircuit('16-bit ripple vs lookahead speed comparison', `
 
 0"MODE:electron (set to electron by default to show the gate delays)"
 
-0"This circuit allows to compare the speed of the 16-bit ripple carry adder and 16-bit"
-0"carry lookahead adder in electron mode. The input A has already been set to all ones to"
-0"enable the case with longest carry propagation."
-0"Just press the buttons marked 'CARRY' or alternatively the ones marked 'B1' (the first"
-0"bit of B) (but not both at the same time) to see the rippling propagation in the first"
-0"adder, and the faster update in the second adder"
+0"This circuit allows to compare the speed of the 16-bit ripple carry adder and"
+0"16-bit carry lookahead adder in electron mode. The input A has already been"
+0"set to all ones to enable the case with longest carry propagation. Just press"
+0"the buttons marked 'CARRY' or alternatively the ones marked 'B1' (the first"
+0"bit of B) (but not both at the same time) to see the rippling propagation in"
+0"the first adder, and the faster update in the second adder"
 
 
         l     l     l     l     l     l     l     l     l     l     l     l     l     l     l     l
@@ -7153,8 +7184,9 @@ registerCircuit('16-bit ripple vs lookahead speed comparison', `
 
 
 
-0"The circuit below is the chip-template for the 4-bit CLA used 4 times above. Using a chip has no effect on speed."
-0"It does obscure some of the logic above from view but otherwise it would be too large to fit on a screen."
+0"The circuit below is the chip-template for the 4-bit CLA used 4 times above."
+0"Using a chip has no effect on speed. It does obscure some of the logic above"
+0"from view but otherwise it would be too large to fit on a screen."
 
                                                           I0                  s"c0"
  2"c0"--------------------------------------------*------------*--------*-----*
@@ -7373,15 +7405,17 @@ registerCircuit('32-bit divider', `
 
 
 registerCircuit('74181 ALU', `
-0"The once popular 74181 4-bit ALU. Check out its spec sheet for more information."
+0"The once popular 74181 4-bit ALU. Check out its spec sheet for more"
+0"information."
 
 0"It supports 32 operations (of which many overlapping/similar/trivial ones)"
 
 0"The m bit selects between two groups of 16 operations (mode): when m is low,"
 0"the 16 different logic operations (0, AND, IMPLY, ...). When m is high,"
-0"addition/subtraction operations, with various combinations of adding/subtracting"
-0"A and B, subtracting 1 of the result (to add 1 use carry instead), and several"
-0"that have A OR B, A AND B or bit-inverted versions as operands"
+0"addition/subtraction operations, with various combinations of"
+0"adding/subtracting A and B, subtracting 1 of the result (to add 1 use carry"
+0"instead), and several that have A OR B, A AND B or bit-inverted versions as"
+0"operands"
 
 0"Bits s0-s3 select one of the 16 operations for the current m"
 
@@ -7394,10 +7428,10 @@ registerCircuit('74181 ALU', `
 0"= is true when all output bits are true (when result of subtraction in active-low"
 0"usage is zero)"
 
-0"p = carry propagate, g = carry generate, used to combine multiple chips (including a separate"
-0"carry lookahead chip) to make 8-bit and higher ALU. These are standard signals of carry"
-0"lookahead adders, for more info on those see the included carry lookahead adder circuit from"
-0"the dropdown."
+0"p = carry propagate, g = carry generate, used to combine multiple chips"
+0"(including a separate carry lookahead chip) to make 8-bit and higher ALU."
+0"These are standard signals of carry lookahead adders, for more info on those"
+0"see the included carry lookahead adder circuit from the dropdown."
 
 0"You can interpret the inputs/outputs as either active low or active high"
 0"and both cases work equally well (but the intended use is active-low,"
@@ -7495,8 +7529,10 @@ registerCircuit('74181 ALU', `
  "F'0             F'1        A=B          F'2                       F'3                      G'    Cn+4        P'"
 
 
-0"NOTE! The IC definition here is not the true pin-order of the physical chip! But it is how the official logic diagram"
-0"is specified. The true pinout has 2x12 pins, has the inputs/outputs in a more mixed order, and has the voltage and ground pins."
+0"NOTE! The IC definition here is not the true pin-order of the physical chip!"
+0"But it is how the official logic diagram is specified. The true pinout has"
+0"2x12 pins, has the inputs/outputs in a more mixed order, and has the voltage"
+0"and ground pins."
 
 
 0"Instance with all inputs at zero"
@@ -7683,8 +7719,8 @@ registerCircuit('16-bit adder with decimal IO', `
 0"Binary 16-bit adder with decimal input and decimal output."
 
 0"Decimal conversions done with the built-in terminal component. For true"
-0"decimal conversion circuits from gates, see bcd/binary encoder/decoder circuits"
-0"or the 'compact display' circuits"
+0"decimal conversion circuits from gates, see bcd/binary encoder/decoder"
+0"circuits or the 'compact display' circuits"
 
 0"The output is 17-bit: the carry is used as extra output bit."
 
@@ -7972,8 +8008,9 @@ registerCircuit('4-bit CPU', `
         3210yyyyyyyyyyyyyy                             "oooo aaaa bbbb iccc"
                                                        " op |  A |  B |b indir, C"
 
-0"Control the CPU here: clock to toggle ticking, manual clock to do a single tick, reset"
-0"to reset the whole memory, reset IP to only reset the instruction pointer (program counter)."
+0"Control the CPU here: clock to toggle ticking, manual clock to do a single"
+0"tick, reset to reset the whole memory, reset IP to only reset the instruction"
+0"pointer (program counter)."
 
              ###
              ###"manual clock"0
@@ -8001,8 +8038,9 @@ registerCircuit('4-bit CPU', `
  0g>O*******************             ^ Q<g2
                                      g6
 
-0"All the global 'g' signals are control signals: 0=clock, 1=reset, 2=reset only IP (instruction pointer), 3=halt,"
-0"4-7=stages, 8-11=opcode, 12=c msb, 13=alu, 14=b imm, 15=a indir, 16=IP jump, 17-18=alu select, 19=carry,"
+0"All the global 'g' signals are control signals: 0=clock, 1=reset, 2=reset"
+0"only IP (instruction pointer), 3=halt, 4-7=stages, 8-11=opcode, 12=c msb,"
+0"13=alu, 14=b imm, 15=a indir, 16=IP jump, 17-18=alu select, 19=carry,"
 0"20=zero, 21=IP carry"
 
 
@@ -8102,15 +8140,19 @@ registerCircuit('4-bit CPU', `
 0"1111: jump to b if carry flag not set"
 
 0"Instruction notes:"
-0"-There is no direct MOV instruction, to do direct MOV use ADD, AND or OR with an operand set to zero."
+0"-There is no direct MOV instruction, to do direct MOV use ADD, AND or OR"
+0" with an operand set to zero."
 0"-To do left shift, add a number to itself"
-0"-To compare, subtract two values. If 0000, they are equal. To test lesser than, test the carry flag (1 if a >= b)"
+0"-To compare, subtract two values. If 0000, they are equal. To test lesser"
+0" than, test the carry flag (1 if a >= b)"
 0"-To negate bits, XOR with 1111"
-0"-there is no unconditional jump. Use conditional one with value known to be 0 or non-0"
+0"-There is no unconditional jump. Use conditional one with value known to be"
+0" 0 or non-0"
 
-0"To enter a program, fill in the matrix of 16x16 instruction bits with b or B. Also fill any of the"
-0"user registers, that is registers 8-f. But registers 0-7 cannot be edited, and may be assumed to all"
-0"start at 0 initially. They may be overwritten by the program as working memory or user output."
+0"To enter a program, fill in the matrix of 16x16 instruction bits with b or B."
+0"Also fill any of the user registers, that is registers 8-f. But registers 0-7"
+0"cannot be edited, and may be assumed to all start at 0 initially. They may be"
+0"overwritten by the program as working memory or user output."
 
 "A few example programs:"
 
@@ -8242,8 +8284,9 @@ registerCircuit('8-bit divider effect', `
 
 0"MODE:electron"
 
-0"This circuit automatically shows the delay of the operation of the divider in action using a strategically placed timer."
-0"The timer makes it alternate between computing 15/1 and 15/3"
+0"This circuit automatically shows the delay of the operation of the divider in"
+0"action using a strategically placed timer. The timer makes it alternate"
+0"between computing 15/1 and 15/3"
 
                  "r128         r64          r32          r16          r8           r4           r2           r1"
                   l            l            l            l            l            l            l            l
