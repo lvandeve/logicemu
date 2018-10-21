@@ -271,8 +271,8 @@ Good combinations of AUTOUPDATE and UPDATE_ALGORITHM are as follows:
 var worldDiv = makeDiv(10, 128, 0, 0);
 var renderingMessageDiv = makeDiv(10, 128, 0, 0);
 
-var AUTOUPDATE = 1; // 0: only update on manual tick, 1: update once whenever user switch or real time timer event happened, 2: update all the time, every so many ticks
-var UPDATE_ALGORITHM = 2; // 0=scanline, 1=fast recursive, 2=slow, 3=slow with infinite metastability fix
+var AUTOUPDATE = 1; // values described below
+var UPDATE_ALGORITHM = 2; // values described below
 
 // search words: autochoose auto_choose autoalgo auto_algo
 var AUTO_CHOOSE_MODE = true; // automatically choose AUTOUPDATE and UPDATE_ALGORITHM based on the circuit
@@ -296,19 +296,21 @@ var use_bresenham = true; // if true, use bresenham for diagonal lines to ensure
 AUTOUPDATE values:
 ------------------
 
-0: never update unless pressing the "tick" button
+0: never update unless on manual tick
 
 1: update when the user presses any input button, or when timers update. This is very useful for combinatorial networks with algorithm 1. However, when things take multiple steps to update, such as other update algorithms, or sequential circuits with any update algorithm, this is useless and 0 (manual ticking) or 2 (realtime ticking) should be used.
 
 2: update automatically every AUTOSECONDS seconds
 
+3: between 1 and 2: update as long as things keep changing
+
 
 UPDATE_ALGORITHM info:
 ----------------------
 
-0: "scanline": Components updated in scanline order and could read inputs from somtimes already-updated, some not-yet-updated components, so e.g. a signal travels faster left to right than right to left. Interestingly, this works best of all with the JK flipflop (simulated at 20Hz, with push button for the clock)
+0: "scanline": Components updated in scanline order and could read inputs from sometimes already-updated, some not-yet-updated components. This has problems such as shape of circuit affects result, so is only included for completeness, not used.
 
-1: "fast": components recursively update their inputs before themselves, for faster propagation. This breaks JK flipflops, round-and-round blinking led loops and most other things with loops.
+1: "fast recursive": components recursively update their inputs before themselves, for faster propagation. This breaks JK flipflops, round-and-round blinking led loops and most other things with loops.
 This algorithm is good for immediate perfect full update in a single tick of final outputs based on user niputs in an asynchronic circuit like a 16-bit adder or multiplier, without any clocks, flipflops or loops
 
 2: "slow": components only update based on the value of its inputs at the previous tick. This can break flipflops, the balance is so perfect that some flipflops can never flip to one state
@@ -2166,6 +2168,14 @@ function Component() {
   this.rgbcolor = 0; // index in array of 16 RGB LED colors
   this.issub = false; // is a component copied for a sub
   this.clocked = false; // for realtime timers
+  // whether this component changed this frame. Normally can be seen from
+  // this.prevvalue != this.value, but, for some components like delays they end
+  // up in changed state due to ticking down, even if their value does not
+  // change. What this value really indicates is: might any later combinational
+  // clock tick still change the value in the future? The purpose of this value is
+  // to know when auto-tick updates can stop for AUTOUPDATE algorithm 3.
+  this.changed = false;
+  this.changedticks = 0; // for keeping track of 'changed' for delay
 
   this.markError = function(message) {
     for(var i = 0; i < this.cells.length; i++) {
@@ -2522,6 +2532,14 @@ function Component() {
           this.regpos = 0;
           for(var r = 0; r < number + 1; r++) this.reg[r] = false;
         }
+
+        var prevregpos = (this.regpos == 0) ? (number - 1) : (this.regpos - 1);
+        if((!!this.reg[prevregpos]) != (!!numon)) {
+          this.changedticks = number;
+        }
+        if(this.changedticks > 0) this.changed = true;
+        this.changedticks--;
+
         this.reg[this.regpos] = numon;
         this.regpos++;
         if(this.regpos >= number + 1) this.regpos = 0;
@@ -2541,6 +2559,8 @@ function Component() {
       if(this.value != this.prevvalue) this.ff_cycle_time++;
       else this.ff_cycle_time = 0;
     }
+
+    if(this.value != this.prevvalue) this.changed = true;
 
     //console.log('updated: ' + this.index + ' ' + this.corecell.symbol + ' ' + this.corecell.x + ' ' + this.corecell.y);
   };
@@ -2638,7 +2658,7 @@ function Component() {
       rom.array[line][bit] = !rom.array[line][bit];
       rom.updateRamDisplay(bit, line);
     }
-    sequential_mode_changed = true;
+    global_changed_something = true;
   };
 
   this.mouseup = function(e) {
@@ -2655,7 +2675,7 @@ function Component() {
     } else {
       return false; // did nothing
     }
-    sequential_mode_changed = true;
+    global_changed_something = true;
     return !e.shiftKey; // did something
   };
 }
@@ -3088,7 +3108,7 @@ function Cell() {
       e.preventDefault();
       if(!toggleMode && !changeMode) lastmousedowncomponent = component;
       if(component) component.mousedown(e, x, y);
-      if(AUTOUPDATE == 1) update();
+      if(AUTOUPDATE == 1/* || AUTOUPDATE == 3*/) update();
       if(isPaused()) unpause();
       if(CLICKDEBUG) {
         console.log('===================');
@@ -3108,7 +3128,7 @@ function Cell() {
         }
 
       }
-      sequential_mode_changed = true;
+      global_changed_something = true;
       return false;
     }, this.components[0], x, y);
 
@@ -4721,9 +4741,9 @@ document.body.onmouseup = function(e) {
   if(lastmousedowncomponent) {
     var didsomething = lastmousedowncomponent.mouseup(e);
     lastmousedowncomponent = null;
-    if(didsomething && AUTOUPDATE == 1) update();
+    if(didsomething && (AUTOUPDATE == 1/* || AUTOUPDATE == 3*/)) update();
   }
-  sequential_mode_changed = true;
+  global_changed_something = true;
 };
 
 var components = [];
@@ -4753,30 +4773,32 @@ function render() {
     }
   }
 
-  if(ticksCounterEl) ticksCounterEl.innerHTML = '&nbspticks: ' + numticks;
+  if(ticksCounterEl) updateTicksDisplay();
 }
 
-sequential_mode_changed = true;
+global_changed_something = true;
 
 function updateComponents(components) {
-  // In sequential mode, we can stop updates if nothing changed: the state became stable. This is not the same as a full pause. Timers, button clicks, ... will start the updates again
-  //if(UPDATE_ALGORITHM == 1 && AUTOUPDATE == 2 && !sequential_mode_changed) return; // only for sequential mode. TODO: stop the JS timer instead.
-
-  //the above (sequential_mode_changed) is disabled! Reason: it makes components that may still do something in the future, that is, delays with a buffer of 16, fail! Since they can still change after some amount of ticks.
+  // For AUTOUPDATE == 3, we can stop updates if nothing changed: the state became stable. This is not the same as a full pause. Timers, button clicks, ... will start the updates again
+  // TODO: instead of doing this, stop the JS timer (autoupdateinterval) instead (and restart it when action like button or timer component happens with AUTOUPDATE == 3)
+  if(AUTOUPDATE == 3 && !global_changed_something) {
+    return;
+  }
 
   var changed = false;
   for(var i = 0; i < components.length; i++) {
+    components[i].changed = false;
     components[i].updated = false;
     components[i].prevvalue = components[i].value;
   }
   for(var i = 0; i < components.length; i++) {
     components[i].update();
-    if(components[i].prevvalue != components[i].value) changed = true;
+    if(components[i].changed) changed = true;
   }
 
-  if(!changed) sequential_mode_changed = false;
+  if(!changed) global_changed_something = false;
 
-  numticks++;
+  if(AUTOUPDATE != 3 || changed) numticks++;
   render();
 }
 
@@ -4801,8 +4823,8 @@ function toggleTimers() {
       }
     }
   }
-  if(AUTOUPDATE == 1 && changed_something) update();
-  if(changed_something) sequential_mode_changed = true;
+  if((AUTOUPDATE == 1/* || AUTOUPDATE == 3*/) && changed_something) update();
+  if(changed_something) global_changed_something = true;
   timerticks++;
 }
 
@@ -5997,7 +6019,7 @@ function resetForParse() {
   // especially in case of long parse time...
   pause();
   timerticks = 0;
-  sequential_mode_changed = true;
+  global_changed_something = true;
   numticks = 0;
   showingLinkIds = false;
 }
@@ -7245,14 +7267,14 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   return true; // success
 }
 
-var AUTOPAUSESECONDS = 3000; // good value: 300
+var AUTOPAUSESECONDS = 3000; // for autopauseinterval
 var USEAUTOPAUSE = true; // pause after LogicEmu was open in a browser tab for a long time (AUTOPAUSESECONDS seconds)
 
-var autoupdateinterval = null;
-var timerinterval = null;
+var autoupdateinterval = null; // for AUTOUPDATE 2 and 3
+var timerinterval = null; // for the timer components
 var autopauseinterval = null; // I don't want browser to keep ticking in background when you forget about it in a tab
 
-if(AUTOUPDATE == 2) autoupdateinterval = setInterval(function(){ update(); }, AUTOSECONDS * 1000);
+if(AUTOUPDATE == 2 || AUTOUPDATE == 3) autoupdateinterval = setInterval(function(){ update(); }, AUTOSECONDS * 1000);
 
 timerinterval = setInterval(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
 
@@ -7284,7 +7306,7 @@ function pauseUpdateOnly() {
 }
 
 function unpause() {
-  if(AUTOUPDATE == 2 && !autoupdateinterval) {
+  if((AUTOUPDATE == 2 || AUTOUPDATE == 3) && !autoupdateinterval) {
     autoupdateinterval = setInterval(function(){ update(); }, AUTOSECONDS * 1000);
   }
   if(!timerinterval)  timerinterval = setInterval(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
@@ -7297,7 +7319,7 @@ function unpause() {
 
 function updateRunningState() {
   unpause(); // unpause no matter what mode (not just AUTOUPDATE == 2), otherwise timers don't work in other modes
-  if(AUTOUPDATE != 2 && autoupdateinterval) {
+  if((AUTOUPDATE != 2 && AUTOUPDATE != 3) && autoupdateinterval) {
     // we're pausing, but however we still want the timer interval to run
     if(!timerinterval) timerinterval = setInterval(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
     clearInterval(autoupdateinterval);
@@ -7464,6 +7486,14 @@ var ticksCounterEl = makeElement('div', menuRow3El);
 ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
 ticksCounterEl.style.width = '95px';
 ticksCounterEl.style.display = 'inline-block';
+ticksCounterEl.onclick = function() {
+  numticks = 0;
+  updateTicksDisplay();
+};
+
+function updateTicksDisplay() {
+  ticksCounterEl.innerHTML = '&nbspticks: ' + numticks;
+}
 
 
 

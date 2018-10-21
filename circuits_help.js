@@ -911,19 +911,19 @@ s->d->d->d->d->d->d->d->d->l
 0"several times yourself before you get the correct sum:"
 
 
-                  "8       4       2       1"
-                   l       l       l       l
-                   ^       ^       ^       ^
-             **a<*>e **a<*>e **a<*>e **a<*>e
-             v ^ * ^ v ^ * ^ v ^ * ^ v ^ * ^
-"carry out"l<o **+***o **+***o **+***o **+***s"carry in"
-             ^   *   ^   *   ^   *   ^   *
-             a<*>e   a<*>e   a<*>e   a<*>e
-             ^ * ^   ^ * ^   ^ * ^   ^ * ^
-             **+**   **+**   **+**   **+**
-               * *     * *     * *     * *
-               s s     s s     s s     s s
-             "b8 a8   b4 a4   b2 a2   b1 a1"
+          "8       4       2       1"
+           l       l       l       l
+           ^       ^       ^       ^
+     **a<*>e **a<*>e **a<*>e **a<*>e
+     v ^ * ^ v ^ * ^ v ^ * ^ v ^ * ^
+"c"l<o **+***o **+***o **+***o **+***s"c"
+     ^   *   ^   *   ^   *   ^   *
+     a<*>e   a<*>e   a<*>e   a<*>e
+     ^ * ^   ^ * ^   ^ * ^   ^ * ^
+     **+**   **+**   **+**   **+**
+       * *     * *     * *     * *
+       s s     s s     s s     s s
+     "b8 a8   b4 a4   b2 a2   b1 a1"
 
 0"However, for a circuit with a loop, you need at least sequential mode."
 0"Here is a very simple example: When you turn the switch from 'off' to"
