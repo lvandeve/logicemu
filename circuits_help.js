@@ -44,30 +44,28 @@ registerCircuit('Main Help', `
 0"LogicEmu Main Help"
 0"------------------"
 
-0"First of all, what is LogicEmu? It emulates logic circuits. It has a whole"
-0"bunch of circuits included to play with, including binary adders,"
-0"multipliers, flip-flops, NAND-only logic, and so on."
+0"Welcome to LogicEmu! LogicEmu emulates logic circuits. It has a whole bunch"
+0"of circuits included to play with, including binary adders, multipliers,"
+0"flip-flops, NAND-only logic, ..., and also allows creating new circuits."
 
-0"LogicEmu also allows creating new circuits, see the editing tutorials for"
-0"more on that."
+0"E.g. like this AND gate with switches and LED:"
 
-0"What is different from many other logic simulators it that this one is"
-0"cell-based. This has as a side effect that the notation is not standard"
+s**>a**>l
+    ^
+s****
+
+0"LogicEmu is cell-based. A side effect of that is the notation isn't standard"
 0"notation. On the other hand, this has as advantage that a lot of logic fits"
 0"on a single screen and it's quite flexible. Also, each cell is an ASCII"
 0"character, which has advantages for editing and sharing circuits."
 
 0"It's a digital logic emulator, but not an electrical simulator. Power sources"
-0"and voltages are abstracted away. Every component (gates, LEDs, even"
-0"switches) implicitely have two connections to a power source with positive"
-0"voltage and ground terminals, but these are not shown. The only wires shown"
-0"are signals between components, which are always either 0 (false) or 1"
-0"(true). Whether these have voltages or ground associated with them does not"
-0"matter for the digital logic."
+0"and voltages are abstracted away, and only two signals, 0 and 1, are"
+0"emulated."
 
-0"This help tutorial explains how to view and interact with circuits and all"
-0"parts. See the next tutorials for different topics such as emulation"
-0"algorithms, rendering and editing."
+0"The rest of this tutorial mainly explains the meaning of the different types"
+0"of components and symbols used, how to view and interact with circuits. Other"
+0"tutorials focus on user interface, emulation algorithms and editing."
 
 0"Note that this tutorial is multiple screens long, so scroll down to see all"
 
@@ -3423,6 +3421,91 @@ s-->c-->l
 s-->j-->l
 s-->k--]l
 
+0"Errors"
+0"------"
+
+0"In this section, everything extending to the right must be an error, marked"
+0"in yellow"
+
+s---*
+    *--------->l
+s---*
+
+s--->i741----->l
+
+I195
+s>e>l0
+
+s--->i195----->l
+     ^
+     s
+
+I197
+s------>e----->l
+I196
+
+0"RENDER:text"
+
+
+`, 'unittest');
+
+
+
+
+
+
+registerCircuit('Drawing Test', `
+
+0"This is a unit test for testing and development."
+
+0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7
+l l l l l l l l   l l l l l l l l   s>L<s   TTTT
+^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^     ^     ^^^^
+s s s s s s s s   S S S S S S S S     s     ssss
+
+s-->l    l   ****
+         ^   ****     l       l l   l   l  l       l  l   l   l
+   l     |   ****      h     h   h  ^  h    h     h    h  ^  h       l
+   ^     |   ****       ;   /     ; | /      ;   /      ; | /        ^
+   |     s               ; /       ;|/        ; /        ;|/         |
+s--+-->l       s          x      s--X-->l   s--X-->l      X       s--X-->l
+   |           *         / ;       /|;        / ;        /|;         |
+   s       l<*****>l    /   ;     / | ;      /   ;      / | ;        s
+               *       s     s   s  s  s    s     s    s  s  s
+    l  l l  l  v
+    ^   h   ^  l       l       l     l   l   l   l
+    |  / ;  |           h     h      ^  h     h  ^        l       l
+s---+-X---X-+------->l   ;   /       | /       ; |        ^       ^
+    |/     ;|             ; /        |/         ;|        |       |
+    X       X              X      s--X-->l    s--X-->l s--%--s s--&--s
+   /|       |;            / ;       /|           |;       |       |
+s-X-+-------+-X----->l   /   ;     / |           | ;      v       v
+ /  |       |  ;        s     s   s  s           s  s     l       l
+S   s       s   s
+
+       s    s s    s       s    s s    s
+  l l  * l  * *  l *  l l  * l  * *  l *      l     l
+   h    h    h    h    H    H    H    H     s*zl  s*Zl
+  * *  * l  l l  l *  * *  * l  l l  l *      l     l
+  s s  s           s  s s  s           s
+
+       s   s                 s   s
+  l    *   *    l       l    *   *    l
+s*hl s*hl lh*s lh*s   s*Hl s*Hl lH*s lH*s
+  *    l   l    *       *    l   l    *
+  s             s       s             s
+
+  a e       s         s         l      s       s      l         e a
+  ^^^       *     l<**+***s     ^      *   s***+**>l  ^         ^^^
+s***+**>l   *>a       vvv       *    a<*     vvv      *     l<**+***s
+    s       *>        e a       *     <*     a e      *         s
+           s+>e               e<+s   e<+s            s+>e
+            *                  <*      *              *>
+            *                 a<*      *              *>a
+            v                   *      v              *
+            l                   s      l              s
+
+
 
 0"Comment Alignment"
 0"-----------------"
@@ -3465,30 +3548,6 @@ eeeEE     eeeEE
 "hi"4     "hi"4
 eeeEE     eeeEE
 
-0"Errors"
-0"------"
+"FIT:x"
 
-0"In this section, everything extending to the right must be an error, marked"
-0"in yellow"
-
-s---*
-    *--------->l
-s---*
-
-s--->i741----->l
-
-I195
-s>e>l0
-
-s--->i195----->l
-     ^
-     s
-
-I197
-s------>e----->l
-I196
-
-0"RENDER:text"
-
-
-`, 'unittest');
+`, 'drawtest');

@@ -290,7 +290,7 @@ var graphics_mode = 1; // 0=text, 1=canvas
 var graphics_mode_browser = graphics_mode; //is_chrome ? graphics_mode : 0;
 var graphics_mode_actual = graphics_mode_browser;
 
-var use_bresenham = true; // if true, use bresenham for diagonal lines to ensure they are not blurry (not antialiased as it looks choppier instead of better here)
+var USE_BRESENHAM = true; // if true, use bresenham for diagonal lines to ensure they are not blurry (not antialiased as it looks choppier instead of better here)
 
 /*
 AUTOUPDATE values:
@@ -3596,14 +3596,100 @@ function RendererDrawer() {
   this.tx = 0;
   this.ty = 0;
 
+  // Both endpoints are inclusive (TODO: if translucent lines are desired, an option to make one endpoint exclusive must be added)
   this.drawLineCore_ = function(ctx, x0, y0, x1, y1) {
     var x0b = Math.floor(x0 * tw);
     var y0b = Math.floor(y0 * th);
     var x1b = Math.floor(x1 * tw);
     var y1b = Math.floor(y1 * th);
 
-    // the 0.5 makes line take up actual pixel rather than blurry multipixel mess.
-    // canvas is THAT kind of drawing engine :( the sub pixel blurry kind
+    if(USE_BRESENHAM) {
+      // For non-diagonal lines, the canvas line drawing routine is reliable
+      // enough to not be blurry (if used carefully such as with the 0.5's
+      // below). So let's use that for those, assuming this is more efficient.
+      if(x0b == x1b) {
+        if(x0b == tw) { x0b--; x1b--; }
+        ctx.moveTo(this.tx + x0b + 0.5, this.ty + y0b);
+        ctx.lineTo(this.tx + x1b + 0.5, this.ty + y1b);
+        return;
+      } else if(y0b == y1b) {
+        if(y0b == th) { y0b--; y1b--; }
+        ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5);
+        ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5);
+        return;
+      }
+
+      // Update such that diagonal lines work as intended
+      x0b = Math.floor(x0 * (tw - 1));
+      y0b = Math.floor(y0 * (th - 1));
+      x1b = Math.floor(x1 * (tw - 1));
+      y1b = Math.floor(y1 * (th - 1));
+
+      if(x1 - x0 == y0 - y1) {
+        // ugly hack: only do this fix for antidiagonals on the main diagonal for now, as it shifts the ones of '%' in less nice way compared to alignemt with its straight segments
+        if(x0 == 1.0 - y0) {
+          // ensure to preserve the 45 degree angle (the rounding may break antidiagonals)
+          x0b = Math.ceil(x0 * (tw - 1));
+          y0b = Math.floor(y0 * (th - 1));
+          x1b = Math.ceil(x1 * (tw - 1));
+          y1b = Math.floor(y1 * (th - 1));
+        }
+      }
+
+      var dxb = Math.abs(x1b - x0b);
+      var dyb = Math.abs(y1b - y0b);
+      var xinc0 = 0, xinc1 = 0, yinc0 = 0, yinc1 = 0, den, numinc;
+      if(false && (x1 - x0 == y0 - y1)) {
+        // special antidiagonal case
+        xinc1 = (x1b >= x0b) ? 1 : -1;
+        yinc0 = (y1b >= y0b) ? 1 : -1;
+        den = dxb;
+        numinc = dyb;
+      } else if(dxb >= dyb) {
+        // more horizontal
+        xinc1 = (x1b >= x0b) ? 1 : -1;
+        yinc0 = (y1b >= y0b) ? 1 : -1;
+        den = dxb;
+        numinc = dyb;
+      } else {
+        // more vertical
+        xinc0 = (x1b >= x0b) ? 1 : -1;
+        yinc1 = (y1b >= y0b) ? 1 : -1;
+        den = dyb;
+        numinc = dxb;
+      }
+
+      var num = (den >> 1);
+      var numpixels = den;
+      var x = x0b;
+      var y = y0b;
+      for(var i = 0; i <= numpixels; i++) {
+        ctx.fillRect(this.tx + x, this.ty + y, 1, 1);
+        num += numinc;
+        if (num >= den) {
+          num -= den;
+          x += xinc0;
+          y += yinc0;
+        }
+        x += xinc1;
+        y += yinc1;
+      }
+      return;
+    }
+
+    // Non-bresenham version. Should not be used: The canvas is not a pixel
+    // based drawing engine, and is unable to guarantee drawing diagonal lines
+    // in non-antialiased way (even if it looks so in some browsers, it's not
+    // guaranteed in others, and e.g. in Chrome as of 2018 it depends on the
+    // canvas size whether it antialiases or goes for sharp pixels).
+
+    // And to be clear: we do not want antialiased here as it does not look good
+    // when connecting the multiple cell based pieces together. We want sharp
+    // pixels that are either fully on or fully off, like the bresenham above
+    // does.
+
+    // the 0.5 makes line take up actual pixel rather than blurry multipixel
+    // mess. Canvas is THAT kind of drawing engine :( the sub pixel blurry kind
     if(x0b == x1b) {
       if(x0b == tw) { x0b--; x1b--; }
       ctx.moveTo(this.tx + x0b + 0.5, this.ty + y0b);
@@ -3613,69 +3699,21 @@ function RendererDrawer() {
       ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5);
       ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5);
     } else {
-      // with use_bresenham, the blurry pixel mess is avoided
-      if(use_bresenham) {
-        // temp fix for something else that's wrong below.
-        if(x1b - x0b == y0b - y1b) {
-          if(x1b < x0b) {
-            var t = x0b; x0b = x1b; x1b = t;
-            t = y0b; y0b = y1b; y1b = t;
-          }
-          for(var i = 0; i < (x1b - x0b); i++) {
-            ctx.fillRect(this.tx + x0b + i, this.ty + y0b - i - 1, 1, 1);
-          }
-          return;
-        }
+      // likely blurry, at least in some browsers
 
-        var dx = Math.abs(x1b - x0b);
-        var dy = Math.abs(y1b - y0b);
-        var xinc0 = 0, xinc1 = 0, yinc0 = 0, yinc1 = 0, den, numinc;
-        if(dx >= dy) {
-          xinc1 = (x1b >= x0b) ? 1 : -1;
-          yinc0 = (y1b >= y0b) ? 1 : -1;
-          den = dx;
-          numinc = dy;
-        } else {
-          xinc0 = (x1b >= x0b) ? 1 : -1;
-          yinc1 = (y1b >= y0b) ? 1 : -1;
-          den = dy;
-          numinc = dx;
-        }
-        var num = (den / 2) | 0;
-        var numpixels = den;
-        var x = x0b;
-        var y = y0b;
-        for(var i = 0; i <= numpixels; i++) {
-          ctx.fillRect(this.tx + x, this.ty + y, 1, 1);
-          num += numinc;
-          if (num >= den) {
-            num -= den;
-            x += xinc0;
-            y += yinc0;
-          }
-          x += xinc1;
-          y += yinc1;
-        }
-      } else {
-        // bresenham not used, guaranteed blurry, at least in some browsers :(
-
-        // if 45 degree line intended but the Math.floor above skewed it
-        // make it exact 45 degree again: that renders better on pixels
-        if(Math.abs(x1 - x0) == Math.abs(y1 - y0) && Math.abs(x1b - x0b) != Math.abs(y1b - y0b)) {
-          /*var d = Math.max(Math.abs(x1b - x0b), Math.abs(y1b - y0b));
-          x1b = (x1b > x0b) ? (x0b + d) : (x0b - d);
-          y1b = (y1b > y0b) ? (y0b + d) : (y0b - d);*/
-          x0b = x0 * tw;
-          y0b = y0 * th;
-          x1b = x1 * tw;
-          y1b = y1 * th;
-        }
-        // This is super unreliable. I want to not have antialiasing and canvas has no
-        // way to disable it. It depends on browser how it looks based on various settings/tricks set
-        // elsewhere.
-        ctx.moveTo(this.tx + x0b, this.ty + y0b);
-        ctx.lineTo(this.tx + x1b, this.ty + y1b);
+      // if 45 degree line intended but the Math.floor above skewed it
+      // make it exact 45 degree again: that renders better on pixels
+      if(Math.abs(x1 - x0) == Math.abs(y1 - y0) && Math.abs(x1b - x0b) != Math.abs(y1b - y0b)) {
+        /*var d = Math.max(Math.abs(x1b - x0b), Math.abs(y1b - y0b));
+        x1b = (x1b > x0b) ? (x0b + d) : (x0b - d);
+        y1b = (y1b > y0b) ? (y0b + d) : (y0b - d);*/
+        x0b = x0 * tw;
+        y0b = y0 * th;
+        x1b = x1 * tw;
+        y1b = y1 * th;
       }
+      ctx.moveTo(this.tx + x0b, this.ty + y0b);
+      ctx.lineTo(this.tx + x1b, this.ty + y1b);
     }
   };
 
@@ -3831,6 +3869,61 @@ function RendererDrawer() {
     }
   };
 
+  // draws wire crossing only for wires connected on any side. Returns array with amount, and code indicating ('|' ? 1) + ('-' ? 2) + ('/' ? 4) + ('\' ? 8), e.g. 3 if it's a + without diagonals
+  this.drawCrossing_ = function(cell, ctx) {
+    var num = 0;
+    var code = 0;
+    if(connected2g(cell.x, cell.y, 0) || connected2g(cell.x, cell.y, 2)) { code |= 1; num++; }
+    if(connected2g(cell.x, cell.y, 1) || connected2g(cell.x, cell.y, 3)) { code |= 2; num++; }
+    if(connected2g(cell.x, cell.y, 4) || connected2g(cell.x, cell.y, 6)) { code |= 4; num++; }
+    if(connected2g(cell.x, cell.y, 5) || connected2g(cell.x, cell.y, 7)) { code |= 8; num++; }
+
+    var full = 0; // which one gets the full length
+    if(code & 2) full = 2; // horizontal full looks best
+    else if(code & 1) full = 1;
+    else if(code & 4) full = 4;
+    else full = 8;
+
+    ctx.beginPath();
+    if(code & 1) {
+      if(full == 1) {
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
+      } else {
+        var shift = 0.2;
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+        this.drawLineCore_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      }
+    }
+    if(code & 2) {
+      if(full == 2) {
+        this.drawLineCore_(ctx, 0, 0.5, 1, 0.5);
+      } else {
+        var shift = 0.2;
+        this.drawLineCore_(ctx, 0, 0.5, 0.5 - shift + 0.1, 0.5);
+        this.drawLineCore_(ctx, 0.5 + shift, 0.5, 1, 0.5);
+      }
+    }
+    if(code & 4) {
+      if(full == 4) {
+        this.drawLineCore_(ctx, 0, 1, 1, 0);
+      } else {
+        this.drawLineCore_(ctx, 0, 1, 0.4, 0.6);
+        this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
+      }
+    }
+    if(code & 8) {
+      if(full == 8) {
+        this.drawLineCore_(ctx, 0, 0, 1, 1);
+      } else {
+        this.drawLineCore_(ctx, 0, 0, 0.4, 0.4);
+        this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
+      }
+    }
+    ctx.stroke();
+
+    return [num, code];
+  };
+
   this.fillBg_ = function(ctx, color) {
     var origStyle = ctx.fillStyle;
     ctx.fillStyle = color;
@@ -3838,78 +3931,120 @@ function RendererDrawer() {
     if(origStyle != color) ctx.fillStyle = origStyle;
   };
 
-  // The '+' wire crossing can still connect a particular one of its wires to a diagonal crossing input.
-  // The graphics for that are handled here.
-  // returns true if it drew a dot in the center
-  this.drawPlusDiagSplit_ = function(cell, ctx) {
-    var num = 0;
-    var cell;
+  this.doDrawPlusDiagSplit_ = function(code, ctx) {
     var rect0 = false;
     var rect1 = false;
     var rect2 = false;
+    var rect3 = false;
 
     ctx.beginPath();
+    if(code & 2) {
+      this.drawLineCore_(ctx, 0.5, 0, 1, 0);
+      rect0 = true;
+    }
+    if(code & 4) {
+      this.drawLineCore_(ctx, 1, 0.5, 1, 0);
+      rect1 = true;
+    }
+    if(code & 16) {
+      this.drawLineCore_(ctx, 0.5, 1, 1, 1);
+      rect2 = true;
+    }
+    if(code & 8) {
+      this.drawLineCore_(ctx, 1, 0.5, 1, 1);
+      rect1 = true;
+    }
+    if(code & 32) {
+      this.drawLineCore_(ctx, 0, 1, 0.5, 1);
+      rect2 = true;
+    }
+    if(code & 64) {
+      this.drawLineCore_(ctx, 0, 0.5, 0, 1);
+      rect3 = true;
+    }
+    if(code & 1) {
+      this.drawLineCore_(ctx, 0, 0, 0.5, 0);
+      rect0 = true;
+    }
+    if(code & 128) {
+      this.drawLineCore_(ctx, 0, 0.5, 0, 0);
+      rect3 = true;
+    }
+    ctx.stroke();
+    //if(rect0) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + (th >> 1) - 1.5, 3.5, 3.5);
+    if(rect0) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + 0, 3.5, 3.5);
+    if(rect1) ctx.fillRect(this.tx + tw - 4, this.ty + (th >> 1) - 1.5, 3.5, 3.5);
+    if(rect2) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + th - 4, 3.5, 3.5);
+    if(rect3) ctx.fillRect(this.tx + 0, this.ty + (th >> 1) - 1.5, 3.5, 3.5);
+  }
+
+  /*
+  The '+' wire crossing can still connect a particular one of its wires to a diagonal crossing input.
+  The graphics for that are handled here.
+  returns true if it drew a dot in the center
+  This is an example where this happens (each switch has an input to a and one to e):
+
+          a e
+          ^^^
+      s***+***>l
+          *
+          s
+  */
+  this.drawPlusDiagSplit_ = function(cell, ctx) {
+    var cell;
+    var code = 0;
+
     n = getNeighbor(cell.x, cell.y, 4);
     if(n && n.circuitextra == 2) {
       var c = n.circuitsymbol;
       if(c == '^' || c == 'm') {
-        this.drawLineCore_(ctx, 0.5, 0, 1, 0);
-        rect1 = true;
+        code |= 2;
       }
       if(c == '>' || c == ']') {
-        this.drawLineCore_(ctx, 0.5, 0.5, 1, 0);
-        rect0 = true;
+        code |= 4;
       }
     }
     n = getNeighbor(cell.x, cell.y, 5);
     if(n && n.circuitextra == 2) {
       var c = n.circuitsymbol;
       if(c == 'v' || c == 'w') {
-        this.drawLineCore_(ctx, 0.5, 1, 1, 1);
-        rect2 = true;
+        code |= 16;
       }
       if(c == '>' || c == ']') {
-        this.drawLineCore_(ctx, 0.5, 0.5, 1, 1);
-        rect0 = true;
+        code |= 8;
       }
     }
     n = getNeighbor(cell.x, cell.y, 6);
     if(n && n.circuitextra == 2) {
       var c = n.circuitsymbol;
       if(c == 'v' || c == 'w') {
-        this.drawLineCore_(ctx, 0, 1, 0.5, 1);
-        rect2 = true;
+        code |= 32;
       }
       if(c == '<' || c == '[') {
-        this.drawLineCore_(ctx, 0.5, 0.5, 0, 1);
-        rect0 = true;
+        code |= 64;
       }
     }
     n = getNeighbor(cell.x, cell.y, 7);
     if(n && n.circuitextra == 2) {
       var c = n.circuitsymbol;
       if(c == '^' || c == 'm') {
-        this.drawLineCore_(ctx, 0, 0, 0.5, 0);
-        rect1 = true;
+        code |= 1;
       }
       if(c == '<' || c == '[') {
-        this.drawLineCore_(ctx, 0.5, 0.5, 0, 0);
-        rect0 = true;
+        code |= 128;
       }
     }
-    ctx.stroke();
-    if(rect0) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + (th >> 1) - 1.5, 3.5, 3.5);
-    if(rect1) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + 0, 3.5, 3.5);
-    if(rect2) ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + th - 4, 3.5, 3.5);
 
-    return [rect0, rect0 || rect1 || rect2];
+    this.doDrawPlusDiagSplit_(code, ctx);
+
+    return code;
   };
 }
 
 // Browsers have certain limits to canvas size (e.g. max 8192 pixels wide, ...), and for large
 // circuits larger than 16384 height can easily be reached, so break it up into smaller pieces
 function MultiCanvas() {
-  if(use_bresenham) {
+  if(USE_BRESENHAM) {
     this.MAX_S = 4096; // max size
   } else {
     // 4096 would be a great max size to use. However, Chrome (at least on my system) makes the
@@ -4006,18 +4141,10 @@ function MultiCanvas() {
   };
 
   // e.g. to set a CSS style on them
-  this.forEachCanvas = function(fun) {
+  this.forEach = function(fun) {
     for(var y2 = 0; y2 < this.canvases.length; y2++) {
       for(var x2 = 0; x2 < this.canvases[y2].length; x2++) {
-        fun(this.canvases[y2][x2]);
-      }
-    }
-  };
-
-  this.forEachContext = function(fun) {
-    for(var y2 = 0; y2 < this.contexts.length; y2++) {
-      for(var x2 = 0; x2 < this.contexts[y2].length; x2++) {
-        fun(this.contexts[y2][x2]);
+        fun(this.canvases[y2][x2], this.contexts[y2][x2]);
       }
     }
   };
@@ -4042,31 +4169,31 @@ function RendererImgGlobal() {
     this.maincanvas.make(0, 0, tw * w, th * h, parent);
     this.offcanvas0.make(0, 0, tw * w, th * h, parent);
     this.offcanvas1.make(0, 0, tw * w, th * h, parent);
-    this.extracanvas.make(0, 0, tw * 32, th * 4, parent);
+    this.extracanvas.make(0, 0, tw * 64, th * 4, parent);
 
-    this.offcanvas0.forEachCanvas(function(canvas) {
+    this.offcanvas0.forEach(function(canvas, context) {
       canvas.style.display = 'none';
     });
-    this.offcanvas1.forEachCanvas(function(canvas) {
+    this.offcanvas1.forEach(function(canvas, context) {
       canvas.style.display = 'none';
     });
-    this.extracanvas.forEachCanvas(function(canvas) {
+    this.extracanvas.forEach(function(canvas, context) {
       canvas.style.display = 'none';
     });
 
     // attempt at disabling antialiazing. It doesn't actually work, since
     // this does not apply to lines but image, but let's just tell the context
     // that we want non-AA in as many ways as possible
-    this.maincanvas.forEachContext(function(context) {
+    this.maincanvas.forEach(function(canvas, context) {
       context.imageSmoothingEnabled = false;
     });
-    this.offcanvas0.forEachContext(function(context) {
+    this.offcanvas0.forEach(function(canvas, context) {
       context.imageSmoothingEnabled = false;
     });
-    this.offcanvas1.forEachContext(function(context) {
+    this.offcanvas1.forEach(function(canvas, context) {
       context.imageSmoothingEnabled = false;
     });
-    this.extracanvas.forEachContext(function(context) {
+    this.extracanvas.forEach(function(canvas, context) {
       context.imageSmoothingEnabled = false;
     });
   };
@@ -4093,6 +4220,11 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
   // if false: avoid using the few fixed graphics from the 'extra' canvas for 2+ connection things if their graphics are too custom
   // if true: see the drawGlobalExtras_ function for more info
   this.drawextra = false;
+  // what value must input match to use this extra graphic
+  this.drawextrai0 = 0;
+  this.drawextrai1 = 0;
+  // x coordinate of this extra graphic
+  this.drawextrag = 0;
    // if non-0, only use "on" drawing if a wire with that particular numerical direction is on
   this.drawonly = 0;
 
@@ -4227,14 +4359,66 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
         }
         if(isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 1, 1, 0);
       } else if(c == '+') {
-        var extras = drawer.drawPlusDiagSplit_(cell, ctx);
-        var centerfull = extras[0];
-        this.drawextra = !extras[1]; // if the + has extra connections, the special 'ON'-leak avoiding drawing is not supported
-        var shift = centerfull ? 0.3 : 0.2;
+        var code = drawer.drawPlusDiagSplit_(cell, ctx);
+        var shift = 0.2;
         drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
         //drawer.drawLine(ctx, 0.5, 0, 0.5, 1);
         drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
         drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+        if(code == 0) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 0;
+        }
+        if(code == 1) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 24;
+        }
+        if(code == 2) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 25;
+        }
+        if(code == 4) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 26;
+        }
+        if(code == 8) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 27;
+        }
+        if(code == 16) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 28;
+        }
+        if(code == 32) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 29;
+        }
+        if(code == 64) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 30;
+        }
+        if(code == 128) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 31;
+        }
       } else if(c == '*' || c == ',') {
         drawer.drawSplit_(cell, ctx);
       } else if(c == '^') {
@@ -4333,28 +4517,162 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
         drawer.drawSplit_(cell, ctx, num);
       } else if(c == 'h') {
         drawer.drawSplit_h_(cell, ctx, -8);
-        if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);
-        if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);
-        if(hasDevice(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);
-        if(hasDevice(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);
-        if(hasDevice(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0, 0.19);
-        if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1, 0.19);
-        if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1, 0.19);
-        if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0, 0.19);
+        var code = 0;
+        if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19); code |= 1; }
+        if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19); code |= 2; }
+        if(hasDevice(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19); code |= 4; }
+        if(hasDevice(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19); code |= 8; }
+        if(hasDevice(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0); code |= 16; }
+        if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1); code |= 32; }
+        if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1); code |= 64; }
+        if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0); code |= 128; }
+        if(code == 144) {
+          this.drawextra = true;
+          this.drawextrai0 = 8;
+          this.drawextrai1 = 4;
+          this.drawextrag = 2;
+        }
+        if(code == 48) {
+          this.drawextra = true;
+          this.drawextrai0 = 4;
+          this.drawextrai1 = 8;
+          this.drawextrag = 3;
+        }
+        if(code == 96) {
+          this.drawextra = true;
+          this.drawextrai0 = 4;
+          this.drawextrai1 = 8;
+          this.drawextrag = 4;
+        }
+        if(code == 192) {
+          this.drawextra = true;
+          this.drawextrai0 = 8;
+          this.drawextrai1 = 4;
+          this.drawextrag = 5;
+        }
+        if(code == 3) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 16;
+        }
+        if(code == 6) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 17;
+        }
+        if(code == 12) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 18;
+        }
+        if(code == 9) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 19;
+        }
       } else if(c == 'H') {
         drawer.drawSplit_h_(cell, ctx, -8);
+        var code = 0;
         // no "isInterestingComponent" checks for H, unlike h, because H can affect things, it's negating (for h any effect, like as AND input, is negated if it's a dummy, but not for H)
-        if(hasDevice(cell.x, cell.y, 0)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
-        if(hasDevice(cell.x, cell.y, 1)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
-        if(hasDevice(cell.x, cell.y, 2)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
-        if(hasDevice(cell.x, cell.y, 3)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
-        if(hasDevice(cell.x, cell.y, 4)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0);
-        if(hasDevice(cell.x, cell.y, 5)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 1);
-        if(hasDevice(cell.x, cell.y, 6)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 1);
-        if(hasDevice(cell.x, cell.y, 7)) drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0);
+        if(hasDevice(cell.x, cell.y, 0)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0); code |= 1; }
+        if(hasDevice(cell.x, cell.y, 1)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5); code |= 2; }
+        if(hasDevice(cell.x, cell.y, 2)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1); code |= 4; }
+        if(hasDevice(cell.x, cell.y, 3)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5); code |= 8; }
+        if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0); code |= 16; }
+        if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 1); code |= 32; }
+        if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 1); code |= 64; }
+        if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0); code |= 128; }
+        if(code == 144) {
+          this.drawextra = true;
+          this.drawextrai0 = 8;
+          this.drawextrai1 = 4;
+          this.drawextrag = 6;
+        }
+        if(code == 48) {
+          this.drawextra = true;
+          this.drawextrai0 = 4;
+          this.drawextrai1 = 8;
+          this.drawextrag = 7;
+        }
+        if(code == 96) {
+          this.drawextra = true;
+          this.drawextrai0 = 4;
+          this.drawextrai1 = 8;
+          this.drawextrag = 8;
+        }
+        if(code == 192) {
+          this.drawextra = true;
+          this.drawextrai0 = 8;
+          this.drawextrai1 = 4;
+          this.drawextrag = 9;
+        }
+        if(code == 3) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 20;
+        }
+        if(code == 6) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 21;
+        }
+        if(code == 12) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 22;
+        }
+        if(code == 9) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 23;
+        }
       } else if(c == 'X') {
-        // TODO: better also have a little gap like '+' does
-        drawer.drawSplit_(cell, ctx, -8);
+        var a = drawer.drawCrossing_(cell, ctx);
+        var code = a[1];
+        if(code == 3) {
+          this.drawextra = true;
+          this.drawextrai0 = 2;
+          this.drawextrai1 = 1;
+          this.drawextrag = 0;
+        }
+        if(code == 12) {
+          this.drawextra = true;
+          this.drawextrai0 = 8;
+          this.drawextrai1 = 4;
+          this.drawextrag = 1;
+        }
+        if(code == 6) {
+          this.drawextra = true;
+          this.drawextrai0 = 8;
+          this.drawextrai1 = 1;
+          this.drawextrag = 12;
+        }
+        if(code == 10) {
+          this.drawextra = true;
+          this.drawextrai0 = 4;
+          this.drawextrai1 = 1;
+          this.drawextrag = 13;
+        }
+        if(code == 5) {
+          this.drawextra = true;
+          this.drawextrai0 = 8;
+          this.drawextrai1 = 2;
+          this.drawextrag = 14;
+        }
+        if(code == 9) {
+          this.drawextra = true;
+          this.drawextrai0 = 4;
+          this.drawextrai1 = 2;
+          this.drawextrag = 15;
+        }
       } else if(c == '&') {
         var draw1 = connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 1);
         var draw0 = connected2g(cell.x, cell.y, 2) && connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0);
@@ -4492,11 +4810,24 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
   here, such as a + with one leg gray and the other black and vice versa.
   */
   this.drawGlobalExtras_ = function() {
-    var ctx = rglobal.extracanvas.getContextAt(0, 0);
     var drawer = new RendererDrawer();
-    ctx.strokeStyle = BGCOLOR;
-    ctx.fillStyle = BGCOLOR;
-    ctx.fillRect(0, 0, rglobal.extracanvas.w, rglobal.extracanvas.h);
+
+    rglobal.extracanvas.forEach(function(canvas, context) {
+      context.strokeStyle = BGCOLOR;
+      context.fillStyle = BGCOLOR;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    });
+
+    var ctx;
+
+    var prepareAt = function(x, y) {
+      // multiplied by 2 because the tiles are currently spread out to avoid leaking
+      var tx = x * tw * 2;
+      var ty = y * th * 2;
+      ctx = rglobal.extracanvas.getContextAt(tx, ty);
+      drawer.tx = tx + rglobal.extracanvas.getXOffsetAt(tx);
+      drawer.ty = ty + rglobal.extracanvas.getYOffsetAt(ty);
+    };
 
     for(var i = 0; i < 2; i++) {
       var color0, color1;
@@ -4508,12 +4839,11 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
         color1 = OFFCOLOR;
       }
 
-      drawer.ty = th * ((i == 0) ? 0 : 2);
-
       // leaving one gap open between each tile so that some border graphics don't overlap each other
+      var ty = ((i == 0) ? 0 : 1);
 
       // '+'
-      drawer.tx = tw * 0;
+      prepareAt(0, ty);
       var shift = 0.2;
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
@@ -4522,7 +4852,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
       drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
 
       // 'x'
-      drawer.tx = tw * 2;
+      prepareAt(1, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0, 0.4, 0.4);
       drawer.drawLine_(ctx, 0.6, 0.6, 1, 1);
@@ -4530,63 +4860,63 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
       drawer.drawLine_(ctx, 0, 1, 1, 0);
 
       // 'diagonal crossing ^'
-      drawer.tx = tw * 4;
+      prepareAt(2, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawArrow_(ctx, 1, 1, 0, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawArrow_(ctx, 0, 1, 1, 0);
 
       // 'diagonal crossing >'
-      drawer.tx = tw * 6;
+      prepareAt(3, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawArrow_(ctx, 0, 1, 1, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawArrow_(ctx, 0, 0, 1, 1)
 
       // 'diagonal crossing v'
-      drawer.tx = tw * 8;
+      prepareAt(4, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawArrow_(ctx, 1, 0, 0, 1);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawArrow_(ctx, 0, 0, 1, 1);
 
       // 'diagonal crossing <'
-      drawer.tx = tw * 10;
+      prepareAt(5, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawArrow_(ctx, 1, 1, 0, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawArrow_(ctx, 1, 0, 0, 1);
 
       // 'diagonal crossing m'
-      drawer.tx = tw * 12;
+      prepareAt(6, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
 
       // 'diagonal crossing ]'
-      drawer.tx = tw * 14;
+      prepareAt(7, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawAntiArrow_(ctx, 0, 0, 1, 1)
 
       // 'diagonal crossing w'
-      drawer.tx = tw * 16;
+      prepareAt(8, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
 
       // 'diagonal crossing ['
-      drawer.tx = tw * 18;
+      prepareAt(9, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
 
       // '&'
-      drawer.tx = tw * 20;
+      prepareAt(10, ty);
       var r = 0.3;
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0.5, r, 0.5);
@@ -4598,7 +4928,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
       drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, r);
 
       // '%'
-      drawer.tx = tw * 22;
+      prepareAt(11, ty);
       r = 0.3;
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0.5, r, 0.5);
@@ -4608,6 +4938,160 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
       drawer.drawLine_(ctx, 1, 0.5, 1 - r, 0.5);
       drawer.drawLine_(ctx, 0.5, 1, 0.5, 1 - r);
       drawer.drawLine_(ctx, 1 - r, 0.5, 0.5, 1 - r);
+
+      // '-/-'
+      prepareAt(12, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0, 1, 0.4, 0.6);
+      drawer.drawLine_(ctx, 0.6, 0.4, 1, 0);
+
+      // '-\-'
+      prepareAt(13, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0, 0, 0.4, 0.4);
+      drawer.drawLine_(ctx, 0.6, 0.6, 1, 1);
+
+      // '| with /'
+      prepareAt(14, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 1);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0, 1, 0.4, 0.6);
+      drawer.drawLine_(ctx, 0.6, 0.4, 1, 0);
+
+      // '| with \'
+      prepareAt(15, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 1);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0, 0, 0.4, 0.4);
+      drawer.drawLine_(ctx, 0.6, 0.6, 1, 1);
+
+      // input crossing NE
+      prepareAt(16, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawArrow_(ctx, 0.5, 1, 0.5, 0, 0.19);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawArrow_(ctx, 0, 0.5, 1, 0.5, 0.19);
+
+      // input crossing ES
+      prepareAt(17, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawArrow_(ctx, 0, 0.5, 1, 0.5, 0.19);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawArrow_(ctx, 0.5, 0, 0.5, 1, 0.19);
+
+      // input crossing SW
+      prepareAt(18, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawArrow_(ctx, 0.5, 0, 0.5, 1, 0.19);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawArrow_(ctx, 1, 0.5, 0, 0.5, 0.19);
+
+      // input crossing WN
+      prepareAt(19, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawArrow_(ctx, 1, 0.5, 0, 0.5, 0.19);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawArrow_(ctx, 0.5, 1, 0.5, 0, 0.19);
+
+      // negated input crossing NE
+      prepareAt(20, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawAntiArrow_(ctx, 0.5, 1, 0.5, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawAntiArrow_(ctx, 0, 0.5, 1, 0.5);
+
+      // negated input crossing ES
+      prepareAt(21, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawAntiArrow_(ctx, 0, 0.5, 1, 0.5);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawAntiArrow_(ctx, 0.5, 0, 0.5, 1);
+
+      // negated input crossing SW
+      prepareAt(22, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawAntiArrow_(ctx, 0.5, 0, 0.5, 1);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawAntiArrow_(ctx, 1, 0.5, 0, 0.5);
+
+      // negated input crossing WN
+      prepareAt(23, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawAntiArrow_(ctx, 1, 0.5, 0, 0.5);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawAntiArrow_(ctx, 0.5, 1, 0.5, 0);
+
+      shift = 0.2;
+
+      prepareAt(24, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.doDrawPlusDiagSplit_(1, ctx);
+
+      prepareAt(25, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.doDrawPlusDiagSplit_(2, ctx);
+
+      prepareAt(26, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      drawer.doDrawPlusDiagSplit_(4, ctx);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+
+      prepareAt(27, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      drawer.doDrawPlusDiagSplit_(8, ctx);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+
+      prepareAt(28, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.doDrawPlusDiagSplit_(16, ctx);
+
+      prepareAt(29, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.doDrawPlusDiagSplit_(32, ctx);
+
+      prepareAt(30, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      drawer.doDrawPlusDiagSplit_(64, ctx);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+
+      prepareAt(31, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+      drawer.doDrawPlusDiagSplit_(128, ctx);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
     }
   };
 
@@ -4639,34 +5123,46 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
         if(this.drawextra) {
           var c = cell.circuitsymbol;
           var isextra = true;
-          if(c == '+' && value == 1)      { sx = tw * 0; sy = th * 2;  }
-          else if(c == '+' && value == 2) { sx = tw * 0; sy = th * 0;  }
-          else if(c == 'x' && value == 1) { sx = tw * 2; sy = th * 0;  }
-          else if(c == 'x' && value == 2) { sx = tw * 2; sy = th * 2;  }
-          else if(c == '^' && value == 1) { sx = tw * 4; sy = th * 2;  }
-          else if(c == '^' && value == 2) { sx = tw * 4; sy = th * 0;  }
-          else if(c == '>' && value == 1) { sx = tw * 6; sy = th * 2;  }
-          else if(c == '>' && value == 2) { sx = tw * 6; sy = th * 0;  }
-          else if(c == 'v' && value == 1) { sx = tw * 8; sy = th * 0;  }
-          else if(c == 'v' && value == 2) { sx = tw * 8; sy = th * 2;  }
-          else if(c == '<' && value == 1) { sx = tw * 10; sy = th * 0; }
-          else if(c == '<' && value == 2) { sx = tw * 10; sy = th * 2; }
-          else if(c == 'm' && value == 1) { sx = tw * 12; sy = th * 2; }
-          else if(c == 'm' && value == 2) { sx = tw * 12; sy = th * 0; }
-          else if(c == ']' && value == 1) { sx = tw * 14; sy = th * 2; }
-          else if(c == ']' && value == 2) { sx = tw * 14; sy = th * 0; }
-          else if(c == 'w' && value == 1) { sx = tw * 16; sy = th * 0; }
-          else if(c == 'w' && value == 2) { sx = tw * 16; sy = th * 2; }
-          else if(c == '[' && value == 1) { sx = tw * 18; sy = th * 0; }
-          else if(c == '[' && value == 2) { sx = tw * 18; sy = th * 2; }
-          else if(c == '&' && value == 1) { sx = tw * 20; sy = th * 2; }
-          else if(c == '&' && value == 2) { sx = tw * 20; sy = th * 0; }
-          else if(c == '%' && value == 1) { sx = tw * 22; sy = th * 0; }
-          else if(c == '%' && value == 2) { sx = tw * 22; sy = th * 2; }
+          var qx, qy;
+          if(c == 'x' && value == 1) { qx = 1;  qy = 0; }
+          else if(c == 'x' && value == 2) { qx = 1;  qy = 1; }
+          else if(c == '^' && value == 1) { qx = 2;  qy = 1; }
+          else if(c == '^' && value == 2) { qx = 2;  qy = 0; }
+          else if(c == '>' && value == 1) { qx = 3;  qy = 1; }
+          else if(c == '>' && value == 2) { qx = 3;  qy = 0; }
+          else if(c == 'v' && value == 1) { qx = 4;  qy = 0; }
+          else if(c == 'v' && value == 2) { qx = 4;  qy = 1; }
+          else if(c == '<' && value == 1) { qx = 5; qy = 0; }
+          else if(c == '<' && value == 2) { qx = 5; qy = 1; }
+          else if(c == 'm' && value == 1) { qx = 6; qy = 1; }
+          else if(c == 'm' && value == 2) { qx = 6; qy = 0; }
+          else if(c == ']' && value == 1) { qx = 7; qy = 1; }
+          else if(c == ']' && value == 2) { qx = 7; qy = 0; }
+          else if(c == 'w' && value == 1) { qx = 8; qy = 0; }
+          else if(c == 'w' && value == 2) { qx = 8; qy = 1; }
+          else if(c == '[' && value == 1) { qx = 9; qy = 0; }
+          else if(c == '[' && value == 2) { qx = 9; qy = 1; }
+          else if(c == '&' && value == 1) { qx = 10; qy = 1; }
+          else if(c == '&' && value == 2) { qx = 10; qy = 0; }
+          else if(c == '%' && value == 1) { qx = 11; qy = 0; }
+          else if(c == '%' && value == 2) { qx = 11; qy = 1; }
           else isextra = false;
+          if(c == 'X' || c == 'h' || c == 'H' || c == '+') {
+            isextra = true;
+            if(value == this.drawextrai0) { qx = this.drawextrag;  qy = 0; }
+            else if(value == this.drawextrai1) { qx = this.drawextrag;  qy = 1; }
+            else isextra = false;
+          }
           if(isextra) {
-            source = rglobal.extracanvas.getCanvasAt(0, 0);
+            // multiplied by 2 because the tiles are currently spread out to avoid leaking
+            qx *= 2;
+            qy *= 2;
+            var cx = tw * qx;
+            var cy = th * qy;
+            source = rglobal.extracanvas.getCanvasAt(cx, cy);
             tweak = 0;
+            var sx = cx + rglobal.extracanvas.getXOffsetAt(cx);
+            var sy = cy + rglobal.extracanvas.getYOffsetAt(cy);
           }
         }
       } else {
@@ -7248,7 +7744,6 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   if(t < 10) t = 10;
   if(t > 40) t = 40;
   if(h > 80 && t > 28) t = 28;
-  if(t & 1) t--; // some diagonal wires possibly look worse for some odd sizes. TODO: fix renderer
   th = tw = t;
 
 
@@ -8503,8 +8998,10 @@ var linkableCircuitsOrder = [];
 
 function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
   var dropdownname = name;
-  if(opt_is_title && name != '--------') dropdownname = '--- ' + name + ' ---';
-  var el = makeElement('option', currentCircuitGroup.dropdown).innerHTML = dropdownname;
+  if(opt_is_title && name != '--------') dropdownname = '[' + name + ']';
+  if(opt_link_id == 'mainhelp') { dropdownname = '*** Main Help ***'; } // would love color instead but dropdown option styles not working in my firefox currently
+  var el = makeElement('option', currentCircuitGroup.dropdown);
+  el.innerHTML = dropdownname;
   var index = allRegisteredCircuits.length;
   var c = {};
   c.text = circuit;

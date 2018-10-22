@@ -6420,13 +6420,13 @@ registerCircuit('Conway\'s game of life single cell', `
             |           ||         |
           yy8yyyyyyyyyyy80yyyyyyyyy8yy
           y                          y
-          y           ###"clk"       y
+          y           ###"clock"     y
           y           ###            y
         s-7           ##p-->c<d      1-s
           y *----]a------>a>d ^      y
           y *     ^       ^ t<*p#    y
           y o<a e>e<o<a e>o<*  ##    y
-          y ^ ^^^   ^ ^^^   * "togl" y
+          y ^ ^^^   ^ ^^^   *"toggle"y
           y a e *   a e *   *        y
           y ^^^ *   ^^^ *   *        y
           y * * ** ** * *** *        y
