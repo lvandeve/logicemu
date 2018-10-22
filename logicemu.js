@@ -3109,7 +3109,7 @@ function Cell() {
       if(!toggleMode && !changeMode) lastmousedowncomponent = component;
       if(component) component.mousedown(e, x, y);
       if(AUTOUPDATE == 1/* || AUTOUPDATE == 3*/) update();
-      if(isPaused()) unpause();
+      if(autopaused && isPaused()) unpause();
       if(CLICKDEBUG) {
         console.log('===================');
         console.log('CLICKDEBUG enabled!');
@@ -6516,7 +6516,7 @@ function resetForParse() {
   pause();
   timerticks = 0;
   global_changed_something = true;
-  numticks = 0;
+  numticks = -1; // -1 because the first implicit tick after parse should not be counted
   showingLinkIds = false;
 }
 
@@ -7386,15 +7386,16 @@ function parseComponents() {
 
       // MODE:electron
       UPDATE_ALGORITHM = 3;
-      AUTOUPDATE = 2;
+      AUTOUPDATE = 3;
     } else if((cycle_detected && global_counter) || (!cycle_detected && global_delay) || (global_counter && global_delay)) {
       // As soon as the circuit has any loops or delays, the combinational mode does not work and the sequential
       // mode is needed: a single update is no longer guaranteed to bring the circuit to a final stable
       // state.
+      // NOTE: replaced by fast now after unification of combinational and sequential
 
-      // MODE:sequential
+      // MODE:fast
       UPDATE_ALGORITHM = 1;
-      AUTOUPDATE = 2;
+      AUTOUPDATE = 3;
     } else if(cycle_detected || global_delay /*the global_delay check is in theory not needed here unless I update the above conditions again*/) {
       // The previous check, which set to MODE:sequential, left out a few cases. Those are set to electron instead of sequential here instead.
       // This is circuits with loops but without any flip-flops or counters. It is more likely that the user intended to make a circuit
@@ -7402,33 +7403,26 @@ function parseComponents() {
 
       // MODE:electron
       UPDATE_ALGORITHM = 3;
-      AUTOUPDATE = 2;
+      AUTOUPDATE = 3;
     } else {
       // otherwise, by default, set to 'combinational' mode, which has no ticks, only updates when a switch is toggled
       // the circuit should be guaranteed to fully update in a single tick if none of the above conditions triggered
+      // NOTE: replaced by fast now after unification of combinational and sequential
 
-      // MODE:combinational
+      // MODE:fast
       UPDATE_ALGORITHM = 1;
-      AUTOUPDATE = 1;
+      AUTOUPDATE = 3;
     }
 
     var modeindex = origtext.indexOf('MODE:');
     if(modeindex >= 0) {
-      if(textHasAt(origtext, modeindex + 5, 'combinational')) {
+      if(textHasAt(origtext, modeindex + 5, 'fast')) {
         UPDATE_ALGORITHM = 1;
-        AUTOUPDATE = 1;
-      }
-      else if(textHasAt(origtext, modeindex + 5, 'sequential')) {
-        UPDATE_ALGORITHM = 1;
-        AUTOUPDATE = 2;
+        AUTOUPDATE = 3;
       }
       else if(textHasAt(origtext, modeindex + 5, 'electron')) {
         UPDATE_ALGORITHM = 3;
-        AUTOUPDATE = 2;
-      }
-      else if(textHasAt(origtext, modeindex + 5, 'investigate')) {
-        UPDATE_ALGORITHM = 2;
-        AUTOUPDATE = 0;
+        AUTOUPDATE = 3;
       }
     }
 
@@ -7773,9 +7767,10 @@ if(AUTOUPDATE == 2 || AUTOUPDATE == 3) autoupdateinterval = setInterval(function
 
 timerinterval = setInterval(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
 
-if(USEAUTOPAUSE) autopauseinterval = setInterval(function(){ pause(); }, AUTOPAUSESECONDS * 1000);
+if(USEAUTOPAUSE) autopauseinterval = setInterval(function(){ pause(); autopaused = true; }, AUTOPAUSESECONDS * 1000);
 
 function pause() {
+  autopaused = false;
   if(autoupdateinterval) {
     clearInterval(autoupdateinterval);
     autoupdateinterval = null;
@@ -7801,6 +7796,7 @@ function pauseUpdateOnly() {
 }
 
 function unpause() {
+  autopaused = false;
   if((AUTOUPDATE == 2 || AUTOUPDATE == 3) && !autoupdateinterval) {
     autoupdateinterval = setInterval(function(){ update(); }, AUTOSECONDS * 1000);
   }
@@ -7813,7 +7809,7 @@ function unpause() {
 }
 
 function updateRunningState() {
-  unpause(); // unpause no matter what mode (not just AUTOUPDATE == 2), otherwise timers don't work in other modes
+  unpause(); // Required e.g. when switching from combinational to other modes [TODO: remove need for this so that mode switching allows remaining paused if user paused]
   if((AUTOUPDATE != 2 && AUTOUPDATE != 3) && autoupdateinterval) {
     // we're pausing, but however we still want the timer interval to run
     if(!timerinterval) timerinterval = setInterval(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
@@ -7851,10 +7847,8 @@ menuRow3El.style.height = '48px';
 
 // predesigned algorithm/autoupdate combinations
 var modes = [
-  ['combinational', 1, 1], // purely combinational circuits update in a single tick
-  ['sequential', 1, 2],
-  ['electron', 3, 2], // designed for gate-level flip-flops (but the built-in flip flops don't need this mode, those work as ideal flipflop in all modes!)
-  ['investigate', 2, 0]
+  ['fast', 1, 3], // faster than electron: recursively resolved gates, and keeps updating until things stop changing (in combinational circuits, that's after only 1 tick)
+  ['electron', 3, 3], // designed for gate-level flip-flops (but the built-in flip flops don't need this mode, those work as ideal flipflop in all modes!)
 ];
 function getMode() {
   for(var i = 0; i < modes.length; i++) {
@@ -7867,11 +7861,9 @@ function getMode() {
 
 
 var modeDropdown = makeUIElement('select', menuRow3El);
-modeDropdown.title = 'Choose Emulation Algorithm. *) combinational: does not auto tick, does a single fast update (all gates at once in sorted order, or as sorted as possible in case of loops) when using a button or timer.' +
-                     ' *) sequential: does fast update every so many milliseconds, for sequential circuits with loops (such as memory->processing->memory). It does not emulate metastable behavior of flip-flops made from individual gates correctly but is good for stable practical circuits.' +
+modeDropdown.title = 'Choose Emulation Algorithm. *) fast: does fast updates (all gates at once in sorted order, or as sorted as possible in case of loops) when using a button or timer. Updates until things stop changing (1 tick for combinational circuits).' +
                      ' *) electron: does slow update (gate-per-gate) every so many milliseconds, emulates flip-flops crafted from gates in more interesting way with even a randomness mechanism to get them out of metastable state.' +
-                     ' *) investigate: does not update unless you press the tick button, and does slow gate-per-gate updates without the randomness mechanism for flip-flops.' +
-                     ' When loading a new circuit, a mode is automatically chosen as follows: by default, combinational. If a particular type of loop between gates (such as in SR latch) is detected, electron. If any other loop is present: sequential'
+                     ' When loading a new circuit, a mode is automatically chosen as follows: by default, fast. If a particular type of loop between gates (such as in SR latch) is detected, electron. If any other loop is present: fast'
                      ;
 modeDropdown.onchange = function() {
   var mode = modeDropdown.selectedIndex;
@@ -7896,7 +7888,7 @@ function updateModeButtonText() {
 
 var tickButton = makeUIElement('button', menuRow3El);
 tickButton.innerText = 'tick';
-tickButton.title = 'Tick once, to update to next state when the circuit is paused or in "investigate" mode. If the emulator is already autoticking, pressing this button has little effect.';
+tickButton.title = 'Tick once. This allows ticking the circuit when paused, to investigate the signal. Especially useful in paused electron mode, or paused fast mode if there are flip-flops or other sequential parts.';
 tickButton.onclick = update;
 
 function isPaused() {
@@ -7981,6 +7973,7 @@ var ticksCounterEl = makeElement('div', menuRow3El);
 ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
 ticksCounterEl.style.width = '95px';
 ticksCounterEl.style.display = 'inline-block';
+ticksCounterEl.title = 'Amount of ticks so far. Click to reset to 0. If in electron mode, is per gate ticks. In fast mode, one tick per full update.';
 ticksCounterEl.onclick = function() {
   numticks = 0;
   updateTicksDisplay();

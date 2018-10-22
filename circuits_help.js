@@ -799,8 +799,8 @@ registerCircuit('Ticks and Emulation Algorithms', `
 0"dropdown above."
 
 0"E.g. the following circuit is most interesting in 'electron mode'. If you hit"
-0"the button, you see the signal go round and round. In a fast modes (sequential"
-0"or combinational, which are used more often), that would not be visible."
+0"the button, you see the signal go round and round. In fast mode, that would"
+0"not be visible."
 
 
 p**>e>e>e>e>e>e>e>e
@@ -838,45 +838,30 @@ p**>e>e>e>e>e>e>e>e
 0"There are different emulation algorithms available for circuits (aka update"
 0"modes, what it does per tick). These can be selected by the dropdown with the"
 0"following choices:"
-0"*) combinational: a single update propagating through all components in a"
-0"   sorted order is done only once when you press a switch or button or when a"
-0"   timer ticks. This mode works well for circuits that do not have any loops"
-0"   (that is, components whose input might be determined directly or"
-0"   indirectly through other components by this component's output state) nor"
-0"   delays"
-0"*) sequential: an update propagating through all components is done"
-0"   automatically every so many milliseconds. This mode is needed when there"
-0"   are loops or delays, because in both these cases a single update is not"
-0"   sufficient to reach the final state. Some circuits may even change state"
-0"   forever, and the sequential mode is perfect for that."
+0"*) fast: updates propagate through all components in a sorted order. This is"
+0"   done when you press a switch or button or when a timer ticks and keeps"
+0"   ticking until things stop changing (in combintional circuits, that's after"
+0"   one tick, for sequential ones or with loops, can be more)."
 0"*) electron: updates are done every so many milliseconds, but this update is"
-0"   different than the update done for combinational/sequential. Instead,"
-0"   every component updates only based on the previous state of its input"
-0"   components. This means signals propagage more slowly, as if you can follow"
-0"   the electric signal itself. This mode is good for circuits that build"
-0"   flip-flops from primitive components (rather than using the built-in ideal"
-0"   flip-flops) This mode also adds one more extra igredient: it adds some"
-0"   randomness to a particular kind of double-linked loop as you find in an SR"
-0"   latch, and this is loosely based on realistic physics of a flip-flop in"
-0"   metastable state eventually reaching a stable state anyway. So indeed the"
-0"   electron mode is mainly designed to simulate such behavior in a realistic"
-0"   way. The sequential mode is good and fast but can't simulate"
-0"   matastability, hence the reason to provide the slower 'nanosecond level'"
-0"   electron mode."
-0"*) investigate: similar to electron, but it only updates when you press the"
-0"   tick button, which allows to see how everything updates at any pace. Note"
-0"   that investigate is to electron mode what combinational is to sequential"
-0"   mode. You can use combinational mode as a way to investigate sequential"
-0"   circuits. The randomness feature of electron mode is disabled for"
-0"   investigate."
+0"   different than the update done for fast mode. Instead, every component"
+0"   updates only based on the previous state of its input components. This"
+0"   means signals propagage more slowly, as if you can follow the electric"
+0"   signal itself. This mode is good for circuits that build flip-flops from"
+0"   primitive components (rather than using the built-in ideal flip-flops)"
+0"   This mode also adds one more extra igredient: it adds some randomness to a"
+0"   particular kind of double-linked loop as you find in an SR latch, and this"
+0"   is loosely based on realistic physics of a flip-flop in metastable state"
+0"   eventually reaching a stable state anyway. So indeed the electron mode is"
+0"   mainly designed to simulate such behavior in a realistic way. The"
+0"   fast mode is good and fast but can't simulate matastability, hence the"
+0"   reason to provide the slower 'nanosecond level' electron mode."
 
 
 0"A circuit, when just loaded, will automatically be in one of the modes that"
-0"is most suitable for the circuit: if there are no loops, it'll choose"
-0"combinational mode. If there are particular types of short loops, electron"
-0"mode. In other cases with loops, sequential mode. A mode may also be enforced"
-0"with a comment like this, which in this circuit sets it to electron"
-0"initially:"
+0"is most suitable for the circuit: if there are no loops, it'll choose fast"
+0"mode. If there are particular types of short loops, electron mode. In other"
+0"cases with loops, fast mode. A mode may also be enforced with a comment like"
+0"this, which in this circuit sets it to electron initially:"
 
 "MODE:electron"
 
@@ -884,29 +869,25 @@ p**>e>e>e>e>e>e>e>e
 0"dropdown to switch to the algorithm applicable for each example as explained"
 0"by its description:"
 
-0"With the circuit below, try the 4 modes: with combinational and sequential,"
-0"the LED updates immediately to the state of the switch. With electron, you"
-0"can see the signal propagate through the gates. With investigate, you must"
-0"manually press the tick button to have the signal propagate through each gate"
+0"With the circuit below, try the 2 modes: with fast mode, the LED updates"
+0"immediately to the state of the switch. With electron, you can see the signal"
+0"propagate through the gates. If you use the pause button, you can use the"
+0"tick button to manually propagate the signal."
 
 
 s->o->o->o->o->o->o->o->o->l
 
-0"The circuit below goes slow in sequential mode too, because 'd' are delays"
-0"which are designed to work per sequential tick on purpose. In combinational"
-0"mode, you now have to press the tick button (or the 's') manually multiple"
-0"times to make it advance now since combinational does only one update when"
-0"you press the switch:"
+0"The circuit below goes slow in fast mode too, because 'd' are delays which"
+0"are designed to work per sequential tick on purpose."
 
 s->d->d->d->d->d->d->d->d->l
 
-0"Below is a 4-bit adder circuit. A circuit like this works in combinational"
-0"mode and does not need the more expensive sequential mode. There are some"
-0"long connections that go through many gates, but none of them are loops. Try"
-0"it in all 4 modes to see what happens: combinational and sequential work the"
-0"same. Electron gives slower updates so you can see the adder operating but"
-0"it'll reach the correct answer soon. Investigate requires pressing tick"
-0"several times yourself before you get the correct sum:"
+0"Below is a 4-bit adder circuit. A combinational circuit like this works in"
+0"works immediately in a single tick in fast mode. There are some long"
+0"connections that go through many gates, but none of them are loops.  Electron"
+0"gives slower updates so you can see the adder operating but it'll reach the"
+0"correct answer soon. You can see how many ticks it takes with the timer"
+0"indicator at the top. You can reset that one to 0 by clicking it."
 
 
           "8       4       2       1"
@@ -923,29 +904,24 @@ s->d->d->d->d->d->d->d->d->l
        s s     s s     s s     s s
      "b8 a8   b4 a4   b2 a2   b1 a1"
 
-0"However, for a circuit with a loop, you need at least sequential mode."
+0"However, for a circuit with a loop, multiple ticks happen even in fast mode."
 0"Here is a very simple example: When you turn the switch from 'off' to"
-0"'on', the counter will disable itself a tick later. But if you do that"
-0"in combinational mode, after pressing the switch, the LED will remain on"
-0"as if the disabling does not happen. Press the 'tick' button to see it"
-0"happen. This example is very simple, a more important case is for example"
-0"when there is memory, then some computation happens on the memory, then"
-0"the result is stored back into the original memory."
+0"'on', the counter will disable itself a tick later.  This example is very"
+0"simple, a more important case is for example when there is memory, then some"
+0"computation happens on the memory, then the result is stored back into the"
+0"original memory."
 
     ***
     v *
 s**>c**>l
 
-0"Another example of something that needs sequential mode is the delay."
-0"if you enable the switch in combinational mode, you'll never see the"
-0"final state of the delay unless when using the 'tick' button"
-
+0"Another example of something that needs multiple fast ticks is the delay."
 
 s**>d**>l
 
 0"An example of something that requires electron mode is a 1-tick pulse made"
 0"from gate delays (without using 'd' but regular gates). In electron mode,"
-0"this will pulse once when activating the switch. In fast modes, it'll just"
+0"this will pulse once when activating the switch. In fast mode, it'll just"
 0"stay off."
 
 p****>o**]a**>l
@@ -953,15 +929,9 @@ p****>o**]a**>l
     *******
 
 0"Another electron example: in electron mode, the signal you make with"
-0"the switch will loop around in a much nicer way than in sequential mode, and"
-0"of course combinational mode does not support the looping at all without"
-0"manually ticking. You can make a neat shape that goes round and round"
-0"in electron mode here by briefly enabling the switch, but when you then"
-0"enable sequential mode it may be destroyed. Also, if you want manual"
-0"ticking, the 'investigate' mode here preserves the signal better than"
-0"'combinational' mode."
+0"the switch will loop around in a much nicer way than in fast mode."
 
-p**>e>e>e>e>e>e>e>e
+s**>e>e>e>e>e>e>e>e
     ^             v
     e             e
     ^             v
@@ -991,9 +961,14 @@ p**>e>e>e>e>e>e>e>e
           v |
           O<*
 
-0"The randomness is not present in combinational or sequential mode. Due to the"
-0"way those algorithms work, such loopy circuits settle to a well defined state"
-0"immediately. The electron mode is physically more realistic, but slower."
+0"The randomness is not present in fast mode. Due to the way those algorithms"
+0"work, such loopy circuits settle to a well defined state immediately. The"
+0"electron mode is physically more realistic, but slower."
+
+0"An interesting circuit to compare the different modes is the 8-bit divider"
+0"circuit. This divider has a very long longest path, but in fast mode you see"
+0"updates immediately. In electron mode, you can see the circuit flow for a"
+0"long time, when changing the right buttons of the divider."
 
 0"FIT:x"
 
@@ -2391,10 +2366,8 @@ s   s   s
 0"replace colon space by just colon, and the commands will work for real. They"
 0"are neutered with the space here to not make them affect this tutorial."
 
-0"'MODE: combinational' --> force combinational mode"
-0"'MODE: sequential' --> force sequential mode"
+0"'MODE: fast' --> force fast mode"
 0"'MODE: electron' --> force electron mode"
-0"'MODE: investigate' --> force investigate mode"
 0"'RENDER: text' --> force text mode rendering (ascii)"
 0"'RENDER: graphical' --> force graphics mode rendering (canvas)"
 0"'FIT: x' --> zoom horizontally to full width, even if it means scrolling y"

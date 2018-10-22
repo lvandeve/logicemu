@@ -5520,7 +5520,7 @@ s**>4
 
 
 0"RENDER:graphical"
-0"MODE:sequential"
+0"MODE:fast"
 `, 'relay_logic');
 
 
@@ -6945,8 +6945,8 @@ registerCircuit('Langtons Ant', `
 0"Langton's Ant"
 
 0"This circuit is without clock, and only works in 'electron' mode, not in"
-0"sequential mode. Make this clocked with global wire to make it work in"
-0"sequential mode."
+0"'fast' mode. Make this clocked with global wire to make it work in"
+0"'fast' mode."
 
 0"MODE:electron"
 
@@ -7134,6 +7134,9 @@ registerCircuit('16-bit ripple vs lookahead speed comparison', `
 0"the buttons marked 'CARRY' or alternatively the ones marked 'B1' (the first"
 0"bit of B) (but not both at the same time) to see the rippling propagation in"
 0"the first adder, and the faster update in the second adder"
+
+0"NOTE: you can look at the ticks counter above to see how long updates take,"
+0"      and can reset the ticks counter to 0 by clicking it."
 
 
         l     l     l     l     l     l     l     l     l     l     l     l     l     l     l     l
