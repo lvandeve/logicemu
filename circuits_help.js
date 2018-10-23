@@ -29,17 +29,6 @@ and injects them into a dropdown from logicemu.js
 
 registerCircuitGroup('help');
 
-registerCircuit('Welcome', introText, introId);
-
-registerCircuit('Help Index', `
-0"List of help circuits. If this is your first time, the first one ('Main Help'"
-0"under 'Viewing') is recommended."
-
-
-INSERT:toc_help`, 'helpindex');
-
-registerTitle('Viewing');
-
 registerCircuit('Main Help', `
 0"LogicEmu Main Help"
 0"------------------"
@@ -787,6 +776,49 @@ l<----*
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `, 'mainhelp');
 
+registerCircuit('Rendering Modes', `
+0"Rendering Modes"
+0"---------------"
+
+0"There are two rendering modes: text (ASCII) and graphical (HTML5 canvas)."
+0"They can be selected with a dropdown in the top menu."
+
+0"The graphical mode draws nice wires, boxes around components, device inputs"
+0"as neatly drawn arrows and negated inputs as little circles. This is the"
+0"default mode."
+
+0"The text mode on the other hand draws everything with ASCII characters,"
+0"matching how you edit circuits. Gates use the similar letters as the"
+0"graphical mode, but now every cell uses some ASCII character, e.g. wires are"
+0"broken up into different characters (depending on direction, how to connect,"
+0"...). To learn the meaning of the characters, see the editing tutorials"
+0"instead."
+
+0"The text mode may render faster in some browsers, especially for huge"
+0"circuits."
+
+0"Try out the two modes on the circuit below by changing the dropdown at the"
+0"top between 'graphical' and 'text':"
+
+      l   lll
+      m  lzzZl
+      |   |ll  ####
+   p--+---%--->l###   l
+      |   |           ^
+s---*******--->e>l** *|*>T
+      v       >     x X
+s---->a-****-->a>l** *|*>l1
+      |  ***          s
+    s-hl ***     l
+      l     ;   ^
+             ; /
+              *
+
+0"You can also zoom in and out with the - and + buttons, and change the color"
+0"scheme. These controls, too, are in the top bar."
+
+0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
+`, 'renderhelp');
 
 registerCircuit('Ticks and Emulation Algorithms', `
 0"Ticks and Emulation Algorithms"
@@ -974,52 +1006,6 @@ s**>e>e>e>e>e>e>e>e
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `, 'algohelp');
-
-
-
-registerCircuit('Rendering Modes', `
-0"Rendering Modes"
-0"---------------"
-
-0"There are two rendering modes: text (ASCII) and graphical (HTML5 canvas)."
-0"They can be selected with a dropdown in the top menu."
-
-0"The graphical mode draws nice wires, boxes around components, device inputs"
-0"as neatly drawn arrows and negated inputs as little circles. This is the"
-0"default mode."
-
-0"The text mode on the other hand draws everything with ASCII characters,"
-0"matching how you edit circuits. Gates use the similar letters as the"
-0"graphical mode, but now every cell uses some ASCII character, e.g. wires are"
-0"broken up into different characters (depending on direction, how to connect,"
-0"...). To learn the meaning of the characters, see the editing tutorials"
-0"instead."
-
-0"The text mode may render faster in some browsers, especially for huge"
-0"circuits."
-
-0"Try out the two modes on the circuit below by changing the dropdown at the"
-0"top between 'graphical' and 'text':"
-
-      l   lll
-      m  lzzZl
-      |   |ll  ####
-   p--+---%--->l###   l
-      |   |           ^
-s---*******--->e>l** *|*>T
-      v       >     x X
-s---->a-****-->a>l** *|*>l1
-      |  ***          s
-    s-hl ***     l
-      l     ;   ^
-             ; /
-              *
-
-0"You can also zoom in and out with the - and + buttons, and change the color"
-0"scheme. These controls, too, are in the top bar."
-
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
-`, 'renderhelp');
 
 
 registerCircuit('Loading Circuits', `
@@ -3521,6 +3507,29 @@ eeeEE     eeeEE
 "hi"4     "hi"4
 eeeEE     eeeEE
 
+
+
+l<--s0"There should be no space between this comment and the switch"
+
+
+"The number 3 in this comment should NOT make the LED green."
+            l
+            ^
+            s
+
 "FIT:x"
 
 `, 'drawtest');
+
+
+registerTitle('Front Page');
+
+
+registerCircuit('Welcome', introText, introId);
+
+registerCircuit('Help Index', `
+0"List of help circuits. If this is your first time, the first one ('Main Help'"
+0"under 'Viewing') is recommended."
+
+
+INSERT:toc_help`, 'helpindex');

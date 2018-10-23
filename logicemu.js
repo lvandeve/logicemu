@@ -262,22 +262,48 @@ global wires = backplane
 
 
 /*
+AUTOUPDATE and UPDATE_ALGORITHM together form the way to experience the emulation.
 Good combinations of AUTOUPDATE and UPDATE_ALGORITHM are as follows:
 -when working on combinatorial aritmhetic things (adder or multiplier with 7-segment display output, ...): AUTOUPDATE=1, UPDATE_ALGORITHM=1
--when working with flipflops: AUTOUPDATE=2, UPDATE_ALGORITHM=3
+-when working with sequential circuits (with built-in flipflops): AUTOUPDATE=2, UPDATE_ALGORITHM=1
+-when working with flipflops from gates: AUTOUPDATE=2, UPDATE_ALGORITHM=3
 -when working on circuits where exact timing through wire is important with loops etc...: AUTOUPDATE=0, UPDATE_ALGORITHM=2
+-combining the advantages of combinatorial and sequential: AUTOUPDATE=3, UPDATE_ALGORITHM=3
 */
 
-var worldDiv = makeDiv(10, 128, 0, 0);
-var renderingMessageDiv = makeDiv(10, 128, 0, 0);
-
+/*
+AUTOUPDATE values:
+0: never update unless on manual tick
+1: update when the user presses any input button, or when timers update. This is very useful for combinatorial networks with algorithm 1. However, when things take multiple steps to update, such as other update algorithms, or sequential circuits with any update algorithm, this is useless and 0 (manual ticking) or 2 (realtime ticking) should be used.
+2: update automatically every AUTOSECONDS seconds
+3: between 1 and 2: update as long as things keep changing
+*/
 var AUTOUPDATE = 1; // values described below
+/*
+UPDATE_ALGORITHM info:
+0: "scanline": Components updated in scanline order and could read inputs from sometimes already-updated, some not-yet-updated components. This has problems such as shape of circuit affects result, so is only included for completeness, not used.
+1: "fast recursive": components recursively update their inputs before themselves, for faster propagation. This breaks JK flipflops, round-and-round blinking led loops and most other things with loops.
+This algorithm is good for immediate perfect full update in a single tick of final outputs based on user niputs in an asynchronic circuit like a 16-bit adder or multiplier, without any clocks, flipflops or loops
+2: "slow": components only update based on the value of its inputs at the previous tick. This can break flipflops, the balance is so perfect that some flipflops can never flip to one state
+This algorithm allows the "on" led in the roundabout circuit to travel around circularly, always 1 led is on
+3: "twiddled slow": like slow, but with some random probability (customizable, e.g. 10%), a gate does not update [or alternatively uses the previous-previous instead of just previous as input.] This may randomly fix some metastable flipflops..
+*/
+
 var UPDATE_ALGORITHM = 2; // values described below
 
 // search words: autochoose auto_choose autoalgo auto_algo
 var AUTO_CHOOSE_MODE = true; // automatically choose AUTOUPDATE and UPDATE_ALGORITHM based on the circuit
 
-var numticks = 0;
+// [search terms: timerspeed autospeed clockspeed timer_speed auto_seconds timer_seconds]
+var NORMALAUTOSECONDS = 0.05;
+var NORMALTIMERSECONDS = 0.1;
+var AUTOSECONDS = NORMALAUTOSECONDS; // good value: 0.05. computers can handle faster but this makes operating circuits visible
+var TIMERSECONDS = NORMALTIMERSECONDS; // default speed of "timer" components in seconds (note that the other timers with numbers are all slower than this). Good value: 1.0 or 0.1
+var TWIDDLE_PROBABILITY = 0.1; // for update algorithm 3
+
+
+var USE_BRESENHAM = true; // if true, use bresenham for diagonal lines to ensure they are not blurry (not antialiased as it looks choppier instead of better here)
+
 
 var origtext = ''; // the currently loaded circuit original text
 var origtitle = null;
@@ -290,42 +316,13 @@ var graphics_mode = 1; // 0=text, 1=canvas
 var graphics_mode_browser = graphics_mode; //is_chrome ? graphics_mode : 0;
 var graphics_mode_actual = graphics_mode_browser;
 
-var USE_BRESENHAM = true; // if true, use bresenham for diagonal lines to ensure they are not blurry (not antialiased as it looks choppier instead of better here)
-
-/*
-AUTOUPDATE values:
-------------------
-
-0: never update unless on manual tick
-
-1: update when the user presses any input button, or when timers update. This is very useful for combinatorial networks with algorithm 1. However, when things take multiple steps to update, such as other update algorithms, or sequential circuits with any update algorithm, this is useless and 0 (manual ticking) or 2 (realtime ticking) should be used.
-
-2: update automatically every AUTOSECONDS seconds
-
-3: between 1 and 2: update as long as things keep changing
 
 
-UPDATE_ALGORITHM info:
-----------------------
+var worldDiv = makeDiv(10, 128, 0, 0);
+var renderingMessageDiv = makeDiv(10, 128, 0, 0);
 
-0: "scanline": Components updated in scanline order and could read inputs from sometimes already-updated, some not-yet-updated components. This has problems such as shape of circuit affects result, so is only included for completeness, not used.
+var numticks = 0;
 
-1: "fast recursive": components recursively update their inputs before themselves, for faster propagation. This breaks JK flipflops, round-and-round blinking led loops and most other things with loops.
-This algorithm is good for immediate perfect full update in a single tick of final outputs based on user niputs in an asynchronic circuit like a 16-bit adder or multiplier, without any clocks, flipflops or loops
-
-2: "slow": components only update based on the value of its inputs at the previous tick. This can break flipflops, the balance is so perfect that some flipflops can never flip to one state
-This algorithm allows the "on" led in the roundabout circuit to travel around circularly, always 1 led is on
-
-3: "twiddled slow": like slow, but with some random probability (customizable, e.g. 10%), a gate does not update [or alternatively uses the previous-previous instead of just previous as input.] This may randomly fix some metastable flipflops..
-*/
-
-
-// [search terms: timerspeed autospeed clockspeed timer_speed auto_seconds timer_seconds]
-var NORMALAUTOSECONDS = 0.05;
-var NORMALTIMERSECONDS = 0.1;
-var AUTOSECONDS = NORMALAUTOSECONDS; // good value: 0.05. computers can handle faster but this makes operating circuits visible
-var TIMERSECONDS = NORMALTIMERSECONDS; // default speed of "timer" components in seconds (note that the other timers with numbers are all slower than this). Good value: 1.0 or 0.1
-var TWIDDLE_PROBABILITY = 0.1; // for update algorithm 3
 
 // tile size
 var tw = 9;
@@ -7767,7 +7764,14 @@ if(AUTOUPDATE == 2 || AUTOUPDATE == 3) autoupdateinterval = setInterval(function
 
 timerinterval = setInterval(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
 
-if(USEAUTOPAUSE) autopauseinterval = setInterval(function(){ pause(); autopaused = true; }, AUTOPAUSESECONDS * 1000);
+if(USEAUTOPAUSE) setAutoPauseInterval();
+
+function setAutoPauseInterval() {
+  autopauseinterval = setInterval(function(){
+    pause();
+    autopaused = true;
+  }, AUTOPAUSESECONDS * 1000);
+}
 
 function pause() {
   autopaused = false;
@@ -7802,7 +7806,7 @@ function unpause() {
   }
   if(!timerinterval)  timerinterval = setInterval(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
   if(USEAUTOPAUSE && !autopauseinterval) {
-    autopauseinterval = setInterval(function(){ pause(); }, AUTOPAUSESECONDS * 1000);
+    setAutoPauseInterval();
     updatePauseButtonText();
   }
   updateTimeButtonBorders();
@@ -8991,9 +8995,9 @@ var linkableCircuitsOrder = [];
 
 function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
   var dropdownname = name;
-  if(opt_is_title && name != '--------') dropdownname = '[' + name + ']';
-  if(opt_link_id == 'mainhelp') { dropdownname = '*** Main Help ***'; } // would love color instead but dropdown option styles not working in my firefox currently
+  if(opt_is_title && name != '--------') dropdownname = '--- ' + name + ' ---';
   var el = makeElement('option', currentCircuitGroup.dropdown);
+  if(opt_link_id == 'mainhelp') { el.style.fontWeight = 'bold'; }
   el.innerHTML = dropdownname;
   var index = allRegisteredCircuits.length;
   var c = {};
@@ -9028,25 +9032,19 @@ var introText = `
 0"Only if both switches are on, the LED will go on. Try enabling both"
 0"switches by clicking them:""
 
-               s****>a****>l
- "AND GATE:"         ^
-               s******
+  s****>a****>l
+        ^
+  s******0"AND GATE"
 
 0"There are much more types of gates and devices available: logic gates,"
 0"flip-flops, integrated circuits, ROMs, displays, ... Explore the circuits"
 0"index below or read the help circuits first to learn more!"
 
-               s**>a**>o**>l"carry"
-                  >    ^
- "ADDER:"      s**>e**>a
-                      >
-               s******>e**>l"sum"
-
-
-               s-->jq->l
- "JK FLIPFLOP:"s-->c#
-               s-->kQ->l
-
+  s**>a**>o**>l"carry"0
+     >    ^            s-->jq->l
+  s**>e**>a    0"ADDER"s-->c#    0"JK FLIPFLOP"
+         >             s-->kQ->l
+  s******>e**>l"sum"0
 
 
 0"Circuits Index"
@@ -9104,3 +9102,10 @@ function printComponentsDebug() {
   }
 }
 
+/*
+Available debug functions:
+printComponentsDebug
+applyAllTransforms
+applyTransform
+testCompression
+*/
