@@ -52,12 +52,17 @@ s****
 0"and voltages are abstracted away, and only two signals, 0 and 1, are"
 0"emulated."
 
-0"The rest of this tutorial mainly explains the meaning of the different types"
-0"of components and symbols used, how to view and interact with circuits. Other"
-0"tutorials focus on user interface, emulation algorithms and editing."
+0"This tutorial is multiple screens long, so scroll down to see all"
 
-0"Note that this tutorial is multiple screens long, so scroll down to see all"
+0"User Interface"
+0"--------------"
 
+0"The top bar has buttons of the user interface, such as selecting built-in"
+0"circuits, pausing, changing graphics options, editing, ... Hover over each"
+0"button and dropdown to see their explanation."
+
+0"The rest of this tutorial explains what the different symbols and components"
+0"in circuits do."
 
 0"Input / Output / Wires"
 0"----------------------"
@@ -2374,7 +2379,7 @@ s   s   s
 `, 'editing');
 
 
-registerCircuit('ASCII symbol summary (for editing)', `
+registerCircuit('ASCII symbol summary', `
 0"Summary of characters. See the other tutorials for the full explanation."
 
 0"BASIC"
@@ -3506,7 +3511,6 @@ eeeEE     eeeEE
 
 "hi"4     "hi"4
 eeeEE     eeeEE
-
 
 
 l<--s0"There should be no space between this comment and the switch"

@@ -3176,8 +3176,8 @@ function setTocHTML(toc, el) {
   var html = '';
   var j = 0;
   for(var i = 0; i < allRegisteredCircuits.length; i++) {
-    if(toc == 1 && (allRegisteredCircuits[i].group != 0 || allRegisteredCircuits[i].linkid == 'helpindex' || allRegisteredCircuits[i].linkid == introId)) continue;
-    if(toc == 2 && allRegisteredCircuits[i].group != 1 && allRegisteredCircuits[i].linkid != 'helpindex') continue;
+    if(toc == 1 && (allRegisteredCircuits[i].group != 0 /*|| allRegisteredCircuits[i].linkid == 'helpindex' || allRegisteredCircuits[i].linkid == introId*/)) continue;
+    if(toc == 2 && allRegisteredCircuits[i].group != 1 && allRegisteredCircuits[i].linkid != 'helpindex' && allRegisteredCircuits[i].linkid != 'mainhelp') continue;
     //var div = makeDiv(0, (i * th), w * tw, th, el);
     var div = makeDiv(0, (j * th), tw, th, el);
     div.style.width = '800px';
@@ -3351,7 +3351,6 @@ function RendererText() {
       } else {
         this.div0.innerText = symbol;
       }
-
       // allow text selection of those
       this.div0.onmousedown = null;
     } else if(symbol == 'toc') {
@@ -7607,7 +7606,6 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
     if(tocType == 1) {
       numLines = 0;
       for(var i = 0; i < allRegisteredCircuits.length; i++) if(allRegisteredCircuits[i].group == 0) numLines++;
-      numLines -= 2; // circuits 'Help' and 'Welcome' not counted for this one
     }
     if(tocType == 2) {
       numLines = 0;
@@ -7904,7 +7902,7 @@ function updatePauseButtonText() {
 }
 var pauseButton = makeUIElement('button', menuRow3El, 3);
 pauseButton.innerText = 'pause';
-pauseButton.title = 'pauses auto ticking and timers, or enables them again if already paused.';
+pauseButton.title = 'pauses running circuit and timers, or enables them again if already paused. If paused, use the tick button to manually advance circuit state step by step instead. If you press switches of the circuit while paused, the update will be visible after you use the tick button.';
 pauseButton.onclick = function() {
   if(isPaused()) {
     unpause();
@@ -8399,6 +8397,7 @@ importButton.onclick = function() {
 
 
 var indexLink = makeElement('span', menuRow1El);
+indexLink.title = 'go to the main welcome page and remove tokens from URL';
 if(getCGIParameterByName('id')) {
   indexLink.innerHTML = '&nbsp;&nbsp;<a href="' + getUrlWithoutQueries() + '">index</a>';
 } else {
@@ -8414,6 +8413,7 @@ if(getCGIParameterByName('id')) {
 }
 
 var helpLink = makeElement('span', menuRow1El);
+helpLink.title = 'go to the help index page';
 helpLink.innerHTML = 'help';
 helpLink.style.paddingLeft = '10px';
 helpLink.style.color = '#00e';
@@ -8965,6 +8965,7 @@ function CircuitGroup(name) {
   makeElement('br', this.main);
   this.dropdown = makeUIElement('select', this.main);
   this.dropdown.style.width = '120px';
+  this.dropdown.title = 'Built-in circuit selector dropdown "' + name + '"';
   // disabled, using onclick of element instead
   var that = this;
   this.dropdown.onchange = function() {
