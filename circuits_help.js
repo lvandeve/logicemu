@@ -2922,7 +2922,8 @@ registerCircuit('Unit Test', `
 
 0"Note: also try: applyTransform(4), applyTransform(2)"
 
-0"Note: also test the map 'game of life ship' and enable autotick"
+0"Note: also test the map 'game of life ship' and enable autotick, and"
+0"'langton's ant' in electron mode"
 
 0"On"
 0"--"
@@ -3408,9 +3409,25 @@ I197
 s------>e----->l
 I196
 
+
+
+0"Test IC input order. Each input must activate the correct LED"
+
+                 "ABCD"
+      llll        llll
+      ^^^^        ^^^^
+      ||||#s      ||||
+    I0|||||       iiiiiiiiii0
+      |||&%       i    ^    i
+    s-*|*-s       i    s    i
+       |          i"C  B" s>i
+       #s         i<s    "A"i
+                  i  "D"    i
+                  i   s     i
+                  i   v     i
+                  iiiiiiiiiii
+
 0"RENDER:text"
-
-
 `, 'unittest');
 
 

@@ -7551,19 +7551,6 @@ registerCircuit('74181 ALU', `
       l l l l l     l l l
      "f0f1= f2f3    g c p"
 
-0"Instance set up for doing addition in active-low"
-
-     "c m a0b0a1b1a2b2a3b3"
-      s s S S S S S S S S
-      v v v v v v v v v v
-      iiiiiiiiiiiiiiiiiii<S"s0"
-      iiiiiiiiiiiiiiiiiii<s"s1"
-      iiiiiiiiiiiiiiiiiii<s"s2"
-      iiiiiiiiiiiiii74181<S"s3"
-      v v v v v     v v v
-      l l l l l     l l l
-     "f0f1= f2f3    g c p"
-
 0"Instance set up for doing addition in active-high"
 
      "c m a0b0a1b1a2b2a3b3"
@@ -7577,7 +7564,20 @@ registerCircuit('74181 ALU', `
       l l l l l     l l l
      "f0f1= f2f3    g c p"
 
-0"Instance set up for doing XOR in active low, XNOR in active high"
+0"Instance set up for doing addition in active-low"
+
+     "c m a0b0a1b1a2b2a3b3"
+      s s S S S S S S S S
+      v v v v v v v v v v
+      iiiiiiiiiiiiiiiiiii<S"s0"
+      iiiiiiiiiiiiiiiiiii<s"s1"
+      iiiiiiiiiiiiiiiiiii<s"s2"
+      iiiiiiiiiiiiii74181<S"s3"
+      v v v v v     v v v
+      l l l l l     l l l
+     "f0f1= f2f3    g c p"
+
+0"Instance set up for doing XNOR in active high, XOR in active low"
 
      "c m a0b0a1b1a2b2a3b3"
       s S s s s s s s s s

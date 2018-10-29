@@ -484,31 +484,68 @@ function DefSub() {
     }
 
     for(var i = 0; i < this.externalinputs.length; i++) {
-      var x = this.externalinputs[i][0];
-      var y = this.externalinputs[i][1];
+      var x0 = this.externalinputs[i][0];
+      var y0 = this.externalinputs[i][1];
+      /*
+      Normally we could just look at 8 neighbors to see where the 's' touches
+      the chip. However, if it's a large switch extended with ### or $$$, we
+      need to look in the entire area where it touches the chip, and not count
+      the connections inside this area itself. Hence the stack and array.
+      */
+      var used = {};
+      used[y0 * w + x0] = true;
+      var stack = [[x0, y0]];
+      var array = [];
+      while(stack.length > 0) {
+        var s = stack.pop();
+        array.push(s);
+        for(var d = 0; d < 4; d++) {
+          var neigh = getNeighbor(s[0], s[1], d);
+          if(!neigh) continue;
+          var x = neigh.x;
+          var y = neigh.y;
+          if(used[y * w + x]) continue;
+          if(neigh.circuitsymbol == '#' || neigh.circuitsymbol == '$') {
+            used[y * w + x] = true;
+            stack.push([x, y]);
+          }
+        }
+      }
+
       var dir = -1;
-      if(connected2(x, y, 0)) dir = 2;
-      else if(connected2(x, y, 1)) dir = 3;
-      else if(connected2(x, y, 2)) dir = 0;
-      else if(connected2(x, y, 3)) dir = 1;
-      else if(connected2(x, y, 4)) dir = 6;
-      else if(connected2(x, y, 5)) dir = 7;
-      else if(connected2(x, y, 6)) dir = 4;
-      else if(connected2(x, y, 7)) dir = 5;
-      var v = world[y][x].components[0];
+      for(var j = 0; j < array.length; j++) {
+        var x = array[j][0];
+        var y = array[j][1];
+        for(var d = 0; d < 8; d++) {
+          var neigh = getNeighbor(x, y, d);
+          if(!neigh) continue;
+          if(neigh.circuitsymbol == '#' || neigh.circuitsymbol == '$' || neigh.circuitsymbol == 's') continue;
+
+          if(connected2(x, y, d)) {
+            dir = getOppositeDir(d);
+            break;
+          }
+        }
+        if(dir >= 0) break; // only one wire per entire switch supported
+      }
+
+      var v = world[y0][x0].components[0];
       if(!v) {
         this.markError('component not found for chip template');
         return;
       }
       var tindex = this.translateindex[v.index];
       if(dir >= 0) {
-        inputs.push([tindex, dir, x, y]);
+        inputs.push([tindex, dir, x0, y0]);
       }
     }
 
     var sortfun = function(a, b) {
+      // sort by direction N,E,S,W first
       if(a[1] < b[1]) return -1;
       if(a[1] > b[1]) return 1;
+      // for same direction, sort left to right, top to bottom, right to left,
+      // bottom to top, depending on dir
       if(a[1] == 0) return a[2] - b[2];
       if(a[1] == 1) return b[3] - a[3];
       if(a[1] == 2) return b[2] - a[2];
@@ -719,7 +756,14 @@ function CallSub(id) {
                 break;
               }
             }
-            inputs.push([component.inputs[k], dir, x2, y2, component.inputs_negated[k]]);
+            /*
+            TODO: investigate why this can be -1 in the first place, as this is some underlying but. Happens for following circuit:
+                i
+                $
+             l<-i<-s   Il<s
+            */
+            if(dir != -1) inputs.push([component.inputs[k], dir, x2, y2, component.inputs_negated[k]]);
+            else console.log('bug with input near ' + x + ', ' + y + ' (TODO: fix)');
           }
           if(connected2(x, y, j)) {
             if(getNeighbor(x, y, j).circuitsymbol != '$') {
@@ -5660,6 +5704,10 @@ function getNeighbor(x, y, dir) {
   return world[y2][x2];
 }
 
+function getOppositeDir(dir) {
+  return (dir ^ 2);
+}
+
 // parse the individual world cells from the text
 function parseCells(text) {
   world = [];
@@ -6113,7 +6161,9 @@ function parseSubs() {
         for(var i = 0; i < array.length; i++) {
           var x = array[i][0];
           var y = array[i][1];
-          if(world[y][x].circuitsymbol == 's' || world[y][x].circuitsymbol == 'S') defsub.externalinputs.push([x, y]);
+          if(world[y][x].circuitsymbol == 's' || world[y][x].circuitsymbol == 'S') {
+            defsub.externalinputs.push([x, y]);
+          }
         }
       }
     }
