@@ -1445,9 +1445,10 @@ o####    e####    e####     ^
 |||||    |||||    |||||    #s#
 sssss    sssss    sssss    ###
 
-0"$ is similar to #, but it does not interact with inputs or wires, it can be"
-0"used to allow squeezing inputs through the following LCD display without"
-0"interacting with unwanted segments:"
+0"$ is similar to #, but it does not interact with inputs or wires (and can be"
+0"considered to only extend surface area, nothing more), it can be used to"
+0"allow squeezing inputs through the following LCD display without interacting"
+0"with unwanted segments:"
 
 
     $$l<-*
@@ -3113,6 +3114,8 @@ s-------]i-->l
 
 S--->i$-----]l
       #----->l
+
+S--->i$$i--->l
 
 S--->i
      $------]l

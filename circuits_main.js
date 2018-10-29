@@ -7408,46 +7408,8 @@ registerCircuit('32-bit divider', `
 
 
 registerCircuit('74181 ALU', `
-0"The once popular 74181 4-bit ALU. Check out its spec sheet for more"
-0"information."
 
-0"It supports 32 operations (of which many overlapping/similar/trivial ones)"
-
-0"The m bit selects between two groups of 16 operations (mode): when m is low,"
-0"the 16 different logic operations (0, AND, IMPLY, ...). When m is high,"
-0"addition/subtraction operations, with various combinations of"
-0"adding/subtracting A and B, subtracting 1 of the result (to add 1 use carry"
-0"instead), and several that have A OR B, A AND B or bit-inverted versions as"
-0"operands"
-
-0"Bits s0-s3 select one of the 16 operations for the current m"
-
-0"Bits a0-a3 are the first input, bits b0-b3 the second input."
-
-0"Bits f0-f3 are the output"
-
-0"The input c is carry in, the output c is carry out"
-
-0"= is true when all output bits are true (when result of subtraction in active-low"
-0"usage is zero)"
-
-0"p = carry propagate, g = carry generate, used to combine multiple chips"
-0"(including a separate carry lookahead chip) to make 8-bit and higher ALU."
-0"These are standard signals of carry lookahead adders, for more info on those"
-0"see the included carry lookahead adder circuit from the dropdown."
-
-0"You can interpret the inputs/outputs as either active low or active high"
-0"and both cases work equally well (but the intended use is active-low,"
-0"because = only works correct there)"
-0"Both those views have a different table of operations, same ones but in different order."
-0"They support all the same ones due to Morgan's law and similar symmetries (e.g. AND and OR wap for both tables)"
-
-0"Some signals are active high in active low mode and vice versa. Here is the full list:"
-0"When using in active-low mode: carry, m, s and = are active-HIGH. a, b, f, g, p are active-low"
-0"When using in active-high mode: carry is active-LOW. All the rest is active-high."
-
-0"The ' in the main circuit shows which are active-low. The ' is not repeated in the small instances below it."
-
+0"74181 ALU. Info below."
 
 "Cn  M  A'0                   B'0     A'1                   B'1     A'2                   B'2   A'3                   B'3"
 ### ### ###                   ###     ###                   ###     ###                   ###   ###                   ###
@@ -7459,14 +7421,21 @@ registerCircuit('74181 ALU', `
  *   *   *   *       *         *       *   *       *         *       *   *       *         *     *   *       *         *
  *   v   *   *       w         *       *   *       w         *       *   *       w         *     *   *       w         *
  *   O   *   *       o         *       *   *       o         *       *   *       o         *     *   *       o         *
- *   *   *   *       *         *       *   *       *         *       *   *       *         *     *   *       *         *
- *   *   *   * ******+*********+*******+***+*******+*********+*******+***+*******+*********+*****+***+*******+*********+**#s#"s0"
+ *   *   *   *       *         *       *   *       *         *       *   *       *         *     *   *       *         *    ###
+ *   *   *   * ******+*********+*******+***+*******+*********+*******+***+*******+*********+*****+***+*******+*********+****#s#"s0"
+ *   *   *   * *     *         *       *   * *     *         *       *   * *     *         *     *   * *     *         *    ###
  *   *   *   * *     *         *       *   * *     *         *       *   * *     *         *     *   * *     *         *
- *   *   *   * * ****+*********+*******+***+*+*****+*********+*******+***+*+*****+*********+*****+***+*+*****+*********+**#s#"s1"
+ *   *   *   * *     *         *       *   * *     *         *       *   * *     *         *     *   * *     *         *    ###
+ *   *   *   * * ****+*********+*******+***+*+*****+*********+*******+***+*+*****+*********+*****+***+*+*****+*********+****#s#"s1"
+ *   *   *   * * *   *         *       *   * * *   *         *       *   * * *   *         *     *   * * *   *         *    ###
  *   *   *   * * *   *         *       *   * * *   *         *       *   * * *   *         *     *   * * *   *         *
- *   *   *   * * *   *   ******+*******+***+*+*+***+*********+*******+***+*+*+***+*********+*****+***+*+*+***+*********+**#s#"s2"
+ *   *   *   * * *   *         *       *   * * *   *         *       *   * * *   *         *     *   * * *   *         *    ###
+ *   *   *   * * *   *   ******+*******+***+*+*+***+*********+*******+***+*+*+***+*********+*****+***+*+*+***+*********+****#s#"s2"
+ *   *   *   * * *   *   *     *       *   * * *   *   *     *       *   * * *   *   *     *     *   * * *   *   *     *    ###
  *   *   *   * * *   *   *     *       *   * * *   *   *     *       *   * * *   *   *     *     *   * * *   *   *     *
- *   *   *   * * *   *   *     * ******+***+*+*+***+***+*****+*******+***+*+*+***+***+*****+*****+***+*+*+***+***+*****+**#s#"s3"
+ *   *   *   * * *   *   *     *       *   * * *   *   *     *       *   * * *   *   *     *     *   * * *   *   *     *    ###
+ *   *   *   * * *   *   *     * ******+***+*+*+***+***+*****+*******+***+*+*+***+***+*****+*****+***+*+*+***+***+*****+****#s#"s3"
+ *   *   *   * * *   *   *     * *     *   * * *   *   *     * *     *   * * *   *   *     * *   *   * * *   *   *     * *  ###
  *   *   *   * * *   *   *     * *     *   * * *   *   *     * *     *   * * *   *   *     * *   *   * * *   *   *     * *
  *   *   *   * * *   *   *     * *     *   * * *   *   *     * *     *   * * *   *   *     * *   *   * * *   *   *     * *
  *   *   ****+*+*+***+***+**** * *     ****+*+*+***+***+**** * *     ****+*+*+***+***+**** * *   ****+*+*+***+***+**** * *
@@ -7481,8 +7450,6 @@ registerCircuit('74181 ALU', `
  *   *       ##O##         #O#             ##O##         #O#             ##O##         #O#           ##O##         #O#
  *   *         *           *                 *           *                 *           *               *           *
  *   *         *           *                 *         ***                 *           *               *           *
- *   *         *           *                 *         *                   *           *               *           *
- *   *         *           *                 *         *                   *           *               *           *
  *   *         *           *                 *         *                   *       ****+***************************+********
  *   *         *           *                 *         *                   *       *   *                           *       *
  *   *         *           *                 *         *                   *       * **+********************************** *
@@ -7524,13 +7491,56 @@ registerCircuit('74181 ALU', `
    *               *       v v v v         *                         *                       *       *         *
    *               *       ###a###         *                         *                       *       *         *
    *               *          *            *                         *                       *       *         *
-   *               *          *            *                         *                       *       *         *
    v               v          v            v                         v                       v       v         v
   #l#             #l#        #l#          #l#                       #l#                     #l#     #l#       #l#
   ###             ###        ###          ###                       ###                     ###     ###       ###
   ###             ###        ###          ###                       ###                     ###     ###       ###
  "F'0             F'1        A=B          F'2                       F'3                      G'    Cn+4        P'"
 
+0"FIT:y"
+
+0"The once popular 74181 4-bit ALU. Check out its spec sheet for more"
+0"information."
+
+0"It supports 32 operations (of which many overlapping/similar/trivial ones)"
+
+0"The m bit selects between two groups of 16 operations (mode): when m is low,"
+0"the 16 different logic operations (0, AND, IMPLY, ...). When m is high,"
+0"addition/subtraction operations, with various combinations of"
+0"adding/subtracting A and B, subtracting 1 of the result (to add 1 use carry"
+0"instead), and several that have A OR B, A AND B or bit-inverted versions as"
+0"operands"
+
+0"Bits s0-s3 select one of the 16 operations for the current m"
+
+0"Bits a0-a3 are the first input, bits b0-b3 the second input."
+
+0"Bits f0-f3 are the output"
+
+0"The input c is carry in, the output c is carry out"
+
+0"= is true when all output bits are true (when result of subtraction in"
+0"active-low usage is zero)"
+
+0"p = carry propagate, g = carry generate, used to combine multiple chips"
+0"(including a separate carry lookahead chip) to make 8-bit and higher ALU."
+0"These are standard signals of carry lookahead adders, for more info on those"
+0"see the included carry lookahead adder circuit from the dropdown."
+
+0"You can interpret the inputs/outputs as either active low or active high and"
+0"both cases work equally well (but the intended use is active-low, because ="
+0"only works correct there) Both those views have a different table of"
+0"operations, same ones but in different order. They support all the same ones"
+0"due to Morgan's law and similar symmetries (e.g. AND and OR wap for both"
+0"tables)"
+
+0"Some signals are active high in active low mode and vice versa. Here is the"
+0"full list: When using in active-low mode: carry, m, s and = are active-HIGH."
+0"a, b, f, g, p are active-low When using in active-high mode: carry is"
+0"active-LOW. All the rest is active-high."
+
+0"The ' in the main circuit shows which are active-low. The ' is not repeated"
+0"in the small instances below."
 
 0"NOTE! The IC definition here is not the true pin-order of the physical chip!"
 0"But it is how the official logic diagram is specified. The true pinout has"

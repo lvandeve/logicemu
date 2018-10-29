@@ -397,7 +397,10 @@ var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's'
                  'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true,
                  'b':true, 'B':true, 'i':true, 'T':true, 'V':true, '?':true};
-var devicemapext = clone(devicemap); devicemapext['#'] = true;
+// devicemap as well as # (with which inputs interact), but not $ (with which inputs do not interact)
+var devicemapin = clone(devicemap); devicemapin['#'] = true;
+// everything that forms the surface of devices, so that includes $
+var devicemaparea = clone(devicemapin); devicemaparea['$'] = true;
 var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true};
 var rommap = {'b':true, 'B':true};
 var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'z':true, 'Z':true, 'h':true, 'H':true};
@@ -411,8 +414,8 @@ var knownmap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true
                 'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true, 'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
                 'c':true, 'C':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'z':true, 'Z':true, 'h':true, 'H':true,
-                '#':true, 'y':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true, '$':true, 'V':true, '?':true,
-                'toc':true};
+                '#':true, 'y':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true,
+                '$':true, 'V':true, '?':true, 'toc':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
 var defsubs = {}; // key is number of the sub (but those are not consecutive like in an array, e.g. one could make a I555 and the index would be 555)
@@ -730,7 +733,7 @@ function CallSub(id) {
 
     for(var i = 0; i < this.cells.length; i++) {
       var cell = world[this.cells[i][1]][this.cells[i][0]];
-      if(cell.circuitsymbol == '$') continue;
+      if(cell.circuitsymbol == '$') continue; // because $ does not interact with inputs
       for(var j = 0; j < cell.components.length; j++) {
         var component = cell.components[j];
         if(parent && component) {
@@ -756,17 +759,15 @@ function CallSub(id) {
                 break;
               }
             }
-            /*
-            TODO: investigate why this can be -1 in the first place, as this is some underlying but. Happens for following circuit:
-                i
-                $
-             l<-i<-s   Il<s
-            */
-            if(dir != -1) inputs.push([component.inputs[k], dir, x2, y2, component.inputs_negated[k]]);
-            else console.log('bug with input near ' + x + ', ' + y + ' (TODO: fix)');
+            if(dir == -1) {
+              console.log('bug with IC input near ' + x + ', ' + y);
+              this.markError('bug with IC inputs near ' + x + ', ' + y);
+              return false;
+            }
+            inputs.push([component.inputs[k], dir, x2, y2, component.inputs_negated[k]]);
           }
           if(connected2(x, y, j)) {
-            if(getNeighbor(x, y, j).circuitsymbol != '$') {
+            if(getNeighbor(x, y, j).circuitsymbol != '$') { // because $ does not interact with outputs
               outputs.push([component, j, x, y]);
             }
           }
@@ -2739,6 +2740,7 @@ document.body.onkeypress = function(e) {
       var key = e.which || e.charCode || e.keyCode || 0;
       activeVTE.typeKeyboard(key);
     }
+    global_changed_something = true;
     // use render() if no update of components should be done but you still want to see the
     // new character appear. Use update() to do a full component update, similar to what
     // is done after pressing on button with mouse.
@@ -2750,6 +2752,7 @@ document.body.onkeypress = function(e) {
 document.body.onkeydown = function(e) {
   if(activeVTE && e && e.code == 'Backspace') {
     activeVTE.doBackspace();
+    global_changed_something = true;
     update();
   }
 };
@@ -5317,7 +5320,7 @@ global_changed_something = true;
 function updateComponents(components) {
   // For AUTOUPDATE == 3, we can stop updates if nothing changed: the state became stable. This is not the same as a full pause. Timers, button clicks, ... will start the updates again
   // TODO: instead of doing this, stop the JS timer (autoupdateinterval) instead (and restart it when action like button or timer component happens with AUTOUPDATE == 3)
-  if(AUTOUPDATE == 3 && !global_changed_something) {
+  if(AUTOUPDATE == 3 && !global_changed_something && numticks >= 0) {
     return;
   }
 
@@ -5334,7 +5337,7 @@ function updateComponents(components) {
 
   if(!changed) global_changed_something = false;
 
-  if(AUTOUPDATE != 3 || changed) numticks++;
+  if(AUTOUPDATE != 3 || changed || numticks < 0) numticks++;
   render();
 }
 
@@ -5904,7 +5907,7 @@ function parseCells(text) {
       // digitmap too because those could be IC numbers that count as part of it...
       // this is a bit sloppy tbh (number is not always chip) but this is an early parse, we don't know which numbers are chip yet
       // TODO: improve that
-      if(!(devicemapext[cb] || digitmap[cb]) && (devicemapext[ca] || digitmap[ca] || devicemapext[cc] || digitmap[cc])) {
+      if(!(devicemapin[cb] || digitmap[cb]) && (devicemapin[ca] || digitmap[ca] || devicemapin[cc] || digitmap[cc])) {
         world[y][x].circuitextra = 2;
       }
 
@@ -5916,7 +5919,7 @@ function parseCells(text) {
         else if(c == '<' || c == '[') { wca = getNeighbor(x, y, 1); }
         ca = ' ';
         if(wca) ca = wca.metasymbol; // idem TODO as above about numbers and chips
-        if(devicemapext[ca] || digitmap[ca] || ca == '*' || ca == '+' || ca == ',') {
+        if(devicemapin[ca] || digitmap[ca] || ca == '*' || ca == '+' || ca == ',') {
           world[y][x].circuitextra = 1;
         }
         if(ca == '|' && (c == '^' || c == 'v' || c == 'm' || c == 'w')) world[y][x].circuitextra = 1;
@@ -6057,7 +6060,10 @@ function parseSubs() {
           var y = array[i][1];
           world[y][x].callsubindex = subindex;
           world[y][x].callsub = callsub;
-          // unlike other digits, those for subs become extenders of the sub component, and extenders should also be marked with a 'i' because we will treat them all specially in the "connected" function, which takes only the circuitsymbol character as input
+          // Unlike other digits, those for ICs become extenders of the IC component, and
+          // extenders should also be marked with a 'i' because we will treat them all
+          // specially in the "connected" function, which takes only the circuitsymbol character as input.
+          // '$' is not changed into 'i' here because it indicates a different function (no interaction)
           if(world[y][x].circuitsymbol != '$') world[y][x].circuitsymbol = 'i';
           callsub.cells.push([x, y]);
         }
@@ -6387,7 +6393,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
     if((c2 == '<' || c2 == '[') && (todir == 6 || todir == 7)) todir2 = 3;
   }
 
-  if(c == '$' && !(devicemapext[c2] || c2 == '$')) return false;
+  if(c == '$' && !devicemaparea[c2]) return false; // $ is really only for extending devices, nothing else
 
   if(todir > 3) {
     // the corners can only interact with those
@@ -6411,10 +6417,15 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
 
   if((c == ',') && (c2 == ',')) return false;
 
+  // Multi-part devices like flip-flop should not have their individual cells connected,
+  // they are initially all their own device (to be able to handle multiple inputs), so
+  // don't let device extenders extend those here yet.
   if(ffmap[c] && (c2 == '#' || c2 == '$')) return false;
   if(ffmap[c2] && (c == '#' || c == '$')) return false;
   if(rommap[c] && (c2 == '#' || c2 == '$')) return false;
   if(rommap[c2] && (c == '#' || c == '$')) return false;
+  if(c == 'i' && (c2 == '#' || c2 == '$')) return false;
+  if(c2 == 'i' && (c == '#' || c == '$')) return false;
 
   if(!knownmap[c2]) return false; // it's an isolator
 
@@ -6454,10 +6465,10 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
     if((c == 'v' || c == 'w') && todir == 2) return false;
     if((c == '<' || c == '[') && todir == 3) return false;
 
-    if((c == '^' || c == 'm') && ce == 1 && devicemapext[c2] && (todir == 1 || todir == 3)) return false;
-    if((c == '>' || c == ']') && ce == 1 && devicemapext[c2] && (todir == 0 || todir == 2)) return false;
-    if((c == 'v' || c == 'w') && ce == 1 && devicemapext[c2] && (todir == 1 || todir == 3)) return false;
-    if((c == '<' || c == '[') && ce == 1 && devicemapext[c2] && (todir == 0 || todir == 2)) return false;
+    if((c == '^' || c == 'm') && ce == 1 && devicemapin[c2] && (todir == 1 || todir == 3)) return false;
+    if((c == '>' || c == ']') && ce == 1 && devicemapin[c2] && (todir == 0 || todir == 2)) return false;
+    if((c == 'v' || c == 'w') && ce == 1 && devicemapin[c2] && (todir == 1 || todir == 3)) return false;
+    if((c == '<' || c == '[') && ce == 1 && devicemapin[c2] && (todir == 0 || todir == 2)) return false;
   }
 
   if(dinputmap[c] && ce == 2) {
@@ -6470,7 +6481,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
 
 
   // those device inputs, too, don't interact with devices here (interaction with devices is resolved later)
-  if((c == 'z' || c == 'Z' || c == 'h' || c == 'H') && devicemapext[c2]) return false;
+  if((c == 'z' || c == 'Z' || c == 'h' || c == 'H') && devicemapin[c2]) return false;
 
   // The different backplane types don't interact, unless numbers of a matching one (ce then encodes allowed direction)
   if(c == 'g' && c2 == 'g') {
@@ -6842,7 +6853,8 @@ function parseComponents() {
           if(devicemap[c]) {
             if(type != TYPE_NULL && type != TYPE_UNKNOWN_DEVICE) {
               var ok = false;
-              // allow input that touches same special shaped chip with multiple sides (TODO: also allow this for other special shaped devices)
+              // allow input that touches same special shaped chip with multiple sides
+              // (TODO: also allow this for other special shaped devices)
               if(world[y][x].callsub != null && world[y][x].callsub == corecell.callsub) ok = true;
               if(type == TYPE_TRISTATE && c == 'V') ok = true;
               if(!ok) {
@@ -6878,8 +6890,9 @@ function parseComponents() {
           if(c == 'toc') type = TYPE_TOC;
 
           if(type == TYPE_NULL && (c == '#' || c == '$')) type = TYPE_UNKNOWN_DEVICE;
-
-          if(world[y][x].number >= 0 && devicemapext[c]) {
+          if(world[y][x].number >= 0 && devicemapin[c]) {
+            // TODO: check if the above if really needs devicemapin instead of just devicemap,
+            // because numbers currently don't interact with # anyway (for e.g. chip, led, ...)
             if(number >= 0 && world[y][x].number != number) {
               errormessage = 'multiple numbers to same component not supported';
               console.log(errormessage);
@@ -7057,7 +7070,7 @@ function parseComponents() {
             var fromdir = (i <= 3) ? ((i + 2) & 3) : (4 + ((i - 2) & 3));
             if(!connected(c2, c, ce2, ce, fromdir, z2, z)) continue;
             // in addition, for this search we don't go through devices, or other ff elements or extensions
-            if(devicemapext[c] || devicemapext[c2]) continue;
+            if(devicemaparea[c] || devicemaparea[c2]) continue;
           }
 
           stack.push([x2, y2, z2]);
@@ -7157,7 +7170,7 @@ function parseComponents() {
           var x2 = wc2.x;
           var y2 = wc2.y;
           var c2 = wc2.circuitsymbol;
-          if(devicemapext[c2]) {
+          if(devicemapin[c2]) {
             x2s.push(x2);
             y2s.push(y2);
             inputused[y2][x2] = true;
@@ -7182,7 +7195,7 @@ function parseComponents() {
           if(z == 2 && !(k == 5 || k == 7)) continue;
           if(z == 3 && !(k == 4 || k == 6)) continue;
           var c2 = wc2.circuitsymbol;
-          if(devicemapext[c2]) {
+          if(devicemapin[c2]) {
             x2s.push(x2);
             y2s.push(y2);
             inputused[y2][x2] = true;
@@ -7197,7 +7210,7 @@ function parseComponents() {
         if(c == '<' || c == '[') { wco0 = getNeighbor(x, y, 6); wco1 = getNeighbor(x, y, 7); }
         if(z == 0) {
           if(!wco0) continue;
-          if(devicemapext[wco0.circuitsymbol]) {
+          if(devicemapin[wco0.circuitsymbol]) {
             x2s.push(wco0.x);
             y2s.push(wco0.y);
             inputused[wco0.y][wco0.x] = true;
@@ -7205,7 +7218,7 @@ function parseComponents() {
         }
         if(z == 1) {
           if(!wco1) continue;
-          if(devicemapext[wco1.circuitsymbol]) {
+          if(devicemapin[wco1.circuitsymbol]) {
             x2s.push(wco1.x);
             y2s.push(wco1.y);
             inputused[wco1.y][wco1.x] = true;
@@ -7237,7 +7250,7 @@ function parseComponents() {
         var y2 = y2s[k];
         var cell2 = world[y2][x2];
         var c2 = cell2.circuitsymbol;
-        if(!devicemapext[c2]) {
+        if(!devicemapin[c2]) {
           continue;
         }
         var component2 = cell2.components[0]; // component outputs to component2 (component is the input, component2 is the output)
@@ -7780,7 +7793,7 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   if(fitwidth && fitheight) t = Math.min(tw, th);
   else if(fitwidth) t = tw;
   else if(fitheight) t = th;
-  if(t < 10) t = 10;
+  if(t < 9) t = 9;
   if(t > 40) t = 40;
   if(h > 80 && t > 28) t = 28;
   th = tw = t;
