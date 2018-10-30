@@ -3073,47 +3073,49 @@ function Cell() {
 
     var title = null;
     if(!this.comment) {
-      if(c == 's' || c == 'S') title = 'switch';
-      if(c == 'p' || c == 'P') title = 'pushbutton';
-      if(c == 'r' || c == 'R') title = 'timer';
-      if(c == 'l') title = 'LED';
-      if(c == 'L') title = 'RGB LED';
-      if(c == '?') title = 'random generator';
-      if(c == 'a') title = 'AND gate';
-      if(c == 'A') title = 'NAND gate';
-      if(c == 'o') title = 'OR gate';
-      if(c == 'O') title = 'NOR gate';
-      if(c == 'e') title = 'XOR gate';
-      if(c == 'E') title = 'XNOR gate';
-      if(c == 'c' || c == 'C') {
+      var tc = c;
+      if(tc == '#' || tc == '$') tc = this.components[0].corecell.circuitsymbol;
+      if(tc == 's' || tc == 'S') title = 'switch';
+      if(tc == 'p' || tc == 'P') title = 'pushbutton';
+      if(tc == 'r' || tc == 'R') title = 'timer';
+      if(tc == 'l') title = 'LED';
+      if(tc == 'L') title = 'RGB LED';
+      if(tc == '?') title = 'random generator';
+      if(tc == 'a') title = 'AND gate';
+      if(tc == 'A') title = 'NAND gate';
+      if(tc == 'o') title = 'OR gate';
+      if(tc == 'O') title = 'NOR gate';
+      if(tc == 'e') title = 'XOR gate';
+      if(tc == 'E') title = 'XNOR gate';
+      if(tc == 'c' || tc == 'C') {
         if(this.components[0] && this.components[0].type == TYPE_CONSTANT) {
-          if(c == 'c') title = 'constant off';
-          if(c == 'C') title = 'constant on';
+          if(tc == 'c') title = 'constant off';
+          if(tc == 'C') title = 'constant on';
         } else if(this.components[0] && this.components[0].type == TYPE_COUNTER) {
-          if(c == 'c') title = 'counter off';
-          if(c == 'C') title = 'counter on';
+          if(tc == 'c') title = 'counter off';
+          if(tc == 'C') title = 'counter on';
         } else {
           title = 'flipflop clock input';
         }
       }
-      if(c == 'd') {
+      if(tc == 'd') {
         if(this.components[0] && this.components[0].type == TYPE_DELAY) {
           title = 'delay';
         } else {
           title = 'flipflop D input';
         }
       }
-      if(c == 't') title = 'flipflop T input';
-      if(c == 'j') title = 'flipflop J input';
-      if(c == 'k') title = 'flipflop K input';
-      if(c == 'q') title = 'flipflop output and async set';
-      if(c == 'Q') title = 'flipflop inverted output and async reset';
-      if(c == 'V') title = 'tristate buffer';
-      if(c == 'g') title = 'global (backplane) wire';
-      if(c == 'I') title = 'IC definition';
-      if(c == 'i') title = 'IC instance';
-      if(c == 'b' || c == 'B') title = 'ROM/RAM bit, or encoder/decoder';
-      if(c == 'y') title = 'bus (wire bundle)';
+      if(tc == 't') title = 'flipflop T input';
+      if(tc == 'j') title = 'flipflop J input';
+      if(tc == 'k') title = 'flipflop K input';
+      if(tc == 'q') title = 'flipflop output and async set';
+      if(tc == 'Q') title = 'flipflop inverted output and async reset';
+      if(tc == 'V') title = 'tristate buffer';
+      if(tc == 'g') title = 'global (backplane) wire';
+      if(tc == 'I') title = 'IC definition';
+      if(tc == 'i') title = 'IC instance';
+      if(tc == 'b' || tc == 'B') title = 'ROM/RAM bit, or encoder/decoder';
+      if(tc == 'y') title = 'bus (wire bundle)';
     }
 
     this.renderer.init2(this, symbol, virtualsymbol, title);
@@ -3864,6 +3866,16 @@ function RendererDrawer() {
     ctx.stroke();
   };
 
+  this.drawFilledCircle_ = function(ctx, x, y, radius) {
+    var xb = Math.floor(x * tw);
+    var yb = Math.floor(y * th);
+    var rb = Math.floor(radius * th);
+    ctx.beginPath();
+    ctx.arc(this.tx + xb, this.ty + yb, rb, 0, Math.PI * 2, false);
+    ctx.fill();
+    ctx.stroke();
+  };
+
   // also returns amount of wires
   this.drawSplit_ = function(cell, ctx, num0) {
     var num = num0 || 0;
@@ -4242,11 +4254,20 @@ function RendererImgGlobal() {
   };
 }
 
+function hasRealComponent(cell) {
+  for(var i = 0; i < cell.components.length; i++) {
+    if(!cell.components[i]) continue;
+    var type = cell.components[i].type;
+    if(type != TYPE_NULL && type != TYPE_LOOSE_WIRE_IMPLICIT) return true;
+  }
+  return false;
+}
+
 var rglobal = new RendererImgGlobal();
 
 // TODO: Fix a few pixel leak through glitches because some things render a few pixels outside their cell.
 /** @implements Renderer */
-function RendererImg() { // RendererCanvas RendererGraphical RendererImage
+function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics RendererImage
   this.fallback = new RendererText();
 
   this.canvas0 = null;
@@ -4475,7 +4496,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
           drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0);
         }
       } else if(c == '>') {
-        if(cell.circuitextra == 2) {
+        if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
           if(hasDevice(cell.x, cell.y, 4)) { drawer.drawArrow_(ctx, 0, 1, 1, 0); num++; }
           if(hasDevice(cell.x, cell.y, 5)) { drawer.drawArrow_(ctx, 0, 0, 1, 1); num++; }
@@ -4485,7 +4506,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
           drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5);
         }
       } else if(c == 'v') {
-        if(cell.circuitextra == 2) {
+        if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
           if(hasDevice(cell.x, cell.y, 6)) { drawer.drawArrow_(ctx, 1, 0, 0, 1); num++; }
           if(hasDevice(cell.x, cell.y, 5)) { drawer.drawArrow_(ctx, 0, 0, 1, 1); num++; }
@@ -4495,7 +4516,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
           drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1);
         }
       } else if(c == '<') {
-        if(cell.circuitextra == 2) {
+        if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
           if(hasDevice(cell.x, cell.y, 7)) { drawer.drawArrow_(ctx, 1, 1, 0, 0); num++; }
           if(hasDevice(cell.x, cell.y, 6)) { drawer.drawArrow_(ctx, 1, 0, 0, 1); num++; }
@@ -4505,7 +4526,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
           drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5);
         }
       } else if(c == 'm') {
-        if(cell.circuitextra == 2) {
+        if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
           if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, 1, 1, 0, 0); num++; }
           if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, 0, 1, 1, 0); num++; }
@@ -4515,7 +4536,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
           drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
         }
       } else if(c == ']') {
-        if(cell.circuitextra == 2) {
+        if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
           if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, 0, 1, 1, 0); num++; }
           if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, 0, 0, 1, 1); num++; }
@@ -4525,7 +4546,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
           drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
         }
       } else if(c == 'w') {
-        if(cell.circuitextra == 2) {
+        if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
           if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, 1, 0, 0, 1); num++; }
           if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, 0, 0, 1, 1); num++; }
@@ -4535,7 +4556,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
           drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
         }
       } else if(c == '[') {
-        if(cell.circuitextra == 2) {
+        if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
           if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, 1, 1, 0, 0); num++; }
           if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, 1, 0, 0, 1); num++; }
@@ -4792,6 +4813,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
       } else if(virtualsymbol == 'L') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
+      } else if(virtualsymbol == 'g') {
+        drawer.drawSplit_(cell, ctx);
+        drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.4);
       } else if(cell.comment) {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
       } else if(c == 'toc') {
@@ -4824,10 +4848,59 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererImage
           if(!alreadybg) {
             drawer.fillBg_(ctx, GATEBGCOLOR);
           }
-          if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
-          if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
-          if(!sameDevice(cell.x, cell.y, 2)) drawer.drawLine_(ctx, 1, 1, 0, 1);
-          if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
+          if(c == '$') {
+            // subtle (but large code) graphics effect: for $ cells, that don't connect to inputs or outputs,
+            // draw a notch when there is an input or wire explicitely trying to connect to this, to show that
+            // it ignores it (to make that clear to the viewer). Only for those where the other graphics doesn't
+            // already show it, e.g. *'s already are obvious because they won't extend there line all the way to
+            // the side.
+            if(!sameDevice(cell.x, cell.y, 0)) {
+              var n2 = getNeighbor(cell.x, cell.y, 0);
+              var c2 = n2 ? n2.circuitsymbol : '';
+              if(c == '$' && (c2 == '^' || c2 == 'v' || c2 == 'm' || c2 == 'w' || c2 == '|' || c2 == '+')) {
+                drawer.drawLine_(ctx, 0, 0, 0.5, 0.25);
+                drawer.drawLine_(ctx, 0.5, 0.25, 1, 0);
+              } else {
+                drawer.drawLine_(ctx, 0, 0, 1, 0);
+              }
+            }
+            if(!sameDevice(cell.x, cell.y, 1)) {
+              var n2 = getNeighbor(cell.x, cell.y, 1);
+              var c2 = n2 ? n2.circuitsymbol : '';
+              if(c == '$' && (c2 == '>' || c2 == '<' || c2 == ']' || c2 == '[' || c2 == '-' || c2 == '+')) {
+                drawer.drawLine_(ctx, 1, 0, 0.75, 0.5);
+                drawer.drawLine_(ctx, 0.75, 0.5, 1, 1);
+              } else {
+                drawer.drawLine_(ctx, 1, 0, 1, 1);
+              }
+            }
+            if(!sameDevice(cell.x, cell.y, 2)) {
+              var n2 = getNeighbor(cell.x, cell.y, 2);
+              var c2 = n2 ? n2.circuitsymbol : '';
+              if(c == '$' && (c2 == '^' || c2 == 'v' || c2 == 'm' || c2 == 'w' || c2 == '|' || c2 == '+')) {
+                drawer.drawLine_(ctx, 0, 1, 0.5, 0.75);
+                drawer.drawLine_(ctx, 0.5, 0.75, 1, 1);
+              } else {
+                drawer.drawLine_(ctx, 1, 1, 0, 1);
+              }
+            }
+            if(!sameDevice(cell.x, cell.y, 3)) {
+              var n2 = getNeighbor(cell.x, cell.y, 3);
+              var c2 = n2 ? n2.circuitsymbol : '';
+              if(c == '$' && (c2 == '>' || c2 == '<' || c2 == ']' || c2 == '[' || c2 == '-' || c2 == '+')) {
+                drawer.drawLine_(ctx, 0, 0, 0.25, 0.5);
+                drawer.drawLine_(ctx, 0.25, 0.5, 0, 1);
+              } else {
+                drawer.drawLine_(ctx, 0, 1, 0, 0);
+              }
+            }
+          } else {
+            // standard box drawing
+            if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
+            if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
+            if(!sameDevice(cell.x, cell.y, 2)) drawer.drawLine_(ctx, 1, 1, 0, 1);
+            if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
+          }
         }
         var okdraw = true;
         if(c == '#' || c == '$') okdraw = false;
@@ -5908,6 +5981,8 @@ function parseCells(text) {
       // this is a bit sloppy tbh (number is not always chip) but this is an early parse, we don't know which numbers are chip yet
       // TODO: improve that
       if(!(devicemapin[cb] || digitmap[cb]) && (devicemapin[ca] || digitmap[ca] || devicemapin[cc] || digitmap[cc])) {
+        // Even if their diagonal backsides have nothing, make them diagonal inputs. Otherwise large repeated IC structures may fail
+        // at the edges when just copypasting the same structure multiple times (see the game of life circuits)
         world[y][x].circuitextra = 2;
       }
 
@@ -6936,7 +7011,8 @@ function parseComponents() {
             // when using such wires, then it's clear that it's a desired explicit loose wire, not a stray wire
             // part of a h,X,%,& or so that only exists as side effect of those having possibly undesired wires
             // even + and x are considered explicit! Since you can always avoid their extra wire with a different ascii char. Not so for h or % etc....
-            if(c == '-' || c == '|' || c == '/' || c == '\\' || c == ',' || c == '*' || c == '+' || c == 'x' || dinputmap[c]) {
+            if(c == '-' || c == '|' || c == '/' || c == '\\' || c == ',' || c == '*' || c == '+' || c == 'x' ||
+                (dinputmap[c] && world[array[i][1]][array[i][0]].circuitextra == 0)) { // only straight inputs considered explicit, diagonal ones may be misplaced ones
               type = TYPE_LOOSE_WIRE_EXPLICIT;
               break;
             }
@@ -7585,6 +7661,7 @@ function countSlowGraphicalDivs() {
 
 function setDocumentTitle(text) {
   document.title = 'LogicEmu: ' + text;
+  circuitName.innerText = 'Current Circuit: ' + text;
 }
 
 var firstParse = true; // to keep scrolled down if you were scrolled down before refresh
@@ -8492,6 +8569,14 @@ helpLink.onclick = function() {
 var githubLink = makeElement('span', menuRow1El);
 githubLink.style.paddingLeft = '10px';
 githubLink.innerHTML = '<a href="https://github.com/lvandeve/logicemu">github</a>';
+githubLink.style.paddingRight = '10px';
+
+
+var circuitName = makeElement('span', menuRow1El);
+circuitName.innerHTML = 'Circuit Name';
+circuitName.style.backgroundColor = '#0f0';
+circuitName.style.border = '1px solid #080';
+circuitName.style.paddingLeft = circuitName.style.paddingRight = '2px';
 
 
 /*var directLinkSpan = makeElement('span', menuRow1El);
@@ -9168,8 +9253,10 @@ function printComponentsDebug() {
 
 /*
 Available debug functions:
-printComponentsDebug
-applyAllTransforms
-applyTransform
-testCompression
+printComponentsDebug()
+applyAllTransforms()
+applyTransform(...)
+testCompression()
+CLICKDEBUG=true
+
 */

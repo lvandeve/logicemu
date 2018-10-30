@@ -720,10 +720,10 @@ s---4y         y         y4--->l
                y0---s
 
 
-0"Global wires, indicated with 'g', are all connected to each other."
-0"If there is a number, then to all other matching numbers. This can be"
-0"used e.g. for a global clock signal or other such control signals."
-0"Imagine it as being connected by wires on the backplane"
+0"Global wires, indicated with a big dot (or 'g' in text mode), are all"
+0"connected to each other. If there is a number, then to all other matching"
+0"numbers. This can be used e.g. for a global clock signal or other such"
+0"control signals. Imagine it as being connected by wires on the backplane"
 
                 g----->l
 
@@ -3467,15 +3467,15 @@ s-X-+-------+-X----->l   /   ;     / |           | ;      v       v
  /  |       |  ;        s     s   s  s           s  s     l       l
 S   s       s   s
 
-       s    s s    s       s    s s    s
-  l l  * l  * *  l *  l l  * l  * *  l *      l     l
-   h    h    h    h    H    H    H    H     s*zl  s*Zl
-  * *  * l  l l  l *  * *  * l  l l  l *      l     l
-  s s  s           s  s s  s           s
-
-       s   s                 s   s
-  l    *   *    l       l    *   *    l
-s*hl s*hl lh*s lh*s   s*Hl s*Hl lH*s lH*s
+       s    s s    s       s    s s    s                  s->a>l       s
+  l l  * l  * *  l *  l l  * l  * *  l *      l     l     p->e>l       v
+   h    h    h    h    H    H    H    H     s*zl  s*Zl    r->o>l       e*
+  * *  * l  l l  l *  * *  * l  l l  l *      l     l     S->A>l  s--->$|
+  s s  s           s  s s  s           s                  P->E>l       $v
+                                                          R->O>l       |l
+       s   s                 s   s                        s->?>l       |
+  l    *   *    l       l    *   *    l                                v
+s*hl s*hl lh*s lh*s   s*Hl s*Hl lH*s lH*s     s-g->l                   l
   *    l   l    *       *    l   l    *
   s             s       s             s
 
