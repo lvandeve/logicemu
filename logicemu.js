@@ -253,7 +253,7 @@ function getLocalStorage(name) {
 
 /*
 NOTE: some old names of things you may find in the code. This will help understand functions and variables more
-bus = junction = ygroup = y = bundle (current true name: bus. And it means any bundle of wires, like a ribbon cable, not the more complex idea of shared bus in CPU (though it can be used as part of that)
+bus = junction = ygroup = bundle = '=' (current true name: bus. And it means any bundle of wires, like a ribbon cable, not the more complex idea of shared bus in CPU (though it can be used as part of that). Used to use 'y' as ascii symbol instead of '='
 sub = function = integrated circuit = IC = chip = def & call. Now uses symbols i,I. Has used u,U and f,F before. (current true name: I = IC template, i = IC usage, with IC = integrated circuit)
 rom = bits = bB. serves also as ram and more (current true name: bits, with usages rom, ram, binary to unary convertor, ...)
 terminal = VTE = interactive terminal = keyboard and screen. Now uses symbol T. Has used i before. (current true name: terminal, with symbol T)
@@ -395,26 +395,26 @@ typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd'; typesymbols[TYPE_
 // all devices except flipflop, those are treated differently because multiple different cells of its type can form one component
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true,
                  'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
-                 'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true,
+                 'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
                  'b':true, 'B':true, 'i':true, 'T':true, 'V':true, '?':true};
 // devicemap as well as # (with which inputs interact), but not $ (with which inputs do not interact)
 var devicemapin = clone(devicemap); devicemapin['#'] = true;
 // everything that forms the surface of devices, so that includes $
 var devicemaparea = clone(devicemapin); devicemaparea['$'] = true;
-var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true};
+var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true};
 var rommap = {'b':true, 'B':true};
 var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'z':true, 'Z':true, 'h':true, 'H':true};
 var dinputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true}; // directional inputs only
-var wiremap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true, '/':true, '\\':true, 'x':true, 'g':true, 'y':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true}; // TODO: remove antennas from wiremap?
+var wiremap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true, '/':true, '\\':true, 'x':true, 'g':true, '=':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true}; // TODO: remove antennas from wiremap?
 var antennamap = {'(':true, ')':true, 'n':true, 'u':true};
 // only those actively interact diagonally (plus diaginputs but those are not identified by character...)
 var diagonalmap = {'x':true, 'h':true, 'H':true, '/':true, '\\':true, 'X':true};
 //non-isolators (does not include isolators like ' ' and '0-9' despite being "known"). I is also not part of this, but i is.
 var knownmap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true, '/':true, '\\':true, 'x':true, 'g':true,
                 'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true, 'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
-                'c':true, 'C':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true,
+                'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'z':true, 'Z':true, 'h':true, 'H':true,
-                '#':true, 'y':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true,
+                '#':true, '=':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true,
                 '$':true, 'V':true, '?':true, 'toc':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
@@ -644,6 +644,8 @@ function CallSub(id) {
       component.number = v.number;
       component.defsubindex = v.defsubindex;
       component.callsubindex = v.callsubindex;
+      component.rgbcolor = v.rgbcolor;
+      component.clocked = v.clocked;
 
       for(var j = 0; j < v.inputs.length; j++) {
         var input = this.components[defsub.translateindex[v.inputs[j].index]];
@@ -681,6 +683,7 @@ function CallSub(id) {
       if(v.ff) {
         var ff = new FF();
         ff.value = v.ff.value;
+        ff.numcC = v.ff.numcC;
         component.ff = ff;
       }
       if(v.tristate) {
@@ -1022,6 +1025,8 @@ function ROM() {
   this.error = false;
   this.errormessage = null;
   this.addressdir = -1;
+  // NOTE: by default, LSB pos is always on the right side when looking in the direction of the input/output arrows
+  // exception to that: the address lines have their LSB on the output side (their direction is always perpendicular to output)
   this.addresslsbpos = 0; // 0: left or top, 1: right or bottom. Where the LSB of address input bits is.
   this.worddir = -1; // dir is 0:columns (so outputdir is E or W), 1:rows (so outputdir is N or S)
   this.wordlsbpos = 0; // where the LSB of the wordlines is
@@ -1590,6 +1595,10 @@ function VTE() {
   this.output = [0,0,0,0,0,0,0,0];
   this.decimaldisplay = false;
   this.decimalinput = false;
+  this.counter = false;
+  this.countervalue = 0;
+  this.previnput = 0;
+  this.previnput2 = 0;
 
   this.keybuffer = [];
 
@@ -1604,12 +1613,37 @@ function VTE() {
       for(var x = 0; x < w; x++) this.text[h - 1][x] = ' ';
     }
     this.cursorx = 0;
-
   };
 
   // Assumes the component has already updated all inputs according to the UPDATE_ALGORITHM and gotten the input values from it
   // Inputs are MSB to LSB
   this.update = function(inputs) {
+    if(this.counter) {
+      var x = this.x1 - this.x0 - 1;
+      var y = this.y1 - this.y0 - 1;
+      var width = Math.max(this.x1 - this.x0, this.y1 - this.y0);
+      if(inputs[0] && !this.previnput) this.countervalue++;
+      this.previnput = inputs[0];
+      if(inputs.length > 1) {
+        if(inputs[1] && !this.previnput2) this.countervalue = 0;
+        this.previnput2 = inputs[1];
+      }
+      var index = this.countervalue;
+      var s = '' + index;
+      for(var i = 0; i < width; i++) {
+        var c = (i < s.length) ? s[s.length - i - 1] : '';
+        this.text[y][x] = c;
+        x--;
+        //if(x >= this.x1 - this.x0) { x = 0; y++; }
+        if(x < 0) { x = this.x1 - 1; y--; }
+      }
+      var mul = 1;
+      for(var i = 0; i < this.numoutputs; i++) {
+        this.output[i] = ((index & mul) ? 1 : 0);
+        mul *= 2;
+      }
+      return;
+    }
     if(this.decimaldisplay) {
       var index = 0;
       var mul = 1;
@@ -1625,7 +1659,7 @@ function VTE() {
         this.text[y][x] = c;
         x--;
         //if(x >= this.x1 - this.x0) { x = 0; y++; }
-        if(x < 0) { x = this.x1 - 1; y--; }
+        if(x < 0) { x = this.x1 - this.x0 - 1; y--; }
       }
       return;
     }
@@ -1685,7 +1719,7 @@ function VTE() {
       this.cursorx++;
     }
 
-    this.output[this.numoutputs] = this.keybuffer.length == 0; // eof
+    this.output[this.numoutputs] = (this.keybuffer.length == 0); // eof
 
     if(read && !prevread && this.keybuffer.length > 0) {
       if(this.keybuffer.length > 0) index = this.keybuffer.shift(); // use as queue
@@ -1796,9 +1830,12 @@ function VTE() {
     var indir = -1;
     var writeheading = -1;
     var writedir = -1;
+    var writeheading2 = -1;
+    var writedir2 = -1;
     var readheading = -1;
     var readdir = -1;
-    var ilsbpos = -1;
+    // NOTE: by default, LSB pos is always on the right side when looking in the direction of the input/output arrows
+    var ilsbpos = -1; // 0: left or top, 1: right or bottom.
     var olsbpos = -1;
 
     for(var i = 0; i < 4; i++) {
@@ -1809,18 +1846,24 @@ function VTE() {
         if(io[i][1] > 0) return null; //error: there may not be inputs on the output side
         outheading = i;
         outdir = (i & 1);
-        olsbpos = (i == 0 || i == 3) ? 1 : 0;
+        olsbpos = (i == 0 || i == 1) ? 1 : 0;
       } else if(io[i][1] > 1) {
         if(inheading != -1) return null; // there may only be 1 valid candidate
         if(io[i + 4][1] > 0) return null; //error: there may not be outputs on the input side
         inheading = i;
         indir = (i & 1);
-        ilsbpos = (i == 1 || i == 2) ? 1 : 0;
-      } else  if(io[i][1] == 1 && io[i + 4][1] == 0) {
-        if(writeheading != -1) return null; // there may only be 1 valid candidate
-        writeheading = i;
-        writedir = (i & 1);
-        //ilsbpos = (i == 1 || i == 2) ? 1 : 0;
+        ilsbpos = (i == 3 || i == 2) ? 1 : 0;
+      } else if(io[i][1] == 1 && io[i + 4][1] == 0) {
+        if(writeheading != -1 && writeheading2 != -1) return null; // there may only be max 2 valid candidates
+        if(writeheading != -1) {
+          writeheading2 = i;
+          writedir2 = (i & 1);
+          //ilsbpos = (i == 1 || i == 2) ? 1 : 0;
+        } else {
+          writeheading = i;
+          writedir = (i & 1);
+          //ilsbpos = (i == 1 || i == 2) ? 1 : 0;
+        }
       } else  if(io[i][1] == 1 && io[i + 4][1] == 1) {
         if(readheading != -1) return null; // there may only be 1 valid candidate
         // TODO: if the read output is on a side, that is, a cell that could also already be a bit output, return error too. Only 1 distinct output can be connected per cell.
@@ -1834,15 +1877,43 @@ function VTE() {
       }
     }
 
-    if(readheading == -1 && writeheading == -1 && outheading == -1 && inheading != -1) {
+    if(readheading == -1 && writeheading == -1 && outheading == -1 && inheading != -1 && writeheading2 == -1) {
       this.decimaldisplay = true;
-    } else if(readheading == -1 && writeheading != -1 && outheading == -1 && inheading == -1) {
+    } else if(readheading == -1 && writeheading != -1 && outheading == -1 && inheading == -1 && writeheading2 == -1) {
       inheading = writeheading;
-      writeheading = -1;
+      indir = writedir;
+      ilsbpos = (inheading == 1 || inheading == 2) ? 1 : 0;
+      writeheading = writedir = -1;
       this.decimaldisplay = true;
-    } else if(readheading == -1 && writeheading == -1 && outheading != -1 && inheading == -1) {
+    } else if(readheading == -1 && writeheading == -1 && outheading != -1 && inheading == -1 && writeheading2 == -1) {
       this.decimalinput = true;
+    } else if(readheading == -1 && writeheading != -1 && outheading != -1 && inheading == -1 && ((writedir == outdir) || (writedir2 == outdir))) {
+      // the counter input must always be opposite side of the output. The optional reset on one of the sides.
+      this.decimaldisplay = true;
+      this.counter = true;
+      if(writeheading2 == -1) {
+        inheading = writeheading;
+        indir = writedir;
+        writeheading = -1;
+      } else {
+        if(writedir == outdir) {
+          inheading = writeheading;
+          indir = writedir;
+          writeheading = writeheading2;
+          writedir = writedir2;
+        } else {
+          inheading = writeheading2;
+          indir = writedir2;
+          writeheading = writeheading;
+          writedir = writedir;
+        }
+        ilsbpos = (inheading == 1 || inheading == 2) ? 1 : 0;
+        writeheading2 = -1;
+        writedir2 = -1;
+      }
+      this.cursorx = this.cursory = -1;
     } else {
+      if(writeheading2 != -1) return null; // only used for counter with reset
       if(readheading == -1 && writeheading == -1) return null;
       if((writeheading != -1) != (inheading != -1)) return null;
       if((readheading != -1) != (outheading != -1)) return null;
@@ -1862,13 +1933,17 @@ function VTE() {
   };
 
   /*
-  Sorts as follows:
-  -inputs from lsb to msb
-  -the write input
-  The given dirs are headings (NESW)
-  Also handles outputs.
+  Sorts inputs and outputs, as follows:
+  -from lsb to msb
+  -for inputs, the write input comes after that
+  dirs is as returned by getDirs: {
+    input [heading, dir, [iv], num, lsbpos]: input side
+    write [heading, dir, [iv], num, lsbpos]: read/write input, also indicates LSB pos
+    output [heading, dir, [iv], num, lsbpos]: output side
+    read [heading, dir, [iv], num, lsbpos]: read side: the side with eof and keyboard read
+  }
   */
-  this.sortInputs = function(dirs) {
+  this.sortIO = function(dirs) {
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
@@ -1977,7 +2052,7 @@ function VTE() {
 
     this.numinputs = dirs.input[3];
     this.numoutputs = dirs.output[3];
-    this.sortInputs(dirs);
+    this.sortIO(dirs);
 
     var w = x1 - x0;
     var h = y1 - y0;
@@ -2000,6 +2075,7 @@ function countFFComponents(array) {
   o.numQ = 0;
   o.numff = 0;
   o.numd = 0;
+  o.numy = 0;
   for(var i = 0; i < array.length; i++) {
     var cell = world[array[i][1]][array[i][0]];
 
@@ -2007,6 +2083,7 @@ function countFFComponents(array) {
     if(cell.circuitsymbol == 'c') o.numc++;
     if(cell.circuitsymbol == 'Q') o.numQ++;
     if(cell.circuitsymbol == 'd') o.numd++;
+    if(cell.circuitsymbol == 'y') o.numy++;
     if(ffmap[cell.circuitsymbol]) o.numff++;
   }
   return o;
@@ -2032,6 +2109,7 @@ function getFFType(array) {
 // flip flop
 function FF() {
   this.cells = [];
+  this.numcC = 0;
 
   this.value = false;
 
@@ -2043,6 +2121,7 @@ function FF() {
   this.init1 = function(array) {
     var array2 = [];
     var num = countFFComponents(array);
+    this.numcC = num.numc + num.numC;
 
     for(var i = 0; i < array.length; i++) {
       var cell = world[array[i][1]][array[i][0]];
@@ -2392,12 +2471,14 @@ function Component() {
     var numc = 0;
     var numc_pos_edge = 0;
     var numc_neg_edge = 0;
-    var numf0 = 0;
-    var numf1 = 0;
-    var numF0 = 0;
-    var numF1 = 0;
+    var numf0 = 0; // num positive inputs set to false
+    var numf1 = 0; // num positive inputs set to true
+    var numF0 = 0; // num negative inputs set to false
+    var numF1 = 0; // num positive inputs set to true
     var numq = 0;
     var numQ = 0;
+    var numy = 0;
+    var numY = 0; // y inputs that are off
     var rom_inputs = []; // only filled in if this is ROM
 
     if(UPDATE_ALGORITHM == 3 && this.ff_cycle && this.ff_cycle_time > 5 && this.type != TYPE_FLIPFLOP && Math.random() < TWIDDLE_PROBABILITY) {
@@ -2433,10 +2514,13 @@ function Component() {
       }
 
       if(this.ff && this.type == TYPE_FLIPFLOP && (UPDATE_ALGORITHM == 0 || UPDATE_ALGORITHM == 1)) {
-        if(this.input_ff_types[i] >= 1 && this.input_ff_types[i] <= 4) {
+        if(this.input_ff_types[i] >= 1 && this.input_ff_types[i] <= 4 && this.ff.numcC) {
           // add a 1-tick delay to the non-clock inputs of built-in flip flops,
           // otherwise serial-in shift registers from D flipflops don't work as intended
           // the flipflops would be too fast and all update at once instead of one by one
+
+          // If no clock (only enable for example) then don't do this delay, to have very
+          // fast response for D-latch (which can be used as 'enable' for other things)
 
           // the shift register is not the only example why this is needed, in fast update modes
           // when there are loops, the order in which components are updated is not defined (because there is
@@ -2473,6 +2557,9 @@ function Component() {
           if(value2) numq++;
         } else if(this.input_ff_types[i] == 6) { // Q
           if(value2) numQ++;
+        } else if(this.input_ff_types[i] == 7) { // y
+          if(value2) numy++;
+          else numY++;
         } else { // c: this.input_ff_types[i] == 0, but also if undefined for some edge cases
           if(value2) numc++;
           if(value2 && !prevvalue2) numc_pos_edge++;
@@ -2526,14 +2613,26 @@ function Component() {
       // is designated as master component.
       // Only the master component has its own ff. So it's updated only once, as intended.
       if(this.ff) {
+        // change whether clocked if there are 'enable' inputs
+        var ffenable = numy;
+        var ffdisable = numY && !numy;
+        if(ffenable) {
+          if(!this.ff.numcC) clocked = true; // this is when there is no real clock (c) present, only an enable input
+        }
+        else if(ffdisable) {
+          clocked = false; // edge triggered clock disabled
+        }
+
         if(numQ && numq) {
-          this.ff.value = !this.ff.value;
+          if(!ffdisable) this.ff.value = !this.ff.value;
         } else if(numQ) {
-          this.ff.value = false; // asynch reset (takes priority over set)
+          if(!ffdisable) this.ff.value = false; // asynch reset (takes priority over set)
         } else if(numq) {
-          this.ff.value = true; // asynch set
+          if(!ffdisable) this.ff.value = true; // asynch set
         } else if(clocked) {
-          if((numf1 && numF1) || (!numf1 && !numf0 && !numF1 && !numF0)) {
+          if((numf1 && numF1) || (!numf1 && !numf0 && !numF1 && !numF0 && this.ff.numcC)) {
+            // "numf1 && numF1" means that JK of a JK flip-flop, or T of a T-flip-flop was set
+            // "!numf1 && !numf0 && !numF1 && !numF0 && this.ff.numcC" means: flip-flop without actual inputs, e.g. a counter (single c, even if combined with q and/or Q), but don't do for 'y'-only FF.
             this.ff.value = !this.ff.value; // toggle
           } else if(numf1) {
             this.ff.value = true; // set
@@ -2732,6 +2831,7 @@ var activeVTE = null;
 document.body.onkeypress = function(e) {
   //console.log('body keypress: vte: ' + activeVTE + ', event: ' + e);
   if(activeVTE) {
+    if(editmode) return;
     if(e.code == 'Backspace') {
       // do nothing. onkeydown does backspace already.
       // chrome only handles backspace in onkeydown, while firefox
@@ -2751,6 +2851,7 @@ document.body.onkeypress = function(e) {
 
 document.body.onkeydown = function(e) {
   if(activeVTE && e && e.code == 'Backspace') {
+    if(editmode) return;
     activeVTE.doBackspace();
     global_changed_something = true;
     update();
@@ -2937,18 +3038,17 @@ setColorScheme(colorscheme);
 
 
 
-// I wanted to use CSS animation instead of this javascript solution, but it turns out the CSS animation uses extreme amount of CPU, at least so much that a flash game in a different window of chrome goes slower.
+// I wanted to use CSS animation instead of this javascript solution, but it turns out the CSS animation uses extreme amount of CPU. So do with JS timer instead.
 var globalSingleBlinkingCursor = null;
 function registerBlinkingCursor(div) {
-  if (div == globalSingleBlinkingCursor) return;
+  if(div == globalSingleBlinkingCursor) return;
 
-  if (globalSingleBlinkingCursor) {
+  if(globalSingleBlinkingCursor) {
     globalSingleBlinkingCursor.style.backgroundColor = TERMINALBGCOLOR;
   }
 
-
   var blink = function() {
-    if (!globalSingleBlinkingCursor.parentNode) {
+    if(!globalSingleBlinkingCursor.parentNode) {
       globalSingleBlinkingCursor = null;
       return;
     }
@@ -3022,7 +3122,7 @@ function Cell() {
       value = rom.selected[index];
     }
 
-    if(digitmap[this.displaysymbol]/*this.circuitsymbol == 'y'*/) {
+    if(digitmap[this.displaysymbol]/*this.circuitsymbol == '='*/) {
       // with buses, some digits light up in confusing ways, so
       // disable them altogether
       value = false;
@@ -3105,6 +3205,7 @@ function Cell() {
           title = 'flipflop D input';
         }
       }
+      if(tc == 'y') title = 'flipflop enable input';
       if(tc == 't') title = 'flipflop T input';
       if(tc == 'j') title = 'flipflop J input';
       if(tc == 'k') title = 'flipflop K input';
@@ -3115,7 +3216,19 @@ function Cell() {
       if(tc == 'I') title = 'IC definition';
       if(tc == 'i') title = 'IC instance';
       if(tc == 'b' || tc == 'B') title = 'ROM/RAM bit, or encoder/decoder';
-      if(tc == 'y') title = 'bus (wire bundle)';
+      if(tc == '=') title = 'bus (wire bundle)';
+      if(tc == 'T') {
+        title = 'terminal';
+        if(this.components[0]) {
+          var master = this.components[0].master;
+          var vte = master ? master.vte : this.components[0].vte;
+          if(vte && vte.numinputs > 0 && !vte.counter) title += ' (with keyboard input)';
+          if(vte && vte.numoutputs > 0 && !vte.counter) title += ' (with ascii output)';
+          if(vte && vte.counter) title += ' (as counter)';
+          if(vte && vte.decimaldisplay && !vte.counter) title += ' (as decimal display)';
+          if(vte && vte.decimalinput && !vte.counter) title += ' (as decimal input)';
+        }
+      }
     }
 
     this.renderer.init2(this, symbol, virtualsymbol, title);
@@ -3132,7 +3245,6 @@ function Cell() {
         }
       }
       if(pointer) this.renderer.setCursorPointer();
-
     }
   };
 
@@ -3599,6 +3711,18 @@ function connected2g(x, y, dir) {
   return true;
 }
 
+// another for graphics, treats middle cell as a '*', for drawing split from it (intended for backplane wires like g and antennas)
+function connected2a(x, y, dir) {
+  var temp = world[y][x].circuitsymbol;
+  world[y][x].circuitsymbol = '*';
+
+  var result = connected2(x, y, dir);
+
+  world[y][x].circuitsymbol = temp;
+
+  return result;
+}
+
 // for canvas drawing of % and & and x without too much stray arms
 function isInterestingComponent(cell, z) {
   if(!cell.components[z]) return false;
@@ -3876,6 +4000,22 @@ function RendererDrawer() {
     ctx.stroke();
   };
 
+  // for 'g' and antennas
+  this.drawBGSplit_ = function(cell, ctx) {
+    var num = 0;
+    ctx.beginPath();
+    if(connected2a(cell.x, cell.y, 0)) { num++; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5); }
+    if(connected2a(cell.x, cell.y, 1)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5); }
+    if(connected2a(cell.x, cell.y, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1); }
+    if(connected2a(cell.x, cell.y, 3)) { num++; this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5); }
+    if(connected2a(cell.x, cell.y, 4)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0); }
+    if(connected2a(cell.x, cell.y, 5)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 1); }
+    if(connected2a(cell.x, cell.y, 6)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 1); }
+    if(connected2a(cell.x, cell.y, 7)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 0); }
+    ctx.stroke();
+    return num;
+  };
+
   // also returns amount of wires
   this.drawSplit_ = function(cell, ctx, num0) {
     var num = num0 || 0;
@@ -3892,6 +4032,7 @@ function RendererDrawer() {
     if(num >= 3) {
       ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + (th >> 1) - 1.5, 3.5, 3.5);
     }
+    return num;
   };
 
   this.drawSplitDiag_ = function(cell, ctx, num0) {
@@ -4784,18 +4925,27 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           this.drawonly = 2;
         }
       } else if(antennamap[c]) {
-        drawer.fillBg_(ctx, ctx.fillStyle);
-        this.ctx0.strokeStyle = this.ctx0.fillStyle = BGCOLOR;
+        //drawer.fillBg_(ctx, ctx.fillStyle);
+        //this.ctx0.strokeStyle = this.ctx0.fillStyle = BGCOLOR;
+        drawer.drawBGSplit_(cell, ctx);
         if(c == ')') {
-          drawer.drawArc_(ctx, -0.3, 0.5, 0.75, 0.1, 0.8);
+          //drawer.drawArc_(ctx, -0.3, 0.5, 0.75, 0.1, 0.8);
+          drawer.drawArc_(ctx, 0.5, 0.5, 0.75, 0.25, 0.4);
+          drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.3);
         } else if(c == '(') {
-          drawer.drawArc_(ctx, 1.3, 0.5, 0.4, 0.75, 0.8);
+          //drawer.drawArc_(ctx, 1.3, 0.5, 0.4, 0.75, 0.8);
+          drawer.drawArc_(ctx, 0.5, 0.5, 0.25, 0.75, 0.4);
+          drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.3);
         } else if(c == 'u') {
-          drawer.drawArc_(ctx, 0.5, -0.3, 0.65, 0.35, 0.8);
+          //drawer.drawArc_(ctx, 0.5, -0.3, 0.65, 0.35, 0.8);
+          drawer.drawArc_(ctx, 0.5, 0.5, 0, 0.5, 0.4);
+          drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.3);
         } else if(c == 'n') {
-          drawer.drawArc_(ctx, 0.5, 1.3, 0.65, 0.85, 0.8);
+          //drawer.drawArc_(ctx, 0.5, 1.3, 0.65, 0.85, 0.8);
+          drawer.drawArc_(ctx, 0.5, 0.5, 0.5, 0, 0.4);
+          drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.3);
         }
-      } else if(c == 'y') {
+      } else if(c == '=') {
         var ygroup = cell.ygroup;
         if(ygroup) {
           // color some buses slightly differently to allow to distinguish them visually
@@ -4814,7 +4964,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       } else if(virtualsymbol == 'L') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
       } else if(virtualsymbol == 'g') {
-        drawer.drawSplit_(cell, ctx);
+        drawer.drawBGSplit_(cell, ctx);
         drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.4);
       } else if(cell.comment) {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
@@ -5449,7 +5599,7 @@ function parseNumbers() {
       if(world[y][x].skipparsing) continue;
       var c = world[y][x].metasymbol;
       var type = NUMBER_NONE;
-      if (c == 'y') type = NUMBER_BUS;
+      if (c == '=') type = NUMBER_BUS;
       if (c == '"' && world[y][x].symbol == '"') type = NUMBER_COMMENT;
       if (c == 'l') type = NUMBER_LED;
       if (c == 'r' || c == 'R') type = NUMBER_TIMER;
@@ -6296,12 +6446,12 @@ function convertJunctionNumbers() {
         var y = s[1];
         if(x < 0 || x >= w || y < 0 || y >= h) continue;
         var c = world[y][x].metasymbol;
-        if(c != 'y' && !digitmap[c]) continue; // we only care about y and digits, they form a group
+        if(c != '=' && !digitmap[c]) continue; // we only care about bus and digits, they form a group
         if(digitmap[c] && world[y][x].numbertype != NUMBER_BUS && world[y][x].numbertype != NUMBER_NONE) continue;
         if(digitmap[c]) world[y][x].numbertype = NUMBER_BUS;
         array.push(s);
 
-        if(c == 'y') {
+        if(c == '=') {
           isjunction = true;
         }
 
@@ -6321,7 +6471,7 @@ function convertJunctionNumbers() {
         for(var i = 0; i < array.length; i++) {
           var x = array[i][0];
           var y = array[i][1];
-          world[y][x].circuitsymbol = 'y';
+          world[y][x].circuitsymbol = '=';
         }
       }
     }
@@ -6331,7 +6481,7 @@ function convertJunctionNumbers() {
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
       if(world[y][x].skipparsing) continue;
-      if(world[y][x].circuitsymbol == 'y') {
+      if(world[y][x].circuitsymbol == '=') {
         var hor = false;
         var ver = false;
         for(var i = 0; i < 4; i++) {
@@ -6340,7 +6490,7 @@ function convertJunctionNumbers() {
           var x2 = x + dx2;
           var y2 = y + dy2;
           if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
-          if(world[y2][x2].circuitsymbol == 'y') continue;
+          if(world[y2][x2].circuitsymbol == '=') continue;
           if(connected2(x, y, i)) {
             if(i == 0 || i == 2) ver = true;
             if(i == 1 || i == 3) hor = true;
@@ -6355,7 +6505,7 @@ function convertJunctionNumbers() {
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
       if(world[y][x].skipparsing) continue;
-      if(world[y][x].circuitsymbol == 'y' && world[y][x].metasymbol == 'y') {
+      if(world[y][x].circuitsymbol == '=' && world[y][x].metasymbol == '=') {
         world[y][x].number = world[y][x].numberh = world[y][x].numberv = -1;
         // this is on purpose! Wires that touch a real y do NOT count for numbered connections
       }
@@ -6504,7 +6654,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
 
   if(!knownmap[c2]) return false; // it's an isolator
 
-  if(c == 'y' && c2 == 'y') return false; // y-y connections must be handled with "handleJunctionConnections" instead
+  if(c == '=' && c2 == '=') return false; // y-y connections must be handled with "handleJunctionConnections" instead
 
   if(c == '+' && !(z == 0 && (todir2 == 1 || todir2 == 3)) && !(z == 1 && (todir2 == 0 || todir2 == 2))) return false;
   if(c == '%' && !(z == 0 && (todir2 == 1 || todir2 == 2)) && !(z == 1 && (todir2 == 0 || todir2 == 3))) return false;
@@ -6729,9 +6879,9 @@ function handleBackPlaneConnections(used, stack, x, y, z) {
   }
 }
 
-// buses (y)
+// buses ('=')
 function handleJunctionConnections(used, stack, x, y) {
-  if(world[y][x].circuitsymbol != 'y') return;
+  if(world[y][x].circuitsymbol != '=') return;
   var ygroup = world[y][x].ygroup;
   if(!ygroup) {
     return;
@@ -6797,7 +6947,7 @@ function parseComponents() {
 
       // pretty good optimization! since we only care about junctions, avoid
       // doing all the "connected" parsing unless we have a y as startpoint
-      if(world[y0][x0].circuitsymbol != 'y') continue;
+      if(world[y0][x0].circuitsymbol != '=') continue;
 
       var stack = [[x0, y0, 0]];
       used[y0][x0][0] = true;
@@ -6814,7 +6964,7 @@ function parseComponents() {
         var ce = world[y][x].circuitextra;
         if(!knownmap[c] || world[y][x].comment) continue; // it's an isolator
 
-        if(c == 'y') {
+        if(c == '=') {
           junction = true;
           array.push(s);
         }
@@ -6834,13 +6984,13 @@ function parseComponents() {
           var number = world[y][x].number;
           var number2 = world[y2][x2].number;
 
-          if(c == 'y' || c2 == 'y') {
-            if(c != 'y' || c2 != 'y') {
+          if(c == '=' || c2 == '=') {
+            if(c != '=' || c2 != '=') {
               // For y's, we do not use the regular connection rules. But instead rules for how y-groups are connected, which are different than components!
               // a numbered y is only connected to y, it's not even connected to wires
               // an unnumbered y is connected to wires and extends its group that way
-              if(c == 'y' && number >= 0) continue;
-              if(c2 == 'y' && number2 >= 0) continue;
+              if(c == '=' && number >= 0) continue;
+              if(c2 == '=' && number2 >= 0) continue;
               if(!connected(c, c2, ce, ce2, i, z, z2)) continue;
               var fromdir = (i <= 3) ? ((i + 2) & 3) : (4 + ((i - 2) & 3));
               if(!connected(c2, c, ce2, ce, fromdir, z2, z)) continue;
@@ -7348,6 +7498,7 @@ function parseComponents() {
           else if(c2 == 't') component2.input_ff_types.push(4);
           else if(c2 == 'q') component2.input_ff_types.push(5);
           else if(c2 == 'Q') component2.input_ff_types.push(6);
+          else if(c2 == 'y') component2.input_ff_types.push(7);
           else /*if(c2 == 'c' || c2 == 'C' || c2 == '#')*/ component2.input_ff_types.push(0);
         }
       }
@@ -7845,7 +7996,7 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   if(!docwidth) docwidth = 1000;
   if(!docheight) docheight = 800;
   var h2 = h;
-  if(h2 * 9 > docheight) {
+  if(h * 20 > docheight || h > w) { // only very rarely DON't disable fitheight
     if(fity > 0) {
       h2 = fity;
     } else {
@@ -8337,8 +8488,8 @@ function transpose(text) {
       else if(c == '(') c = 'n';
       // not yet implemented "vertical comment", but transform done to
       // avoid existing quotes commenting out wrong lines when transposed
-      else if(c == '=') c = '"';
-      else if(c == '"') c = '=';
+      else if(c == ':') c = '"';
+      else if(c == '"') c = ':';
       grid[y][x] = c;
     }
   }
@@ -8502,6 +8653,7 @@ importButton.onclick = function() {
     editarea.cols = 40;
     editarea.value = '';
     editarea.style.fontSize = fontsize + 'px';
+    editdiv.style.zIndex = '100';
     editarea.focus();
 
     var donebutton = makeUIElement('button', editdiv);

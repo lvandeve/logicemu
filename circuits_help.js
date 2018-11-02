@@ -332,6 +332,8 @@ C****>l
 0"q: output, or asynchronous S input. Note that c, j, k, d and t can also"
 0"   already be used as outputs"
 0"Q: negated output, or asynchronous R input"
+0"y: enable input: if present, only reacts to inputs if this is on. May also"
+0"   replace c, then the object is a latch instead of a flip-flop."
 0"Most other parts will also output signal so using q and Q is not required for"
 0"that. These parts can be combined in any way, with # (visible in text mode)"
 0"as filler"
@@ -369,6 +371,12 @@ s**>q**>l
 s**>Q**>l
 
 
+
+s-->dy-->l 0"D-latch (enable input instead of clock)"
+     ^
+     s
+
+
 s-->c-->l
 s-->t-->l
 s-->d-->l
@@ -376,6 +384,7 @@ s-->j-->l 0"All parts combined in 1 flip-flop (not realistic but possible)"
 s-->k-->l
 s-->q-->l
 s-->Q-->l
+S-->y-->l
 
 0"So to summarize, the 'c' and 'C' can actually mean three different things:"
 0"-counter (1-input T flip-flop): when standalone with an input"
@@ -496,6 +505,15 @@ s-->d-->d-->d-->d-->d-->d-->d-->d-->l
          llllllll
          ^^^^^^^^
          TTTTTTTT
+
+0"With a single input, it acts as an up-counter. An optional reset an be added"
+
+         lllllll
+         ^^^^^^^
+         TTTTTTT<p"reset"0
+               ^
+               p
+
 
 0"A ? is a random generator. It starts with a random initial value. If it"
 0"has inputs it will change to a random value on any positive or negative"
@@ -694,30 +712,30 @@ s**>V**                    s******
 
                                      llllllll
                                      ^^^^^^^^
-s---0y                   y0--->l     ||||||||
-s---1y                   y1--->l     76543210
-s---2yyyyyyyyyyyyyyyyyyyyy2--->l     yyyyyyyy
-s---3y                   y3--->l     01234567
-s---4y                   y4--->l     ||||||||
+s---0=                   =0--->l     ||||||||
+s---1=                   =1--->l     76543210
+s---2=====================2--->l     ========
+s---3=                   =3--->l     01234567
+s---4=                   =4--->l     ||||||||
                                      ssssssss
 
 0"Wire connections without number to buses are still part of the bus,"
 0"e.g. this wire crossing lets two entire buses cross:"
 
 
-               y2-->l
-               y1-->l
-               y0-->l
-               y
-s---0y         y         y0--->l
-s---1y         |         y1--->l
-s---2yyyyyyyyy-+-yyyyyyyyy2--->l
-s---3y         |         y3--->l
-s---4y         y         y4--->l
-               y
-               y2---s
-               y1---s
-               y0---s
+               =2-->l
+               =1-->l
+               =0-->l
+               =
+s---0=         =         =0--->l
+s---1=         |         =1--->l
+s---2=========-+-=========2--->l
+s---3=         |         =3--->l
+s---4=         =         =4--->l
+               =
+               =2---s
+               =1---s
+               =0---s
 
 
 0"Global wires, indicated with a big dot (or 'g' in text mode), are all"
@@ -823,6 +841,8 @@ s---->a-****-->a>l** *|*>l1
 0"scheme. These controls, too, are in the top bar."
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
+
+0"FIT:y"
 `, 'renderhelp');
 
 registerCircuit('Ticks and Emulation Algorithms', `
@@ -1536,12 +1556,24 @@ s**>c**>l 0"JK flip-flop with q and Q left out, they are not required to get out
     #
 s**>k**>l
 
+
+s**>q**>l
+    #      0"SR latch: no clock, output remembers single switch"
+s**>Q**>l
+
+
+
+s-->dy-->l 0"D-latch (enable input instead of clock)"
+     ^
+     s
+
+
      s
      v
 s-->jq**>l
-s-- k#
-s-->d#     0"Combining every single part (not useful but possible)"
-s-- t#
+s-->k#
+s-->dy<**S 0"Combining every single part (not useful but possible)"
+s-->t#
 s-->cQ**>l
      ^
      s
@@ -1926,6 +1958,20 @@ SsssssS"ASCII code in to screen"
          ^^^^^^^^
          TTTTTTTT
 
+0"With a single input, it acts as an up-counter. An optional reset an be added"
+
+         lllllll
+         ^^^^^^^
+         TTTTTTT
+               ^
+               p
+
+         lllllll
+         ^^^^^^^
+         TTTTTTT<p"reset"0
+               ^
+               p
+
 0"NEW PART: Random generator"
 0"?: random generator"
 
@@ -2134,7 +2180,7 @@ s---G    G--->l
    uuuuuuuuu
 
 0"NEW PART: bus"
-0"y: bus"
+0"=: bus"
 
 0"A bus is a bundle of wires through which multiple connections can go. Numbers"
 0"indicate which internal wire connects to external wire. Matching numbers"
@@ -2144,7 +2190,7 @@ s---G    G--->l
  ^  ^  ^  ^  ^  ^  ^
  |  |  |  |  |  |  |
  0  1  2  3  4  5  6
- yyyyyyyyyyyyyyyyyyy
+ ===================
  6  5  4  3  2  1  0
  |  |  |  |  |  |  |
  s  s  s  s  s  s  s
@@ -2158,17 +2204,17 @@ s---G    G--->l
 0"just like regular wires, all the buses did was tell which gates connect to"
 0"which"
 
-            y1->l
-            y2->l
-            y3->l
-            y
+            =1->l
+            =2->l
+            =3->l
+            =
             |
-   yyyy-----+-----yyyy
+   ====-----+-----====
    123      |      123
-   |||      y      |||
-   sss      y1-s   vvv
-            y2-s   lll
-            y3-s
+   |||      =      |||
+   sss      =1-s   vvv
+            =2-s   lll
+            =3-s
 
 
 0"The above shortcuts and behaviors are all still considered readable style."
@@ -2411,9 +2457,10 @@ registerCircuit('ASCII symbol summary', `
 
 0"#: extend the surface area of devices"
 
-0"cC: flip-flop clock, counter"
+0"cC: flip-flop clock, counter, constant"
 0"jkdt: flip-flop inputs"
 0"qQ: flip-flop outputs/asynch inputs"
+0"y: flip-flop enable"
 
 0"EXTENDED"
 0"--------"
@@ -2424,7 +2471,7 @@ registerCircuit('ASCII symbol summary', `
 0"/\\: diagonal wires"
 0"&%: double wire corners"
 0"g: global backplane wires"
-0"y: bus (bundle of wires)"
+0"=: bus (bundle of wires)"
 0"()un: straight connected backplane wires, 'antennas'"
 
 0"I: IC template"
@@ -2444,6 +2491,8 @@ registerCircuit('ASCII symbol summary', `
 
 0"$: extend the surface area of devices without input/output interaction"
 0"0123456789: modifiers: LED color, timer speed, bus/ic/backplane id"
+
+0"FIT:y"
 
 `, 'symbols');
 
@@ -2912,6 +2961,375 @@ registerCircuit('Electronic Diagram', `
 `, 'diagram');
 
 
+registerTitle('Components');
+
+var componentid = 0;
+
+registerCircuit('Switch', `
+ s-->l
+`, 'component' + componentid++);
+
+registerCircuit('Pushbutton', `
+ p-->l
+`, 'component' + componentid++);
+
+registerCircuit('Timer', `
+ R-->l
+`, 'component' + componentid++);
+
+registerCircuit('LED', `
+ s-->l
+`, 'component' + componentid++);
+
+registerCircuit('Colored LED', `
+ s-->l2
+`, 'component' + componentid++);
+
+registerCircuit('RGB LED', `
+ s-->L<--s
+     ^
+     |
+     |
+     s
+`, 'component' + componentid++);
+
+registerCircuit('Wire Split', `
+    l
+    ^
+    |
+ s--*->l
+    |
+    v
+    l
+`, 'component' + componentid++);
+
+registerCircuit('Wire Crossing', `
+    s
+    |
+    |
+ s--+->l
+    |
+    v
+    l
+`, 'component' + componentid++);
+
+registerCircuit('Diagonal Wire Crossing', `
+
+ s     l
+  ;   h
+   ; /
+    x
+   / ;
+  /   h
+ s     l
+
+`, 'component' + componentid++);
+
+registerCircuit('8-Way Wire Crossing', `
+
+ s  s  l
+  ; | h
+   ;|/
+ s--X->l
+   /|;
+  / v h
+ s  l  l
+
+`, 'component' + componentid++);
+
+registerCircuit('AND gate', `
+s-->a-->l
+    ^
+s---*
+`, 'component' + componentid++);
+
+registerCircuit('OR Gate', `
+s-->o-->l
+    ^
+s---*
+`, 'component' + componentid++);
+
+registerCircuit('XOR Gate', `
+s-->e-->l
+    ^
+s---*
+`, 'component' + componentid++);
+
+registerCircuit('NAND Gate', `
+s-->A-->l
+    ^
+s---*
+`, 'component' + componentid++);
+
+registerCircuit('NOR Gate', `
+s-->O-->l
+    ^
+s---*
+`, 'component' + componentid++);
+
+registerCircuit('XNOR Gate', `
+s-->E-->l
+    ^
+s---*
+`, 'component' + componentid++);
+
+registerCircuit('Negative Input', `
+s--]o-->l
+    ^
+s---*
+`, 'component' + componentid++);
+
+registerCircuit('Constant Off', `
+c-->l
+`, 'component' + componentid++);
+
+registerCircuit('Constant On', `
+C-->l
+`, 'component' + componentid++);
+
+registerCircuit('Random Generator', `
+s-->?-->l
+`, 'component' + componentid++);
+
+registerCircuit('Counter Gate', `
+s-->c-->c-->c-->c-->l
+`, 'component' + componentid++);
+
+registerCircuit('Delay gate', `
+s-->d-->d-->d-->d-->l
+`, 'component' + componentid++);
+
+registerCircuit('D flip-flop', `
+ s-->d-->l
+     #
+ s-->c
+`, 'component' + componentid++);
+
+registerCircuit('T flip-flop', `
+ s-->t-->l
+     #
+ s-->c
+`, 'component' + componentid++);
+
+registerCircuit('JK flip-flop', `
+ s-->j-->l
+ s-->c
+ s-->k-->l
+`, 'component' + componentid++);
+
+registerCircuit('D latch', `
+ s-->d-->l
+     #
+ s-->y
+`, 'component' + componentid++);
+
+registerCircuit('SR latch', `
+ s-->q-->l
+     #
+ s-->Q-->l
+`, 'component' + componentid++);
+
+registerCircuit('Keyboard Terminal', `
+     lllllll
+     ^^^^^^^
+     |||||||
+     TTTTTTT<p
+     TTTTTTT>l"eof"0
+     TTTTTTT
+`, 'component' + componentid++);
+
+registerCircuit('ASCII Terminal (Screen)', `
+     TTTTTTT<p"read"
+     TTTTTTT
+     TTTTTTT
+     ^^^^^^^
+     Sssssss
+`, 'component' + componentid++);
+
+registerCircuit('Decimal Display Terminal', `
+     TTTTTTT
+     ^^^^^^^
+     sssssss
+`, 'component' + componentid++);
+
+registerCircuit('Decimal Keyboard Terminal', `
+     lllllll
+     ^^^^^^^
+     TTTTTTT
+`, 'component' + componentid++);
+
+registerCircuit('Terminal Counter With Reset', `
+     lllllll
+     ^^^^^^^
+     TTTTTTT<p"reset"0
+           ^
+           p
+`, 'component' + componentid++);
+
+registerCircuit('ROM one-hot', `
+   lll
+   ^^^
+   |||
+s->bbB
+s->BBb
+s->BbB
+s->bBb
+`, 'component' + componentid++);
+
+registerCircuit('ROM binary', `
+   lll
+   ^^^
+   |||
+s->bbB
+s->BBb
+   BbB
+   bBb
+`, 'component' + componentid++);
+
+registerCircuit('RAM', `
+
+   lll
+   ^^^
+   |||
+s->bbb<-p
+s->bbb
+s->bbb
+   bbb
+   ^^^
+   |||
+   sss
+`, 'component' + componentid++);
+
+registerCircuit('Binary to Unary', `
+
+  llll
+  ^^^^
+  ||||
+  bbbb
+    ^^
+    ||
+    ss
+
+`, 'component' + componentid++);
+
+registerCircuit('Unary to Binary', `
+
+   ll
+   ^^
+   ||
+ bbbb
+ ^^^^
+ ||||
+ ssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Priority Selector', `
+
+ llll
+ ^^^^
+ ||||
+ bbbb
+ ^^^^
+ ||||
+ ssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Priority Selector (LSB left)', `
+
+ llll
+ ^^^^
+ ||||
+0bbbb
+ ^^^^
+ ||||
+ ssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Bus', `
+
+s---0==3-->l
+s---1==2-->l
+s---2==1-->l
+s---3==0-->l
+`, 'component' + componentid++);
+
+registerCircuit('Backplane', `
+  s----g
+
+          g--->l
+`, 'component' + componentid++);
+
+registerCircuit('Backplane Wrap-Around', `
+(--s     l<--)
+`, 'component' + componentid++);
+
+registerCircuit('Tristate Buffer (as OR)', `
+
+s-->V**-->l
+      *
+s-->V**
+
+`, 'component' + componentid++);
+
+registerCircuit('Tristate Buffer (as AND)', `
+
+s-->V-->l
+    ^
+s---*
+
+`, 'component' + componentid++);
+
+registerCircuit('Double Corner', `
+    s
+    |
+    |
+ s--&->l
+    |
+    v
+    l
+`, 'component' + componentid++);
+
+registerCircuit('Multi-input', `
+   l
+s--zl
+   l
+`, 'component' + componentid++);
+
+registerCircuit('Wire Crossing Input', `
+
+    s
+    |
+  s-hl
+    l
+
+`, 'component' + componentid++);
+
+registerCircuit('Diagonal Crossing Input', `
+
+l l
+^ ^
+a e
+^^^
+s s
+
+`, 'component' + componentid++);
+
+registerCircuit('IC', `
+l   l     l l
+^   ^     ^ ^
+o<a eI5   #i5
+^ ^^^     ^^^
+a e *     sss
+^^^ *
+s s s
+`, 'component' + componentid++);
+
+
+
+
 registerTitle('Testing');
 
 
@@ -3091,15 +3509,15 @@ C----------zhl
 
 
 
-C12y     y21]l
-   yy---yy
-c21y     y12>l
+C12=     =21]l
+   ==---==
+c21=     =12>l
 
 
-C---12y45--->l
-C---23y34---]l
-c---34y12--->l
-C---45y23--->l
+C---12=45--->l
+C---23=34---]l
+c---34=12--->l
+C---45=23--->l
 
   I8
 S*(@@@)*****>l
@@ -3146,6 +3564,10 @@ O*****>d****>l
 C------+---->l
       >
        e---->l
+
+S-->dy------>l
+     ^
+     S
 
 0"Off"
 0"---"
@@ -3223,16 +3645,16 @@ C*****>o
       >o---->l
 
 
-C---y0y3y--->l
-C---y1y2y--->l
-C---y2y1y--->l
-C---y3y0y--->l
+C---=0=3=--->l
+C---=1=2=--->l
+C---=2=1=--->l
+C---=3=0=--->l
 
 
   12      21
-C-y       y->l
-  yyyyyyyyy
-C-y       y->l
+C-=       =->l
+  =========
+C-=       =->l
   21      12
 
 S***********]l
@@ -3253,6 +3675,14 @@ S**>c*******>l
        e---->l
       ^
 C-----
+
+S-->dy------>l
+     ^
+     s
+
+s-->dy------>l
+     ^
+     S
 
 
 0"Toggle"
@@ -3296,17 +3726,17 @@ s##
 ***g12 12g**>l
 *
 *
-*       y1>O>l
-*     yyy
-*     * y2**>l
+*       =1>O>l
+*     ===
+*     * =2**>l
 *     *
-***1y * y2>O>l
-*   yy+yy
-*>O2y * y1**>l
+***1= * =2>O>l
+*   ==+==
+*>O2= * =1**>l
 *     *
-***2y *
-*   yyy
-*>O1y
+***2= *
+*   ===
+*>O1=
 *
 *
 ***(    )***>l
@@ -3354,6 +3784,9 @@ s##
 *    *>O**
 *
 *
+*-->dy------>l
+     ^
+     S
 
 0"Flip Flops"
 0"----------"
@@ -3382,6 +3815,7 @@ s-->k--]l
     #
 s-->q-->l
 s-->Q--]l
+S-->y-->l
 
 0"Expected: behaves like JK flipflop, all LEDs same value"
 
@@ -3412,9 +3846,10 @@ I197
 s------>e----->l
 I196
 
+0"IC input order"
+0"--------------"
 
-
-0"Test IC input order. Each input must activate the correct LED"
+0"Each input must activate the correct LED"
 
                  "ABCD"
       llll        llll
@@ -3545,7 +3980,6 @@ l<--s0"There should be no space between this comment and the switch"
 
 `, 'drawtest');
 
-
 registerTitle('Front Page');
 
 
@@ -3556,4 +3990,6 @@ registerCircuit('Help Index', `
 0"under 'Viewing') is recommended."
 
 
-INSERT:toc_help`, 'helpindex');
+INSERT:toc_help
+
+0"FIT:y"`, 'helpindex');

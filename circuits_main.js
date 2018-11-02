@@ -296,7 +296,6 @@ registerCircuit('Binary Numbers Tutorial', `
      *  *  *  *  *  *  *  *
      TTTTTTTTTTTTTTTTTTTTTT"decimal"
 
-0"FIT:x"
 `, 'binary_numbers');
 
 registerCircuit('16 gates', `
@@ -615,13 +614,13 @@ s**>A**>A**>A**
 "b"s**>A****
 
 
-  **>A***
-  *  ^  *
-s*+***v v
-  *   A>A>A>A****>l"majority"
-s*+***^     ^
-  *  v      *
-s***>A*******
+  ***>A**
+  *   ^ *
+s*+**** *
+  *   v v
+s*+**>A>A>A>A***>l  "majority"
+  * v       ^
+s**>A********
 
 
 0"Wire crossing"
@@ -787,13 +786,13 @@ s**>O**>O**>O**
 "b"s****>O****
 
 
-  **>O***
-  *  ^  *
-s*+***v v
-  *   O>O>O>O****>l"majority"
-s*+***^     ^
-  *  v      *
-s***>O*******
+  ***>O**
+  *   ^ *
+s*+**** *
+  *   v v
+s*+**>O>O>O>O***>l  "majority"
+  * v       ^
+s**>O********
 
 
 0"Wire crossing"
@@ -902,9 +901,6 @@ registerCircuit('mux & demux', `
    *   s *   s *   s *   s *   s *   s *   s *   s
    *     *     *     *     *     *     *     *
    s     s     s     s     s     s     s     s
-
-
-
 
 `, 'mux');
 
@@ -1518,8 +1514,7 @@ registerCircuit('8-bit multiplier', `
 
 
 
-
-
+0"FIT:y"
 
 `, 'mul8');
 
@@ -1778,6 +1773,7 @@ registerCircuit('8-bit divider', `
 
 
 
+0"FIT:y"
 
 `, 'div8');
 
@@ -1947,7 +1943,7 @@ registerCircuit('8-bit fully customizable barrel shifter', `
                     ^ * ^ ^ * ^ ^ * ^ ^ * ^ ^ * ^ ^ * ^ ^ * ^ ^ * ^
                   **+***+*+***+*+***+*+***+*+***+*+***+*+***+*+***+**
                   * *   * *   * *   * *   * *   * *   * *   * *   *
-                  * 7yyy0y6yyy1y5yyy2y4yyy3y3yyy4y2yyy5y1yyy6y0yyy7 0"mirroring stage"
+                  * 7===0=6===1=5===2=4===3=3===4=2===5=1===6=0===7 0"mirroring stage"
                   * *     *     *     *     *     *     *     *
                   * *     *     *     *     *     *     *     *
                   * *     *     *     *     *     *     *     *
@@ -1968,7 +1964,7 @@ registerCircuit('8-bit fully customizable barrel shifter', `
               * * * *   * *   * *   * *   * *   * *   * *   * *   *
               * * * *   * *   * *   * *   * *   * *   * *   * *   *
               * * * *   * *   * *   * *   * *   * *   * *   * *   *
-              * * * 7yyy7y6yyy6y5yyy5y4yyy4y3yyy3y2yyy2y1yyy1y0yyy0 0"redundant looking mux. For consistency..."
+              * * * 7===7=6===6=5===5=4===4=3===3=2===2=1===1=0===0 0"redundant looking mux. For consistency..."
               * * * *     *     *     *     *     *     *     *
               * * * o<*** o<*** o<*** o<*** o<*** o<*** o<*** o<***
               * * * ^   * ^   * ^   * ^   * ^   * ^   * ^   * ^   *
@@ -1986,7 +1982,7 @@ registerCircuit('8-bit fully customizable barrel shifter', `
               * * * *   * *   * *   * *   * *   * *   * *   * *   *
               * * * *   * *   * *   * *   * *   * *   * *   * *   *
               * * * *   * *   * *   * *   * *   * *   * *   * *   *
-              * * * 7yyy3y6yyy2y5yyy1y4yyy0y3yyy7y2yyy6y1yyy5y0yyy4 0"rotate 4"
+              * * * 7===3=6===2=5===1=4===0=3===7=2===6=1===5=0===4 0"rotate 4"
               * * * *     *     *     *     *     *     *     *
               * * * o<*** o<*** o<*** o<*** o<*** o<*** o<*** o<***
               * * * ^   * ^   * ^   * ^   * ^   * ^   * ^   * ^   *
@@ -2004,7 +2000,7 @@ registerCircuit('8-bit fully customizable barrel shifter', `
               * * * *   * *   * *   * *   * *   * *   * *   * *   *
               * * * *   * *   * *   * *   * *   * *   * *   * *   *
               * * * *   * *   * *   * *   * *   * *   * *   * *   *
-              * * * 7yyy1y6yyy0y5yyy7y4yyy6y3yyy5y2yyy4y1yyy3y0yyy2 0"rotate 2 right"
+              * * * 7===1=6===0=5===7=4===6=3===5=2===4=1===3=0===2 0"rotate 2 right"
               * * * *     *     *     *     *     *     *     *
               * * * o<*** o<*** o<*** o<*** o<*** o<*** o<*** o<***
               * * * ^   * ^   * ^   * ^   * ^   * ^   * ^   * ^   *
@@ -2018,7 +2014,7 @@ registerCircuit('8-bit fully customizable barrel shifter', `
               **+*+*+**>a *   * *   * *   * *   * *   * *   * *   *
               * * * *   ^ *   * *   * *   * *   * *   * *   * *   *
               * * * *   * *   * *   * *   * *   * *   * *   * *   *
-              * * * 7yyy0y6yyy7y5yyy6y4yyy5y3yyy4y2yyy3y1yyy2y0yyy1 0"rotate 1 right"
+              * * * 7===0=6===7=5===6=4===5=3===4=2===3=1===2=0===1 0"rotate 1 right"
               * * * *     *     *     *     *     *     *     *
               * * * *     *     *     *     *     *     *     *
               * * * *     *     *     *     *     *     *     *
@@ -2030,7 +2026,7 @@ registerCircuit('8-bit fully customizable barrel shifter', `
                 * ^ ^ * ^ ^ * ^ ^ * ^ ^ * ^ ^ * ^ ^ * ^ ^ * ^ ^ * ^
         "l"s****+***+***+*+***+*+***+*+***+*+***+*+***+*+***+*+***+**
                 *   *   * *   * *   * *   * *   * *   * *   * *   *
-                *   7yyy0y6yyy1y5yyy2y4yyy3y3yyy4y2yyy5y1yyy6y0yyy7 0"mirroring stage"
+                *   7===0=6===1=5===2=4===3=3===4=2===5=1===6=0===7 0"mirroring stage"
                 *   *     *     *     *     *     *     *     *
                 *****     *     *     *     *     *     *     *
                     *     *     *     *     *     *     *     *
@@ -3860,7 +3856,6 @@ s****+*+*+>o***+*+*+>o***+*+*+>o***+*+*+>o**>l
    s s s s   s s s s   s s s s   s s s s
   "f e d c   b a 9 8   7 6 5 4   3 2 1 0"
 
-0"FIT:x"
 `, 'priority_encoder');
 
 
@@ -4044,6 +4039,8 @@ registerCircuit('bcd to binary, 0-255', `
 0"The output here only goes to 255, so if you try to give larger input it'll"
 0"overflow"
 
+0"FIT:y"
+
                 "128    64    32    16    8     4     2     1"
                   l     l     l     l     l     l     l     l
                   ^     ^     ^     ^     ^     ^     ^     ^
@@ -4111,6 +4108,7 @@ registerCircuit('bcd to binary, 0-255', `
     "200   100  | 80    40    20    10 |  8     4     2     1"
     " hundreds  |         tens         |         units       "
 
+0"FIT:y"
 
 
 `, 'bcd_to_bin');
@@ -4120,7 +4118,6 @@ registerCircuit('bcd to binary, 0-999', `
 
 0"See the 0-255 circuit for the explanation of this one. This is just a"
 0"slightly bigger version to do up to 999"
-
 
                "512   256   128    64    32    16    8     4     2     1"
                  l     l     l     l     l     l     l     l     l     l
@@ -4206,6 +4203,8 @@ registerCircuit('bcd to binary, 0-999', `
      s     s     s     s  "|"s     s     s     s "|" s     s     s     s
    "800   400   200   100  | 80    40    20    10 |  8     4     2     1"
    "      hundreds         |         tens         |         units       "
+
+0"FIT:y"
 
 `, 'bcd_to_bin_999');
 
@@ -4328,7 +4327,7 @@ registerCircuit('keypad', `
          0#p-----*
           ##
 
-
+0"FIT:y"
 
 `, 'keypad');
 
@@ -5920,7 +5919,7 @@ registerCircuit('mirror bits', `
      * * * * * * * *      ||||||||
      *  x   x   x  *      ||||||||
      * * * * * * * *      76543210
-      x   x   x   x       yyyyyyyy
+      x   x   x   x       ========
      * * * * * * * *      01234567
      *  x   x   x  *      ||||||||
      * * * * * * * *      ||||||||
@@ -5947,7 +5946,7 @@ registerCircuit('shuffle & unshuffle bits', `
      * * * * * * * *      ||||||||
      *  x   x   x  *      ||||||||
      * * * * * * * *      04152637
-     * *  x   x  * *      yyyyyyyy
+     * *  x   x  * *      ========
      * * * * * * * *      01234567
      * * *  x  * * *      ||||||||
      * * * * * * * *      ||||||||
@@ -5958,7 +5957,7 @@ registerCircuit('shuffle & unshuffle bits', `
      * * * * * * * *      ||||||||
      * * *  x  * * *      ||||||||
      * * * * * * * *      02461357
-     * *  x   x  * *      yyyyyyyy
+     * *  x   x  * *      ========
      * * * * * * * *      01234567
      *  x   x   x  *      ||||||||
      * * * * * * * *      ||||||||
@@ -6255,7 +6254,7 @@ registerCircuit('population count', `
      "1"
       l
       ^
-      s  "1-bit popcount: trivial"
+      s  "1-bit popcount: trivial"0
 
 
      "2 1"
@@ -6263,7 +6262,7 @@ registerCircuit('population count', `
       ^ ^
       a e
       ^^^
-      s s "2-bit popcount: half adder"
+      s s "2-bit popcount: half adder"0
 
 
      "2   1"
@@ -6273,7 +6272,7 @@ registerCircuit('population count', `
       ^ ^^^
       a e *
       ^^^ *
-      s s s "3-bit popcount: full adder"
+      s s s "3-bit popcount: full adder"0
 
 
      "4 2   1"
@@ -6285,7 +6284,7 @@ registerCircuit('population count', `
       *  x  *
       a e a e
       ^^^ ^^^
-      s s s s "4-bit popcount"
+      s s s s "4-bit popcount"0
 
 
      "4   2   1"
@@ -6301,7 +6300,7 @@ registerCircuit('population count', `
       ^ ^^^ * *
       a e * a e
       ^^^ * ^^^
-      s s s s s "5-bit popcount"
+      s s s s s "5-bit popcount"0
 
 
      "4   2     1"
@@ -6317,7 +6316,7 @@ registerCircuit('population count', `
       ^ ^^^ ^ ^^^
       a e * a e *
       ^^^ * ^^^ *
-      s s s s s s "6-bit popcount"
+      s s s s s s "6-bit popcount"0
 
 
      "4   2       1"
@@ -6333,7 +6332,7 @@ registerCircuit('population count', `
       ^ ^^^ ^ ^^^ *
       a e * a e * *
       ^^^ * ^^^ * *
-      s s s s s s s "7-bit popcount"
+      s s s s s s s "7-bit popcount"0
 
 
      "8   4     2   1"
@@ -6354,7 +6353,7 @@ registerCircuit('population count', `
       *  x  * *  x  *
       a e a e a e a e
       ^^^ ^^^ ^^^ ^^^
-      s s s s s s s s "8-bit popcount"
+      s s s s s s s s "8-bit popcount"0
 
 
      "8   4     2     1"
@@ -6377,7 +6376,7 @@ registerCircuit('population count', `
       *  x  * *  x  * *
       a e a e a e a e *
       ^^^ ^^^ ^^^ ^^^ *
-      s s s s s s s s s  "9-bit popcount"
+      s s s s s s s s s  "9-bit popcount"0
 
 `, 'popcount');
 
@@ -6416,33 +6415,33 @@ registerCircuit('Conway\'s game of life single cell', `
 
                          s
             |           ||         |
-          yy8yyyyyyyyyyy80yyyyyyyyy8yy
-          y                          y
-          y           ###"clock"     y
-          y           ###            y
+          ==8===========80=========8==
+          =                          =
+          =           ###"clock"     =
+          =           ###            =
         s-7           ##p-->c<d      1-s
-          y *----]a------>a>d ^      y
-          y *     ^       ^ t<*p#    y
-          y o<a e>e<o<a e>o<*  ##    y
-          y ^ ^^^   ^ ^^^   *"toggle"y
-          y a e *   a e *   *        y
-          y ^^^ *   ^^^ *   *        y
-          y * * ** ** * *** *        y
+          = *----]a------>a>d ^      =
+          = *     ^       ^ t<*p#    =
+          = o<a e>e<o<a e>o<*  ##    =
+          = ^ ^^^   ^ ^^^   *"toggle"=
+          = a e *   a e *   *        =
+          = ^^^ *   ^^^ *   *        =
+          = * * ** ** * *** *        =
         s-6 * *   x   *   * *        8-
          -8 * * ** ** *   * *        2-s
-          y *  x     x    * *        y
-          y a e o<a e o<a e *        y
-          y ^^^ ^ ^^^ ^ ^^^ *        y
-          y * * a e * a e * * ###### y
-          y * * ^^^ * ^^^ * * ###### y
-          y * * * * * * * * * ###### y
-          yy0y1y2y3y4y5y6y7y8>l##### y
-          y                   ###### y
+          = *  x     x    * *        =
+          = a e o<a e o<a e *        =
+          = ^^^ ^ ^^^ ^ ^^^ *        =
+          = * * a e * a e * * ###### =
+          = * * ^^^ * ^^^ * * ###### =
+          = * * * * * * * * * ###### =
+          ==0=1=2=3=4=5=6=7=8>l##### =
+          =                   ###### =
         s-5                   ###### 3-s
-          y                          y
-          y                          y
-          y                          y
-          yy8yyyyyyyyyyy48yyyyyyyyy8yy
+          =                          =
+          =                          =
+          =                          =
+          ==8===========48=========8==
             |           ||         |
                         s
 
@@ -6541,30 +6540,31 @@ registerCircuit('Conway\'s game of life', `
     ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
 
+0"FIT:y"
 
           l           ls          l
            h          ^|         h
        s    *         ||        *    s          l
-        ; yy8yyyyyyyyy80yyyyyyyy8yy /      ls   ^   sl
+        ; ==8=========80========8== /      ls   ^   sl
          *7                       1*        h;  |s /h
-          y             g-->c<d   y          ;h |vh/
-          y *----]a------>a>d ^   y           i####
-          y |     ^       ^ t<*s  y           #   #<--s
-          y o<a e>e<o<a e>o<*     y         s>#   #-->l
-          y ^ ^^^   ^ ^^^   |     y       l<--#>l #<s
-          y a e *   a e *   |     y           #   #
-          y ^^^ |   ^^^ |   |     y          /#####;
+          =             g-->c<d   =          ;h |vh/
+          = *----]a------>a>d ^   =           i####
+          = |     ^       ^ t<*s  =           #   #<--s
+          = o<a e>e<o<a e>o<*     =         s>#   #-->l
+          = ^ ^^^   ^ ^^^   |     =       l<--#>l #<s
+          = a e *   a e *   |     =           #   #
+          = ^^^ |   ^^^ |   |     =          /#####;
        s--6 0 2 4   1 3 5   |     8->l      hh  ^| hh
-       l<-8 yyyyyyyyyyyyyyy |     2--s     l/   s|  ;l
-          y 0 1 2   3 4   5 |     y        s     v   s
-          y a e o<a e o<a e |     y              l
-          y ^^^ ^ ^^^ ^ ^^^ |     y
-          y * * a e * a e * |     y
-          y | | ^^^ | ^^^ | |     yI
-          y | | * * | * * | |     y
-          yy0y1y2y3y4y5y6y7y8>l   y
+       l<-8 =============== |     2--s     l/   s|  ;l
+          = 0 1 2   3 4   5 |     =        s     v   s
+          = a e o<a e o<a e |     =              l
+          = ^^^ ^ ^^^ ^ ^^^ |     =
+          = * * a e * a e * |     =
+          = | | ^^^ | ^^^ | |     =I
+          = | | * * | * * | |     =
+          ==0=1=2=3=4=5=6=7=8>l   =
          *5                       3*
-        / yy8yyyyyyyyy48yyyyyyyy8yy ;
+        / ==8=========48========8== ;
        s    *         ||        *    s
            h          |v         h
           l           sl          l
@@ -6663,29 +6663,31 @@ registerCircuit('Conway\'s game of life galaxy', `
     ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
 
+0"FIT:y"
+
           l           ls          l
            h          ^|         h
        s    *         ||        *    s          l
-        ; yy8yyyyyyyyy80yyyyyyyy8yy /      ls   ^   sl
+        ; ==8=========80========8== /      ls   ^   sl
          *7                       1*        h;  |s /h
-          y         g------>c<d   y          ;h |vh/
-          y *----]a------>a>d ^   y           i####
-          y |     ^       ^ t<*s  y           #   #<--------o<sI1
-          y o<a e>e<o<a e>o<*     y         s>#   #-->l     ^
-          y ^ ^^^   ^ ^^^   |     y       l<--#>l #<s       a<
-          y a e *   a e *   |     y           #   #         m|
-          y ^^^ |   ^^^ |   |     y          /#####;        d|
+          =         g------>c<d   =          ;h |vh/
+          = *----]a------>a>d ^   =           i####
+          = |     ^       ^ t<*s  =           #   #<--------o<sI1
+          = o<a e>e<o<a e>o<*     =         s>#   #-->l     ^
+          = ^ ^^^   ^ ^^^   |     =       l<--#>l #<s       a<
+          = a e *   a e *   |     =           #   #         m|
+          = ^^^ |   ^^^ |   |     =          /#####;        d|
        s--6 0 2 4   1 3 5   |     8->l      hh  ^| hh       ^|
-       l<-8 yyyyyyyyyyyyyyy |     2--s     l/   s|  ;l      C*
-          y 0 1 2   3 4   5 |     y        s     v   s
-          y a e o<a e o<a e |     y              l
-          y ^^^ ^ ^^^ ^ ^^^ |     y
-          y * * a e * a e * |     y
-          y | | ^^^ | ^^^ | |     yI
-          y | | * * | * * | |     y
-          yy0y1y2y3y4y5y6y7y8>l   y
+       l<-8 =============== |     2--s     l/   s|  ;l      C*
+          = 0 1 2   3 4   5 |     =        s     v   s
+          = a e o<a e o<a e |     =              l
+          = ^^^ ^ ^^^ ^ ^^^ |     =
+          = * * a e * a e * |     =
+          = | | ^^^ | ^^^ | |     =I
+          = | | * * | * * | |     =
+          ==0=1=2=3=4=5=6=7=8>l   =
          *5                       3*
-        / yy8yyyyyyyyy48yyyyyyyy8yy ;
+        / ==8=========48========8== ;
        s    *         ||        *    s
            h          |v         h
           l           sl          l
@@ -6785,31 +6787,33 @@ registerCircuit('Conway\'s game of life wrap', `
     (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
      uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
 
+0"FIT:y"
+
 
 
           l           ls          l
            h          ^|         h
        s    *         ||        *    s          l
-        ; yy8yyyyyyyyy80yyyyyyyy8yy /      ls   ^   sl
+        ; ==8=========80========8== /      ls   ^   sl
          *7                       1*        h;  |s /h
-          y             g-->c<d   y          ;h |vh/
-          y *----]a------>a>d ^   y           i####
-          y |     ^       ^ t<*s  y           #   #<--s
-          y o<a e>e<o<a e>o<*     y         s>#   #-->l
-          y ^ ^^^   ^ ^^^   |     y       l<--#>l #<s
-          y a e *   a e *   |     y           #   #
-          y ^^^ |   ^^^ |   |     y          /#####;
+          =             g-->c<d   =          ;h |vh/
+          = *----]a------>a>d ^   =           i####
+          = |     ^       ^ t<*s  =           #   #<--s
+          = o<a e>e<o<a e>o<*     =         s>#   #-->l
+          = ^ ^^^   ^ ^^^   |     =       l<--#>l #<s
+          = a e *   a e *   |     =           #   #
+          = ^^^ |   ^^^ |   |     =          /#####;
        s--6 0 2 4   1 3 5   |     8->l      hh  ^| hh
-       l<-8 yyyyyyyyyyyyyyy |     2--s     l/   s|  ;l
-          y 0 1 2   3 4   5 |     y        s     v   s
-          y a e o<a e o<a e |     y              l
-          y ^^^ ^ ^^^ ^ ^^^ |     y
-          y * * a e * a e * |     y
-          y | | ^^^ | ^^^ | |     yI
-          y | | * * | * * | |     y
-          yy0y1y2y3y4y5y6y7y8>l   y
+       l<-8 =============== |     2--s     l/   s|  ;l
+          = 0 1 2   3 4   5 |     =        s     v   s
+          = a e o<a e o<a e |     =              l
+          = ^^^ ^ ^^^ ^ ^^^ |     =
+          = * * a e * a e * |     =
+          = | | ^^^ | ^^^ | |     =I
+          = | | * * | * * | |     =
+          ==0=1=2=3=4=5=6=7=8>l   =
          *5                       3*
-        / yy8yyyyyyyyy48yyyyyyyy8yy ;
+        / ==8=========48========8== ;
        s    *         ||        *    s
            h          |v         h
           l           sl          l
@@ -6909,30 +6913,32 @@ registerCircuit('Conway\'s game of life ship', `
     (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
      uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
 
+0"FIT:y"
+
 
           l           ls          l
            h          ^|         h
        s    *         ||        *    s          l
-        ; yy8yyyyyyyyy80yyyyyyyy8yy /      ls   ^   sl
+        ; ==8=========80========8== /      ls   ^   sl
          *7                       1*        h;  |s /h
-          y         g------>c<d   y          ;h |vh/
-          y *----]a------>a>d ^   y           i####
-          y |     ^       ^ t<*s  y           #   #<--------o<sI1
-          y o<a e>e<o<a e>o<*     y         s>#   #-->l     ^
-          y ^ ^^^   ^ ^^^   |     y       l<--#>l #<s       a<
-          y a e *   a e *   |     y           #   #         m|
-          y ^^^ |   ^^^ |   |     y          /#####;        d|
+          =         g------>c<d   =          ;h |vh/
+          = *----]a------>a>d ^   =           i####
+          = |     ^       ^ t<*s  =           #   #<--------o<sI1
+          = o<a e>e<o<a e>o<*     =         s>#   #-->l     ^
+          = ^ ^^^   ^ ^^^   |     =       l<--#>l #<s       a<
+          = a e *   a e *   |     =           #   #         m|
+          = ^^^ |   ^^^ |   |     =          /#####;        d|
        s--6 0 2 4   1 3 5   |     8->l      hh  ^| hh       ^|
-       l<-8 yyyyyyyyyyyyyyy |     2--s     l/   s|  ;l      C*
-          y 0 1 2   3 4   5 |     y        s     v   s
-          y a e o<a e o<a e |     y              l
-          y ^^^ ^ ^^^ ^ ^^^ |     y
-          y * * a e * a e * |     y
-          y | | ^^^ | ^^^ | |     yI
-          y | | * * | * * | |     y
-          yy0y1y2y3y4y5y6y7y8>l   y
+       l<-8 =============== |     2--s     l/   s|  ;l      C*
+          = 0 1 2   3 4   5 |     =        s     v   s
+          = a e o<a e o<a e |     =              l
+          = ^^^ ^ ^^^ ^ ^^^ |     =
+          = * * a e * a e * |     =
+          = | | ^^^ | ^^^ | |     =I
+          = | | * * | * * | |     =
+          ==0=1=2=3=4=5=6=7=8>l   =
          *5                       3*
-        / yy8yyyyyyyyy48yyyyyyyy8yy ;
+        / ==8=========48========8== ;
        s    *         ||        *    s
            h          |v         h
           l           sl          l
@@ -7012,6 +7018,8 @@ registerCircuit('Langtons Ant', `
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
       uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
 
+
+0"FIT:y"
 
 
                s       l
@@ -7119,6 +7127,9 @@ registerCircuit('16-bit carry lookahead adder', `
                                   * *               * *          * *      * *
                                   * *               * *          * *      * *
                                   s s               s s          s s      s s
+
+0"FIT:y"
+
 `, 'cla_adder_16');
 
 
@@ -7178,7 +7189,7 @@ registerCircuit('16-bit ripple vs lookahead speed comparison', `
                            SsSsSsSsS            SsSsSsSs        SsSsSsSs    SsSsSsSs##"<------ B1"
                                                                                    ###
                                                                                    ###
-
+0"FIT:y"
 
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -7292,6 +7303,8 @@ registerCircuit('16-bit divider', `
     | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | *s
     s   s   s   s   s   s   s   s   s   s   s   s   s   s   s   s
                                                    "b8  b4  b2  b1"
+
+0"FIT:y"
 
 `, 'div16');
 
@@ -7721,6 +7734,8 @@ i87#############################################################################
                                                                                 ^^^^^^^^^^^^^^^^
                                                                                 ssssssssssssssss
 
+0"FIT:y"
+
 `, 'compact_65535_display');
 
 
@@ -7760,7 +7775,7 @@ l<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<i1<sI16
   ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^
   31 31 21 21 21 21 20 20 20 20 20 20 10 10 10 10
   15 04 93 82 71 60 59 48 37 26 15 04 93 82 71 60
-  yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+  ===============================================
   3322222222221111 1111110000000000
   1098765432109876 5432109876543210
   ssssssssssssssss ssssssssssssssss
@@ -7944,79 +7959,79 @@ registerCircuit('4-bit CPU', `
 
   1                                llll"ALU out"
   3 0                              ^^^^
-  g g                    yyyyyyyyyy3210                                    g17 g18
-  * *                    y         ||||                                    v   v
-  * *   3210yyyyyyyyyyyy y         iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii14
-  * *   ||||           y y         ^^^^                  ^^^^  ^^^^         ^^^^
-  * *   ||||"registers"y y         ||||      "carry"     ||||  ||||         ||||
-  * *   ||||"memory"   y y         ||||        g19>l     ||||  ||||         ||||
-  * ***>iiiiilllli     y y         |||| 1   0g>i         ||||  ||||         ||||
-  *-+-->i"r0"^^^^i<b<0 y y         |||| 0  13g>3         ||||  ||||         ||||
-  * * *>iiiiiiii32 # y y y         |||| g   1g>0 g10  8g>a|||  ||||         ||||
-  * * * ^^^^       # y y y         |||| w      ^ v       ^|||  ||||         ||||
-  * **+>iiiiilllli # y y y   ******++++>a----->o<a<***** g|||  ||||         ||||
-  *-+-+>i"r1"^^^^i<b<1 y y   *     ||||                * 1|||  ||||  98     ||||
-  * * *>iiiiiiii32 # y y y   *iiiiiii21<***e<a<g19     * 9|||  ||||  gg     ||||
-  * * * ^^^^       # y y y    ^^^^ ^^^^    ^ ^         *  |||  ||||  vv     ||||
-  * **+>iiiiilllli # y y y    |||| ii22<g9** g8        ***|||  iiiiii23     ||||
-  *-+-+>i"r2"^^^^i<b<2 y y    |||| ^^^^                  ||||  ^^^^^^^^     ||||
-  * * *>iiiiiiii32 # y y y yyy3210y7654yyyyyyyyyyyyyyyyyy0321yy32107654yyyyy7654yy3210yy
-  * * * ^^^^       # y y y y    "adder"             "shift"     "logic"           vvvv
-  * **+>iiiiilllli # y y y y                                                      O###
-  *-+-+>i"r3"^^^^i<b<3 y y y     "ALU inputs"                                     v
-  * * *>iiiiiiii32 # y y y yyyyyyy3210yyyy7654                                    lg20 "zero"
-  * * * ^^^^       # y y y y      ||||    ||||
-  * **+>iiiiilllli # y y y y   "A"llll    llll"B"
-  *-+-+>i"r4"^^^^i<b y y y y      ^^^^    ^^^^
-  * * *>iiiiiiii32 # y y y y   0g>ii31 0g>ii31
-  * * * ^^^^       # y y y y   4g>iiii 5g>iiii
-  * **+>iiiiilllli # y y y y   1g>iiii 1g>iiii
-  *-+-+>i"r5"^^^^i<b y y y y      ^^^^    ^^^^
-  * * *>iiiiiiii32 # y y y y      3210yyyy3210
-  * * * ^^^^       # y y y y              ||||
-  * **+>iiiiilllli # y y y y         iiiiiii12<a<g14
-  *-+-+>i"r6"^^^^i<b y y y y         ^^^^ ^^^^
-  * * *>iiiiiiii32 # y yy+y+yyyyyyyyy3210 3210yyyyyy
-  * * * ^^^^       # y   y y          "B imm"      y
-  * **+>iiiiilllli # y   y y                       y
-  *---+>i"r7"^^^^i<b yyyy+y+yyyyyyyyy3210          y
-      *>iiiiiiii32 #     y y         ||||"A ind"   y
-      * ^^^^       #     y y         iiiiiii12[g15 y
-      g ||||       #     y y         ^^^^ ^^^^     y
-      1 ||||"user" #     y yyyyyyyyyy3210 3210yyyyyyyyyyyyyyy3210
-        iiiiiiiiii #     y                                   ||||      6g g5
-        i"r8"^^^^i<b     y                                   ||||       * *
-        ii12 SSSS  #     y          "jump"                   ||||"ABC"  v v
-        ^^^^       #     y         yy3210                    iiiiiiiiiiii13
-        iiiiiiiiii #     y         y ||||                    ^^^^ ^^^^ ^^^^
-        i"r9"^^^^i<b     y         y iiiiiii12[g16           |||| |||| c|||
-        ii12 sSSS  #     y         y ^^^^ ^^^^               |||| ||||  |||
-        ^^^^       #     yyyyyyyyyy+y3210 ||||          11   |||| |||| 1|||
-        iiiiiiiiii #     y         y      ||||          1098 |||| |||| 2|||
-        i"ra"^^^^i<b     y         y     2||||          gggg |||| |||| g|||
-        ii12 ssSS  #     y         y     1||||"inc"     |||| |||| |||| ||||
-        ^^^^       #     y         y     g||||"IP"      llll llll llll llll
-        iiiiiiiiii #     y         y     *ii20<C        ^^^^ ^^^^ ^^^^ ^^^^
-        i"rb"^^^^i<b     y         y      ^^^^          |||| |||| |||| ||||"instruction ROM"0
-        ii12 sssS  #     y         y      ||||          |||| |||| |||| ||||"put program here"0
-        ^^^^       #     y         y    *-*+++--------->bbbb#Bbbb#bbbb#bbbb"0 0000"
-        iiiiiiiiii #     y         y    |*-*++--------->bbbb#BbbB#bbbb#bbbB"1 0001"
-        i"rc"^^^^i<b     y         y"IP"||*-*+--------->bbbb#BbBb#bbbb#bbBb"2 0010"
-        ii12 ssss  #     y         y    |||*-*--------->bbbb#BbBB#bbbb#bbBB"3 0011"
-        ^^^^       #     y         y 0g>ii31            BBbB#bBbb#bBBb#bbbb"4 0100"
-        iiiiiiiiii #     y         y 7g>iiii            bbbb#BBBB#bbBB#bBbb"5 0101"
-        i"rd"^^^^i<b     y         y 2g>iiii            bBBb#bBbb#bbbb#bBbB"6 0110"
-        ii12 ssss  #     y         y    ^^^^            bbBb#bBbb#bbbB#bBbb"7 0111"
-        ^^^^       #     y         y    llll            bBBb#bBbb#bbbb#bBBb"8 1000"
-        iiiiiiiiii #     y         y    ^^^^            bbBb#bBbB#bBBb#BBBB"9 1001"
-        i"re"^^^^i<b     y         y 0g>ii31            BBBb#bbbb#BBBb#bbbb"a 1010"
-        ii12 ssss  #     y         y 6g>iiii            bBBB#bBbb#bBbB#Bbbb"b 1011"
-        ^^^^       #     y         y 1g>iiii            bbbb#bBbb#bbbB#bBBB"c 1100"
-        iiiiiiiiii #     y         y    ^^^^            bBBB#bBBB#bBBb#Bbbb"d 1101"
-        i"rf"^^^^i<b     y         yyyyy3210            BBbb#BBBB#bBbb#bbbb"e 1110"
-        ii12 ssss        y                              bbbb#bbbb#bbbb#bbbb"f 1111"
-        ^^^^             y                                                 "      "
-        3210yyyyyyyyyyyyyy                             "oooo aaaa bbbb iccc"
+  g g                    ==========3210                                    g17 g18
+  * *                    =         ||||                                    v   v
+  * *   3210============ =         iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii14
+  * *   ||||           = =         ^^^^                  ^^^^  ^^^^         ^^^^
+  * *   ||||"registers"= =         ||||      "carr="     ||||  ||||         ||||
+  * *   ||||"memor="   = =         ||||        g19>l     ||||  ||||         ||||
+  * ***>iiiiilllli     = =         |||| 1   0g>i         ||||  ||||         ||||
+  *-+-->i"r0"^^^^i<b<0 = =         |||| 0  13g>3         ||||  ||||         ||||
+  * * *>iiiiiiii32 # = = =         |||| g   1g>0 g10  8g>a|||  ||||         ||||
+  * * * ^^^^       # = = =         |||| w      ^ v       ^|||  ||||         ||||
+  * **+>iiiiilllli # = = =   ******++++>a----->o<a<***** g|||  ||||         ||||
+  *-+-+>i"r1"^^^^i<b<1 = =   *     ||||                * 1|||  ||||  98     ||||
+  * * *>iiiiiiii32 # = = =   *iiiiiii21<***e<a<g19     * 9|||  ||||  gg     ||||
+  * * * ^^^^       # = = =    ^^^^ ^^^^    ^ ^         *  |||  ||||  vv     ||||
+  * **+>iiiiilllli # = = =    |||| ii22<g9** g8        ***|||  iiiiii23     ||||
+  *-+-+>i"r2"^^^^i<b<2 = =    |||| ^^^^                  ||||  ^^^^^^^^     ||||
+  * * *>iiiiiiii32 # = = = ===3210=7654==================0321==32107654=====7654==3210==
+  * * * ^^^^       # = = = =    "adder"             "shift"     "logic"           vvvv
+  * **+>iiiiilllli # = = = =                                                      O###
+  *-+-+>i"r3"^^^^i<b<3 = = =     "ALU inputs"                                     v
+  * * *>iiiiiiii32 # = = = =======3210====7654                                    lg20 "zero"
+  * * * ^^^^       # = = = =      ||||    ||||
+  * **+>iiiiilllli # = = = =   "A"llll    llll"B"
+  *-+-+>i"r4"^^^^i<b = = = =      ^^^^    ^^^^
+  * * *>iiiiiiii32 # = = = =   0g>ii31 0g>ii31
+  * * * ^^^^       # = = = =   4g>iiii 5g>iiii
+  * **+>iiiiilllli # = = = =   1g>iiii 1g>iiii
+  *-+-+>i"r5"^^^^i<b = = = =      ^^^^    ^^^^
+  * * *>iiiiiiii32 # = = = =      3210====3210
+  * * * ^^^^       # = = = =              ||||
+  * **+>iiiiilllli # = = = =         iiiiiii12<a<g14
+  *-+-+>i"r6"^^^^i<b = = = =         ^^^^ ^^^^
+  * * *>iiiiiiii32 # = ==+=+=========3210 3210======
+  * * * ^^^^       # =   = =          "B imm"      =
+  * **+>iiiiilllli # =   = =                       =
+  *---+>i"r7"^^^^i<b ====+=+=========3210          =
+      *>iiiiiiii32 #     = =         ||||"A ind"   =
+      * ^^^^       #     = =         iiiiiii12[g15 =
+      g ||||       #     = =         ^^^^ ^^^^     =
+      1 ||||"user" #     = ==========3210 3210===============3210
+        iiiiiiiiii #     =                                   ||||      6g g5
+        i"r8"^^^^i<b     =                                   ||||       * *
+        ii12 SSSS  #     =          "jump"                   ||||"ABC"  v v
+        ^^^^       #     =         ==3210                    iiiiiiiiiiii13
+        iiiiiiiiii #     =         = ||||                    ^^^^ ^^^^ ^^^^
+        i"r9"^^^^i<b     =         = iiiiiii12[g16           |||| |||| c|||
+        ii12 sSSS  #     =         = ^^^^ ^^^^               |||| ||||  |||
+        ^^^^       #     ==========+=3210 ||||          11   |||| |||| 1|||
+        iiiiiiiiii #     =         =      ||||          1098 |||| |||| 2|||
+        i"ra"^^^^i<b     =         =     2||||          gggg |||| |||| g|||
+        ii12 ssSS  #     =         =     1||||"inc"     |||| |||| |||| ||||
+        ^^^^       #     =         =     g||||"IP"      llll llll llll llll
+        iiiiiiiiii #     =         =     *ii20<C        ^^^^ ^^^^ ^^^^ ^^^^
+        i"rb"^^^^i<b     =         =      ^^^^          |||| |||| |||| ||||"instruction ROM"0
+        ii12 sssS  #     =         =      ||||          |||| |||| |||| ||||"put program here"0
+        ^^^^       #     =         =    *-*+++--------->bbbb#Bbbb#bbbb#bbbb"0 0000"
+        iiiiiiiiii #     =         =    |*-*++--------->bbbb#BbbB#bbbb#bbbB"1 0001"
+        i"rc"^^^^i<b     =         ="IP"||*-*+--------->bbbb#BbBb#bbbb#bbBb"2 0010"
+        ii12 ssss  #     =         =    |||*-*--------->bbbb#BbBB#bbbb#bbBB"3 0011"
+        ^^^^       #     =         = 0g>ii31            BBbB#bBbb#bBBb#bbbb"4 0100"
+        iiiiiiiiii #     =         = 7g>iiii            bbbb#BBBB#bbBB#bBbb"5 0101"
+        i"rd"^^^^i<b     =         = 2g>iiii            bBBb#bBbb#bbbb#bBbB"6 0110"
+        ii12 ssss  #     =         =    ^^^^            bbBb#bBbb#bbbB#bBbb"7 0111"
+        ^^^^       #     =         =    llll            bBBb#bBbb#bbbb#bBBb"8 1000"
+        iiiiiiiiii #     =         =    ^^^^            bbBb#bBbB#bBBb#BBBB"9 1001"
+        i"re"^^^^i<b     =         = 0g>ii31            BBBb#bbbb#BBBb#bbbb"a 1010"
+        ii12 ssss  #     =         = 6g>iiii            bBBB#bBbb#bBbB#Bbbb"b 1011"
+        ^^^^       #     =         = 1g>iiii            bbbb#bBbb#bbbB#bBBB"c 1100"
+        iiiiiiiiii #     =         =    ^^^^            bBBB#bBBB#bBBb#Bbbb"d 1101"
+        i"rf"^^^^i<b     =         =====3210            BBbb#BBBB#bBbb#bbbb"e 1110"
+        ii12 ssss        =                              bbbb#bbbb#bbbb#bbbb"f 1111"
+        ^^^^             =                                                 "      "
+        3210==============                             "oooo aaaa bbbb iccc"
                                                        " op |  A |  B |b indir, C"
 
 0"Control the CPU here: clock to toggle ticking, manual clock to do a single"
@@ -8027,11 +8042,11 @@ registerCircuit('4-bit CPU', `
              ###"manual clock"0
              p##
          ### v                    ###                   ###
-  "clock"###>o>a*g0           1g--p##"reset"    2go<----p##"reset only IP"
+ 0"clock"###>o>a*g0           1g--p##"reset"0   2go<----p##"reset only IP"0
          ##R   m                  ###             ^     ###
            3   g3                                 g1
 
-"FIT:y"
+0"FIT:y"
 
 
            4   5   6   7                                                                       g9
@@ -8061,11 +8076,11 @@ registerCircuit('4-bit CPU', `
     *** l         l     l     l     lI12           llll      s    sI13             llll      s      sI14
     * w ^         ^     ^     ^     ^              ^^^^      v    *                ^^^^      v      *
   s*+>a>oI      0>i   1>i   2>i   3>i              iiiiiiiii12    *                iiiiiiiii12      *
-    *   ^1      y 1   y 1   y 1   y 1              ^^^^   ^^^^    *                ^^^^   ^^^^      *
+    *   ^1      = 1   = 1   = 1   = 1              ^^^^   ^^^^    *                ^^^^   ^^^^      *
   s*+>a**0      4>0   5>0   6>0   7>0         iiiiiii12<**++++*****           iiiiiii12<* iiiiiii12<*
-    * ^         y ^   y ^   y ^   y ^         ^^^^ ^^^^   ||||                ^^^^ ^^^^ * ^^^^ ^^^^ *
-    ***         y 8   y 8   y 8   y 8         ssss ssss   ssss                ssss ssss * ssss ssss *
-      *         yyyyyyyyyyyyyyyyyyyyy8s                                                 *           *
+    * ^         = ^   = ^   = ^   = ^         ^^^^ ^^^^   ||||                ^^^^ ^^^^ * ^^^^ ^^^^ *
+    ***         = 8   = 8   = 8   = 8         ssss ssss   ssss                ssss ssss * ssss ssss *
+      *         =====================8s                                                 *           *
       s         0123 4567                                                               *************
                 ssss ssss
 
@@ -8078,7 +8093,7 @@ registerCircuit('4-bit CPU', `
     * * * * * * * *           a e * a e * a e * a e *                   * **+***+***+****sI22
     |   |   |   |             ^^^   ^^^   ^^^   ^^^                     *   *   *   *
     s   s   s   s             7 3   6 2   5 1   4 0                     s   s   s   s
-                              yyyyyyyyyyyyyyyyyyyyy
+                              =====================
                               7654 3210
                               ssss ssss
 
@@ -8090,7 +8105,7 @@ registerCircuit('4-bit CPU', `
                   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^
                   a<* a<* a<* a<* A<* A<* A<* A<* o<* o<* o<* o<* e<* e<* e<* e<*
                   ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ *
-  0y1y2y3y4y5y6y7y0y4y1y5y2y6y3y7y0y4y1y5y2y6y3y7y0y4y1y5y2y6y3y7y0y4y1y5y2y6y3y7yyyyyyyyyyyyy
+  0=1=2=3=4=5=6=7=0=4=1=5=2=6=3=7=0=4=1=5=2=6=3=7=0=4=1=5=2=6=3=7=0=4=1=5=2=6=3=7=============
   s s s s s s s s
 
 
@@ -8099,18 +8114,18 @@ registerCircuit('4-bit CPU', `
                   l
                   ^                 l   l   l   lI31                        "bus"
              ******                 ^   ^   ^   ^                           llllI32
-             *    *               yy+yyy+yyy+yyy+y                          ^^^^
+             *    *               ==+===+===+===+=                          ^^^^
       "C"s***+***>c           "c"s0>i 0>i 0>i 0>i                      iiiiiii12<* llll"state"
              *    #           "e"s1>3 1>3 1>3 1>3                      ^^^^ ^^^^ * ^^^^
-             *    Q<*         "r"s2>0 2>0 2>0 2>0                 yyyyy3210 3210y+y3210
-             *    d *               ^   ^   ^   ^                 y         |||| *
+             *    Q<*         "r"s2>0 2>0 2>0 2>0                 =====3210 3210=+=3210
+             *    d *               ^   ^   ^   ^                 =         |||| *
              *    ^ *               s   s   s   s               **+*********++++****s"en. r/w"
- "enable"s***+****+*+**I                                        * y         ||||
-             * *  * * *3                                        v y s>iiiiiiii31
+ "enable"s***+****+*+**I                                        * =         ||||
+             * *  * * *3                                        v = s>iiiiiiii31
       "R"s***+*+**+** *0                               "en. w"s>a-+-->iiiiiiiiii
-             * *  *   *                                           y s>iiiiiiiiii
-             * ]a>o<a<*                                           y         ^^^^
-             *  ^   ^                                             yyyyyyyyyy3210
+             * *  *   *                                           = s>iiiiiiiiii
+             * ]a>o<a<*                                           =         ^^^^
+             *  ^   ^                                             ==========3210
              ****   s                                                       ssss
 
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"3
@@ -8402,7 +8417,7 @@ registerCircuit('8-bit divider effect', `
             s            s            s            s            s            s            R80          S
            "b128         b64          b32          b16          b8           b4           b2           b1"
 
-
+0"FIT:y"
 
 
 `, 'div_effect');
