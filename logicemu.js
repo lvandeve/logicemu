@@ -2072,6 +2072,7 @@ function countFFComponents(array) {
   var o = {};
   o.numc = 0;
   o.numC = 0;
+  o.numq = 0;
   o.numQ = 0;
   o.numff = 0;
   o.numd = 0;
@@ -2079,8 +2080,9 @@ function countFFComponents(array) {
   for(var i = 0; i < array.length; i++) {
     var cell = world[array[i][1]][array[i][0]];
 
-    if(cell.circuitsymbol == 'C') o.numC++;
     if(cell.circuitsymbol == 'c') o.numc++;
+    if(cell.circuitsymbol == 'C') o.numC++;
+    if(cell.circuitsymbol == 'q') o.numq++;
     if(cell.circuitsymbol == 'Q') o.numQ++;
     if(cell.circuitsymbol == 'd') o.numd++;
     if(cell.circuitsymbol == 'y') o.numy++;
@@ -2247,9 +2249,9 @@ function TriState() {
   };
 }
 
-var ygroups = []; // this are busses in fact. named ygroup here because the letter y is used to draw them...
+var buses = [];
 
-function YGroup() {
+function Bus() {
   // object, index is number. Value is array of coordinates that have this number.
   this.connections = {};
 }
@@ -3095,7 +3097,7 @@ function Cell() {
   this.numberv = -1; // number for vertical parse direction only
   this.numberh = -1; // number for horizontal parse direction only
   this.numbertype = NUMBER_NONE; // NOTE: this is set for numbers touching devices, and the touched device cells, but may NOT be set for all digits of a longer number. Only read at the device cells touching the number, unless specially handled (like for NUMBER_BUS).
-  this.ygroup = null;
+  this.bus = null;
   this.defsubindex = -2; // define sub (capital I). >=-1 means it's part of a sub, indicated with a capital I and that number (-1 means no number - still to be distinguished from 0!)
   this.callsubindex = -2; // use sub (small i)
   this.callsub = null; // the CallSub
@@ -4946,10 +4948,10 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.3);
         }
       } else if(c == '=') {
-        var ygroup = cell.ygroup;
-        if(ygroup) {
+        var bus = cell.bus;
+        if(bus) {
           // color some buses slightly differently to allow to distinguish them visually
-          var cc = (ygroup.index & 7);
+          var cc = (bus.index & 7);
           drawer.fillBg_(ctx, BUSCOLORS[cc]);
         }
         if(digitmap[symbol]) {
@@ -6654,7 +6656,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
 
   if(!knownmap[c2]) return false; // it's an isolator
 
-  if(c == '=' && c2 == '=') return false; // y-y connections must be handled with "handleJunctionConnections" instead
+  if(c == '=' && c2 == '=') return false; // '='-'=' connections must be handled with "handleJunctionConnections" instead
 
   if(c == '+' && !(z == 0 && (todir2 == 1 || todir2 == 3)) && !(z == 1 && (todir2 == 0 || todir2 == 2))) return false;
   if(c == '%' && !(z == 0 && (todir2 == 1 || todir2 == 2)) && !(z == 1 && (todir2 == 0 || todir2 == 3))) return false;
@@ -6787,7 +6789,7 @@ function resetForParse() {
   world = [];
   w = 0;
   h = 0;
-  ygroups = [];
+  buses = [];
   defsubs = {};
   callsubs = [];
   backplanes_g = [];
@@ -6882,14 +6884,15 @@ function handleBackPlaneConnections(used, stack, x, y, z) {
 // buses ('=')
 function handleJunctionConnections(used, stack, x, y) {
   if(world[y][x].circuitsymbol != '=') return;
-  var ygroup = world[y][x].ygroup;
-  if(!ygroup) {
+  var bus = world[y][x].bus;
+  if(!bus) {
     return;
   }
   var number = world[y][x].number;
   if (world[y][x].numbertype != NUMBER_BUS) return;
+  // unnumbered wire connections are not independent signals but bus itself, so skip
   if(number == -1) return;
-  var c = ygroup.connections[number];
+  var c = bus.connections[number];
   if(!c) {
     console.log('no connections for this number? this should not happen');
     return;
@@ -7011,18 +7014,19 @@ function parseComponents() {
       }
 
       if(junction) {
-        var ygroup = new YGroup();
-        ygroup.index = ygroups.length;
-        ygroups.push(ygroup);
+        var bus = new Bus();
+        bus.index = buses.length;
+        buses.push(bus);
         for(var i = 0; i < array.length; i++) {
           var x = array[i][0];
           var y = array[i][1];
           var z = array[i][2];
-          world[y][x].ygroup = ygroup;
+          world[y][x].bus = bus;
           var number = world[y][x].number;
+            // unnumbered wire connections are not independent signals but bus itself, so skip
           if(number >= 0) {
-            if(!ygroup.connections[number]) ygroup.connections[number] = [];
-            ygroup.connections[number].push([x, y, z]);
+            if(!bus.connections[number]) bus.connections[number] = [];
+            bus.connections[number].push([x, y, z]);
           }
         }
       }
@@ -9295,6 +9299,7 @@ var linkableCircuits = {};
 var linkableCircuitsOrder = [];
 
 function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
+  if(!opt_link_id) opt_link_id = 'circuit' + allRegisteredCircuits.length;
   var dropdownname = name;
   if(opt_is_title && name != '--------') dropdownname = '--- ' + name + ' ---';
   var el = makeElement('option', currentCircuitGroup.dropdown);

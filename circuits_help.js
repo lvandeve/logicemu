@@ -1507,11 +1507,13 @@ s**>c**>c**>c**>c**>c**>c**>c**>c**>l
 s**>C**>C**>C**>C**>C**>C**>C**>C**>l
 
 0"NEW PARTS: flip flop parts"
-0"c, C, j, k, d, t, q, Q: flip-flop parts (clocked with c). combine them freely."
+0"c, C, j, k, d, t, q, Q, y: flip-flop parts (clocked with c). combine them"
+0"freely."
 
 0"j, k, d and t are inputs for JK, T, D, and SR flip-flops."
 0"c is the clock input and what stores the state. use C to have it initially on."
-0"q and Q are output and negated output, and asynch set and reset inputs"
+0"q and Q are output and negated output, and asynch set and reset inputs."
+0"y is an optional enable input, if not on, the flip-flop ignores all inputs."
 0"NOTE: the inputs for SR flip-flop are named J,K like for JK flip-flop, since"
 0"JK flip-flop behaves the same as SR for all allowed SR input combinations,"
 0"and the names S and R are already used for other non flipflop related parts"
@@ -2961,7 +2963,7 @@ registerCircuit('Electronic Diagram', `
 `, 'diagram');
 
 
-registerTitle('Components');
+registerTitle('Components & Parts');
 
 var componentid = 0;
 
@@ -3092,11 +3094,11 @@ s-->?-->l
 `, 'component' + componentid++);
 
 registerCircuit('Counter Gate', `
-s-->c-->c-->c-->c-->l
+s-->c-->l
 `, 'component' + componentid++);
 
 registerCircuit('Delay gate', `
-s-->d-->d-->d-->d-->l
+s-->d-->l
 `, 'component' + componentid++);
 
 registerCircuit('D flip-flop', `
@@ -3507,7 +3509,7 @@ C----------zzl
 
 C----------zhl
 
-
+C----0=0---->l
 
 C12=     =21]l
    ==---==
@@ -3645,17 +3647,15 @@ C*****>o
       >o---->l
 
 
-C---=0=3=--->l
-C---=1=2=--->l
-C---=2=1=--->l
-C---=3=0=--->l
+C---=0==0--->l
 
+C---=0=0---->l
 
-  12      21
-C-=       =->l
-  =========
-C-=       =->l
-  21      12
+C---=0------>l
+
+C---=====--->l
+
+C----=0=---->l
 
 S***********]l
 
