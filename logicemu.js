@@ -3340,7 +3340,7 @@ function setTocHTML(toc, el) {
   var j = 0;
   for(var i = 0; i < allRegisteredCircuits.length; i++) {
     if(toc == 1 && (allRegisteredCircuits[i].group != 0 /*|| allRegisteredCircuits[i].linkid == 'helpindex' || allRegisteredCircuits[i].linkid == introId*/)) continue;
-    if(toc == 2 && allRegisteredCircuits[i].group != 1 && allRegisteredCircuits[i].linkid != 'helpindex' && allRegisteredCircuits[i].linkid != 'mainhelp') continue;
+    if(toc == 2 && allRegisteredCircuits[i].group == 0 && allRegisteredCircuits[i].linkid != 'helpindex' && allRegisteredCircuits[i].linkid != 'mainhelp') continue;
     //var div = makeDiv(0, (i * th), w * tw, th, el);
     var div = makeDiv(0, (j * th), tw, th, el);
     div.style.width = '800px';
@@ -6656,6 +6656,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
 
   if(!knownmap[c2]) return false; // it's an isolator
 
+  // TODO: may need to become || instead of && when bus connections handled separately
   if(c == '=' && c2 == '=') return false; // '='-'=' connections must be handled with "handleJunctionConnections" instead
 
   if(c == '+' && !(z == 0 && (todir2 == 1 || todir2 == 3)) && !(z == 1 && (todir2 == 0 || todir2 == 2))) return false;
@@ -6942,14 +6943,13 @@ function parseComponents() {
   globalLooseWireInstanceI = null;
   globalLooseWireInstanceE = null;
 
-  // PASS 0: parse the buses (y)
+  // PASS 0: parse the buses ('=')
   used = initUsed3();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
       if(used[y0][x0][0]) continue;
 
-      // pretty good optimization! since we only care about junctions, avoid
-      // doing all the "connected" parsing unless we have a y as startpoint
+      // don't do all this parsing if it's not a junction in the first place
       if(world[y0][x0].circuitsymbol != '=') continue;
 
       var stack = [[x0, y0, 0]];
@@ -7683,7 +7683,7 @@ function parseComponents() {
       // state.
       // NOTE: replaced by fast now after unification of combinational and sequential
 
-      // MODE:fast
+      // MODE:immediate
       UPDATE_ALGORITHM = 1;
       AUTOUPDATE = 3;
     } else if(cycle_detected || global_delay /*the global_delay check is in theory not needed here unless I update the above conditions again*/) {
@@ -7699,14 +7699,14 @@ function parseComponents() {
       // the circuit should be guaranteed to fully update in a single tick if none of the above conditions triggered
       // NOTE: replaced by fast now after unification of combinational and sequential
 
-      // MODE:fast
+      // MODE:immediate
       UPDATE_ALGORITHM = 1;
       AUTOUPDATE = 3;
     }
 
     var modeindex = origtext.indexOf('MODE:');
     if(modeindex >= 0) {
-      if(textHasAt(origtext, modeindex + 5, 'fast')) {
+      if(textHasAt(origtext, modeindex + 5, 'immediate')) {
         UPDATE_ALGORITHM = 1;
         AUTOUPDATE = 3;
       }
@@ -7899,12 +7899,13 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
     var newlines = '';
     var numLines = allRegisteredCircuits.length;
     if(tocType == 1) {
+      // TODO: get numlines directly from setTocHTML instead
       numLines = 0;
       for(var i = 0; i < allRegisteredCircuits.length; i++) if(allRegisteredCircuits[i].group == 0) numLines++;
     }
     if(tocType == 2) {
       numLines = 0;
-      for(var i = 0; i < allRegisteredCircuits.length; i++) if(allRegisteredCircuits[i].group == 1) numLines++;
+      for(var i = 0; i < allRegisteredCircuits.length; i++) if(allRegisteredCircuits[i].group != 0) numLines++;
       numLines++; // circuit 'Help' counted for this one
     }
     for(var i = 1; i < numLines; i++) newlines += '\n';
@@ -8144,7 +8145,7 @@ menuRow3El.style.height = '48px';
 
 // predesigned algorithm/autoupdate combinations
 var modes = [
-  ['fast', 1, 3], // faster than electron: recursively resolved gates, and keeps updating until things stop changing (in combinational circuits, that's after only 1 tick)
+  ['immediate', 1, 3], // faster than electron: recursively resolved gates, and keeps updating until things stop changing (in combinational circuits, that's after only 1 tick)
   ['electron', 3, 3], // designed for gate-level flip-flops (but the built-in flip flops don't need this mode, those work as ideal flipflop in all modes!)
 ];
 function getMode() {
@@ -8158,9 +8159,9 @@ function getMode() {
 
 
 var modeDropdown = makeUIElement('select', menuRow3El);
-modeDropdown.title = 'Choose Emulation Algorithm. *) fast: does fast updates (all gates at once in sorted order, or as sorted as possible in case of loops) when using a button or timer. Updates until things stop changing (1 tick for combinational circuits).' +
+modeDropdown.title = 'Choose Emulation Algorithm. *) immediate: does fast updates (all gates at once in sorted order, or as sorted as possible in case of loops) when using a button or timer. Updates until things stop changing (1 tick for combinational circuits).' +
                      ' *) electron: does slow update (gate-per-gate) every so many milliseconds, emulates flip-flops crafted from gates in more interesting way with even a randomness mechanism to get them out of metastable state.' +
-                     ' When loading a new circuit, a mode is automatically chosen as follows: by default, fast. If a particular type of loop between gates (such as in SR latch) is detected, electron. If any other loop is present: fast'
+                     ' When loading a new circuit, a mode is automatically chosen as follows: by default, immediate. If a particular type of loop between gates (such as in SR latch) is detected, electron. If any other loop is present: immediate'
                      ;
 modeDropdown.onchange = function() {
   var mode = modeDropdown.selectedIndex;
@@ -8185,7 +8186,7 @@ function updateModeButtonText() {
 
 var tickButton = makeUIElement('button', menuRow3El);
 tickButton.innerText = 'tick';
-tickButton.title = 'Tick once. This allows ticking the circuit when paused, to investigate the signal. Especially useful in paused electron mode, or paused fast mode if there are flip-flops or other sequential parts.';
+tickButton.title = 'Tick once. This allows ticking the circuit when paused, to investigate the signal. Especially useful in paused electron mode, or paused immediate mode if there are flip-flops or other sequential parts.';
 tickButton.onclick = update;
 
 function isPaused() {
@@ -8270,7 +8271,7 @@ var ticksCounterEl = makeElement('div', menuRow3El);
 ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
 ticksCounterEl.style.width = '95px';
 ticksCounterEl.style.display = 'inline-block';
-ticksCounterEl.title = 'Amount of ticks so far. Click to reset to 0. If in electron mode, is per gate ticks. In fast mode, one tick per full update.';
+ticksCounterEl.title = 'Amount of ticks so far. Click to reset to 0. If in electron mode, is per gate ticks. In immediate mode, one tick per full update.';
 ticksCounterEl.onclick = function() {
   numticks = 0;
   updateTicksDisplay();
@@ -8311,7 +8312,7 @@ colorDropdown.selectedIndex = colorscheme;
 /*
 var toggleButton = makeUIElement('button', menuRow2El);
 toggleButton.innerText = 'spark';
-toggleButton.title = 'after clicking this button, click any component and its state will be toggled. May not take effect in fast mode.';
+toggleButton.title = 'after clicking this button, click any component and its state will be toggled. May not take effect in immediate mode.';
 toggleButton.onclick = function() {
   toggleMode = true;
 };
@@ -9358,7 +9359,8 @@ var introText = `
 
 0"INSERT:toc_main"
 
-0"You can also use the 'help' and 'circuits' dropdowns"
+
+0"You can also use the 'help', 'articles' and 'circuits' dropdowns"
 0"and the prev/next buttons in the top bar to navigate to these. You can also"
 0"edit or create your own circuits instead."
 

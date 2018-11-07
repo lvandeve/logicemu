@@ -814,7 +814,7 @@ registerCircuit('Rendering Modes', `
 0"matching how you edit circuits. Gates use the similar letters as the"
 0"graphical mode, but now every cell uses some ASCII character, e.g. wires are"
 0"broken up into different characters (depending on direction, how to connect,"
-0"...). To learn the meaning of the characters, see the editing tutorials"
+0"...). To learn the meaning of the characters, see the editing help"
 0"instead."
 
 0"The text mode may render faster in some browsers, especially for huge"
@@ -856,8 +856,8 @@ registerCircuit('Ticks and Emulation Algorithms', `
 0"dropdown above."
 
 0"E.g. the following circuit is most interesting in 'electron mode'. If you hit"
-0"the button, you see the signal go round and round. In fast mode, that would"
-0"not be visible."
+0"the button, you see the signal go round and round. In immediate mode, that"
+0"would not be visible."
 
 
 p**>e>e>e>e>e>e>e>e
@@ -895,12 +895,12 @@ p**>e>e>e>e>e>e>e>e
 0"There are different emulation algorithms available for circuits (aka update"
 0"modes, what it does per tick). These can be selected by the dropdown with the"
 0"following choices:"
-0"*) fast: updates propagate through all components in a sorted order. This is"
-0"   done when you press a switch or button or when a timer ticks and keeps"
+0"*) immediate: updates propagate through all components in a sorted order. This"
+0"   is done when you press a switch or button or when a timer ticks and keeps"
 0"   ticking until things stop changing (in combintional circuits, that's after"
 0"   one tick, for sequential ones or with loops, can be more)."
 0"*) electron: updates are done every so many milliseconds, but this update is"
-0"   different than the update done for fast mode. Instead, every component"
+0"   different than the update done for immediate mode. Instead, every component"
 0"   updates only based on the previous state of its input components. This"
 0"   means signals propagage more slowly, as if you can follow the electric"
 0"   signal itself. This mode is good for circuits that build flip-flops from"
@@ -910,15 +910,15 @@ p**>e>e>e>e>e>e>e>e
 0"   is loosely based on realistic physics of a flip-flop in metastable state"
 0"   eventually reaching a stable state anyway. So indeed the electron mode is"
 0"   mainly designed to simulate such behavior in a realistic way. The"
-0"   fast mode is good and fast but can't simulate matastability, hence the"
-0"   reason to provide the slower 'nanosecond level' electron mode."
+0"   immediate mode is good and fast but can't simulate matastability, hence"
+0"   the reason to provide the slower 'nanosecond level' electron mode."
 
 
 0"A circuit, when just loaded, will automatically be in one of the modes that"
-0"is most suitable for the circuit: if there are no loops, it'll choose fast"
-0"mode. If there are particular types of short loops, electron mode. In other"
-0"cases with loops, fast mode. A mode may also be enforced with a comment like"
-0"this, which in this circuit sets it to electron initially:"
+0"is most suitable for the circuit: if there are no loops, it'll choose"
+0"immediate mode. If there are particular types of short loops, electron mode."
+0"In other cases with loops, immediate mode. A mode may also be enforced with a"
+0"comment like this, which in this circuit sets it to electron initially:"
 
 "MODE:electron"
 
@@ -926,7 +926,7 @@ p**>e>e>e>e>e>e>e>e
 0"dropdown to switch to the algorithm applicable for each example as explained"
 0"by its description:"
 
-0"With the circuit below, try the 2 modes: with fast mode, the LED updates"
+0"With the circuit below, try the 2 modes: with immediate mode, the LED updates"
 0"immediately to the state of the switch. With electron, you can see the signal"
 0"propagate through the gates. If you use the pause button, you can use the"
 0"tick button to manually propagate the signal."
@@ -934,13 +934,13 @@ p**>e>e>e>e>e>e>e>e
 
 s->o->o->o->o->o->o->o->o->l
 
-0"The circuit below goes slow in fast mode too, because 'd' are delays which"
-0"are designed to work per sequential tick on purpose."
+0"The circuit below goes slow in immediate mode too, because 'd' are delays"
+0"which are designed to work per sequential tick on purpose."
 
 s->d->d->d->d->d->d->d->d->l
 
 0"Below is a 4-bit adder circuit. A combinational circuit like this works in"
-0"works immediately in a single tick in fast mode. There are some long"
+0"works immediately in a single tick in immediate mode. There are some long"
 0"connections that go through many gates, but none of them are loops.  Electron"
 0"gives slower updates so you can see the adder operating but it'll reach the"
 0"correct answer soon. You can see how many ticks it takes with the timer"
@@ -961,8 +961,8 @@ s->d->d->d->d->d->d->d->d->l
        s s     s s     s s     s s
      "b8 a8   b4 a4   b2 a2   b1 a1"
 
-0"However, for a circuit with a loop, multiple ticks happen even in fast mode."
-0"Here is a very simple example: When you turn the switch from 'off' to"
+0"However, for a circuit with a loop, multiple ticks happen even in immediate"
+0"mode. Here is a very simple example: When you turn the switch from 'off' to"
 0"'on', the counter will disable itself a tick later.  This example is very"
 0"simple, a more important case is for example when there is memory, then some"
 0"computation happens on the memory, then the result is stored back into the"
@@ -972,21 +972,21 @@ s->d->d->d->d->d->d->d->d->l
     v *
 s**>c**>l
 
-0"Another example of something that needs multiple fast ticks is the delay."
+0"Another example of something that needs multiple immediate ticks is the delay."
 
 s**>d**>l
 
 0"An example of something that requires electron mode is a 1-tick pulse made"
 0"from gate delays (without using 'd' but regular gates). In electron mode,"
-0"this will pulse once when activating the switch. In fast mode, it'll just"
-0"stay off."
+0"this will pulse once when activating the switch. In immediate mode, it'll"
+0"just stay off."
 
 p****>o**]a**>l
     *     ^
     *******
 
 0"Another electron example: in electron mode, the signal you make with"
-0"the switch will loop around in a much nicer way than in fast mode."
+0"the switch will loop around in a much nicer way than in immediate mode."
 
 s**>e>e>e>e>e>e>e>e
     ^             v
@@ -1018,13 +1018,13 @@ s**>e>e>e>e>e>e>e>e
           v |
           O<*
 
-0"The randomness is not present in fast mode. Due to the way those algorithms"
-0"work, such loopy circuits settle to a well defined state immediately. The"
-0"electron mode is physically more realistic, but slower."
+0"The randomness is not present in immediate mode. Due to the way those"
+0"algorithms work, such loopy circuits settle to a well defined state"
+0"immediately. The electron mode is physically more realistic, but slower."
 
 0"An interesting circuit to compare the different modes is the 8-bit divider"
-0"circuit. This divider has a very long longest path, but in fast mode you see"
-0"updates immediately. In electron mode, you can see the circuit flow for a"
+0"circuit. This divider has a very long longest path, but in immediate mode you"
+0"see updates immediately. In electron mode, you can see the circuit flow for a"
 0"long time, when changing the right buttons of the divider."
 
 0"FIT:x"
@@ -1049,7 +1049,7 @@ registerCircuit('Loading Circuits', `
 0"A second method, to load external circuits, is to load a circuit with"
 0"'import' (or 'edit'). Then you need to get the source code from a circuit and"
 0"paste it in the box. You can view the source code of circuits yourself with"
-0"the 'edit' button (see the editing tutorials for that). Source code of a"
+0"the 'edit' button (see the editing help for that). Source code of a"
 0"circuit looks for example like this:"
 
 0"s--->a---->l"
@@ -1111,14 +1111,14 @@ s----*
 
 registerTitle('Editing');
 
-registerCircuit('Editing Tutorial', `
+registerCircuit('Editing Help', `
 0"This tutorial introduces all the parts and cell characters for editing."
 
 0"Editing is done with ASCII text. The simulation is cell based: Every"
 0"character is a cell. Cells contain wires, parts, and so on. Devices can span"
 0"multiple cells, e.g. a long wire, an enlarged AND gate, ..."
 
-0"In fact, to show better how circuits are built in this editing tutorial, we"
+0"In fact, to show better how circuits are built in this editing help, we"
 0"force text rendering mode instead of graphical here with the following"
 0"command:"
 
@@ -2406,7 +2406,7 @@ s   s   s
 0"replace colon space by just colon, and the commands will work for real. They"
 0"are neutered with the space here to not make them affect this tutorial."
 
-0"'MODE: fast' --> force fast mode"
+0"'MODE: immediate' --> force immediate mode"
 0"'MODE: electron' --> force electron mode"
 0"'RENDER: text' --> force text mode rendering (ascii)"
 0"'RENDER: graphical' --> force graphics mode rendering (canvas)"
@@ -2421,7 +2421,7 @@ s   s   s
 0"Epilogue"
 0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 
-0"This concludes the editing tutorial, and showed most of the different"
+0"This concludes the editing help, and showed most of the different"
 0"behaviors of different cells and parts."
 
 
@@ -2963,7 +2963,7 @@ registerCircuit('Electronic Diagram', `
 `, 'diagram');
 
 
-registerTitle('Components & Parts');
+registerTitle('Parts');
 
 var componentid = 0;
 
