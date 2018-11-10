@@ -112,7 +112,7 @@ registerCircuit('16 gates', `
 
 "b a"
 
-0"FIT:y FIT:x"
+0"FIT:y FIT:w"
 
 0"Configurable gate"
 
@@ -2004,7 +2004,7 @@ registerCircuit('simple encoders', `
 
    "FEDCBA9876543210"
 
-0"FIT:x"
+0"FIT:w"
 
 `, 'encoder');
 

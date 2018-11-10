@@ -1027,7 +1027,7 @@ s**>e>e>e>e>e>e>e>e
 0"see updates immediately. In electron mode, you can see the circuit flow for a"
 0"long time, when changing the right buttons of the divider."
 
-0"FIT:x"
+0"FIT:w"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `, 'algohelp');
@@ -2410,7 +2410,10 @@ s   s   s
 0"'MODE: electron' --> force electron mode"
 0"'RENDER: text' --> force text mode rendering (ascii)"
 0"'RENDER: graphical' --> force graphics mode rendering (canvas)"
-0"'FIT: x' --> zoom horizontally to full width, even if it means scrolling y"
+0"'FIT: w' --> zoom horizontally to full width, even if it means scrolling y"
+0"             (the w means 'full width')
+0"'FIT: r' --> don't take anything to the right of this marker into account for"
+0"             zooming so causes less zoom out (the r is from 'right side')"
 0"'FIT: y' --> if possible zoom vertically such that top up to this marker is"
 0"             visible. If two such markers present, zoom such that height"
 0"             matches their vertical distance."
@@ -2729,7 +2732,7 @@ s     s     s     s
 
 0"RENDER:text"
 
-0"FIT:x"
+0"FIT:w"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `, 'editingextra');
@@ -2741,7 +2744,7 @@ registerCircuit('Electronic Diagram', `
 
 
 0"RENDER:text"
-0"FIT:x"
+0"FIT:w"
 
 1"                ___         "
 1"            ---|   \\        "**>a**
@@ -2967,27 +2970,27 @@ registerTitle('Parts');
 
 var componentid = 0;
 
-registerCircuit('Switch', `
+registerCircuit('Switch (s)', `
  s-->l
 `, 'component' + componentid++);
 
-registerCircuit('Pushbutton', `
+registerCircuit('Pushbutton (p)', `
  p-->l
 `, 'component' + componentid++);
 
-registerCircuit('Timer', `
+registerCircuit('Timer (r)', `
  R-->l
 `, 'component' + componentid++);
 
-registerCircuit('LED', `
+registerCircuit('LED (l)', `
  s-->l
 `, 'component' + componentid++);
 
-registerCircuit('Colored LED', `
+registerCircuit('Colored LED (l)', `
  s-->l2
 `, 'component' + componentid++);
 
-registerCircuit('RGB LED', `
+registerCircuit('RGB LED (L)', `
  s-->L<--s
      ^
      |
@@ -2995,7 +2998,7 @@ registerCircuit('RGB LED', `
      s
 `, 'component' + componentid++);
 
-registerCircuit('Wire Split', `
+registerCircuit('Wire Split (*)', `
     l
     ^
     |
@@ -3005,7 +3008,7 @@ registerCircuit('Wire Split', `
     l
 `, 'component' + componentid++);
 
-registerCircuit('Wire Crossing', `
+registerCircuit('Wire Crossing (+)', `
     s
     |
     |
@@ -3015,7 +3018,7 @@ registerCircuit('Wire Crossing', `
     l
 `, 'component' + componentid++);
 
-registerCircuit('Diagonal Wire Crossing', `
+registerCircuit('Diagonal Wire Crossing (x)', `
 
  s     l
   ;   h
@@ -3027,7 +3030,7 @@ registerCircuit('Diagonal Wire Crossing', `
 
 `, 'component' + componentid++);
 
-registerCircuit('8-Way Wire Crossing', `
+registerCircuit('8-Way Wire Crossing (X)', `
 
  s  s  l
   ; | h
@@ -3039,99 +3042,99 @@ registerCircuit('8-Way Wire Crossing', `
 
 `, 'component' + componentid++);
 
-registerCircuit('AND gate', `
+registerCircuit('AND gate (a)', `
 s-->a-->l
     ^
 s---*
 `, 'component' + componentid++);
 
-registerCircuit('OR Gate', `
+registerCircuit('OR Gate (o)', `
 s-->o-->l
     ^
 s---*
 `, 'component' + componentid++);
 
-registerCircuit('XOR Gate', `
+registerCircuit('XOR Gate (e)', `
 s-->e-->l
     ^
 s---*
 `, 'component' + componentid++);
 
-registerCircuit('NAND Gate', `
+registerCircuit('NAND Gate (A)', `
 s-->A-->l
     ^
 s---*
 `, 'component' + componentid++);
 
-registerCircuit('NOR Gate', `
+registerCircuit('NOR Gate (O)', `
 s-->O-->l
     ^
 s---*
 `, 'component' + componentid++);
 
-registerCircuit('XNOR Gate', `
+registerCircuit('XNOR Gate (E)', `
 s-->E-->l
     ^
 s---*
 `, 'component' + componentid++);
 
-registerCircuit('Negative Input', `
+registerCircuit('Negative Input (m]w[)', `
 s--]o-->l
     ^
 s---*
 `, 'component' + componentid++);
 
-registerCircuit('Constant Off', `
+registerCircuit('Constant Off (c)', `
 c-->l
 `, 'component' + componentid++);
 
-registerCircuit('Constant On', `
+registerCircuit('Constant On (C)', `
 C-->l
 `, 'component' + componentid++);
 
-registerCircuit('Random Generator', `
+registerCircuit('Random Generator (?)', `
 s-->?-->l
 `, 'component' + componentid++);
 
-registerCircuit('Counter Gate', `
+registerCircuit('Counter Gate (c)', `
 s-->c-->l
 `, 'component' + componentid++);
 
-registerCircuit('Delay gate', `
+registerCircuit('Delay gate (d)', `
 s-->d-->l
 `, 'component' + componentid++);
 
-registerCircuit('D flip-flop', `
+registerCircuit('D flip-flop (d)', `
  s-->d-->l
      #
  s-->c
 `, 'component' + componentid++);
 
-registerCircuit('T flip-flop', `
+registerCircuit('T flip-flop (t)', `
  s-->t-->l
      #
  s-->c
 `, 'component' + componentid++);
 
-registerCircuit('JK flip-flop', `
+registerCircuit('JK flip-flop (jk)', `
  s-->j-->l
  s-->c
  s-->k-->l
 `, 'component' + componentid++);
 
-registerCircuit('D latch', `
+registerCircuit('D latch (d)', `
  s-->d-->l
      #
  s-->y
 `, 'component' + componentid++);
 
-registerCircuit('SR latch', `
+registerCircuit('SR latch (qQ)', `
  s-->q-->l
      #
  s-->Q-->l
 `, 'component' + componentid++);
 
-registerCircuit('Keyboard Terminal', `
+registerCircuit('Keyboard Terminal (T)', `
      lllllll
      ^^^^^^^
      |||||||
@@ -3140,7 +3143,7 @@ registerCircuit('Keyboard Terminal', `
      TTTTTTT
 `, 'component' + componentid++);
 
-registerCircuit('ASCII Terminal (Screen)', `
+registerCircuit('ASCII Terminal Screen (T)', `
      TTTTTTT<p"read"
      TTTTTTT
      TTTTTTT
@@ -3148,19 +3151,19 @@ registerCircuit('ASCII Terminal (Screen)', `
      Sssssss
 `, 'component' + componentid++);
 
-registerCircuit('Decimal Display Terminal', `
+registerCircuit('Decimal Display Terminal (T)', `
      TTTTTTT
      ^^^^^^^
      sssssss
 `, 'component' + componentid++);
 
-registerCircuit('Decimal Keyboard Terminal', `
+registerCircuit('Decimal Keyboard Terminal (T)', `
      lllllll
      ^^^^^^^
      TTTTTTT
 `, 'component' + componentid++);
 
-registerCircuit('Terminal Counter With Reset', `
+registerCircuit('Terminal Counter With Reset (T)', `
      lllllll
      ^^^^^^^
      TTTTTTT<p"reset"0
@@ -3168,7 +3171,7 @@ registerCircuit('Terminal Counter With Reset', `
            p
 `, 'component' + componentid++);
 
-registerCircuit('ROM one-hot', `
+registerCircuit('ROM one-hot (bB)', `
    lll
    ^^^
    |||
@@ -3178,7 +3181,7 @@ s->BbB
 s->bBb
 `, 'component' + componentid++);
 
-registerCircuit('ROM binary', `
+registerCircuit('ROM binary (bB)', `
    lll
    ^^^
    |||
@@ -3188,7 +3191,7 @@ s->BBb
    bBb
 `, 'component' + componentid++);
 
-registerCircuit('RAM', `
+registerCircuit('RAM (bB)', `
 
    lll
    ^^^
@@ -3202,7 +3205,7 @@ s->bbb
    sss
 `, 'component' + componentid++);
 
-registerCircuit('Binary to Unary', `
+registerCircuit('Binary to Unary (b)', `
 
   llll
   ^^^^
@@ -3214,7 +3217,7 @@ registerCircuit('Binary to Unary', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Unary to Binary', `
+registerCircuit('Unary to Binary (b)', `
 
    ll
    ^^
@@ -3226,7 +3229,7 @@ registerCircuit('Unary to Binary', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Priority Selector', `
+registerCircuit('Priority Selector (b)', `
 
  llll
  ^^^^
@@ -3238,7 +3241,7 @@ registerCircuit('Priority Selector', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Priority Selector (LSB left)', `
+registerCircuit('Priority Selector (LSB left) (b)', `
 
  llll
  ^^^^
@@ -3250,7 +3253,7 @@ registerCircuit('Priority Selector (LSB left)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Bus', `
+registerCircuit('Bus (=)', `
 
 s---0==3-->l
 s---1==2-->l
@@ -3258,17 +3261,17 @@ s---2==1-->l
 s---3==0-->l
 `, 'component' + componentid++);
 
-registerCircuit('Backplane', `
+registerCircuit('Backplane (g)', `
   s----g
 
           g--->l
 `, 'component' + componentid++);
 
-registerCircuit('Backplane Wrap-Around', `
+registerCircuit('Backplane Wrap-Around ((u)n)', `
 (--s     l<--)
 `, 'component' + componentid++);
 
-registerCircuit('Tristate Buffer (as OR)', `
+registerCircuit('Tristate Buffer as OR (V)', `
 
 s-->V**-->l
       *
@@ -3276,7 +3279,7 @@ s-->V**
 
 `, 'component' + componentid++);
 
-registerCircuit('Tristate Buffer (as AND)', `
+registerCircuit('Tristate Buffer as AND (V)', `
 
 s-->V-->l
     ^
@@ -3284,7 +3287,7 @@ s---*
 
 `, 'component' + componentid++);
 
-registerCircuit('Double Corner', `
+registerCircuit('Double Corner (&%)', `
     s
     |
     |
@@ -3294,13 +3297,19 @@ registerCircuit('Double Corner', `
     l
 `, 'component' + componentid++);
 
-registerCircuit('Multi-input', `
+registerCircuit('Multi-input (z)', `
    l
 s--zl
    l
 `, 'component' + componentid++);
 
-registerCircuit('Wire Crossing Input', `
+registerCircuit('Negated multi-input (Z)', `
+   l
+s--Zl
+   l
+`, 'component' + componentid++);
+
+registerCircuit('Wire Crossing Input (h)', `
 
     s
     |
@@ -3309,7 +3318,16 @@ registerCircuit('Wire Crossing Input', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Diagonal Crossing Input', `
+registerCircuit('Negated Wire Crossing Input (H)', `
+
+    s
+    |
+  s-Hl
+    l
+
+`, 'component' + componentid++);
+
+registerCircuit('Diagonal Crossing Input (^^^)', `
 
 l l
 ^ ^
@@ -3319,7 +3337,7 @@ s s
 
 `, 'component' + componentid++);
 
-registerCircuit('IC', `
+registerCircuit('IC (iI)', `
 l   l     l l
 ^   ^     ^ ^
 o<a eI5   #i5
@@ -3976,7 +3994,7 @@ l<--s0"There should be no space between this comment and the switch"
             ^
             s
 
-"FIT:x"
+"FIT:w"
 
 `, 'drawtest');
 

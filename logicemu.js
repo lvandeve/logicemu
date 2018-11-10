@@ -7992,7 +7992,16 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
     fity = fity2 - fity;
   }
 
-  var fitx = (origtext.indexOf('FIT:x') >= 0);
+  var fitrindex = origtext.indexOf('FIT:r');
+  var fitr = 0;
+  if(fitrindex >= 0) {
+    for(var i = 0; i < fitrindex; i++) {
+      if(origtext[i] == '\n') fitr = 0;
+      fitr++;
+    }
+  }
+
+  var fitw = (origtext.indexOf('FIT:w') >= 0);
 
   var fitwidth = true;
   var fitheight = true;
@@ -8008,18 +8017,19 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
       fitheight = false; // if it's very high, then do not try to fit h, use width only, and scroll for h
     }
   }
-  if(fitx) {
+  if(fitw) {
     if(fity > 0 && fity < h) {
-      //if you have both a FIT:x and a FIT:y, then it means:
+      //if you have both a FIT:w and a FIT:y, then it means:
       //be as wide as possible as you can, while still fitting that what
-      //FIT:y asked for. Without FIT:x, the FIT:y might be having no
-      //effect when it tries to fit an even higher h. But FIT:x then
+      //FIT:y asked for. Without FIT:w, the FIT:y might be having no
+      //effect when it tries to fit an even higher h. But FIT:w then
       //lets it try to be as wide as possible.
       h2 = fity;
     } else {
       fitheight = false;
     }
   }
+  if(fitr) nonthinw = fitr;
   tw = Math.floor(docwidth / (nonthinw + 2));
   th = Math.floor(docheight / (h2 + 2));
   var t = tw;
@@ -8402,11 +8412,13 @@ editButton.title = 'Opens text field to edit the map. Press this button again to
 editButton.onclick = function() {
   if(!editmode) {
     textbeforeedit = origtext;
-
+    var docwidth = /*document.body.clientWidth*/window.innerWidth - 8;
+    var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8;
     var fontsize = 10;
-    var ewidth = Math.max(w, 16);
+    var ewidth = Math.max(w, 40);
     var eheight = Math.min(Math.max(origtext.split('\n').length, 16));
-    editarea = makeAbsElement('textarea', 30, 128, (fontsize + 2) * ewidth, (fontsize + 2) * eheight);
+    //editarea = makeAbsElement('textarea', 30, 128, (fontsize + 2) * ewidth, (fontsize + 2) * eheight);
+    editarea = makeAbsElement('textarea', 30, 128, docwidth - 80, docheight - 80);
     editarea.rows = eheight;
     editarea.cols = ewidth;
     editarea.value = origtext;
@@ -9386,7 +9398,7 @@ var introText = `
 0"storage (not a cookie), it's not sent anywhere. To share a circuit with"
 0"others, you must post its source or base64 URL code somewhere yourself."
 
-0"FIT:x"
+0"FIT:w"
 
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"`;
 
