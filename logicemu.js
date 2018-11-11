@@ -360,7 +360,7 @@ var TYPE_IC = TYPE_index++; // also called "sub"
 var TYPE_IC_PASSTHROUGH = TYPE_index++; // the switch gets internally converted into this. Behaves like OR, but will have always only 1 input
 var TYPE_VTE = TYPE_index++;
 var TYPE_TRISTATE = TYPE_index++;
-var TYPE_TRISTATE_NEG = TYPE_index++;
+var TYPE_TRISTATE_INV = TYPE_index++;
 var TYPE_RANDOM = TYPE_index++;
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
@@ -391,14 +391,15 @@ typesymbols[TYPE_PUSHBUTTON_OFF] = 'p'; typesymbols[TYPE_PUSHBUTTON_ON] = 'P';
 typesymbols[TYPE_TIMER_OFF] = 'r'; typesymbols[TYPE_TIMER_ON] = 'R'; typesymbols[TYPE_AND] = 'a';
 typesymbols[TYPE_OR] = 'o'; typesymbols[TYPE_XOR] = 'e'; typesymbols[TYPE_NAND] = 'A';
 typesymbols[TYPE_NOR] = 'O'; typesymbols[TYPE_XNOR] = 'E'; typesymbols[TYPE_FLIPFLOP] = 'c';
-typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd'; typesymbols[TYPE_TRISTATE] = 'z';
+typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd';
+typesymbols[TYPE_TRISTATE] = 'z'; typesymbols[TYPE_TRISTATE_INV] = 'Z';
 
 
 // all devices except flipflop, those are treated differently because multiple different cells of its type can form one component
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true,
                  'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
-                 'b':true, 'B':true, 'M':true, 'i':true, 'T':true, 'z':true, '?':true};
+                 'b':true, 'B':true, 'M':true, 'i':true, 'T':true, 'z':true, 'Z':true, '?':true};
 // devicemap as well as # (with which inputs interact), but not $ (with which inputs do not interact)
 var devicemapin = clone(devicemap); devicemapin['#'] = true;
 // everything that forms the surface of devices, so that includes $
@@ -417,7 +418,7 @@ var knownmap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'U':true, 'G':true, 'V':true, 'W':true,
                 '#':true, '=':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true,
-                '$':true, 'z':true, '?':true, 'toc':true};
+                '$':true, 'z':true, 'Z':true, '?':true, 'toc':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
 var defsubs = {}; // key is number of the sub (but those are not consecutive like in an array, e.g. one could make a I555 and the index would be 555)
@@ -713,6 +714,8 @@ function CallSub(id) {
       if(v.tristate) {
         var tristate = new TriState();
         tristate.component = component;
+        tristate.invin = v.tristate.invin;
+        tristate.invout = v.tristate.invout;
         component.tristate = tristate;
       }
 
@@ -2579,11 +2582,19 @@ NOTE:
 */
 function TriState() {
   this.component = null;
+  this.invin = false; // if true, input ORs instead of ANDs
+  this.invout = false;  // if true, output ANDs instead of ORs with wire (low wins instead of high wins, a 'high' pull up resistor is at the wire bus)
 
   // must be called after inputs are resolved
   this.init = function(component) {
     // we sort the inputs such that each group of inputs pointing to the same 'z' are after each other
     this.component = component;
+
+    if(component.type == TYPE_TRISTATE_INV) {
+      this.invin = true;
+      this.invout = true;
+    }
+
     var array = [];
     for(var i = 0; i < component.inputs.length; i++) array[i] = i;
     /*if((array.length & 1) != 0) {
@@ -2629,18 +2640,22 @@ function TriState() {
     var component = this.component;
     // given the order created by init, we simply have to check for each consecutive pair of inputs, if their 'AND' is on
     // NOTE: in theory, if there are multiple pairs that are on, this should result in an error! But we don't support dynamic errors. So they get OR-ed instead.
-    var on = false;
+    var on = this.invout ? true : false;
     var prevx = -1;
     var prevy = -1;
     if(component.inputs.length > 0) {
       prevx = component.inputs_x2[0];
       prevy = component.inputs_y2[0];
     }
-    var v = true;
+    var v = this.invin ? false : true;
     for(var i = 0; i < component.inputs.length; i++) {
       var value = component.inputs[i].value;
       if(component.inputs_negated[i]) value = !value;
-      if(!value) v = false;
+      if(this.invin) {
+        if(value) v = true;
+      } else {
+        if(!value) v = false;
+      }
       var x = -2;
       var y = -2;
       if(i + 1 < component.inputs.length) {
@@ -2650,11 +2665,18 @@ function TriState() {
       if(x != prevx || y != prevy) {
         prevx = x;
         prevy = y;
-        if(v) {
-          on = true;
-          break;
+        if(this.invout) {
+          if(!v) {
+            on = false;
+            break;
+          }
+        } else {
+          if(v) {
+            on = true;
+            break;
+          }
         }
-        v = true;
+        v = this.invin ? false : true;
       }
     }
     return on;
@@ -3113,7 +3135,7 @@ function Component() {
       } else {
         this.value = numon; // delay 0, so immediate
       }
-    } else if(this.type == TYPE_TRISTATE) {
+    } else if(this.type == TYPE_TRISTATE || this.type == TYPE_TRISTATE_INV) {
       this.value = this.tristate.update();
     } else if(this.type == TYPE_TIMER_OFF) {
       this.value = false;
@@ -3645,8 +3667,13 @@ function Cell() {
       if(tc == 'k') title = 'flipflop K input';
       if(tc == 'q') title = 'flipflop output and async set';
       if(tc == 'Q') title = 'flipflop inverted output and async reset';
-      if(tc == 'z') title = 'tristate buffer (the only device allowed to have multiple output to the same wire. Should be used as one-hot [max 1 enabled] only to be electrically correct and realistic, but logicemu does not enforce that [does not emulate shorts].)';
-      if(tc == 'g') title = 'global (backplane) wire';
+      if(tc == 'z') title = 'tristate buffer, inputs to same z ANDed, multiple z to wire high when any z high (like OR but read on). Allowed to have multiple output to the same wire, but should be used as one-hot (max 1 high to wire, rest must be low) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
+      if(tc == 'Z') title = 'tristate buffer, inputs to same Z ORed, multiple Z to wire low when any Z low (like AND but read on). Allowed to have multiple output to the same wire, but should be used as one-cold (max 1 low to wire, rest must be high) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
+      if(tc == 'g') title = 'global (backplane) wire, connects to all other g with matching (or matching absense of) number';
+      if(tc == '(') title = 'backplane wire that connects to one matching connector to the right';
+      if(tc == ')') title = 'backplane wire that connects to one matching connector to the left';
+      if(tc == 'n') title = 'backplane wire that connects to one matching connector to below';
+      if(tc == 'u') title = 'backplane wire that connects to one matching connector to the top';
       if(tc == 'I') title = 'IC definition';
       if(tc == 'i') title = 'IC instance';
       if(tc == 'b' || tc == 'B') {
@@ -7593,8 +7620,13 @@ function parseComponents() {
               // (TODO: also allow this for other special shaped devices)
               if(world[y][x].callsub != null && world[y][x].callsub == corecell.callsub) ok = true;
               if(type == TYPE_TRISTATE && c == 'z') ok = true;
+              if(type == TYPE_TRISTATE_INV && c == 'Z') ok = true;
               if(!ok) {
-                errormessage = 'error: multiple devices outputting to same wire at ' + x + ' ' + y + ' (type: ' + type + ')';
+                if((type == TYPE_TRISTATE && c == 'Z') || (type == TYPE_TRISTATE_INV && c == 'z')) {
+                  errormessage = 'error: cannot mix low and high tristate buffers (z and Z)';
+                } else {
+                  errormessage = 'error: multiple devices outputting to same wire at ' + x + ' ' + y + ' (type: ' + type + ')';
+                }
                 console.log(errormessage);
                 //return false;
                 error = true;
@@ -7620,6 +7652,7 @@ function parseComponents() {
             if(c == 'i') type = TYPE_IC;
             if(c == 'T') type = TYPE_VTE;
             if(c == 'z') type = TYPE_TRISTATE;
+            if(c == 'Z') type = TYPE_TRISTATE_INV;
             if(c == '?') type = TYPE_RANDOM;
             if(ffmap[c]) type = TYPE_FLIPFLOP;
           }
@@ -8147,7 +8180,7 @@ function parseComponents() {
       if(!component.vte.error && !component.vte.init2()) component.vte.error = true;
       if(component.vte.error) component.error = true;
     }
-    if(component.type == TYPE_TRISTATE) {
+    if(component.type == TYPE_TRISTATE || component.type == TYPE_TRISTATE_INV) {
       component.tristate = new TriState();
       component.tristate.init(component);
     }

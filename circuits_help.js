@@ -672,9 +672,9 @@ R-->?-->l
    "76543210"
 
 
-0"Tri-state buffers, indicated with 'z', allow multiple"
-0"devices to output to the same wire, something that normally is not allowed"
-0"and would normally create a conflict."
+0"Tri-state buffers (or, open collector outputs), indicated with 'z', allow"
+0"multiple devices to output to the same wire, something that normally is not"
+0"allowed and would normally create a conflict."
 
 0"Our simulation does not support three states, but the tri-state buffer's"
 0"behavior tries to be as close to real-life as possible. All tri-state buffers"
@@ -759,6 +759,31 @@ s**>z**                    s******
 0"The built-in circuit where these z's are used the most, is the one named"
 0"'Relay Logic'"
 
+0"There also exist inverted tristate buffers, with capital 'Z'. These work the"
+0"other way around: the inputs are ORed, the outputs ANDed."
+0"So where z is a bunch of open collector outputs where one being high is"
+0"treated as the active one, the Z is a bunch of open collector outputs where"
+0"one being low is treated as the active one. Remember that in real life there"
+0"should truly be only one active one (whether high or low), in logicemu we can"
+0"make some distinction of intention this way instead."
+
+
+s****                      s****
+    v                          v
+s**>Z**                    s**>o**
+      *                          v
+      *>l 1"corresponds to"      a>l
+      *                          ^
+s**>Z**                    s**>o**
+    ^                          ^
+s****                      s****
+
+
+s**>Z**                    s******
+      *                          v
+s**>Z**>l 1"corresponds to"s****>a>l
+      *                          ^
+s**>Z**                    s******
 
 0"Special wires"
 0"-------------"
@@ -2112,15 +2137,14 @@ s**>?**>l
 R**>?**>l
 1
 
-0"NEW PART: tri-state buffer"
+0"NEW PART: tri-state buffer (or open collector output)"
 0"z: fake tri-state buffer"
 
-0"z is a fake"
-0"representation of a tristate buffer. It is fake because the simulation does"
-0"not support three states. In real life, you have the states 'low voltage',"
-0"'high voltage' and 'high impedance'. In the simulation, there is only zero"
-0"and one. High impedance is treated the same as 0. Still, the tri-state buffer"
-0"can be used as a representation of a real-life circuit"
+0"z is a fake representation of a tristate buffer. It is fake because the"
+0"simulation does not support three states. In real life, you have the states"
+0"'low voltage', 'high voltage' and 'high impedance'. In the simulation, there"
+0"is only zero and one. High impedance is treated the same as 0. Still, the"
+0"tri-state buffer can be used as a representation of a real-life circuit"
 
 0"As seen before, different components outputting to same wire normally gives"
 0"error, and one solution is to OR them. The tristate buffer solution, instead,"
@@ -2168,6 +2192,32 @@ s**>o**>l   s*>z***>l    s********>l
 0"-z's only approximate reality, some real behavior like shorts is not emulated."
 
 0"The best example circuit to see z's in action is the 'Relay Logic' circuit."
+
+0"There also exist inverted tristate buffers, with capital 'Z'. These work the"
+0"other way around: the inputs are ORed, the outputs ANDed."
+0"So where z is a bunch of open collector outputs where one being high is"
+0"treated as the active one, the Z is a bunch of open collector outputs where"
+0"one being low is treated as the active one. Remember that in real life there"
+0"should truly be only one active one (whether high or low), in logicemu we can"
+0"make some distinction of intention this way instead."
+
+
+s****                      s****
+    v                          v
+s**>Z**                    s**>o**
+      *                          v
+      *>l 1"corresponds to"      a>l
+      *                          ^
+s**>Z**                    s**>o**
+    ^                          ^
+s****                      s****
+
+
+s**>Z**                    s******
+      *                          v
+s**>Z**>l 1"corresponds to"s****>a>l
+      *                          ^
+s**>Z**                    s******
 
 0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 0"SECTION VI: Parts for shortcuts and compactness"
@@ -3491,6 +3541,22 @@ s---*
 
 `, 'component' + componentid++);
 
+registerCircuit('Tristate Buffer (inverted) as AND (Z)', `
+
+S-->Z**-->l
+      *
+S-->Z**
+
+`, 'component' + componentid++);
+
+registerCircuit('Tristate Buffer (inverted) as OR (Z)', `
+
+S-->Z-->l
+    ^
+S---*
+
+`, 'component' + componentid++);
+
 registerCircuit('Double Corner (&%)', `
     s
     |
@@ -3792,6 +3858,32 @@ C------+---->l
 S-->dy------>l
      ^
      S
+
+C**>z*******>l
+
+    c
+    v
+C**>z*******]l
+
+    C
+    v
+C**>z*******>l
+     *
+c**>z*
+
+    c
+    v
+C**>Z*******>l
+     *
+C**>Z*
+
+    C
+    v
+C**>Z*******]l
+     *
+c**>Z*
+    ^
+    c
 
 0"Off"
 0"---"
