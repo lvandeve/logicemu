@@ -3566,7 +3566,7 @@ function Cell() {
       var co = rom.worddir ? (this.y - rom.y0) : (this.x - rom.x0);
       if(rom.wordlsbpos) co = rom.worddir ? (rom.y1 - this.y - 1) : (rom.x1 - this.x - 1);
       var index = rom.lines_inv[co];
-      value = rom.selected[index];
+      value = rom.selected[index]; // show which line is selected
     }
 
     if(digitmap[this.displaysymbol]/*this.circuitsymbol == '='*/) {
@@ -4991,18 +4991,6 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       this.fallback.div1.innerHTML = '';
       this.text0 = makeDiv(0, 0, tw, th, this.fallback.div0);
       this.text1 = makeDiv(0, 0, tw, th, this.fallback.div1);
-      var fs = tw - 2;
-      if (fs < 7) fs = 7;
-      this.text0.style.color =  OFFCOLOR;
-      this.text0.style.textAlign = 'center';
-      this.text0.style.fontSize = fs + 'px';
-      this.text0.style.fontFamily = 'monospace';
-      this.text0.style.zIndex = MAINZINDEX;
-      this.text1.style.color = ONCOLOR;
-      this.text1.style.textAlign = 'center';
-      this.text1.style.fontSize = fs + 'px';
-      this.text1.style.fontFamily = 'monospace';
-      this.text1.style.zIndex = MAINZINDEX;
     }
   };
 
@@ -5018,16 +5006,29 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     drawer.tx = this.tx;
     drawer.ty = this.ty;
 
-    if (this.init2done) {
+    if(this.init2done) {
       this.ctx0.clearRect(0, 0, tw, th);
       this.ctx1.clearRect(0, 0, tw, th);
     }
     this.init2done = true;
 
-    // white instead of transparent background
+    // BGCOLOR instead of transparent background
     // so that when using 'drawImage' to blit, it fully covers it rather than draw semitranslucent edges more and more over each other
     drawer.fillBg_(this.ctx0, BGCOLOR);
     drawer.fillBg_(this.ctx1, BGCOLOR);
+
+    var fs = tw - 2;
+    if (fs < 7) fs = 7;
+    this.text0.style.color =  OFFCOLOR;
+    this.text0.style.textAlign = 'center';
+    this.text0.style.fontSize = fs + 'px';
+    this.text0.style.fontFamily = 'monospace';
+    this.text0.style.zIndex = MAINZINDEX;
+    this.text1.style.color = ONCOLOR;
+    this.text1.style.textAlign = 'center';
+    this.text1.style.fontSize = fs + 'px';
+    this.text1.style.fontFamily = 'monospace';
+    this.text1.style.zIndex = MAINZINDEX;
 
     this.ctx0.strokeStyle = OFFCOLOR;
     this.ctx1.strokeStyle = ONCOLOR;
@@ -5521,6 +5522,16 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
             this.text0.style.color = led_off_fg_colors[color];
             this.text1.style.color = led_on_fg_colors[color];
           }
+          if(virtualsymbol == 'B') {
+            // NOTE: this actually may make a loose B (not part of a component) invisible
+            // since setValue, that actually copies it to the canvas, is never called, and
+            // this makes the text color equal to the background color.
+            // That's actually more like an error (it has no component), and it would be
+            // not efficient to enforce drawing somehow, who ignored for now.
+            alreadybg = true;
+            drawer.fillBg_(ctx, textel.style.color);
+            textel.style.color = BGCOLOR;
+          }
         }
         if(devicemap[c] || c == '#' || c == '$') {
           if(!alreadybg) {
@@ -5592,6 +5603,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         }
       }
     }
+
+    // ensure that if this is a re-init (e.g. after clicking on a bB bit with mouse), it will actually draw the change, not do the optimization when nothing changed
+    this.prevvalue = -1;
   };
 
   /*
