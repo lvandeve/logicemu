@@ -334,7 +334,7 @@ var th = 9;
 var TYPE_index = 0;
 var TYPE_NULL = TYPE_index++; // uninited
 var TYPE_LOOSE_WIRE_EXPLICIT = TYPE_index++; // it has no core, it's just a loose wire, always outputs 0 (in real life, would be "floating" instead)
-var TYPE_LOOSE_WIRE_IMPLICIT = TYPE_index++; // like TYPE_LOOSE_WIRE_EXPLICIT, but without any explicit added things like -, |, ^, ..., only implicit part of +, x, h, ...
+var TYPE_LOOSE_WIRE_IMPLICIT = TYPE_index++; // like TYPE_LOOSE_WIRE_EXPLICIT, but without any explicit added things like -, |, ^, ..., only implicit part of +, x, V, ...
 var TYPE_UNKNOWN_DEVICE = TYPE_index++; // e.g. a # without proper core cell
 var TYPE_SWITCH_OFF = TYPE_index++;
 var TYPE_SWITCH_ON = TYPE_index++;
@@ -360,6 +360,7 @@ var TYPE_IC = TYPE_index++; // also called "sub"
 var TYPE_IC_PASSTHROUGH = TYPE_index++; // the switch gets internally converted into this. Behaves like OR, but will have always only 1 input
 var TYPE_VTE = TYPE_index++;
 var TYPE_TRISTATE = TYPE_index++;
+var TYPE_TRISTATE_NEG = TYPE_index++;
 var TYPE_RANDOM = TYPE_index++;
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
@@ -390,33 +391,33 @@ typesymbols[TYPE_PUSHBUTTON_OFF] = 'p'; typesymbols[TYPE_PUSHBUTTON_ON] = 'P';
 typesymbols[TYPE_TIMER_OFF] = 'r'; typesymbols[TYPE_TIMER_ON] = 'R'; typesymbols[TYPE_AND] = 'a';
 typesymbols[TYPE_OR] = 'o'; typesymbols[TYPE_XOR] = 'e'; typesymbols[TYPE_NAND] = 'A';
 typesymbols[TYPE_NOR] = 'O'; typesymbols[TYPE_XNOR] = 'E'; typesymbols[TYPE_FLIPFLOP] = 'c';
-typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd'; typesymbols[TYPE_TRISTATE] = 'V';
+typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd'; typesymbols[TYPE_TRISTATE] = 'z';
 
 
 // all devices except flipflop, those are treated differently because multiple different cells of its type can form one component
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true,
                  'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
-                 'b':true, 'B':true, 'M':true, 'i':true, 'T':true, 'V':true, '?':true};
+                 'b':true, 'B':true, 'M':true, 'i':true, 'T':true, 'z':true, '?':true};
 // devicemap as well as # (with which inputs interact), but not $ (with which inputs do not interact)
 var devicemapin = clone(devicemap); devicemapin['#'] = true;
 // everything that forms the surface of devices, so that includes $
 var devicemaparea = clone(devicemapin); devicemaparea['$'] = true;
 var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true};
 var rommap = {'b':true, 'B':true};
-var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'z':true, 'Z':true, 'h':true, 'H':true};
+var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'U':true, 'G':true, 'V':true, 'W':true};
 var dinputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true}; // directional inputs only
 var wiremap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true, '/':true, '\\':true, 'x':true, 'g':true, '=':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true}; // TODO: remove antennas from wiremap?
 var antennamap = {'(':true, ')':true, 'n':true, 'u':true};
 // only those actively interact diagonally (plus diaginputs but those are not identified by character...)
-var diagonalmap = {'x':true, 'h':true, 'H':true, '/':true, '\\':true, 'X':true};
+var diagonalmap = {'x':true, 'V':true, 'W':true, '/':true, '\\':true, 'X':true};
 //non-isolators (does not include isolators like ' ' and '0-9' despite being "known"). I is also not part of this, but i is.
 var knownmap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true, '/':true, '\\':true, 'x':true, 'g':true,
                 'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true, 'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true,
-                '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'z':true, 'Z':true, 'h':true, 'H':true,
+                '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'U':true, 'G':true, 'V':true, 'W':true,
                 '#':true, '=':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true,
-                '$':true, 'V':true, '?':true, 'toc':true};
+                '$':true, 'z':true, '?':true, 'toc':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
 var defsubs = {}; // key is number of the sub (but those are not consecutive like in an array, e.g. one could make a I555 and the index would be 555)
@@ -473,10 +474,10 @@ function DefSub() {
         else if(x > 0 && world[y][x - 1].circuitsymbol == '>') dir = 1;
         else if(y > 0 && world[y - 1][x].circuitsymbol == 'v') dir = 2;
         else if(x + 1 < w && world[y][x + 1].circuitsymbol == '<') dir = 3;
-        else if(x + 1 < w && y > 0 && world[y - 1][x + 1].circuitsymbol == 'h') dir = 4;
-        else if(x + 1 < w && y + 1 < h && world[y + 1][x + 1].circuitsymbol == 'h') dir = 5;
-        else if(x > 0 && y + 1 < h && world[y + 1][x - 1].circuitsymbol == 'h') dir = 6;
-        else if(x > 0 && y > 0 && world[y - 1][x - 1].circuitsymbol == 'h') dir = 7;
+        else if(x + 1 < w && y > 0 && world[y - 1][x + 1].circuitsymbol == 'V') dir = 4;
+        else if(x + 1 < w && y + 1 < h && world[y + 1][x + 1].circuitsymbol == 'V') dir = 5;
+        else if(x > 0 && y + 1 < h && world[y + 1][x - 1].circuitsymbol == 'V') dir = 6;
+        else if(x > 0 && y > 0 && world[y - 1][x - 1].circuitsymbol == 'V') dir = 7;
         else if(x + 1 < w && y > 0 && world[y - 1][x + 1].circuitextra == 2 && (world[y - 1][x + 1].circuitsymbol == 'v' || world[y - 1][x + 1].circuitsymbol == '<')) dir = 4;
         else if(x + 1 < w && y + 1 < h && world[y + 1][x + 1].circuitextra == 2 && (world[y + 1][x + 1].circuitsymbol == '<' || world[y + 1][x + 1].circuitsymbol == '^')) dir = 5;
         else if(x > 0 && y + 1 < h && world[y + 1][x - 1].circuitextra == 2 && (world[y + 1][x - 1].circuitsymbol == '^' || world[y + 1][x - 1].circuitsymbol == '>')) dir = 6;
@@ -2560,20 +2561,20 @@ function FF() {
 }
 
 /*
-The tristate component 'V': is a fake component that acts somewhat like a tristate buffer in real life,
+The tristate component 'z': is a fake component that acts somewhat like a tristate buffer in real life,
 except we don't actually have 3 states here (high impedance/floating is treated the same as zero, because
 the simulation only supports two states).
-Unlike other components, multiple V's can output to the same wire. Internally this group of V's and wires
+Unlike other components, multiple z's can output to the same wire. Internally this group of z's and wires
 is actually a single component, which exists out of multiple tristate buffers all outputting to the same wire.
-Every V that is part of it must have exactly 1 or 2 inputs. If the AND of these 2 inputs is true, then the entire
-components outputs (and this applies to any V).
+Every z that is part of it must have exactly 1 or 2 inputs. If the AND of these 2 inputs is true, then the entire
+components outputs (and this applies to any z).
 NOTE:
 -In real life, a tristate buffer can output 3 possible levels: low voltage, high voltage, or high impedance, which is like having no connection at all (switch open)
 --> In the simulation, this third state "high impedance" aka "floating" aka "disconnected" aka "Z" is NOT supported. It still outputs only 0 or 1 here, the simulation treats high impedance exactly like zero.
 -In real life, if multiple tristate buffers output to the same wire, then all except one must be high impedance, otherwise there can be a short (or at least a conflict)
---> In the simulation, that error condition is not indicated as an error (This is a TODO), instead the OR is taken (without using 'V' the error condition is immediately shown though)
+--> In the simulation, that error condition is not indicated as an error (This is a TODO), instead the OR is taken (without using 'z' the error condition is immediately shown though)
 -In real life, a tristate buffer has 2 inputs: one that turns it between high impedance and signal, and the other is the signal
---> In the simulation, there are also up to 2 inputs, but they both do the same thing rather than being different (they AND here), but the intention of using 'V' instead of 'a' is to actually show this
+--> In the simulation, there are also up to 2 inputs, but they both do the same thing rather than being different (they AND here), but the intention of using 'z' instead of 'a' is to actually show this
     to the viewer and point out they need to interpret it as how it would be in real life.
 */
 function TriState() {
@@ -2581,13 +2582,13 @@ function TriState() {
 
   // must be called after inputs are resolved
   this.init = function(component) {
-    // we sort the inputs such that each group of inputs pointing to the same 'V' are after each other
+    // we sort the inputs such that each group of inputs pointing to the same 'z' are after each other
     this.component = component;
     var array = [];
     for(var i = 0; i < component.inputs.length; i++) array[i] = i;
     /*if((array.length & 1) != 0) {
       component.error = true;
-      component.errormessage = 'Invalid tristate buffer input combination, each V must have 1 pair';
+      component.errormessage = 'Invalid tristate buffer input combination, each z must have 1 pair';
       return;
     }*/
     array = array.sort(function(a, b) {
@@ -2607,7 +2608,7 @@ function TriState() {
       if((component.inputs_x2[i] != component.inputs_x2[i + 1]) ||
          (component.inputs_y2[i] != component.inputs_y2[i + 1])) {
         component.error = true;
-        component.errormessage = 'Invalid tristate buffer input combination, each V must have 1 pair';
+        component.errormessage = 'Invalid tristate buffer input combination, each z must have 1 pair';
         return;
       }
     }*/
@@ -2618,7 +2619,7 @@ function TriState() {
          component.inputs_y2[i] == component.inputs_y2[i + 1] &&
          component.inputs_y2[i] == component.inputs_y2[i + 2]) {
         component.error = true;
-        component.errormessage = 'Invalid tristate buffer input combination: max 2 inputs per V. More makes no sense IRL so we do not simulate it to avoid confusion.';
+        component.errormessage = 'Invalid tristate buffer input combination: max 2 inputs per z. More makes no sense IRL so we do not simulate it to avoid confusion.';
         return;
       }
     }
@@ -3644,16 +3645,16 @@ function Cell() {
       if(tc == 'k') title = 'flipflop K input';
       if(tc == 'q') title = 'flipflop output and async set';
       if(tc == 'Q') title = 'flipflop inverted output and async reset';
-      if(tc == 'V') title = 'tristate buffer';
+      if(tc == 'z') title = 'tristate buffer (the only device allowed to have multiple output to the same wire. Should be used as one-hot [max 1 enabled] only to be electrically correct and realistic, but logicemu does not enforce that [does not emulate shorts].)';
       if(tc == 'g') title = 'global (backplane) wire';
       if(tc == 'I') title = 'IC definition';
       if(tc == 'i') title = 'IC instance';
       if(tc == 'b' || tc == 'B') {
-        title = 'ROM/RAM bit, or encoder/decoder';
+        title = 'ROM/RAM bit (b=0, B=1)';
         if(this.components[0]) {
           var master = this.components[0].master;
           var rom = master ? master.rom : this.components[0].rom;
-          if(rom) {
+          if(rom && rom.array && rom.array[0]) {
             if(rom.ram) {
               var numadr = rom.array.length;
               var width = rom.array[0].length;
@@ -5206,21 +5207,21 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
         }
-      } else if(c == 'z') {
+      } else if(c == 'U') {
         var num = 0;
         if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);}
         if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);}
         if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);}
         if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);}
         drawer.drawSplit_(cell, ctx, num);
-      } else if(c == 'Z') {
+      } else if(c == 'G') {
         var num = 0;
         if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);}
         if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);}
         if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);}
         if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);}
         drawer.drawSplit_(cell, ctx, num);
-      } else if(c == 'h') {
+      } else if(c == 'V') {
         drawer.drawSplit_h_(cell, ctx, -8);
         var code = 0;
         if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19); code |= 1; }
@@ -5279,10 +5280,10 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           this.drawextrai1 = 1;
           this.drawextrag = 19;
         }
-      } else if(c == 'H') {
+      } else if(c == 'W') {
         drawer.drawSplit_h_(cell, ctx, -8);
         var code = 0;
-        // no "isInterestingComponent" checks for H, unlike h, because H can affect things, it's negating (for h any effect, like as AND input, is negated if it's a dummy, but not for H)
+        // no "isInterestingComponent" checks for W, unlike V, because W can affect things, it's negating (for V any effect, like as AND input, is negated if it's a dummy, but not for W)
         if(hasDevice(cell.x, cell.y, 0)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0); code |= 1; }
         if(hasDevice(cell.x, cell.y, 1)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5); code |= 2; }
         if(hasDevice(cell.x, cell.y, 2)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1); code |= 4; }
@@ -5913,7 +5914,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           else if(c == '%' && value == 1) { qx = 11; qy = 0; }
           else if(c == '%' && value == 2) { qx = 11; qy = 1; }
           else isextra = false;
-          if(c == 'X' || c == 'h' || c == 'H' || c == '+') {
+          if(c == 'X' || c == 'V' || c == 'W' || c == '+') {
             isextra = true;
             if(value == this.drawextrai0) { qx = this.drawextrag;  qy = 0; }
             else if(value == this.drawextrai1) { qx = this.drawextrag;  qy = 1; }
@@ -7133,7 +7134,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(todir <= 3 && (c == 'x' || c2 == 'x')) return false; // x's do not interact with the sides
 
   if(z > 3 && c != 'i') return false;
-  if(z > 1 && !(c == 'i' || c == 'h' || c == 'H' || c2 == 'h' || c2 == 'H' || c == 'X' || c2 == 'X')) return false;
+  if(z > 1 && !(c == 'i' || c == 'V' || c == 'W' || c2 == 'V' || c2 == 'W' || c == 'X' || c2 == 'X')) return false;
 
   //if(c == 'i' && c2 != 'i') return false; // connecting sub-calls is implemented later. And full subs are marked with 'i' earlier, so u's connect only with u's.
 
@@ -7164,7 +7165,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(c == '\\' && !(todir == 5 || todir == 7)) return false;
 
   if(c == 'x' && !(z == 0 && (todir == 4 || todir == 6)) && !(z == 1 && (todir == 5 || todir == 7))) return false;
-  if((c == 'h' || c == 'H' || c == 'X') &&
+  if((c == 'V' || c == 'W' || c == 'X') &&
       !(z == 0 && (todir == 1 || todir == 3)) &&
       !(z == 1 && (todir == 0 || todir == 2)) &&
       !(z == 2 && (todir == 5 || todir == 7)) &&
@@ -7207,7 +7208,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
 
 
   // those device inputs, too, don't interact with devices here (interaction with devices is resolved later)
-  if((c == 'z' || c == 'Z' || c == 'h' || c == 'H') && devicemapin[c2]) return false;
+  if((c == 'U' || c == 'G' || c == 'V' || c == 'W') && devicemapin[c2]) return false;
 
   // The different backplane types don't interact, unless numbers of a matching one (ce then encodes allowed direction)
   if(c == 'g' && c2 == 'g') {
@@ -7216,7 +7217,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
     if(ce != cedir && ce2 != cedir) return false;
   }
 
-  if(((dinputmap[c] && inputmap[c2]) || (inputmap[c] && dinputmap[c2]))) return false; // inputs don't interact, including not > with z, but z with z do interact
+  if(((dinputmap[c] && inputmap[c2]) || (inputmap[c] && dinputmap[c2]))) return false; // inputs don't interact, including not > with U, but U with U do interact
   if(devicemap[c] && devicemap[c2]) return false; // device cores don't interact
 
   if(c == 'i' && z != todir) return false;
@@ -7265,7 +7266,7 @@ function getZ2(c, c2, ce, ce2, todir, z) {
   }
 
   if(c2 == '+' && (todir2 == 0 || todir2 == 2)) z2 = 1;
-  if(c2 == 'X' || c2 == 'h' || c2 == 'H') {
+  if(c2 == 'X' || c2 == 'V' || c2 == 'W') {
     // X's meaning for z coordinate: z=0:-, z=1:|, z=2:/, z=3:\ (backspace)
     if(todir == 0 || todir == 2) z2 = 1;
     else if(todir == 4 || todir == 6) z2 = 3;
@@ -7548,14 +7549,14 @@ function parseComponents() {
       var c0 = world[y0][x0].circuitsymbol;
 
       // z0 > 0 is only to handle following weird edge case scenarios:
-      // *) to connect the negated H as loose wire to things, it should cause a negated input signal there...
+      // *) to connect the negated W as loose wire to things, it should cause a negated input signal there...
       // *) to connect things to call-ic's in some rare case, the rare case being such crossings like that.
       // the thing is, IC output connections use the z value as output direction detector. and crossings like x use the z value for
       // the different legs. Now, if IC's z is higher than 0, and so is the z of this leg of x, it would NEVER find that connection
       // unless we also start from z0 > 0. But using z0 > 0 on EVERYTHING, breaks various things. So only use for those crossings..........
       // It's tricky and hacky and ad hoc (this only added on 20171210) but I HOPE It works
       var maxz0 = 1;
-      if(c0 == 'H') maxz0 = 4;
+      if(c0 == 'W') maxz0 = 4;
       if(c0 == 'x' || c0 == '+' || c0 == '%' || c0 == '&') maxz0 = 2;
       if(dinputmap[c0] && world[y0][x0].circuitextra == 2) maxz0 = 2;
 
@@ -7591,7 +7592,7 @@ function parseComponents() {
               // allow input that touches same special shaped chip with multiple sides
               // (TODO: also allow this for other special shaped devices)
               if(world[y][x].callsub != null && world[y][x].callsub == corecell.callsub) ok = true;
-              if(type == TYPE_TRISTATE && c == 'V') ok = true;
+              if(type == TYPE_TRISTATE && c == 'z') ok = true;
               if(!ok) {
                 errormessage = 'error: multiple devices outputting to same wire at ' + x + ' ' + y + ' (type: ' + type + ')';
                 console.log(errormessage);
@@ -7618,7 +7619,7 @@ function parseComponents() {
             if(c == 'M') type = TYPE_MUX;
             if(c == 'i') type = TYPE_IC;
             if(c == 'T') type = TYPE_VTE;
-            if(c == 'V') type = TYPE_TRISTATE;
+            if(c == 'z') type = TYPE_TRISTATE;
             if(c == '?') type = TYPE_RANDOM;
             if(ffmap[c]) type = TYPE_FLIPFLOP;
           }
@@ -7670,8 +7671,8 @@ function parseComponents() {
           for(var i = 0; i < array.length; i++) {
             var c = world[array[i][1]][array[i][0]].circuitsymbol;
             // when using such wires, then it's clear that it's a desired explicit loose wire, not a stray wire
-            // part of a h,X,%,& or so that only exists as side effect of those having possibly undesired wires
-            // even + and x are considered explicit! Since you can always avoid their extra wire with a different ascii char. Not so for h or % etc....
+            // part of a V,X,%,& or so that only exists as side effect of those having possibly undesired wires
+            // even + and x are considered explicit! Since you can always avoid their extra wire with a different ascii char. Not so for V or % etc....
             if(c == '-' || c == '|' || c == '/' || c == '\\' || c == ',' || c == '*' || c == '+' || c == 'x' ||
                 (dinputmap[c] && world[array[i][1]][array[i][0]].circuitextra == 0)) { // only straight inputs considered explicit, diagonal ones may be misplaced ones
               type = TYPE_LOOSE_WIRE_EXPLICIT;
@@ -7935,7 +7936,7 @@ function parseComponents() {
       if(!inputmap[c]) continue;
       var x2s = [];
       var y2s = [];
-      if(c == 'z' || c == 'Z') {
+      if(c == 'U' || c == 'G') {
         for(var k = 0; k < 4; k++) {
           var wc2 = getNeighbor(x, y, k);
           if(!wc2) continue;
@@ -7948,14 +7949,14 @@ function parseComponents() {
             inputused[y2][x2] = true;
           }
         }
-      //} else if((c == 'h' || c == 'H') && component.type != TYPE_LOOSE_WIRE_IMPLICIT) {
-      } else if((c == 'h' && component.type != TYPE_LOOSE_WIRE_IMPLICIT) || c == 'H') {
-        // why not for loose wire: if an h touches an AND with an unused side, then it would be
+      //} else if((c == 'V' || c == 'W') && component.type != TYPE_LOOSE_WIRE_IMPLICIT) {
+      } else if((c == 'V' && component.type != TYPE_LOOSE_WIRE_IMPLICIT) || c == 'W') {
+        // why not for loose wire: if a V touches an AND with an unused side, then it would be
         // counted as an actual input for the AND and the AND would never work. For other inputs
-        // like > it's explicitely pointed at the AND so there it's fine. But for the h, often
-        // the h serves just to cross over some other input with the goal of not interfering with
+        // like > it's explicitely pointed at the AND so there it's fine. But for the V, often
+        // the V serves just to cross over some other input with the goal of not interfering with
         // this AND at all.
-        // It's enabled for H (due to negating this one cannot be ignored), only not for h.
+        // It's enabled for W (due to negating this one cannot be ignored), only not for V.
         for(var k = 0; k < 8; k++) {
           var wc2 = getNeighbor(x, y, k);
           if(!wc2) continue;
@@ -8016,7 +8017,7 @@ function parseComponents() {
         inputused[wc2.y][wc2.x] = true;
       }
       var negated = false;
-      if(c == 'm' || c == ']' || c == 'w' || c == '[' || c == 'Z' || c == 'H') negated = true;
+      if(c == 'm' || c == ']' || c == 'w' || c == '[' || c == 'G' || c == 'W') negated = true;
       for(var k = 0; k < x2s.length; k++) {
         var x2 = x2s[k];
         var y2 = y2s[k];

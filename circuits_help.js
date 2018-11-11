@@ -672,7 +672,7 @@ R-->?-->l
    "76543210"
 
 
-0"Tri-state buffers, indicated with 'V' (that is capital V), allow multiple"
+0"Tri-state buffers, indicated with 'z', allow multiple"
 0"devices to output to the same wire, something that normally is not allowed"
 0"and would normally create a conflict."
 
@@ -693,70 +693,70 @@ R-->?-->l
 
      p
      v
- s**>V***
+ s**>z***
         *
      p  *
      v  *
- s**>V***
+ s**>z***
         *
      p  *
      v  *
- s**>V******>l
+ s**>z******>l
 
 
-0"Multiple single-input 'V's can also be used to OR multiple wires together"
+0"Multiple single-input 'z's can also be used to OR multiple wires together"
 0"where in real life you would need no gate at all there or diodes would have"
 0"sufficed. Again, the simulation cannot simulate that, connecting multiple"
 0"wires from different devices together would result in an error (because"
 0"inconsistency is possible where one device outputs ground, andother positive"
 0"voltage, to it. Aka a short). One solution would be use an OR gate, but the"
-0"'V' is available instead simply to indicate: 'in real life, no gate is needed"
+0"'z' is available instead simply to indicate: 'in real life, no gate is needed"
 0"here.' It has the same effect as OR in the simulation, but the notation"
 0"indicates the intended meaning better."
 
     s           s            s
     *           *            *0"this one indicates error, but in real"
     *           v            *0"life this can be fine, depending on"
-    v           V            *0"what the switches are connected to"
-s**>o**>l   s*>V***>l    s********>l
-    ^           V            *
+    v           z            *0"what the switches are connected to"
+s**>o**>l   s*>z***>l    s********>l
+    ^           z            *
     *           ^            *
     *           *            *
     s           s            s
 
-0"So in conclusion, if you see a 'V' it means: the simulation has limitations"
+0"So in conclusion, if you see a 'z' it means: the simulation has limitations"
 0"here because it cannot represent tri-state logic or floating wires. Let use"
-0"use a 'V' to show how you could make this circuit in real life without gates"
-0"or with a tristate buffer. In the simulation, the V acts as an AND gate and"
-0"multiple V outputs together are OR-ed, but in real life you need neither the"
+0"use a 'z' to show how you could make this circuit in real life without gates"
+0"or with a tristate buffer. In the simulation, the z acts as an AND gate and"
+0"multiple z outputs together are OR-ed, but in real life you need neither the"
 0"AND nor the OR, you need a tristate buffer instead of the AND, and nothing at"
 0"all (just connect wires together) instead of the OR. In real life you also"
-0"must make sure only one V at the time is anything other than 'floating' to"
+0"must make sure only one z at the time is anything other than 'floating' to"
 0"avoid a short."
 
-0"As far as the simulation is concerned, here is what V's correspond to (but"
+0"As far as the simulation is concerned, here is what z's correspond to (but"
 0"this is not what it corresponds to in real life since the below allows to"
 0"easily make shorts):"
 
 
 s****                      s****
     v                          v
-s**>V**                    s**>a**
+s**>z**                    s**>a**
       *                          v
       *>l 1"corresponds to"      o>l
       *                          ^
-s**>V**                    s**>a**
+s**>z**                    s**>a**
     ^                          ^
 s****                      s****
 
 
-s**>V**                    s******
+s**>z**                    s******
       *                          v
-s**>V**>l 1"corresponds to"s****>o>l
+s**>z**>l 1"corresponds to"s****>o>l
       *                          ^
-s**>V**                    s******
+s**>z**                    s******
 
-0"The built-in circuit where these V's are used the most, is the one named"
+0"The built-in circuit where these z's are used the most, is the one named"
 0"'Relay Logic'"
 
 
@@ -881,7 +881,7 @@ registerCircuit('Rendering Modes', `
 0"top between 'graphical' and 'text':"
 
       l   lll
-      m  lzzZl
+      m  lUUGl
       |   |ll  ####
    p--+---%--->l###   l
       |   |           ^
@@ -889,7 +889,7 @@ s---*******--->e>l** *|*>T
       v       >     x X
 s---->a-****-->a>l** *|*>l1
       |  ***          s
-    s-hl ***     l
+    s-Vl ***     l
       l     ;   ^
              ; /
               *
@@ -2113,9 +2113,9 @@ R**>?**>l
 1
 
 0"NEW PART: tri-state buffer"
-0"V: fake tri-state buffer"
+0"z: fake tri-state buffer"
 
-0"V (capital V, not to be confused with small arrowhead input v) is a fake"
+0"z is a fake"
 0"representation of a tristate buffer. It is fake because the simulation does"
 0"not support three states. In real life, you have the states 'low voltage',"
 0"'high voltage' and 'high impedance'. In the simulation, there is only zero"
@@ -2124,50 +2124,50 @@ R**>?**>l
 
 0"As seen before, different components outputting to same wire normally gives"
 0"error, and one solution is to OR them. The tristate buffer solution, instead,"
-0"also has 1 more switch per tristate buffer, to select that line (each V must"
+0"also has 1 more switch per tristate buffer, to select that line (each z must"
 0"have exactly 2 inputs to work correctly)"
 
                                     p
                                     v
-s*****          s*****          s**>V***
+s*****          s*****          s**>z***
      *               v                 *
 s*****          s***>o              p  *
      *               v              v  *
-s*********>l    s***>o****>l    s**>V***
+s*********>l    s***>o****>l    s**>z***
                                        *
                                     p  *
                                     v  *
-                                s**>V******>l
+                                s**>z******>l
 
-0"Note that in real life enabling multiple V's at the same time could cause a"
+0"Note that in real life enabling multiple z's at the same time could cause a"
 0"short but that is not simulated here."
 
-0"Multiple single-input 'V's can also be used to OR multiple wires together"
+0"Multiple single-input 'z's can also be used to OR multiple wires together"
 0"where in real life you would need no gate at all there or diodes would have"
 0"sufficed."
 
     s           s            s
     *           *            *0"here you see error, but this is what it"
     *           v            *0"represents in real life and there it's ok"
-    v           V            *
-s**>o**>l   s*>V***>l    s********>l
-    ^           V            *
+    v           z            *
+s**>o**>l   s*>z***>l    s********>l
+    ^           z            *
     *           ^            *
     *           *            *
     s           s            s
 
 0"So in conclusion:"
-0"-V's in logicemu are purely notational and show what a circuit 'could' look"
+0"-z's in logicemu are purely notational and show what a circuit 'could' look"
 0" like in real life electrical circuits"
-0"-a single-input V in logicemu represents an OR to its output wire in logicemu"
-0"-a single-input V in real-life represents nothing at all, that is, only"
+0"-a single-input z in logicemu represents an OR to its output wire in logicemu"
+0"-a single-input z in real-life represents nothing at all, that is, only"
 0" multiple wires connecting to the same point (possibly with diode)"
-0"-a 2-input V in logicemu represents an AND gate that is OR-ed to its output"
+0"-a 2-input z in logicemu represents an AND gate that is OR-ed to its output"
 0" wire"
-0"-a 2-input V in real life represents a tristate buffer"
-0"-V's only approximate reality, some real behavior like shorts is not emulated."
+0"-a 2-input z in real life represents a tristate buffer"
+0"-z's only approximate reality, some real behavior like shorts is not emulated."
 
-0"The best example circuit to see V's in action is the 'Relay Logic' circuit."
+0"The best example circuit to see z's in action is the 'Relay Logic' circuit."
 
 0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 0"SECTION VI: Parts for shortcuts and compactness"
@@ -2227,11 +2227,7 @@ s----g    g--->l
 
 l<---g    g--->l
 
-0"G: an additional independent global wire"
-
-s---G    G--->l
-
-0"g,G with numbers: yet more global wires"
+0"g with numbers: more independent global wires"
 
  s---g0  3g--->l
  s---g1  2g--->l
@@ -2453,18 +2449,18 @@ s--v--s
    l
 
 0"NEW PART: multi device input"
-0"z: regular multi device input, Z: inverted multi device input"
+0"U: regular multi device input, G: inverted multi device input"
 
 0"These are normal and inverted device/gate inputs outputting to multiple sides"
 0"they connect to each other and wires, and output to all devices, no matter"
 0"what direction. They do not interact with other gate input types"
 
        l  l
-s------zz-zZl
+s------UU-UGl
        l  l
 
 0"NEW PART: device input crossing"
-0"h: regular device input crossing, H: inverted device input crossing"
+0"V: regular device input crossing, W: inverted device input crossing"
 
 0"These are a combination of wire crossing and normal or inverted device input"
 
@@ -2475,27 +2471,27 @@ s------zz-zZl
     s         s                 ||^
                                 sss
 
-0"h and H work also diagonally. So can serve also as simple diagonal device"
+0"V and W work also diagonally. So can serve also as simple diagonal device"
 0"inputs"
 
 s     s              l
- ;     ;            h
-  h     H     s----*
-   l     l          h
+ ;     ;            V
+  V     W     s----*
+   l     l          V
                      l
 
 0"NOTE: the diagonal usage of ^ seen earler above is also a type of wire"
 0"crossing input, and the diagonal ^ is a nicer looking style than what you can"
-0"make with h."
+0"make with V."
 
-0"h and H can also work as a regular wire crossing, in fact it does the same as"
+0"V and W can also work as a regular wire crossing, in fact it does the same as"
 0"capital X in that case:"
 
 l   l   l
- h  ^  h
+ V  ^  V
   ; | /
    ;|/
-s---h-->l
+s---V-->l
    /|;
   / | ;
  /  |  ;
@@ -2504,15 +2500,15 @@ s   s   s
 0"NEW BEHAVIOR: integrated circuits diagonal inputs/outputs"
 
 0"Chips, too, can have diagonal inputs and outputs:"
-0"For the definition, x from s as inputs, and h to l as outputs"
-0"For the usages, h to the chip as its inputs, x from the chip as outputs"
+0"For the definition, x from s as inputs, and V to l as outputs"
+0"For the usages, V to the chip as its inputs, x from the chip as outputs"
 
    s  s  s  l
-    ; | /  h               s s s >l
+    ; | /  V               s s s >l
      vvv  *                * | */
-     e###>O                 hvh/
+     e###>O                 VvV/
   s->#I9#-->l              s>i9-->l
-     ####                   h^h
+     ####                   V^V
      ^^^                   * | *
     / | ;                  s s s
    s  s  s
@@ -2604,10 +2600,10 @@ registerCircuit('ASCII symbol summary', `
 0"I: IC template"
 0"i: IC instance"
 
-0"zZ: normal/inverted device inputs that work in 4 directions"
-0"hH: normal/inverted wire crossing device input (works diagonally too)"
+0"UG: normal/inverted device inputs that work in 4 directions"
+0"VW: normal/inverted wire crossing device input (works diagonally too)"
 
-0"V: tri-state buffer"
+0"z: tri-state buffer"
 
 0"L: RGB LED: 3 inputs, red, green and blue"
 0"rR: real-time timer"
@@ -2679,12 +2675,12 @@ s-->bBB
 
 
 0"Some of the 'compact shortcut' cells are avoided except in rare circumstances,"
-0"in particular 'h', 'H', 'Z', '%', '&' and touching >^<v inputs from sides"
+0"in particular 'V', 'W', 'G', '%', '&' and touching >^<v inputs from sides"
 
 0"yes:"       0"no:"       0"no:"
 
 s**>a**>l     s*&>a**>l   s**>a**>l
-   >            &+z          h
+   >            &+U          V
 s**>e**>l     s**>e**>l   s**>e**>l
 
 0"Centers and corners of devices are aligned on a certain grid for aesthetic"
@@ -2955,7 +2951,7 @@ registerCircuit('Electronic Diagram', `
 1"                            "
 1"                  |         "    *
 1"                  |         "    v
-1"TRISTATE     ----|>----     "***>V**** 0"(Not truly supported but this represents it)"
+1"TRISTATE     ----|>----     "***>z**** 0"(Not truly supported but this represents it)"
 1"BUFFER                      "
 1"                            "
 1"                            "
@@ -3043,7 +3039,7 @@ registerCircuit('Electronic Diagram', `
 1" RELAY (SPST)               "
 1"                            "   *
 1" ---uuuuuu----              "   v
-1"    ======                  "**>V*** 0"(same as tristate buffer, not accurate emulation but close)"
+1"    ======                  "**>z*** 0"(same as tristate buffer, not accurate emulation but close)"
 1" ----o  o-----              "
 1"      \\                     "
 1"                            "
@@ -3053,9 +3049,9 @@ registerCircuit('Electronic Diagram', `
 1" RELAY (SPDT)               "   *
 1"                            "   ***
 1" ---uuuuuu----              "   v |
-1"    ======                  "**>V*+***
+1"    ======                  "**>z*+***
 1"        o----               "     w
-1" ----o                      "****>V***
+1" ----o                      "****>z***
 1"      \\ o----               "
 1"                            "
 1"                            "
@@ -3143,11 +3139,11 @@ registerCircuit('Wire Crossing (+)', `
 registerCircuit('Diagonal Wire Crossing (x)', `
 
  s     l
-  ;   h
+  ;   V
    ; /
     x
    / ;
-  /   h
+  /   V
  s     l
 
 `, 'component' + componentid++);
@@ -3155,11 +3151,11 @@ registerCircuit('Diagonal Wire Crossing (x)', `
 registerCircuit('8-Way Wire Crossing (X)', `
 
  s  s  l
-  ; | h
+  ; | V
    ;|/
  s--X->l
    /|;
-  / v h
+  / v V
  s  l  l
 
 `, 'component' + componentid++);
@@ -3462,10 +3458,11 @@ s**>M**>l
 
 registerCircuit('Bus (=)', `
 
-s---0==3-->l
-s---1==2-->l
-s---2==1-->l
-s---3==0-->l
+s---0=              =4-->l
+s---1=              =3-->l
+s---2================2-->l
+s---3=              =1-->l
+s---4=              =0-->l
 `, 'component' + componentid++);
 
 registerCircuit('Backplane (g)', `
@@ -3478,17 +3475,17 @@ registerCircuit('Backplane Wrap-Around ((u)n)', `
 (--s     l<--)
 `, 'component' + componentid++);
 
-registerCircuit('Tristate Buffer as OR (V)', `
+registerCircuit('Tristate Buffer as OR (z)', `
 
-s-->V**-->l
+s-->z**-->l
       *
-s-->V**
+s-->z**
 
 `, 'component' + componentid++);
 
-registerCircuit('Tristate Buffer as AND (V)', `
+registerCircuit('Tristate Buffer as AND (z)', `
 
-s-->V-->l
+s-->z-->l
     ^
 s---*
 
@@ -3504,32 +3501,32 @@ registerCircuit('Double Corner (&%)', `
     l
 `, 'component' + componentid++);
 
-registerCircuit('Multi-input (z)', `
+registerCircuit('Multi-input (U)', `
    l
-s--zl
-   l
-`, 'component' + componentid++);
-
-registerCircuit('Negated multi-input (Z)', `
-   l
-s--Zl
+s--Ul
    l
 `, 'component' + componentid++);
 
-registerCircuit('Wire Crossing Input (h)', `
+registerCircuit('Negated multi-input (G)', `
+   l
+s--Gl
+   l
+`, 'component' + componentid++);
+
+registerCircuit('Wire Crossing Input (V)', `
 
     s
     |
-  s-hl
+  s-Vl
     l
 
 `, 'component' + componentid++);
 
-registerCircuit('Negated Wire Crossing Input (H)', `
+registerCircuit('Negated Wire Crossing Input (W)', `
 
     s
     |
-  s-Hl
+  s-Wl
     l
 
 `, 'component' + componentid++);
@@ -3581,7 +3578,7 @@ C***********>l
 
 C----------->l
 
-C>e-ha-zzo+*>l
+C>e-ha-UUo+*>l
 
 c****>O*****>l
 
@@ -3673,17 +3670,17 @@ C***
      *******>l
 
 C***
-    h
+    V
      *******>l
 
-C***h*******>l
+C***V*******>l
 
 c->O-------->lI5
 
 i5---------->l
 
 c->O-------*
-            h
+            V
 i6           lI6
   x
    *********>l
@@ -3722,17 +3719,17 @@ C--( ( ) )-->l
 
             ]l
 
-            Zl
+            Gl
 
              l
-            Hl
+            Wl
              l
 
 C---------->#l
 
-C----------zzl
+C----------UUl
 
-C----------zhl
+C----------UVl
 
 C----0=0---->l
 
@@ -3834,20 +3831,20 @@ C*****( (***>l
 C***( ( )***>l
 
 C*****
-      h*****>l
+      V*****>l
 
 c---- ------>l
      x
 C---- ------>l
 
 C-----------
-            zl
+            Ul
 
-C-----------z
+C-----------U
              l
 
 C----------*
-            zl
+            Ul
 1Rw
   E--------->l
 1R^
@@ -3858,9 +3855,9 @@ s---->R----->l
 
 C***********]l
 
-C---------->hl
+C---------->Vl
 
-C----------z>l
+C----------U>l
 
 C******
       *
@@ -3978,12 +3975,12 @@ s##
 *--*>e-->c-->l
 *
 * C--*>a---->l
-*     h
+*     V
 *----*>e----]l
 *
 ******
 *     x
-*      H
+*      W
 *       O--->l
 *
 *---*>o>q--->l
@@ -4131,7 +4128,7 @@ s s s s s s s s   S S S S S S S S     s     ssss
 
 s-->l    l   ****
          ^   ****     l       l l   l   l  l       l  l   l   l
-   l     |   ****      h     h   h  ^  h    h     h    h  ^  h       l
+   l     |   ****      V     V   V  ^  V    V     V    V  ^  V       l
    ^     |   ****       ;   /     ; | /      ;   /      ; | /        ^
    |     s               ; /       ;|/        ; /        ;|/         |
 s--+-->l       s          x      s--X-->l   s--X-->l      X       s--X-->l
@@ -4139,8 +4136,8 @@ s--+-->l       s          x      s--X-->l   s--X-->l      X       s--X-->l
    s       l<*****>l    /   ;     / | ;      /   ;      / | ;        s
                *       s     s   s  s  s    s     s    s  s  s
     l  l l  l  v
-    ^   h   ^  l       l       l     l   l   l   l
-    |  / ;  |           h     h      ^  h     h  ^        l       l
+    ^   V   ^  l       l       l     l   l   l   l
+    |  / ;  |           V     V      ^  V     V  ^        l       l
 s---+-X---X-+------->l   ;   /       | /       ; |        ^       ^
     |/     ;|             ; /        |/         ;|        |       |
     X       X              X      s--X-->l    s--X-->l s--%--s s--&--s
@@ -4151,13 +4148,13 @@ S   s       s   s
 
        s    s s    s       s    s s    s                  s->a>l       s
   l l  * l  * *  l *  l l  * l  * *  l *      l     l     p->e>l       v
-   h    h    h    h    H    H    H    H     s*zl  s*Zl    r->o>l       e*
+   V    V    V    V    W    W    W    W     s*Ul  s*Gl    r->o>l       e*
   * *  * l  l l  l *  * *  * l  l l  l *      l     l     S->A>l  s--->$|
   s s  s           s  s s  s           s                  P->E>l       $v
                                                           R->O>l       |l
        s   s                 s   s                        s->?>l       |
   l    *   *    l       l    *   *    l                                v
-s*hl s*hl lh*s lh*s   s*Hl s*Hl lH*s lH*s     s-g->l                   l
+s*Vl s*Vl lV*s lV*s   s*Wl s*Wl lW*s lW*s     s-g->l                   l
   *    l   l    *       *    l   l    *
   s             s       s             s
 
