@@ -355,6 +355,7 @@ var TYPE_COUNTER = TYPE_index++; // standalone "c", "C"
 var TYPE_CONSTANT = TYPE_index++; // also "c", "C", but when they have no inputs. Why it exists: if you use C as constant, you do not want mode to become sequential due to this C, and we auto-set mode to sequential if any TYPE_FLIPFLOP is present
 var TYPE_DELAY = TYPE_index++;
 var TYPE_ROM = TYPE_index++;
+var TYPE_MUX = TYPE_index++;
 var TYPE_IC = TYPE_index++; // also called "sub"
 var TYPE_IC_PASSTHROUGH = TYPE_index++; // the switch gets internally converted into this. Behaves like OR, but will have always only 1 input
 var TYPE_VTE = TYPE_index++;
@@ -396,7 +397,7 @@ typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd'; typesymbols[TYPE_
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true,
                  'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
-                 'b':true, 'B':true, 'i':true, 'T':true, 'V':true, '?':true};
+                 'b':true, 'B':true, 'M':true, 'i':true, 'T':true, 'V':true, '?':true};
 // devicemap as well as # (with which inputs interact), but not $ (with which inputs do not interact)
 var devicemapin = clone(devicemap); devicemapin['#'] = true;
 // everything that forms the surface of devices, so that includes $
@@ -412,7 +413,7 @@ var diagonalmap = {'x':true, 'h':true, 'H':true, '/':true, '\\':true, 'X':true};
 //non-isolators (does not include isolators like ' ' and '0-9' despite being "known"). I is also not part of this, but i is.
 var knownmap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true, '/':true, '\\':true, 'x':true, 'g':true,
                 'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true, 'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
-                'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true,
+                'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'z':true, 'Z':true, 'h':true, 'H':true,
                 '#':true, '=':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true,
                 '$':true, 'V':true, '?':true, 'toc':true};
@@ -639,6 +640,7 @@ function CallSub(id) {
       component.ff_cycle_time = v.ff_cycle_time;
       component.master = null; // handled further
       component.rom = null; // handled further
+      component.mux = null; // handled further
       component.ff = null; // handled further
       component.rom_out_pos = v.rom_out_pos;
       component.number = v.number;
@@ -679,6 +681,27 @@ function CallSub(id) {
         rom.ram = v.rom.ram;
         rom.decoder = v.rom.decoder;
         rom.encoder = v.rom.encoder;
+      }
+      if(v.mux) {
+        var mux = new Mux();
+        component.mux = mux;
+        mux.master = component;
+        mux.error = v.mux.error;
+        mux.errormessage = v.mux.errormessage;
+        mux.dataindir = v.mux.dataindir;
+        mux.datainlsbpos = v.mux.datainlsbpos;
+        mux.selindir = v.mux.selindir;
+        mux.selinlsbpos = v.mux.selinlsbpos;
+        mux.output = v.mux.output;
+        mux.numdatain = v.mux.numdatain;
+        mux.numselin = v.mux.numselin;
+        mux.numdataout = v.mux.numdataout;
+        mux.numselout = v.mux.numselout;
+        mux.demux = v.mux.demux;
+        mux.x0 = v.mux.x0;
+        mux.y0 = v.mux.y0;
+        mux.x1 = v.mux.x1;
+        mux.y1 = v.mux.y1;
       }
       if(v.ff) {
         var ff = new FF();
@@ -779,7 +802,7 @@ function CallSub(id) {
     }
 
     var defsub = defsubs[this.subindex];
-    if(!defsub) { this.markError('called defsub does not exist, id: ' + this.subindex); return false; }
+    if(!defsub) { this.markError('IC template (which should be defined with a capital I) with this id does not exist, id: ' + this.subindex); return false; }
     if(defsub.error) { this.markError(defsub.errormessage); return false; }
     this.defsub = defsub;
     if(!this.copyComponents(parent)) { this.markError('copyComponents failed'); return false; }
@@ -815,11 +838,11 @@ function CallSub(id) {
 
     // TODO: also give errors if directions don't match
     if(inputs.length != defsub.inputs.length) {
-      this.markError('unequal inputs amount in ' + this.subindex + ': call: ' + inputs.length + ', def: ' + defsub.inputs.length);
+      this.markError('unequal inputs amount in ' + this.subindex + ': IC instance: ' + inputs.length + ', IC template: ' + defsub.inputs.length);
       return false;
     }
     if(outputs.length != defsub.outputs.length) {
-      this.markError('unequal outputs amount in ' + this.subindex + ': call: ' + outputs.length + ', def: ' + defsub.outputs.length);
+      this.markError('unequal outputs amount in ' + this.subindex + ': IC instance: ' + outputs.length + ', IC template: ' + defsub.outputs.length);
       return false;
     }
 
@@ -1163,6 +1186,7 @@ function ROM() {
           break;
         }
       }
+      if(this.master) break;
     }
     if(!this.master) return false;
     for(var y = y0; y < y1; y++) {
@@ -1574,6 +1598,393 @@ function ROM() {
     this.num_address_inputs = dirs.address[3];
 
     this.sortInputs(dirs.address[0], dirs.datainput[0], dirs.address[4]);
+
+    return true;
+  };
+}
+
+
+
+
+function Mux() {
+  this.master = null;
+  this.error = false;
+  this.errormessage = null;
+  this.dataindir = -1; // out dir is always opposite side
+  this.datainlsbpos = 0; // 0: left or top, 1: right or bottom. The data one will be away from the selection inputs side
+  this.selindir = -1;
+  this.selinlsbpos = -1; // by default: will be on the right side when looking at the direction of the arrows
+  this.output = []; // current ouput values (first data output(s), then the select passthrough)
+  this.numdatain = 0;
+  this.numselin = 0;
+  this.numdataout = 0;
+  this.numselout = 0; // passthrough of sel, should be same as numselin
+  this.demux = false;
+
+  // should have rectangular shape
+  this.x0 = -1;
+  this.y0 = -1;
+  this.x1 = -1;
+  this.y1 = -1;
+
+  // first inputs are the data, last the select
+  this.update = function(inputs) {
+    var index = 0;
+    var l = 1;
+    for(var i = 0; i < this.numselin; i++) {
+      var j = this.numdatain + i;
+      index += l * inputs[j];
+      l += l;
+    }
+
+    if(this.demux) {
+      for(var i = 0; i < this.numdataout; i++) {
+        this.output[i] = false;
+      }
+      this.output[index] = inputs[0];
+    } else {
+      for(var i = 0; i < this.numdataout; i++) {
+        var j = i;
+        this.output[j] = inputs[j ^ index];
+      }
+    }
+    for(var i = 0; i < this.numselout; i++) {
+      this.output[this.numdataout + i] = inputs[this.numdatain + i];
+    }
+  };
+
+  this.setError = function(text) {
+    this.error = true;
+    if(!this.errormessage) this.errormessage = text;
+  };
+
+  // init before inputs are resolved
+  // returns true if ok, false if error
+  this.init1 = function(x0, y0, x1, y1) {
+    this.master = null; // the master component for this Mux
+
+    this.x0 = x0;
+    this.y0 = y0;
+    this.x1 = x1;
+    this.y1 = y1;
+    for(var y = y0; y < y1; y++) {
+      for(var x = x0; x < x1; x++) {
+        var c = world[y][x];
+        if(c.circuitsymbol == 'M') {
+          this.master = c.components[0] || c.components[1];
+          break;
+        }
+      }
+      if(this.master) break;
+    }
+
+    if(!this.master) {
+      this.setError('no master component found');
+      return false;
+    }
+    for(var y = y0; y < y1; y++) {
+      for(var x = x0; x < x1; x++) {
+        var c = world[y][x];
+        //if(c.components[0] == this.master) continue;
+        /*if(!c.components[0]) {
+          c.components[0] = this.master;
+        } else {
+          c.components[0].master = this.master;
+        }*/
+        if(c.components[0]) c.components[0].master = this.master;
+        if(c.components[1]) c.components[1].master = this.master;
+      }
+    }
+    this.master.mux = this;
+    this.master.type = TYPE_MUX; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with $ or #
+    return true;
+  };
+
+
+  /*
+  given the array returned by getIO3,
+  returns object of {
+    datain [heading, lsbpos, num]: input and output's heading, and lsbpos: which data line is for select 0 (normally the one closest to input side of select)
+    dataout [heading, lsbpos, num]: heading/lsbpos should be same as datain,
+    selin [heading, lsbpos, num]
+    selout [heading, lsbpos, num]
+    demux: true if it's a demultiplexer instead of multiplexer
+  }
+  with
+  heading: wind direction of side with this inputs/outputs (NESW), for input is where it comes from, for output is where it goes to
+  lsbpos: is lsbpos for this left or right, value is 0:left/top, 1:right/bottom
+  num: the amount
+  }
+  returns null on error.
+  */
+  this.getDirs = function(io) {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+    var numinputsides = 0;
+    var numoutputsides = 0;
+
+    var datain = [-1, -1, -1];
+    var dataout = [-1, -1, -1];
+    var selin = [-1, -1, -1];
+    var selout = [-1, -1, -1];
+
+    var demux = false;
+    var demuxdataside = -1;
+
+    //io is of form: [[[nv], nc, nt], [[ev], ec, et], [[sv], sc, st], [[wv], wc, wt], ic, oc], with t meaning type: 0:none,1:input,2:output
+
+    // it's a demux if there is a side with one input and opposite side has multiple outputs.
+    for(var i = 0; i < 4; i++) {
+      if(io[i][1] == 1 && io[i][2] == 1) { // if one input
+        var j = getOppositeDir(i);
+        if(io[j][1] > 1 && io[j][2] == 2) { // on opposite side, multiple outputs
+          demux = true;
+          demuxdataside = i;
+          break;
+        }
+      }
+    }
+
+    if(demux) {
+      for(var i = 0; i < 4; i++) {
+        if(io[i][2] == 1) {
+          numinputsides++;
+          if(numinputsides > 2) {
+            this.setError('too many input sides');
+            return null;
+          }
+          if(i == demuxdataside) {
+            datain[0] = i;
+            datain[2] = io[i][1];
+          } else {
+            selin[0] = i;
+            selin[2] = io[i][1];
+          }
+        }
+        if(io[i][2] == 2) {
+          numoutputsides++;
+          if(numoutputsides > 2) {
+            this.setError('too many output sides');
+            return null;
+          }
+          if(i == getOppositeDir(demuxdataside)) {
+            dataout[0] = i;
+            dataout[2] = io[i][1];
+          } else {
+            selout[0] = i;
+            selout[2] = io[i][1];
+          }
+        }
+      }
+
+      if(dataout[2] < 2) { this.setError('must have multiple outputs'); return null; }
+      if(dataout[2] < (1 << selin[2])) { this.setError('too few data outputs'); return null; }
+    } else {
+      for(var i = 0; i < 4; i++) {
+        if(io[i][2] == 1) {
+          numinputsides++;
+          if(numinputsides > 2) {
+            this.setError('too many input sides');
+            return null;
+          }
+          if(numinputsides == 1) {
+            datain[0] = i;
+            datain[2] = io[i][1];
+          }
+          if(numinputsides == 2) {
+            selin[0] = i;
+            selin[2] = io[i][1];
+            if(selin[2] > datain[2]) {
+              var temp = selin;
+              selin = datain;
+              datain = temp;
+            }
+          }
+        }
+        if(io[i][2] == 2) {
+          numoutputsides++;
+          if(numoutputsides > 2) {
+            this.setError('too many output sides');
+            return null;
+          }
+          if(numoutputsides == 1) {
+            dataout[0] = i;
+            dataout[2] = io[i][1];
+          }
+          if(numoutputsides == 2) {
+            selout[0] = i;
+            selout[2] = io[i][1];
+          }
+        }
+      }
+
+      if(datain[2] < 2) { this.setError('must have multiple data inputs'); return null; }
+      if(datain[2] < (1 << selin[2])) { this.setError('too few data inputs'); return null; }
+    }
+
+    if(numoutputsides == 2) {
+      if(selout[0] == getOppositeDir(datain[0])) {
+        var temp = selout;
+        selout = dataout;
+        dataout = temp;
+      }
+    }
+
+    if(datain[0] == -1) { this.setError('no data in'); return null; }
+    if(dataout[0] == -1) { this.setError('no data out'); return null; }
+    if(selin[0] == -1) { this.setError('no sel in'); return null; }
+    if(datain[0] != getOppositeDir(dataout[0])) { this.setError('data dir not opposite'); return null; }
+    if(selout[0] != -1) {
+      if(selin[0] != getOppositeDir(selout[0])) { this.setError('sel dir not opposite'); return null; }
+      if(selout[2] != selin[2]) { this.setError('passthrough sel output not matching amount'); return null; }
+    } else {
+      selout[2] = 0;
+    }
+
+
+    var datalsb = 0;
+    if(selin[0] == 0 || selin[0] == 3) datalsb = 1;
+    datain[1] = dataout[1] = datalsb;
+
+    var sellsb = 0;
+    if(selin[0] == 2 || selin[0] == 3) sellsb = 1;
+    selin[1] = selout[1] = sellsb;
+
+    var result = [datain, dataout, selin, selout, demux];
+
+    return result;
+  };
+
+  /*
+  Sorts as follows:
+  -data inputs from lsb to msb
+  -select inputs from lsb to msb
+  The given dirs are headings (NESW)
+  */
+  this.sortIO = function(io) {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
+    var getDir = function(x, y) {
+      if(y < y0) return 0;
+      if(x >= x1) return 1;
+      if(y >= y1) return 2;
+      if(x < x0) return 3;
+      return -1;
+    };
+
+    var array = [];
+    for(var i = 0; i < this.master.inputs.length; i++) array[i] = i;
+    var self = this;
+    array = array.sort(function(a, b) {
+      var xa =  self.master.inputs_x[a];
+      var ya =  self.master.inputs_y[a];
+      var xb =  self.master.inputs_x[b];
+      var yb =  self.master.inputs_y[b];
+      var da = getDir(xa, ya);
+      var db = getDir(xb, yb);
+      if(da != db) {
+        if(da == self.dataindir) return -1;
+        if(db == self.dataindir) return 1;
+        if(da == self.selindir) return 1;
+        if(db == self.selindir) return -1;
+      }
+      var lsbpos = (da == self.dataindir) ? self.datainlsbpos : self.selinlsbpos;
+      if(((da & 1) == 0) && lsbpos) return xb - xa;
+      if(((da & 1) == 0)) return xa - xb;
+      if(lsbpos) return yb - ya;
+      return ya - yb;
+    });
+    newOrder(this.master.inputs, array);
+    newOrder(this.master.inputs_negated, array);
+    newOrder(this.master.inputs_x, array);
+    newOrder(this.master.inputs_y, array);
+    newOrder(this.master.inputs_x2, array);
+    newOrder(this.master.inputs_y2, array);
+
+    // now assign the outputs
+
+    var getSide = function(dir) {
+      if(dir == 0) {
+        return [x0, y0, 1, 0, 1, x1 - x0];
+      }
+      if(dir == 1) {
+        return [x1 - 1, y0, 0, 1, 0, y1 - y0];
+      }
+      if(dir == 2) {
+        return [x0, y1 - 1, 1, 0, 1, x1 - x0];
+      }
+      if(dir == 3) {
+        return [x0, y0, 0, 1, 0, y1 - y0];
+      }
+    };
+
+    var rompos = 0;
+
+    var side = getSide(getOppositeDir(this.dataindir));
+    var o = io[getOppositeDir(this.dataindir)];
+    for(var i = 0; i < o[0].length; i++) {
+      var j = i;
+      if(this.datainlsbpos) j = o[0].length - i - 1;
+      j = o[0][j] - ((this.dataindir & 1) ? this.y0 : this.x0);
+      var x = side[0] + side[2] * j;
+      var y = side[1] + side[3] * j;
+      var z = side[4];
+      var c = world[y][x];
+      if(c.circuitsymbol != 'M' && c.circuitsymbol != '#') continue;
+      if(c.components[z]) c.components[z].rom_out_pos = rompos++;
+    }
+
+    side = getSide(getOppositeDir(this.selindir));
+    o = io[getOppositeDir(this.selindir)];
+    for(var i = 0; i < o[0].length; i++) {
+      var j = i;
+      if(this.selinlsbpos) j = o[0].length - i - 1;
+      j = o[0][j] - ((this.selindir & 1) ? this.y0 : this.x0);
+      var x = side[0] + side[2] * j;
+      var y = side[1] + side[3] * j;
+      var z = side[4];
+      var c = world[y][x];
+      if(c.circuitsymbol != 'M' && c.circuitsymbol != '#') continue;
+      if(c.components[z]) c.components[z].rom_out_pos = rompos++;
+    }
+  };
+
+  // init after inputs are resolved
+  // returns true if ok, false if error (e.g. no rectangle or inputs not all on one side)
+  this.init2 = function() {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
+    if(!this.master) return false;
+
+    var io = getIO3(x0, y0, x1, y1, this.master);
+    if(!io) { this.setError('getting io error'); return false; }
+
+    var dirs = this.getDirs(io);
+    if(!dirs) { this.setError('getting dirs error'); return false; }
+
+    this.demux = dirs[4];
+
+    this.dataindir = dirs[0][0];
+    this.datainlsbpos = dirs[0][1];
+    this.selindir = dirs[2][0];
+    this.selinlsbpos = dirs[2][1];
+    this.output = []; // current ouput values (first data output(s), then the select passthrough)
+    this.numdatain = dirs[0][2];
+    this.numselin = dirs[2][2];
+    this.numdataout = dirs[1][2];
+    this.numselout = dirs[3][2];
+
+    this.output.length = this.numdataout + this.numselout;
+
+    this.sortIO(io);
 
     return true;
   };
@@ -2274,10 +2685,11 @@ function Component() {
   this.input_ff_types = []; // only used by flipflops. 0=c, 1=j, 2=k, 3=d, 4=t, 5=q, 6=Q
   this.master = null; // master component for rom, vte, ...
   this.rom = null; // used if this is a master of rom
+  this.mux = null; // used if this is a master of mux
   this.vte = null;
   this.ff = null;
   this.tristate = null;
-  this.rom_out_pos = -1;
+  this.rom_out_pos = -1; // used not only for ROM outputs but also for other big components like flip-flops and mux, to know which output value of the master this one belongs to
   // location of the input symbol >, v, ... of incoming component
   this.inputs_x = [];
   this.inputs_y = [];
@@ -2301,6 +2713,8 @@ function Component() {
   this.changedticks = 0; // for keeping track of 'changed' for delay
 
   this.markError = function(message) {
+    this.error = true;
+    if(!message) message = 'component error';
     for(var i = 0; i < this.cells.length; i++) {
       var x = this.cells[i][0];
       var y = this.cells[i][1];
@@ -2423,6 +2837,8 @@ function Component() {
     } else if(this.type == TYPE_FLIPFLOP) {
       return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_ROM) {
+      return this.value; // not implemented in this function, but elsewhere
+    } else if(this.type == TYPE_MUX) {
       return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_VTE) {
       return this.value; // not implemented in this function, but elsewhere
@@ -2577,7 +2993,7 @@ function Component() {
         if(!value2 && prevvalue2) numc_neg_edge++;
       }
 
-      if(this.type == TYPE_ROM || this.type == TYPE_LED_RGB || this.type == TYPE_VTE) {
+      if(this.type == TYPE_ROM || this.type == TYPE_MUX || this.type == TYPE_LED_RGB || this.type == TYPE_VTE) {
         rom_inputs[i] = value2;
       }
     }
@@ -2587,6 +3003,12 @@ function Component() {
         if(this.rom) this.rom.update(rom_inputs);
         var rom = this.rom || this.master.rom;
         this.value = rom.output[this.rom_out_pos];
+      }
+    } else if(this.type == TYPE_MUX) {
+      if(this.master) {
+        if(this.mux) this.mux.update(rom_inputs);
+        var mux = this.mux || this.master.mux;
+        this.value = mux.output[this.rom_out_pos];
       }
     } else if(this.type == TYPE_VTE) {
       if(this.master) {
@@ -3156,6 +3578,15 @@ function Cell() {
     // this function looks unused!!!! it's for graphics effect. but the renderers already check component.
   };
 
+  this.getErrorText = function() {
+    if(this.components[0]) {
+      var result = this.components[0].errormessage;
+      if(!result && this.components[0].master) result = this.components[0].master.errormessage;
+      return result;
+    }
+    return 'unknown error';
+  }
+
   this.initDiv2 = function() {
     var c = this.circuitsymbol;
     var symbol = this.displaysymbol;
@@ -3217,18 +3648,84 @@ function Cell() {
       if(tc == 'g') title = 'global (backplane) wire';
       if(tc == 'I') title = 'IC definition';
       if(tc == 'i') title = 'IC instance';
-      if(tc == 'b' || tc == 'B') title = 'ROM/RAM bit, or encoder/decoder';
+      if(tc == 'b' || tc == 'B') {
+        title = 'ROM/RAM bit, or encoder/decoder';
+        if(this.components[0]) {
+          var master = this.components[0].master;
+          var rom = master ? master.rom : this.components[0].rom;
+          if(rom) {
+            if(rom.ram) {
+              var numadr = rom.array.length;
+              var width = rom.array[0].length;
+              title = 'RAM with ' + numadr + ' ' + width + '-bit values (b=0, B=1)';
+            }
+            else if(rom.decoder) title = 'decoder (binary to unary)';
+            else if(rom.encoder) title = 'encoder (unary to binary)';
+            else if(rom.priority) title = 'priority selector (unary to unary)';
+            else {
+              var numadr = rom.array.length;
+              var width = rom.array[0].length;
+              title = 'ROM with ' + numadr + ' ' + width + '-bit values (b=0, B=1)';
+            }
+          }
+        }
+      }
       if(tc == '=') title = 'bus (wire bundle)';
+      if(tc == 'M') {
+        title = 'mux';
+        var master = this.components[0].master;
+        var mux = master ? master.mux : this.components[0].mux;
+        if(mux) {
+          if(mux.demux) {
+            title = 'demux';
+            if(mux.numdataout > 2) title = '' + mux.numdataout + '-output ' + title;
+            title += '. ';
+            var side0 = '';
+            var side1 = '';
+            if(!(mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'right'; side1 = 'left';}
+            if(!(mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'left'; side1 = 'right';}
+            if((mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'bottom'; side1 = 'top';}
+            if((mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'top'; side1 = 'bottom';}
+            title += 'Output 0 is at the ' + side0 + ', output ' + (mux.numdataout - 1) + ' is at the ' + side1;
+          } else {
+            if(mux.numdataout > 1) {
+              if(mux.numdatain == 2 && mux.numdataout == 2) title += ' (as controlled swap)';
+              else title += ' (with multiple swapped data outputs)';
+            }
+            if(mux.numselout > 0) title += ' (with selection passthrough)';
+            if(mux.numdatain > 2) title = '' + mux.numdatain + '-input ' + title;
+            title += '. ';
+            var side0 = '';
+            var side1 = '';
+            if(!(mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'right'; side1 = 'left';}
+            if(!(mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'left'; side1 = 'right';}
+            if((mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'bottom'; side1 = 'top';}
+            if((mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'top'; side1 = 'bottom';}
+            title += 'Input 0 is at the ' + side0 + ', input ' + (mux.numdatain - 1) + ' is at the ' + side1;
+          }
+        }
+        if(mux.numselin > 1) {
+          title += '. ';
+          var sellsbname = '';
+          if(!(mux.selindir & 1) && mux.selinlsbpos) sellsbname = 'right';
+          if(!(mux.selindir & 1) && !mux.selinlsbpos) sellsbname = 'left';
+          if((mux.selindir & 1) && mux.selinlsbpos) sellsbname = 'bottom';
+          if((mux.selindir & 1) && !mux.selinlsbpos) sellsbname = 'top';
+          title += 'Selection input LSB is at the ' + sellsbname + ' of its group of ' + mux.numselin;
+        }
+      }
       if(tc == 'T') {
         title = 'terminal';
         if(this.components[0]) {
           var master = this.components[0].master;
           var vte = master ? master.vte : this.components[0].vte;
-          if(vte && vte.numinputs > 0 && !vte.counter) title += ' (with keyboard input)';
-          if(vte && vte.numoutputs > 0 && !vte.counter) title += ' (with ascii output)';
-          if(vte && vte.counter) title += ' (as counter)';
-          if(vte && vte.decimaldisplay && !vte.counter) title += ' (as decimal display)';
-          if(vte && vte.decimalinput && !vte.counter) title += ' (as decimal input)';
+          if(vte) {
+            if(vte.numinputs > 0 && !vte.counter) title += ' (with keyboard input)';
+            if(vte.numoutputs > 0 && !vte.counter) title += ' (with ascii output)';
+            if(vte.counter) title += ' (as counter)';
+            if(vte.decimaldisplay && !vte.counter) title += ' (as decimal display)';
+            if(vte.decimalinput && !vte.counter) title += ' (as decimal input)';
+          }
         }
       }
     }
@@ -3577,7 +4074,7 @@ function RendererText() {
     }
 
     if(cell.components[0] && cell.components[0].error) {
-      this.markError(cell, components[0].errormessage);
+      this.markError(cell, cell.getErrorText());
     } else if(opt_title) {
       this.div0.title = opt_title;
       this.div1.title = opt_title;
@@ -3742,6 +4239,7 @@ function sameDevice(x, y, dir) {
   var y2 = n.y;
   var c = world[y][x].circuitsymbol;
   var c2 = world[y2][x2].circuitsymbol;
+  if(c == 'M' && c2 == 'M') return true;
   if(c == 'i' && c2 == 'i') return true;
   if((c == 'b' || c == 'B') && (c2 == 'b' || c2 == 'B')) return true;
   /*if(c == 'c' && c2 == 'c') {
@@ -4514,7 +5012,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     var error = false;
     if(cell.components[0] && cell.components[0].error) {
       error = true;
-      this.markError(cell, cell.components[0].errormessage);
+      this.markError(cell, cell.getErrorText());
       drawer.fillBg_(this.ctx0, 'yellow');
       drawer.fillBg_(this.ctx1, 'yellow');
     } else if(opt_title) {
@@ -4537,7 +5035,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       // off (the letter character will still get on color)
       if(i == 1 && cell.components[0]) {
         var type = cell.components[0].type;
-        if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM) {
+        if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM || type == TYPE_MUX) {
           // only for the solid parts, wires part of this component must still use on color
           if(devicemap[c] || c == '#' || c == '$') {
             ctx.strokeStyle = OFFCOLOR;
@@ -6409,11 +6907,11 @@ function parseSubs() {
     //}
     for(var k in defsubs) {
       defsubs[k].error = true;
-      defsubs[k].markError();
+      defsubs[k].markError(); // TODO: add error message
     }
     for(var i = 0; i < callsubs.length; i++) {
       callsubs[i].error = true;
-      callsubs[i].markError();
+      callsubs[i].markError(); // TODO: add error message
     }
     defsubs_order = [];
     // TODO: only disable those ICs that participate in the loop
@@ -6722,6 +7220,11 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(devicemap[c] && devicemap[c2]) return false; // device cores don't interact
 
   if(c == 'i' && z != todir) return false;
+  if(c == 'M') {
+    if((todir == 0 || todir == 2) && z != 1) return false;
+    if((todir == 1 || todir == 3) && z != 0) return false;
+    if(todir > 3) return false;
+  }
 
   return true;
 }
@@ -6774,6 +7277,9 @@ function getZ2(c, c2, ce, ce2, todir, z) {
   if(c2 == 'i') {
     if(todir < 4) z2 = ((todir + 2) & 3);
     else z2 = 4 + ((todir + 2) & 3);
+  }
+  if(c2 == 'M') {
+    if(todir == 0 || todir == 2) z2 = 1;
   }
   if(dinputmap[c2] && ce2 == 2) {
     if(c2 == '^' || c2 == 'm') return todir == 4 ? 1 : 0;
@@ -7109,6 +7615,7 @@ function parseComponents() {
             if(c == 'e') type = TYPE_XOR;
             if(c == 'E') type = TYPE_XNOR;
             if(c == 'b' || c == 'B') type = TYPE_ROM;
+            if(c == 'M') type = TYPE_MUX;
             if(c == 'i') type = TYPE_IC;
             if(c == 'T') type = TYPE_VTE;
             if(c == 'V') type = TYPE_TRISTATE;
@@ -7241,6 +7748,7 @@ function parseComponents() {
       var stack = [[x0, y0, 0]];
       used[y0][x0][0] = true;
       var rom = false;
+      var mux = false;
       var vte = false;
       var ff = false;
       var error = false;
@@ -7260,6 +7768,8 @@ function parseComponents() {
 
         if(ffmap[c] && world[y][x].components[0].type == TYPE_FLIPFLOP) ff = true;
         if(c == 'T' && world[y][x].components[0].type == TYPE_VTE) vte = true;
+        if(c == 'M' && world[y][x].components[0] && world[y][x].components[0].type == TYPE_MUX) mux = true;
+        if(c == 'M' && world[y][x].components[1] && world[y][x].components[1].type == TYPE_MUX) mux = true;
 
         // neighbors
         for(var i = 0; i < 8; i++) { // N, E, S, W ; NE, SE, SW, NW
@@ -7271,6 +7781,9 @@ function parseComponents() {
 
           var z2 = getZ2(c, c2, ce, ce2, i, z); // z coordinate for the neighbor
           if(used[y2][x2][z2]) continue;
+
+          if(rommap[c] && c2 == 'M') continue;
+          if(rommap[c2] && c == 'M') continue;
 
           if(rommap[c] && c2 == 'T') continue;
           if(rommap[c2] && c == 'T') continue;
@@ -7284,6 +7797,10 @@ function parseComponents() {
           if(c == 'T' && c2 != 'T') continue;
           if(c2 == 'T' && c != 'T') continue;
 
+          if(c == 'M') mux = true;
+          if(c == 'M' && !(c2 == 'M' || c2 == '#' || c2 == '$')) continue;
+          if(c2 == 'M' && !(c == 'M' || c == '#' || c == '$')) continue;
+
           if(ffmap[c] && world[y][x].components[0].type == TYPE_FLIPFLOP) ff = true;
           if((c == '#' || c == '$') && (ffmap[c2] && i < 4 && world[y2][x2].components[0].type == TYPE_FLIPFLOP)) ff = true;
           if(ff && i >= 4) continue;
@@ -7295,7 +7812,7 @@ function parseComponents() {
           if(c == 'd' && c2 == 'd') continue;
           // Note: for other flipflop parts, such as qq, it is allowed to touch and they are part of same flipflop then.
 
-          if(!rom && !vte && !ff) {
+          if(!rom && !vte && !ff && !mux) {
             if(!connected(c, c2, ce, ce2, i, z, z2)) continue;
             var fromdir = (i <= 3) ? ((i + 2) & 3) : (4 + ((i - 2) & 3));
             if(!connected(c2, c, ce2, ce, fromdir, z2, z)) continue;
@@ -7305,6 +7822,16 @@ function parseComponents() {
 
           stack.push([x2, y2, z2]);
           used[y2][x2][z2] = true;
+        }
+
+        if(c == 'M') {
+          var x2 = x;
+          var y2 = y;
+          var z2 = (z == 0) ? 1 : 0;
+          if(!used[y2][x2][z2]) {
+            stack.push([x2, y2, z2]);
+            used[y2][x2][z2] = true;
+          }
         }
 
         handleBackPlaneConnections(used, stack, x, y, z);
@@ -7323,6 +7850,21 @@ function parseComponents() {
         if(!romobject.init1(x0, y0, x1, y1)) {
           console.log('rom error @' + x0 + ',' + y0 + '-' + x1 + ',' + y1);
           romobject.error = true;
+        }
+      }
+
+      if(mux) {
+        var muxobject = new Mux();
+        var x0 = w, y0 = h, x1 = 0, y1 = 0;
+        for(var i = 0; i < array.length; i++) {
+          x0 = Math.min(x0, array[i][0]);
+          y0 = Math.min(y0, array[i][1]);
+          x1 = Math.max(x1, array[i][0] + 1);
+          y1 = Math.max(y1, array[i][1] + 1);
+        }
+        if(!muxobject.init1(x0, y0, x1, y1)) {
+          console.log('mux error @' + array[0][0] + ' ' + array[0][1]);
+          muxobject.error = true;
         }
       }
 
@@ -7585,7 +8127,20 @@ function parseComponents() {
         component.rom.error = true;
         console.log('rom error with component ' + i);
       }
-      if(component.rom.error) component.error = true;
+      if(component.rom.error) {
+        component.error = true;
+        component.errormessage = component.rom.errormessage;
+      }
+    }
+    if(component.mux) {
+      if(!component.mux.error && !component.mux.init2()) {
+        component.mux.error = true;
+        console.log('mux error with component ' + i);
+      }
+      if(component.mux.error) {
+        component.error = true;
+        component.errormessage = component.mux.errormessage;
+      }
     }
     if(component.vte) {
       if(!component.vte.error && !component.vte.init2()) component.vte.error = true;
@@ -7603,13 +8158,19 @@ function parseComponents() {
       component.error = true;
     }
     if(component.type == TYPE_ROM && (!component.master && !component.rom)) {
+      component.markError('is rom but has no master');
+    }
+    if(component.master && component.master.mux && component.master.mux.error) {
       component.error = true;
+    }
+    if(component.type == TYPE_MUX && (!component.master && !component.mux)) {
+      component.markError('is mux but has no master');
     }
     if(component.master && component.master.vte && component.master.vte.error) {
       component.error = true;
     }
     if(component.type == TYPE_VTE && (!component.master && !component.vte)) {
-      component.error = true;
+      component.markError('is vte but has no master');
     }
 
     if(component.type == TYPE_LED_RGB) {

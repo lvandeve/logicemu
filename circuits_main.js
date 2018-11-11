@@ -1715,6 +1715,23 @@ registerCircuit('register', `
             *
             s
 
+0"Logicemu also supports a shortcut for this (a D flip-flop with an enable"
+0"input y), and alternatively a MUX notation (M), these are shown here below,"
+0"but are not used further down, since shortcuts like this are intended for"
+0"bigger circuits that use registers but are not themselves about registers."
+
+       l                l
+       ^                ^
+       *                *
+       *                *
+"C"s-->c    "C"s*****>c#d**
+"E"s-->y                ^ *
+       d    "E"s*****>MMM *
+       ^              ^ ^ *
+       *              * ***
+       *              *
+       s              s
+
 0"8-bit register"
 
        l       l       l       l       l       l       l       l

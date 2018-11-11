@@ -477,6 +477,63 @@ s-->d-->d-->d-->d-->d-->d-->d-->d-->l
          s
         "G"
 
+
+
+0"Capital M's form multiplexer, demultiplexer or controlled swap, depending on"
+0"the configuration. Mouse over them to see a tooltip that explains each one."
+
+0"Mux:"
+
+    l               l l
+    ^               ^ ^
+    *               * *
+    *               * *
+s**>M**>l       s**>MMM**>l
+    M               MMM
+s**>M           s**>MMM
+    ^               MMM
+    *           s**>MMM
+    *               MMM
+    s           s**>MMM
+                    ^ ^
+                    * *
+                    * *
+                    s s
+
+
+0"Demux:"
+
+    l               l l
+    ^               ^ ^
+s**>M**>l           * *
+    M               * *
+    M**>l       s**>MMM**>l
+    ^               MMM
+    s               MMM**>l
+                    MMM
+                    MMM**>l
+                    MMM
+                    MMM**>l
+                    ^ ^
+                    * *
+                    * *
+                    s s
+
+0"Controlled swap:"
+
+    l
+    ^
+    *
+    *
+s**>M**>l
+    M
+s**>M**>l
+    ^
+    *
+    *
+    s
+
+
 0"A terminal can display ASCII characters to a screen and read them from"
 0"the keyboard. If it has a blinking cursor, you can type in it. The"
 0"EOF LED indicates that nothing was typed or everything types was"
@@ -1485,6 +1542,10 @@ sssss    sssss    sssss    ###
  ||| | |||
  sss s sss
 
+0"The device extender is used for logic gates, LEDs, switches and other single-"
+0"cell devices. However, for large devices which are introduced below, like T,"
+0"i, M, B, b, the extenders are not (always) needed, for those the letters"
+0"themselves usually connect with each other, unlike a, o, e, etc... do."
 
 0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 0"SECTION III: Flip-Flops And Memory"
@@ -1886,6 +1947,67 @@ s*>L<*s
    ^
    *
    s
+
+0"NEW PART: Mux"
+0"M: Multiplexer (various functions)"
+
+0"Multiple M's that touch together form a multiplexer, or, in other"
+0"configurations", a demux, controlled swap, and possibly with more than two"
+0"inputs/outputs and passthrough of the select signal."
+
+0"Mux:"
+
+    l               l l
+    ^               ^ ^
+    *               * *
+    *               * *
+s**>M**>l       s**>MMM**>l
+    M               MMM
+s**>M           s**>MMM
+    ^               MMM
+    *           s**>MMM
+    *               MMM
+    s           s**>MMM
+                    ^ ^
+                    * *
+                    * *
+                    s s
+
+
+0"Demux:"
+
+    l               l l
+    ^               ^ ^
+s**>M**>l           * *
+    M               * *
+    M**>l       s**>MMM**>l
+    ^               MMM
+    s               MMM**>l
+                    MMM
+                    MMM**>l
+                    MMM
+                    MMM**>l
+                    ^ ^
+                    * *
+                    * *
+                    s s
+
+0"Controlled swap:"
+
+    l
+    ^
+    *
+    *
+s**>M**>l
+    M
+s**>M**>l
+    ^
+    *
+    *
+    s
+
+0"These muxes are optional for convenience, notation or compactness, you can"
+0"also instead make them with AND and OR gates or from NAND gates only."
 
 0"NEW PART: Interactive terminal"
 0"T: Interactive multiline terminal (7-bit ASCII)"
@@ -2939,26 +3061,26 @@ registerCircuit('Electronic Diagram', `
 1"                            "
 1"                            "
 1"          _                 "
-1"         | -_               "****>a**
-1"       --|   |              "     m v
-1"         |   |              "     * o**
-1" MUX     |   |---           "     * ^
-1"       --|  _|              "**>a*+**
-1"         |_-                "   ^ *
-1"           |                "   ***
+1"         | -_               "
+1"       --|   |              "**>M***
+1"         |   |              "   M
+1" MUX     |   |---           "**>M
+1"       --|  _|              "   ^
+1"         |_-                "   *
 1"           |                "   *
+1"           |                "
 1"                            "
 1"                            "
 1"                            "
 1"          _                 "
-1"         | -_               "   *>a****
-1"         |   |--            "   * m
-1"         |   |              "**** *
-1"DEMUX  --|   |              "   v *
-1"         |  _|--            "   a*+****
-1"         |_-                "   ^ *
-1"           |                "   ***
+1"         | -_               "
+1"         |   |--            "**>M***
+1"         |   |              "   M
+1"DEMUX  --|   |              "   M***
+1"         |  _|--            "   ^
+1"         |_-                "   *
 1"           |                "   *
+1"           |                "
 1"                            "
 
 
@@ -3250,6 +3372,91 @@ registerCircuit('Priority Selector (LSB left) (b)', `
  ^^^^
  ||||
  ssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Mux (M)', `
+
+    l
+    ^
+    *
+    *
+s**>M**>l
+    M
+s**>M
+    ^
+    *
+    *
+    s
+
+`, 'component' + componentid++);
+
+registerCircuit('Demux (M)', `
+
+
+    l
+    ^
+s**>M**>l
+    M
+    M**>l
+    ^
+    s
+
+`, 'component' + componentid++);
+
+registerCircuit('Multi-input mux (M)', `
+
+    l l
+    ^ ^
+    * *
+    * *
+s**>MMM**>l
+    MMM
+s**>MMM
+    MMM
+s**>MMM
+    MMM
+s**>MMM
+    ^ ^
+    * *
+    * *
+    s s
+
+`, 'component' + componentid++);
+
+registerCircuit('Multi-output demux (M)', `
+
+    l l
+    ^ ^
+    * *
+    * *
+s**>MMM**>l
+    MMM
+    MMM**>l
+    MMM
+    MMM**>l
+    MMM
+    MMM**>l
+    ^ ^
+    * *
+    * *
+    s s
+
+`, 'component' + componentid++);
+
+registerCircuit('Mux with swap (M)', `
+
+    l
+    ^
+    *
+    *
+s**>M**>l
+    M
+s**>M**>l
+    ^
+    *
+    *
+    s
 
 `, 'component' + componentid++);
 
@@ -3803,8 +4010,30 @@ s##
 *
 *
 *-->dy------>l
-     ^
-     S
+*    ^
+*    S
+*
+*     ******>l
+*     *
+* c**>M*****>l
+*     M
+* C**>M*****]l
+*     ^
+*******
+*
+*     ******>l
+*     *
+* C**>M*****]l
+*     M
+*     M*****>l
+*     ^
+*******
+*
+*
+*
+*
+*
+
 
 0"Flip Flops"
 0"----------"
