@@ -6561,7 +6561,7 @@ function parseCells(text) {
           commentend = x + 1;
           for(;;) {
             if(lines[y][commentend] == '"') break;
-            if(commentend + 1 == w) break;
+            if(commentend + 1 >= w) break;
             commentend++;
           }
           commentend2 = commentend;
@@ -6623,6 +6623,36 @@ function parseCells(text) {
         }
       }
     }
+  }
+
+  // vertical comments
+  var above = [];
+  for(var y = 0; y < h; y++) {
+    var above2 = [];
+    //for(var x = line0[y]; x < line1[y]; x++) {
+    for(var x = 0; x < w; x++) {
+      var cell = world[y][x];
+      var c = world[y][x].circuitsymbol;
+      if(c == ':') {
+        if(above[x]) {
+          // nothing, comment done
+        } else {
+          above2[x] = true;
+        }
+        cell.comment = true;
+        cell.circuitsymbol = ' ';
+        cell.displaysymbol = ' ';
+        cell.metasymbol = '"';
+      } else {
+        if(above[x]) {
+          cell.comment = true;
+          above2[x] = true;
+          cell.circuitsymbol = ' ';
+          cell.metasymbol = '"';
+        }
+      }
+    }
+    above = above2;
   }
 
   parseAntennas();
@@ -9078,32 +9108,58 @@ function transpose(text) {
   h = lines.length;
   w = 0;
   for(var i = 0; i < lines.length; i++) w = Math.max(w, lines[i].length);
-
   var grid = [];
+  var above = []; // for vertical comments
   for(var y = 0; y < h; y++) {
     grid[y] = [];
+    var comment = false;
+    var above2 = [];
     for(var x = 0; x < w; x++) {
       var c = x < lines[y].length ? lines[y][x] : ' ';
-      if(c == '|') c = '-';
-      else if(c == '-') c = '|';
-      else if(c == '^') c = '<';
-      else if(c == '>') c = 'v';
-      else if(c == 'v') c = '>';
-      else if(c == '<') c = '^';
-      else if(c == 'm') c = '[';
-      else if(c == ']') c = 'w';
-      else if(c == 'w') c = ']';
-      else if(c == '[') c = 'm';
-      else if(c == 'n') c = '(';
-      else if(c == ')') c = 'u';
-      else if(c == 'u') c = ')';
-      else if(c == '(') c = 'n';
-      // not yet implemented "vertical comment", but transform done to
-      // avoid existing quotes commenting out wrong lines when transposed
-      else if(c == ':') c = '"';
-      else if(c == '"') c = ':';
+      if(comment) {
+        if(c == '"' || c == '`') {
+          c = ':'; // swap this just in case there's a : in regular comment that would prematurely end rotated comment
+          comment = false;
+        } else if(c == ':') {
+          c = '~'; // idem, however " overrules : and due to that we cannot put " inside :. So use ~ as replacement.
+        }
+      } else if(above[x]) {
+        above2[x] = true;
+        if(c == ':') {
+          above2[x] = false;
+          c = '"';
+        } else if (c == '"' || c == '`') {
+          c = ':';
+        } else if (c == '~') {
+          c = ':';
+        }
+      } else {
+        if(c == '|') c = '-';
+        else if(c == '-') c = '|';
+        else if(c == '^') c = '<';
+        else if(c == '>') c = 'v';
+        else if(c == 'v') c = '>';
+        else if(c == '<') c = '^';
+        else if(c == 'm') c = '[';
+        else if(c == ']') c = 'w';
+        else if(c == 'w') c = ']';
+        else if(c == '[') c = 'm';
+        else if(c == 'n') c = '(';
+        else if(c == ')') c = 'u';
+        else if(c == 'u') c = ')';
+        else if(c == '(') c = 'n';
+        else if(c == ':') {
+          c = '"';
+          above2[x] = true;
+        }
+        else if(c == '"' || c == '`') {
+          c = ':';
+          comment = true;
+        }
+      }
       grid[y][x] = c;
     }
+    above = above2;
   }
 
   var result = '\n';
@@ -9127,25 +9183,43 @@ function mirror(text) {
   h = lines.length;
   w = 0;
   for(var i = 0; i < lines.length; i++) w = Math.max(w, lines[i].length);
-
   var grid = [];
+  var above = []; // for vertical comments
   for(var y = 0; y < h; y++) {
     grid[y] = [];
+    var comment = false;
+    var above2 = [];
     for(var x = 0; x < w; x++) {
       var c = x < lines[y].length ? lines[y][x] : ' ';
-      // TODO: keep multidigit numbers unmirrored, otherwise they may not match up with horizontal numbers
-      if(c == '>') c = '<';
-      else if(c == '<') c = '>';
-      else if(c == ']') c = '[';
-      else if(c == '[') c = ']';
-      else if(c == ')') c = '(';
-      else if(c == '(') c = ')';
-      else if(c == '%') c = '&';
-      else if(c == '&') c = '%';
-      else if(c == '/') c = hasbackslash ? '\\' : BACKSLASH_ALTERNATIVE;
-      else if(c == '\\' || c == BACKSLASH_ALTERNATIVE) c = '/';
+      if(comment || above[x]) {
+        if(above[x]) above2[x] = true;
+        if(c == '"') {
+          comment = false;
+        } else if(c == ':') {
+          above2[x] = false;
+        }
+      } else {
+        // TODO: keep multidigit numbers unmirrored, otherwise they may not match up with horizontal numbers
+        if(c == '>') c = '<';
+        else if(c == '<') c = '>';
+        else if(c == ']') c = '[';
+        else if(c == '[') c = ']';
+        else if(c == ')') c = '(';
+        else if(c == '(') c = ')';
+        else if(c == '%') c = '&';
+        else if(c == '&') c = '%';
+        else if(c == '/') c = hasbackslash ? '\\' : BACKSLASH_ALTERNATIVE;
+        else if(c == '\\' || c == BACKSLASH_ALTERNATIVE) c = '/';
+        else if(c == ':') {
+          above2[x] = true;
+        }
+        else if(c == '"') {
+          comment = true;
+        }
+      }
       grid[y][x] = c;
     }
+    above = above2;
   }
 
   var result = '\n';

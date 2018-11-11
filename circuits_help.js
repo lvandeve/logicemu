@@ -1378,7 +1378,8 @@ s----->l  |||     *****>l
 0"really needed. This is purely up to personal preference though."
 
 0"NEW PART: comments"
-0"double quote: encloses comment, numbers: alter alignment"
+0"double quote: encloses comment, numbers: alter alignment, colon: vertical
+0"              comment"
 
 0"Comments, like this text here, are made with double quotes. The comment"
 0"starts at a quote and ends at the next quote on the same line. A number"
@@ -1400,6 +1401,22 @@ s----->l  |||     *****>l
 3"quotes with 3: 1 char per cell, shifted left a bit"
 
 4"quotes with 4: 1 char per cell, shifted right a bit"
+
+0"Vertical comments can alternatively be made with a colon above and below:"
+
+  :
+  v
+  e
+  r
+  t
+  i
+  c
+  a
+  l
+  :
+
+0"Note: It's safe to use a colon in a horizontal comment, but you can't use a"
+0"quote in a vertical comment, it'll be used to comment a line horizontally."
 
 0"NEW PART: isolators"
 
@@ -3950,6 +3967,10 @@ C***********]l
 C---------->Vl
 
 C----------U>l
+
+      :
+C***********>l
+      :
 
 C******
       *
