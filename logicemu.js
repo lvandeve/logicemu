@@ -3685,7 +3685,7 @@ function Cell() {
             if(rom.ram) {
               var numadr = rom.array.length;
               var width = rom.array[0].length;
-              title = 'RAM with ' + numadr + ' ' + width + '-bit values (b=0, B=1)';
+              title = 'RAM with ' + numadr + ' ' + width + '-bit values (b=0, B=1). Note that the RAM may be bigger than the amount of bits shown, if so only the first lines are shown. Clicking bits with the mouse can toggle them.';
             }
             else if(rom.decoder) title = 'decoder (binary to unary)';
             else if(rom.encoder) title = 'encoder (unary to binary)';
@@ -3693,7 +3693,7 @@ function Cell() {
             else {
               var numadr = rom.array.length;
               var width = rom.array[0].length;
-              title = 'ROM with ' + numadr + ' ' + width + '-bit values (b=0, B=1)';
+              title = 'ROM with ' + numadr + ' ' + width + '-bit values (b=0, B=1). Clicking bits with the mouse can toggle them.';
             }
           }
         }
@@ -3964,10 +3964,12 @@ function RendererText() {
   // one time initialization
   this.init = function(cell, x, y, clickfun) {
     this.div0 = makeDiv(x * tw, y * th, tw, th, worldDiv);
-    this.div1 = makeDiv(x * tw, y * th, tw, th, worldDiv);
-
     this.div0.onmousedown = clickfun;
-    this.div1.onmousedown = clickfun;
+
+    if(cell.circuitsymbol != '"') {
+      this.div1 = makeDiv(x * tw, y * th, tw, th, worldDiv);
+      this.div1.onmousedown = clickfun;
+    }
 
     var c = cell.circuitsymbol;
     if(c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R') {
@@ -3990,15 +3992,18 @@ function RendererText() {
       this.div0.style.textAlign = 'center';
       this.div0.style.fontSize = tw + 'px';
       this.div0.style.fontFamily = 'monospace';
-      this.div1.style.color = ONCOLOR;
-      this.div1.style.textAlign = 'center';
-      this.div1.style.fontSize = tw + 'px';
-      this.div1.style.fontFamily = 'monospace';
-      this.div1.style.fontWeight = 'bold';
       this.div0.style.backgroundColor = '';
-      this.div1.style.backgroundColor = '';
       this.div0.style.zIndex = MAINZINDEX;
-      this.div1.style.zIndex = MAINZINDEX;
+
+      if(this.div1) {
+        this.div1.style.color = ONCOLOR;
+        this.div1.style.textAlign = 'center';
+        this.div1.style.fontSize = tw + 'px';
+        this.div1.style.fontFamily = 'monospace';
+        this.div1.style.fontWeight = 'bold';
+        this.div1.style.backgroundColor = '';
+        this.div1.style.zIndex = MAINZINDEX;
+      }
     }
 
     if(!cell.comment) {
@@ -4944,7 +4949,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   this.ctx0 = null;
   this.ctx1 = null;
   this.prevvalue = null;
-  this.usefallback = false;
+  this.usefallbackonly = false;
   this.init2done = false;
   this.text0 = null;
   this.text1 = null;
@@ -4977,6 +4982,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
   // one time initialization
   this.init = function(cell, x, y, clickfun) {
+    // todo: don't create the fallback for elements that don't need it. the fallback is used for text characters, but e.g. wires don't need it, and its div creation is costly
     this.fallback.init(cell, x, y, clickfun);
     this.tx = tw * cell.x + rglobal.offcanvas0.getXOffsetForCell(cell);
     this.ty = th * cell.y + rglobal.offcanvas0.getYOffsetForCell(cell);
@@ -4985,12 +4991,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       this.canvas1 = rglobal.offcanvas1.getCanvasForCell(cell); //makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div1*/);
       this.ctx0 = rglobal.offcanvas0.getContextForCell(cell);
       this.ctx1 = rglobal.offcanvas1.getContextForCell(cell);
-      if(this.text0) removeElement(this.text0);
-      if(this.text1) removeElement(this.text1);
-      this.fallback.div0.innerHTML = '';
-      this.fallback.div1.innerHTML = '';
-      this.text0 = makeDiv(0, 0, tw, th, this.fallback.div0);
-      this.text1 = makeDiv(0, 0, tw, th, this.fallback.div1);
+      this.text0 = this.fallback.div0;
+      this.text1 = this.fallback.div1;
     }
   };
 
@@ -5489,16 +5491,16 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           ctx.fillText(symbol, drawer.tx + (tw >> 1), drawer.ty + (th >> 1));
         }
       } else if(c == 'T') {
-        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
+        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'L') {
-        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
+        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'g') {
         drawer.drawBGSplit_(cell, ctx);
         drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.4);
       } else if(cell.comment) {
-        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
+        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else if(c == 'toc') {
-        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallback = true; break;
+        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else {
         var alreadybg = error;
         if(!error) {
@@ -5904,7 +5906,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   };
 
   this.setValue = function(cell, value, type) {
-    if(this.usefallback) {
+    if(this.usefallbackonly) {
       this.fallback.setValue(cell, value, type);
       return;
     }
@@ -5926,7 +5928,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
       if(value) {
         this.fallback.div0.style.visibility = 'hidden';
-        this.fallback.div1.style.visibility = 'visible';
+        if(this.fallback.div1) this.fallback.div1.style.visibility = 'visible';
         source = rglobal.offcanvas1.getCanvasForCell(cell);
         if(this.drawextra) {
           var c = cell.circuitsymbol;
@@ -5975,7 +5977,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         }
       } else {
         this.fallback.div0.style.visibility = 'visible';
-        this.fallback.div1.style.visibility = 'hidden';
+        if(this.fallback.div1) this.fallback.div1.style.visibility = 'hidden';
         source = rglobal.offcanvas0.getCanvasForCell(cell);
       }
       dest.drawImage(source, sx, sy, tw + tweak, th + tweak, dx, dy, tw + tweak, th + tweak);
@@ -5984,7 +5986,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   };
 
   this.markError = function(cell, errortext) {
-    if(this.usefallback) {
+    if(this.usefallbackonly) {
       this.fallback.markError(cell, errortext);
     } else {
       //this.canvas0.style.backgroundColor = 'yellow';
@@ -6001,10 +6003,6 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   };
 
   this.setCursorPointer = function() {
-    this.fallback.div0.style.cursor = 'pointer';
-    this.fallback.div1.style.cursor = 'pointer';
-    this.text0.style.cursor = 'pointer';
-    this.text1.style.cursor = 'pointer';
     this.fallback.setCursorPointer();
   };
 
