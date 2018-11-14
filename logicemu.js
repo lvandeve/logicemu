@@ -4135,6 +4135,7 @@ function RendererText() {
   };
 
   this.setValue = function(cell, value, type) {
+    if(!this.div1) return; // e.g. if this is a comment (TODO: fix the fact that comment gets setValue at all, it should not be part of a component)
     if(type == TYPE_LED_RGB && (cell.circuitsymbol == 'L' || cell.circuitsymbol == '#' || cell.circuitsymbol == '$')) {
       value = cell.components[0].rgbcolor;
       if(value != this.prevvalue) {
@@ -4653,6 +4654,72 @@ function RendererDrawer() {
     return [num, code];
   };
 
+  // specifically made for dynamic rendering of the 4-way X crossing. Value and code use different bits.
+  this.drawCrossing2_ = function(ctx, code, value, color0, color1) {
+    var full = 0; // which one gets the full length
+    if(code & 2) full = 2; // horizontal full looks best
+    else if(code & 1) full = 1;
+    else if(code & 4) full = 4;
+    else full = 8;
+
+    var color;
+
+    color = (value & 2) ? color1 : color0;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    if(code & 1) {
+      if(full == 1) {
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
+      } else {
+        var shift = 0.2;
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+        this.drawLineCore_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      }
+    }
+    ctx.stroke();
+    color = (value & 1) ? color1 : color0;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    if(code & 2) {
+      if(full == 2) {
+        this.drawLineCore_(ctx, 0, 0.5, 1, 0.5);
+      } else {
+        var shift = 0.2;
+        this.drawLineCore_(ctx, 0, 0.5, 0.5 - shift + 0.1, 0.5);
+        this.drawLineCore_(ctx, 0.5 + shift, 0.5, 1, 0.5);
+      }
+    }
+    ctx.stroke();
+    color = (value & 8) ? color1 : color0;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    if(code & 4) {
+      if(full == 4) {
+        this.drawLineCore_(ctx, 0, 1, 1, 0);
+      } else {
+        this.drawLineCore_(ctx, 0, 1, 0.4, 0.6);
+        this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
+      }
+    }
+    ctx.stroke();
+    color = (value & 4) ? color1 : color0;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    if(code & 8) {
+      if(full == 8) {
+        this.drawLineCore_(ctx, 0, 0, 1, 1);
+      } else {
+        this.drawLineCore_(ctx, 0, 0, 0.4, 0.4);
+        this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
+      }
+    }
+    ctx.stroke();
+  };
+
   this.fillBg_ = function(ctx, color) {
     var origStyle = ctx.fillStyle;
     ctx.fillStyle = color;
@@ -4939,6 +5006,12 @@ function hasRealComponent(cell) {
 
 var rglobal = new RendererImgGlobal();
 
+var NOUSETEXTMAP = {'-':true, '|':true, '*':true, '+':true, 'x':true, 'X':true,
+                    '>':true, 'v':true, '<':true, '^':true, ']':true, 'w':true, '[':true, 'm':true,
+                    'U':true, 'G':true, 'V':true, 'W':true}
+
+var drawer = new RendererDrawer();
+
 // TODO: Fix a few pixel leak through glitches because some things render a few pixels outside their cell.
 /** @implements Renderer */
 function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics RendererImage
@@ -4950,8 +5023,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   this.ctx1 = null;
   this.prevvalue = null;
   this.usefallbackonly = false;
+  this.usetext = true;
   this.init2done = false;
-  this.text0 = null;
+  this.text0 = null; // also used for clickfun, tooltip, ...
   this.text1 = null;
   this.tx = 0;
   this.ty = 0;
@@ -4965,6 +5039,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   this.drawextrag = 0;
    // if non-0, only use "on" drawing if a wire with that particular numerical direction is on
   this.drawonly = 0;
+  this.dynamicdraw = false;
+  this.dynamicdrawcode = 0;
 
   this.globalInit = function() {
     this.fallback.globalInit();
@@ -4982,8 +5058,12 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
   // one time initialization
   this.init = function(cell, x, y, clickfun) {
-    // todo: don't create the fallback for elements that don't need it. the fallback is used for text characters, but e.g. wires don't need it, and its div creation is costly
-    this.fallback.init(cell, x, y, clickfun);
+    var c = cell.circuitsymbol;
+    if(NOUSETEXTMAP[c]) {
+      // optimization for those that don't need divs at all
+      this.usetext = false;
+    }
+    if(this.usetext) this.fallback.init(cell, x, y, clickfun);
     this.tx = tw * cell.x + rglobal.offcanvas0.getXOffsetForCell(cell);
     this.ty = th * cell.y + rglobal.offcanvas0.getYOffsetForCell(cell);
     if(!cell.comment && cell.circuitsymbol != ' ') {
@@ -4991,8 +5071,14 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       this.canvas1 = rglobal.offcanvas1.getCanvasForCell(cell); //makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div1*/);
       this.ctx0 = rglobal.offcanvas0.getContextForCell(cell);
       this.ctx1 = rglobal.offcanvas1.getContextForCell(cell);
-      this.text0 = this.fallback.div0;
-      this.text1 = this.fallback.div1;
+      if(this.usetext) {
+        this.text0 = this.fallback.div0;
+        this.text1 = this.fallback.div1;
+      } else {
+        // still need to make 1 div anyway (at least not 2) for the click function
+        this.text0 = makeDiv(x * tw, y * th, tw, th, worldDiv);
+        this.text0.onmousedown = clickfun;
+      }
     }
   };
 
@@ -5000,11 +5086,11 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   // specific initialization, can be re-done if cell changed on click
   this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
     if(!this.canvas0) {
+      this.usefallbackonly = true;
       this.fallback.init2(cell, symbol, virtualsymbol, opt_title);
       return;
     }
 
-    var drawer = new RendererDrawer();
     drawer.tx = this.tx;
     drawer.ty = this.ty;
 
@@ -5026,11 +5112,14 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     this.text0.style.fontSize = fs + 'px';
     this.text0.style.fontFamily = 'monospace';
     this.text0.style.zIndex = MAINZINDEX;
-    this.text1.style.color = ONCOLOR;
-    this.text1.style.textAlign = 'center';
-    this.text1.style.fontSize = fs + 'px';
-    this.text1.style.fontFamily = 'monospace';
-    this.text1.style.zIndex = MAINZINDEX;
+
+    if(this.text1) {
+      this.text1.style.color = ONCOLOR;
+      this.text1.style.textAlign = 'center';
+      this.text1.style.fontSize = fs + 'px';
+      this.text1.style.fontFamily = 'monospace';
+      this.text1.style.zIndex = MAINZINDEX;
+    }
 
     this.ctx0.strokeStyle = OFFCOLOR;
     this.ctx1.strokeStyle = ONCOLOR;
@@ -5047,10 +5136,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       drawer.fillBg_(this.ctx0, 'yellow');
       drawer.fillBg_(this.ctx1, 'yellow');
     } else if(opt_title) {
-      //this.text0.title = opt_title;
-      //this.text1.title = opt_title;
-      this.fallback.div0.title = opt_title;
-      this.fallback.div1.title = opt_title;
+      this.text0.title = opt_title;
+      if(this.text1) this.text1.title = opt_title;
     }
     var c = cell.circuitsymbol;
     // This avoids blurry lines that take up other amounts of pixels with lighter colors than desired
@@ -5378,36 +5465,34 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           this.drawextrai0 = 2;
           this.drawextrai1 = 1;
           this.drawextrag = 0;
-        }
-        if(code == 12) {
+        } else if(code == 12) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 4;
           this.drawextrag = 1;
-        }
-        if(code == 6) {
+        } else if(code == 6) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 1;
           this.drawextrag = 12;
-        }
-        if(code == 10) {
+        } else if(code == 10) {
           this.drawextra = true;
           this.drawextrai0 = 4;
           this.drawextrai1 = 1;
           this.drawextrag = 13;
-        }
-        if(code == 5) {
+        } else if(code == 5) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 2;
           this.drawextrag = 14;
-        }
-        if(code == 9) {
+        } else if(code == 9) {
           this.drawextra = true;
           this.drawextrai0 = 4;
           this.drawextrai1 = 2;
           this.drawextrag = 15;
+        } else {
+          this.dynamicdraw = true;
+          this.dynamicdrawcode = code;
         }
       } else if(c == '&') {
         var draw1 = connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 1);
@@ -5922,13 +6007,25 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       var tweak = 0; // set to 1 to fix a few graphics are not perfectly aligned to the cell. This is a quick fix for that... TODO: this too gives issues. Fix all rendering above to let each symbol stay only inside of its own cell (not as easy as it seems near borders).
       var source;
 
+      // for the X with its up to 16 possible graphics (and more if some legs are
+      // not present), do dynamic drawing. Not done for other components because possibly slower.
+      if(this.dynamicdraw) {
+        drawer.tx = dx;
+        drawer.ty = dy;
+        drawer.drawCrossing2_(dest, this.dynamicdrawcode, value, OFFCOLOR, ONCOLOR);
+        this.prevvalue = value;
+        return;
+      }
+
       if(value && this.drawonly) {
         value &= this.drawonly;
       }
 
       if(value) {
-        this.fallback.div0.style.visibility = 'hidden';
-        if(this.fallback.div1) this.fallback.div1.style.visibility = 'visible';
+        if(this.usetext) {
+          this.text0.style.visibility = 'hidden';
+          if(this.text1) this.text1.style.visibility = 'visible';
+        }
         source = rglobal.offcanvas1.getCanvasForCell(cell);
         if(this.drawextra) {
           var c = cell.circuitsymbol;
@@ -5976,8 +6073,10 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           }
         }
       } else {
-        this.fallback.div0.style.visibility = 'visible';
-        if(this.fallback.div1) this.fallback.div1.style.visibility = 'hidden';
+        if(this.usetext) {
+          this.text0.style.visibility = 'visible';
+          if(this.text1) this.fallback.div1.style.visibility = 'hidden';
+        }
         source = rglobal.offcanvas0.getCanvasForCell(cell);
       }
       dest.drawImage(source, sx, sy, tw + tweak, th + tweak, dx, dy, tw + tweak, th + tweak);
@@ -5995,10 +6094,12 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       this.ctx1.strokeStyle = 'red';
       this.ctx0.fillStyle = 'red';
       this.ctx1.fillStyle = 'red';
-      this.fallback.div0.style.color = 'red';
-      this.fallback.div1.style.color = 'red';
-      this.fallback.div0.title = errortext;
-      this.fallback.div1.title = errortext;
+      this.text0.style.color = 'red';
+      this.text0.title = errortext;
+      if(this.usetext) {
+        this.text1.style.color = 'red';
+        this.text1.title = errortext;
+      }
     }
   };
 
