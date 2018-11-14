@@ -672,24 +672,46 @@ R-->?-->l
    "76543210"
 
 
-0"Tri-state buffers (or, open collector outputs), indicated with 'z', allow"
-0"multiple devices to output to the same wire, something that normally is not"
-0"allowed and would normally create a conflict."
+0"z and Z are representations of a tristate buffer, or open collector outputs."
+0"It is fake because the simulation does not support three states. In real"
+0"life, you can have states 'low voltage', 'high voltage' and 'high impedance'."
+0"(Other names for high impedance are 'open', 'not connected', 'floating')"
+0"In the simulation, there is only zero and one. High impedance is treated the"
+0"same as 0. Still, the tri-state buffer can be used as a representation of a"
+0"real-life circuit"
 
-0"Our simulation does not support three states, but the tri-state buffer's"
-0"behavior tries to be as close to real-life as possible. All tri-state buffers"
-0"can output their signal to the wire, but you should have only one active at"
-0"the time. Multiple active at the same time could create a short in real life,"
-0"but that is not simulated here. In real life, one may be active and output a"
-0"signal to the shared wire, and all others must have 'floating' state. This"
-0"'floating' state is the same as '0' in the simulation, in real life it's a"
-0"'third' state."
+0"As seen before, different components outputting to same wire normally gives"
+0"error, and one solution is to OR them. An alternative solution here is to"
+0"use tri-state buffers (or open collector outputs if you will)."
 
-0"In the circuit below, you can activate exactly one tristate buffer at the"
-0"same time thanks to using pushbuttons (can't press more than one with a"
-0"single mouse cursor), so this one cannot create a short in real life."
-0"Enabling multiple 's' switches is ok, that is just the signal passed through"
-0"if the corresponding tristate buffer is selected."
+s*****          s*****          s**>z***
+     *               v                 *
+s*****          s***>o          s**>z***
+     *               v                 *
+s*********>l    s***>o****>l    s**>z*******>l
+
+0"Note that in real life enabling multiple z's at the same time could cause a"
+0"short but that is not simulated here."
+
+0"Since the output wires are literally connected to each other, it would be"
+0"a problem in real life if multiple have different voltages. Only combining"
+0"open or high impedance ones with ones that have the same voltage is OK in"
+0"real life."
+
+0"Logicemu simply provides this as an alternative notation, so that you can"
+0"design circuits in it and show the real-life intent."
+
+0"There is more behavior: multiple inputs to the same z are ANDed, this you can"
+0"use to actually represent a tri-state buffer with a control signal."
+
+    s
+    *
+    *
+    v
+s**>z**>l
+
+0"Multiple could output to some shared bus, each with a control of which only"
+0"one should be active at the time, like this:"
 
      p
      v
@@ -703,41 +725,7 @@ R-->?-->l
      v  *
  s**>z******>l
 
-
-0"Multiple single-input 'z's can also be used to OR multiple wires together"
-0"where in real life you would need no gate at all there or diodes would have"
-0"sufficed. Again, the simulation cannot simulate that, connecting multiple"
-0"wires from different devices together would result in an error (because"
-0"inconsistency is possible where one device outputs ground, andother positive"
-0"voltage, to it. Aka a short). One solution would be use an OR gate, but the"
-0"'z' is available instead simply to indicate: 'in real life, no gate is needed"
-0"here.' It has the same effect as OR in the simulation, but the notation"
-0"indicates the intended meaning better."
-
-    s           s            s
-    *           *            *0"this one indicates error, but in real"
-    *           v            *0"life this can be fine, depending on"
-    v           z            *0"what the switches are connected to"
-s**>o**>l   s*>z***>l    s********>l
-    ^           z            *
-    *           ^            *
-    *           *            *
-    s           s            s
-
-0"So in conclusion, if you see a 'z' it means: the simulation has limitations"
-0"here because it cannot represent tri-state logic or floating wires. Let use"
-0"use a 'z' to show how you could make this circuit in real life without gates"
-0"or with a tristate buffer. In the simulation, the z acts as an AND gate and"
-0"multiple z outputs together are OR-ed, but in real life you need neither the"
-0"AND nor the OR, you need a tristate buffer instead of the AND, and nothing at"
-0"all (just connect wires together) instead of the OR. In real life you also"
-0"must make sure only one z at the time is anything other than 'floating' to"
-0"avoid a short."
-
-0"As far as the simulation is concerned, here is what z's correspond to (but"
-0"this is not what it corresponds to in real life since the below allows to"
-0"easily make shorts):"
-
+0"To summarize it:"
 
 s****                      s****
     v                          v
@@ -748,24 +736,6 @@ s**>z**                    s**>a**
 s**>z**                    s**>a**
     ^                          ^
 s****                      s****
-
-
-s**>z**                    s******
-      *                          v
-s**>z**>l 1"corresponds to"s****>o>l
-      *                          ^
-s**>z**                    s******
-
-0"The built-in circuit where these z's are used the most, is the one named"
-0"'Relay Logic'"
-
-0"There also exist inverted tristate buffers, with capital 'Z'. These work the"
-0"other way around: the inputs are ORed, the outputs ANDed."
-0"So where z is a bunch of open collector outputs where one being high is"
-0"treated as the active one, the Z is a bunch of open collector outputs where"
-0"one being low is treated as the active one. Remember that in real life there"
-0"should truly be only one active one (whether high or low), in logicemu we can"
-0"make some distinction of intention this way instead."
 
 
 s****                      s****
@@ -779,11 +749,9 @@ s**>Z**                    s**>o**
 s****                      s****
 
 
-s**>Z**                    s******
-      *                          v
-s**>Z**>l 1"corresponds to"s****>a>l
-      *                          ^
-s**>Z**                    s******
+0"The built-in circuit where these z's are used the most, is the one named"
+0"'Relay Logic'"
+
 
 0"Special wires"
 0"-------------"
@@ -2155,68 +2123,71 @@ R**>?**>l
 1
 
 0"NEW PART: tri-state buffer (or open collector output)"
-0"z: fake tri-state buffer"
+0"z, Z: fake tri-state buffer"
 
 0"z is a fake representation of a tristate buffer. It is fake because the"
-0"simulation does not support three states. In real life, you have the states"
-0"'low voltage', 'high voltage' and 'high impedance'. In the simulation, there"
+0"simulation does not support three states. In real life, you can have states"
+0"'low voltage', 'high voltage' and 'high impedance'. (Other names for high"
+0"impedance are 'open', 'not connected', 'floating'). In the simulation, there"
 0"is only zero and one. High impedance is treated the same as 0. Still, the"
 0"tri-state buffer can be used as a representation of a real-life circuit"
 
 0"As seen before, different components outputting to same wire normally gives"
-0"error, and one solution is to OR them. The tristate buffer solution, instead,"
-0"also has 1 more switch per tristate buffer, to select that line (each z must"
-0"have exactly 2 inputs to work correctly)"
+0"error, and one solution is to OR them. An alternative solution here is to"
+0"use tri-state buffers (or open collector outputs if you will)."
 
-                                    p
-                                    v
 s*****          s*****          s**>z***
      *               v                 *
-s*****          s***>o              p  *
-     *               v              v  *
-s*********>l    s***>o****>l    s**>z***
-                                       *
-                                    p  *
-                                    v  *
-                                s**>z******>l
+s*****          s***>o          s**>z***
+     *               v                 *
+s*********>l    s***>o****>l    s**>z*******>l
 
 0"Note that in real life enabling multiple z's at the same time could cause a"
 0"short but that is not simulated here."
 
-0"Multiple single-input 'z's can also be used to OR multiple wires together"
-0"where in real life you would need no gate at all there or diodes would have"
-0"sufficed."
+0"Since the output wires are literally connected to each other, it would be"
+0"a problem in real life if multiple have different voltages. Only combining"
+0"open or high impedance ones with ones that have the same voltage is OK in"
+0"real life."
 
-    s           s            s
-    *           *            *0"here you see error, but this is what it"
-    *           v            *0"represents in real life and there it's ok"
-    v           z            *
-s**>o**>l   s*>z***>l    s********>l
-    ^           z            *
-    *           ^            *
-    *           *            *
-    s           s            s
+0"Logicemu simply provides this as an alternative notation, so that you can"
+0"design circuits in it and show the real-life intent."
 
-0"So in conclusion:"
-0"-z's in logicemu are purely notational and show what a circuit 'could' look"
-0" like in real life electrical circuits"
-0"-a single-input z in logicemu represents an OR to its output wire in logicemu"
-0"-a single-input z in real-life represents nothing at all, that is, only"
-0" multiple wires connecting to the same point (possibly with diode)"
-0"-a 2-input z in logicemu represents an AND gate that is OR-ed to its output"
-0" wire"
-0"-a 2-input z in real life represents a tristate buffer"
-0"-z's only approximate reality, some real behavior like shorts is not emulated."
+0"There is more behavior: multiple inputs to the same z are ANDed, this you can"
+0"use to actually represent a tri-state buffer with a control signal."
 
-0"The best example circuit to see z's in action is the 'Relay Logic' circuit."
+    s
+    *
+    *
+    v
+s**>z**>l
 
-0"There also exist inverted tristate buffers, with capital 'Z'. These work the"
-0"other way around: the inputs are ORed, the outputs ANDed."
-0"So where z is a bunch of open collector outputs where one being high is"
-0"treated as the active one, the Z is a bunch of open collector outputs where"
-0"one being low is treated as the active one. Remember that in real life there"
-0"should truly be only one active one (whether high or low), in logicemu we can"
-0"make some distinction of intention this way instead."
+0"Multiple could output to some shared bus, each with a control of which only"
+0"one should be active at the time, like this:"
+
+     p
+     v
+ s**>z***
+        *
+     p  *
+     v  *
+ s**>z***
+        *
+     p  *
+     v  *
+ s**>z******>l
+
+0"To summarize it:"
+
+s****                      s****
+    v                          v
+s**>z**                    s**>a**
+      *                          v
+      *>l 1"corresponds to"      o>l
+      *                          ^
+s**>z**                    s**>a**
+    ^                          ^
+s****                      s****
 
 
 s****                      s****
@@ -2229,12 +2200,6 @@ s**>Z**                    s**>o**
     ^                          ^
 s****                      s****
 
-
-s**>Z**                    s******
-      *                          v
-s**>Z**>l 1"corresponds to"s****>a>l
-      *                          ^
-s**>Z**                    s******
 
 0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 0"SECTION VI: Parts for shortcuts and compactness"
