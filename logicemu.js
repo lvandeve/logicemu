@@ -2690,6 +2690,8 @@ function Bus() {
   this.connections = {};
 }
 
+var highlightedcomponent = null;
+
 function Component() {
   this.value = false;
   this.prevvalue = false; // used for the slow algorithms, plus also for flipflops (to support shift registers with D flipflops made from counters...)
@@ -3154,6 +3156,19 @@ function Component() {
   };
 
   this.mousedown = function(e, x, y) {
+    if(e.shiftKey) {
+      if(isPaused() && highlightedcomponent == this) {
+        highlightedcomponent = null;
+        unpause();
+        render();
+      } else {
+        pause();
+        highlightedcomponent = this;
+        render();
+        autopaused = true; // this to cause less user confusion: with this true, it unpauses more easily (when pressing anything)
+      }
+      return;
+    }
     if(toggleMode) {
       toggleMode = false;
       this.value = !this.value;
@@ -3444,7 +3459,7 @@ function setColorScheme(index) {
     BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
 
     TEXTBGCOLOR = 'none';
-  } else {
+  } else if(index == 3) {
     setColorScheme(0);
 
     BGCOLOR = '#008';
@@ -3475,7 +3490,78 @@ function setColorScheme(index) {
 
     LINKCOLOR = '#880';
     TITLECOLOR = TEXTFGCOLOR;
+  } else {
+    setColorScheme(index - 4);
+    negateColorScheme(); // this only looks decent for inverting the 'light' color scheme.
   }
+}
+
+// warning: does not validate input
+function normalizeCSSColor(css) {
+  if(css == 'black') css = '#000000';
+  if(css == 'white') css = '#ffffff';
+  if(css == 'red') css = '#ff0000';
+  if(css == 'green') css = '#00ff00';
+  if(css == 'blue') css = '#0000ff';
+  if(css.length == 4) {
+    css = '#' + css[1] + css[1] + css[2] + css[2] + css[3] + css[3];
+  }
+  return css;
+}
+
+function negateColor(css) {
+  css = normalizeCSSColor(css);
+  var r = (255 - parseInt(css.substr(1, 2), 16)).toString(16);
+  var g = (255 - parseInt(css.substr(3, 2), 16)).toString(16);
+  var b = (255 - parseInt(css.substr(5, 2), 16)).toString(16);
+  if(r.length == 1) r = '0' + r;
+  if(g.length == 1) g = '0' + g;
+  if(b.length == 1) b = '0' + b;
+  return '#' + r + g + b;
+}
+
+function negateLigntness(css) {
+  css = normalizeCSSColor(css);
+  var r = parseInt(css.substr(1, 2), 16);
+  var g = parseInt(css.substr(3, 2), 16);
+  var b = parseInt(css.substr(5, 2), 16);
+  var mm = Math.min(Math.min(r, g), b) + Math.max(Math.max(r, g), b);
+  r = 255 - mm + r;
+  g = 255 - mm + g;
+  b = 255 - mm + b;
+  var r = r.toString(16);
+  var g = g.toString(16);
+  var b = b.toString(16);
+  if(r.length == 1) r = '0' + r;
+  if(g.length == 1) g = '0' + g;
+  if(b.length == 1) b = '0' + b;
+  return '#' + r + g + b;
+}
+
+function negateColorScheme() {
+  ONCOLOR = negateColor(ONCOLOR);
+  OFFCOLOR = negateColor(OFFCOLOR);
+  BGCOLOR = negateColor(BGCOLOR);
+  TEXTFGCOLOR = negateColor(TEXTFGCOLOR);
+  TEXTBGCOLOR = negateColor(TEXTBGCOLOR);
+  for(var i = 0; i < led_off_fg_colors.length; i++) led_off_fg_colors[i] = negateLigntness(led_off_fg_colors[i]);
+  for(var i = 0; i < led_off_bg_colors.length; i++) led_off_bg_colors[i] = negateLigntness(led_off_bg_colors[i]);
+  for(var i = 0; i < led_off_border_colors.length; i++) led_off_border_colors[i] = negateLigntness(led_off_border_colors[i]);
+  for(var i = 0; i < led_on_fg_colors.length; i++) led_on_fg_colors[i] = negateLigntness(led_on_fg_colors[i]);
+  for(var i = 0; i < led_on_bg_colors.length; i++) led_on_bg_colors[i] = negateLigntness(led_on_bg_colors[i]);
+  for(var i = 0; i < led_on_border_colors.length; i++) led_on_border_colors[i] = negateLigntness(led_on_border_colors[i]);
+  for(var i = 0; i < BUSCOLORS.length; i++) BUSCOLORS[i] = negateColor(BUSCOLORS[i]);
+  SWITCHON_FGCOLOR = negateLigntness(SWITCHON_FGCOLOR);
+  SWITCHON_BGCOLOR = negateLigntness(SWITCHON_BGCOLOR);
+  SWITCHOFF_FGCOLOR = negateLigntness(SWITCHOFF_FGCOLOR);
+  SWITCHOFF_BGCOLOR = negateLigntness(SWITCHOFF_BGCOLOR);
+  SWITCHON_BORDERCOLOR = negateLigntness(SWITCHON_BORDERCOLOR);
+  SWITCHOFF_BORDERCOLOR = negateLigntness(SWITCHOFF_BORDERCOLOR);
+  GATEBGCOLOR = negateColor(GATEBGCOLOR);
+  LINKCOLOR = negateColor(LINKCOLOR);
+  TITLECOLOR = negateColor(TITLECOLOR);
+  TERMINALBGCOLOR = negateColor(TERMINALBGCOLOR);
+  TERMINALFGCOLOR = negateColor(TERMINALFGCOLOR);
 }
 
 var colorscheme = getLocalStorage('color_scheme') || 0;
@@ -3631,6 +3717,9 @@ function Cell() {
     if(!this.comment) {
       var tc = c;
       if(tc == '#' || tc == '$') tc = this.components[0].corecell.circuitsymbol;
+      if(tc == '-' || tc == '|' || tc == '*') {
+        title = 'wire. Shift+click to highlight.';
+      }
       if(tc == 's' || tc == 'S') title = 'switch';
       if(tc == 'p' || tc == 'P') title = 'pushbutton';
       if(tc == 'r' || tc == 'R') title = 'timer';
@@ -3681,8 +3770,8 @@ function Cell() {
         if(this.components[0]) {
           var master = this.components[0].master;
           var rom = master ? master.rom : this.components[0].rom;
-          if(rom && rom.array && rom.array[0]) {
-            if(rom.ram) {
+          if(rom) {
+            if(rom.ram && rom.array && rom.array[0]) {
               var numadr = rom.array.length;
               var width = rom.array[0].length;
               title = 'RAM with ' + numadr + ' ' + width + '-bit values (b=0, B=1). Note that the RAM may be bigger than the amount of bits shown, if so only the first lines are shown. Clicking bits with the mouse can toggle them.';
@@ -3690,7 +3779,7 @@ function Cell() {
             else if(rom.decoder) title = 'decoder (binary to unary)';
             else if(rom.encoder) title = 'encoder (unary to binary)';
             else if(rom.priority) title = 'priority selector (unary to unary)';
-            else {
+            else if(rom.array && rom.array[0]) {
               var numadr = rom.array.length;
               var width = rom.array[0].length;
               title = 'ROM with ' + numadr + ' ' + width + '-bit values (b=0, B=1). Clicking bits with the mouse can toggle them.';
@@ -3792,9 +3881,12 @@ function Cell() {
       e.stopPropagation();
       e.preventDefault();
       if(!toggleMode && !changeMode) lastmousedowncomponent = component;
-      if(component) component.mousedown(e, x, y);
       if(AUTOUPDATE == 1/* || AUTOUPDATE == 3*/) update();
-      if(autopaused && isPaused()) unpause();
+      if(component) component.mousedown(e, x, y);
+      if(autopaused && isPaused() && !e.shiftKey) {
+        // not done with shift key to not interfere with the 'highlight' feature that also uses pause and autopaused state
+        unpause();
+      }
       if(CLICKDEBUG) {
         console.log('===================');
         console.log('CLICKDEBUG enabled!');
@@ -4244,10 +4336,11 @@ function connected2g(x, y, dir) {
   return true;
 }
 
-// another for graphics, treats middle cell as a '*', for drawing split from it (intended for backplane wires like g and antennas)
-function connected2a(x, y, dir) {
+// another for graphics, treats middle cell as a 'g', for drawing split from it,
+// for backplane wires and antennas. Connects to slightly less things than '*' would.
+function connected2b(x, y, dir) {
   var temp = world[y][x].circuitsymbol;
-  world[y][x].circuitsymbol = '*';
+  world[y][x].circuitsymbol = 'g';
 
   var result = connected2(x, y, dir);
 
@@ -4538,14 +4631,14 @@ function RendererDrawer() {
   this.drawBGSplit_ = function(cell, ctx) {
     var num = 0;
     ctx.beginPath();
-    if(connected2a(cell.x, cell.y, 0)) { num++; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5); }
-    if(connected2a(cell.x, cell.y, 1)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5); }
-    if(connected2a(cell.x, cell.y, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1); }
-    if(connected2a(cell.x, cell.y, 3)) { num++; this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5); }
-    if(connected2a(cell.x, cell.y, 4)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0); }
-    if(connected2a(cell.x, cell.y, 5)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 1); }
-    if(connected2a(cell.x, cell.y, 6)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 1); }
-    if(connected2a(cell.x, cell.y, 7)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 0); }
+    if(connected2b(cell.x, cell.y, 0)) { num++; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5); }
+    if(connected2b(cell.x, cell.y, 1)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5); }
+    if(connected2b(cell.x, cell.y, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1); }
+    if(connected2b(cell.x, cell.y, 3)) { num++; this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5); }
+    if(connected2b(cell.x, cell.y, 4)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0); }
+    if(connected2b(cell.x, cell.y, 5)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 1); }
+    if(connected2b(cell.x, cell.y, 6)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 1); }
+    if(connected2b(cell.x, cell.y, 7)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 0); }
     ctx.stroke();
     return num;
   };
@@ -4965,7 +5058,7 @@ function RendererImgGlobal() {
     this.maincanvas.make(0, 0, tw * w, th * h, parent);
     this.offcanvas0.make(0, 0, tw * w, th * h, parent);
     this.offcanvas1.make(0, 0, tw * w, th * h, parent);
-    this.extracanvas.make(0, 0, tw * 64, th * 4, parent);
+    this.extracanvas.make(0, 0, tw * 128, th * 4, parent);
 
     this.offcanvas0.forEach(function(canvas, context) {
       canvas.style.display = 'none';
@@ -5349,6 +5442,30 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1); code |= 32; }
         if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1); code |= 64; }
         if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0); code |= 128; }
+        if(code == 1) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 32;
+        }
+        if(code == 2) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 33;
+        }
+        if(code == 4) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 34;
+        }
+        if(code == 8) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 35;
+        }
         if(code == 144) {
           this.drawextra = true;
           this.drawextrai0 = 8;
@@ -5409,6 +5526,30 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 1); code |= 32; }
         if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 1); code |= 64; }
         if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0); code |= 128; }
+        if(code == 1) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 36;
+        }
+        if(code == 2) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 37;
+        }
+        if(code == 4) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 38;
+        }
+        if(code == 8) {
+          this.drawextra = true;
+          this.drawextrai0 = 1;
+          this.drawextrai1 = 2;
+          this.drawextrag = 39;
+        }
         if(code == 144) {
           this.drawextra = true;
           this.drawextrai0 = 8;
@@ -5987,6 +6128,64 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
       drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+
+      // asdf TODO
+
+      // input crossing N
+      prepareAt(32, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawArrow_(ctx, 0.5, 1, 0.5, 0, 0.19);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+
+      // input crossing E
+      prepareAt(33, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0.5, 1, 0.5, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawArrow_(ctx, 0, 0.5, 1, 0.5, 0.19);
+
+      // input crossing S
+      prepareAt(34, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawArrow_(ctx, 0.5, 0, 0.5, 1, 0.19);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+
+      // input crossing W
+      prepareAt(35, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0.5, 1, 0.5, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawArrow_(ctx, 1, 0.5, 0, 0.5, 0.19);
+
+      // negated input crossing N
+      prepareAt(36, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawAntiArrow_(ctx, 0.5, 1, 0.5, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+
+      // negated input crossing E
+      prepareAt(37, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0.5, 1, 0.5, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawAntiArrow_(ctx, 0, 0.5, 1, 0.5);
+
+      // negated input crossing S
+      prepareAt(38, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawAntiArrow_(ctx, 0.5, 0, 0.5, 1);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
+
+      // negated input crossing W
+      prepareAt(39, ty);
+      ctx.strokeStyle = ctx.fillStyle = color0;
+      drawer.drawLine_(ctx, 0.5, 1, 0.5, 0);
+      ctx.strokeStyle = ctx.fillStyle = color1;
+      drawer.drawAntiArrow_(ctx, 1, 0.5, 0, 0.5);
     }
   };
 
@@ -6159,6 +6358,10 @@ var line0 = [];
 var line1 = [];
 
 function render() {
+  if(highlightedcomponent) {
+    renderHighlightComponent(highlightedcomponent);
+    return;
+  }
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
       var cell = world[y][x];
@@ -6172,6 +6375,27 @@ function render() {
       if(cell.components[5]) value |= (cell.components[5].value << 5);
       if(cell.components[6]) value |= (cell.components[6].value << 6);
       if(cell.components[7]) value |= (cell.components[7].value << 7);
+      cell.setValue(value);
+    }
+  }
+
+  if(ticksCounterEl) updateTicksDisplay();
+}
+
+function renderHighlightComponent(component) {
+  for(var y = 0; y < h; y++) {
+    for(var x = line0[y]; x < line1[y]; x++) {
+      var cell = world[y][x];
+      if(!cell.renderer) continue;
+      var value = 0;
+      if(cell.components[0] == component) value |= 1;
+      if(cell.components[1] == component) value |= (1 << 1);
+      if(cell.components[2] == component) value |= (1 << 2);
+      if(cell.components[3] == component) value |= (1 << 3);
+      if(cell.components[4] == component) value |= (1 << 4);
+      if(cell.components[5] == component) value |= (1 << 5);
+      if(cell.components[6] == component) value |= (1 << 6);
+      if(cell.components[7] == component) value |= (1 << 7);
       cell.setValue(value);
     }
   }
@@ -8843,6 +9067,7 @@ function pauseUpdateOnly() {
 
 function unpause() {
   autopaused = false;
+  highlightedcomponent = null;
   if((AUTOUPDATE == 2 || AUTOUPDATE == 3) && !autoupdateinterval) {
     autoupdateinterval = setInterval(function(){ update(); }, AUTOSECONDS * 1000);
   }
@@ -9055,6 +9280,7 @@ makeElement('option', colorDropdown).innerText = 'light';
 makeElement('option', colorDropdown).innerText = 'dark';
 makeElement('option', colorDropdown).innerText = 'gray';
 makeElement('option', colorDropdown).innerText = 'blue';
+makeElement('option', colorDropdown).innerText = 'inverted';
 colorDropdown.selectedIndex = colorscheme;
 
 /*

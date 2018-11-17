@@ -849,6 +849,107 @@ l<----*
 0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `, 'mainhelp');
 
+registerCircuit('Controls', `
+0"Controls"
+0"--------"
+
+0"Interact with switches (s), pushbuttons (p) and timers (r) by clicking them:"
+
+s--->l
+
+p--->l
+
+r--->l
+
+0"Hover over things to see a tooltip describing them:"
+
+llllllll    llllllll
+^^^^^^^^    ^^^^^^^^
+bbbbbbbb    TTTTTTTT
+     ^^^           ^
+     sss           s
+
+0"Click bits (b, B) of a ROM to toggle them:"
+
+  llll
+  ^^^^
+s>bbbb
+s>bBbb
+s>bbBb
+s>BBBb
+
+0"Shift+Click on something to highlight only that component or wire, e.g. to"
+0"easily see where each of the following wires go."
+0"This pauses the running circuit until you activate it again."
+
+
+c>a------------------* *->l
+c-V--------,,--------+-+->l
+c-+-----* *+* *----* *-+->l
+c-+-----+-++--*  *-+---+->l
+c-+-----+-,,-----+-+---+->l
+c-+---* *--------+-+---*->l
+c-+-* *----------+-+----->l
+c-* *------------* *----->l
+
+0"User Interface"
+0"--------------"
+
+0"This briefly describes the controls at the top. You can also hover over them"
+0"to get a tooltip with their explanation."
+
+0"User Interface - First Row"
+0"--------------------------"
+
+0"The dropdowns labeled 'help', 'articles', 'circuits' all allow selecting the"
+0"various built-in circuits. The current circuit is 'Controls' under 'help'"
+
+0"The left and right arrow next to those dropdowns select the previous or next"
+0"circuit."
+
+0"The 'import' button allows to open another circuit, made by yourself or"
+0"someone else. More info for that is in the 'Loading Circuits' help circuit."
+
+0"User Interface - Second Row"
+0"---------------------------"
+
+0"The first dropdown on the second row allows to choose the 'immediate' or"
+0"'electron' algorithm to run the circuits. More information on that is in the"
+0"'Ticks and Emulation Algorithms' help circuit"
+
+0"Next to that, the 'tick', 'pause', 'slow', 'norm' and 'fast' buttons all"
+0"control the speed. The tick button can be used while paused to do one step."
+
+0"The ticks indicator itself shows how many updates or state changes have been"
+0"done in the circuit. Depending on the immediate or electron algorithm, ticks"
+0"have a different meaning. You can click the indicator to reset it to 0."
+
+0"To the right of the ticks indicator is a dropdown to choose between graphical"
+0"or text mode. Graphical mode looks better, text may be faster and can help"
+0"with editing instead. More on that is in the 'Rendering Modes' help circuit."
+
+0"Right of that is a color scheme selector, to choose between various light"
+0"or dark schemes to render with."
+
+0"The +/- buttons allow to zoom in or out."
+
+0"Then there is a 'change' dropdown, which allows to change a gate or other"
+0"device into something else. This only works for simple devices and does not"
+0"allow to change the layout. But it's useful to change a switch into a"
+0"pushbutton for example."
+
+0"Next to that is the full fledged edit button which allows to edit existing"
+0"circuits or create new ones (similar to 'import')."
+0"For more on that, see the 'Editing Help' help circuit. Depending on whether"
+0"you used editing, there may also appear a 'forget' button to bring everything"
+0"back to the normal state before you edited, and a 'restore' button to go back"
+0"to the edited circuit (if not forgotten). Note that if you care about a"
+0"circuit you edited or created, you should back it up to your disk in a text"
+0"editor, since logicemu only stores it in local storage of your browser, where"
+0"it can easily get lost (it does not store it online), and only stores one."
+
+`, 'controlshelp');
+
 registerCircuit('Rendering Modes', `
 0"Rendering Modes"
 0"---------------"
@@ -4223,18 +4324,18 @@ s---+-X---X-+------->l   ;   /       | /       ; |        ^       ^
 s-X-+-------+-X----->l   /   ;     / |           | ;      v       v
  /  |       |  ;        s     s   s  s           s  s     l       l
 S   s       s   s
-
+                                            s-g->l
        s    s s    s       s    s s    s                  s->a>l       s
   l l  * l  * *  l *  l l  * l  * *  l *      l     l     p->e>l       v
    V    V    V    V    W    W    W    W     s*Ul  s*Gl    r->o>l       e*
   * *  * l  l l  l *  * *  * l  l l  l *      l     l     S->A>l  s--->$|
   s s  s           s  s s  s           s                  P->E>l       $v
-                                                          R->O>l       |l
-       s   s                 s   s                        s->?>l       |
-  l    *   *    l       l    *   *    l                                v
-s*Vl s*Vl lV*s lV*s   s*Wl s*Wl lW*s lW*s     s-g->l                   l
-  *    l   l    *       *    l   l    *
-  s             s       s             s
+                                              s     s     R->O>l       |l
+       s   s                 s   s            |     |     s->?>l       |
+  l    *   *    l       l    *   *    l     s*Vl  s*Wl                 v
+s*Vl s*Vl lV*s lV*s   s*Wl s*Wl lW*s lW*s     |     |                  l
+  *    l   l    *       *    l   l    *       v     v
+  s             s       s             s       l     l
 
   a e       s         s         l      s       s      l         e a
   ^^^       *     l<**+***s     ^      *   s***+**>l  ^         ^^^
