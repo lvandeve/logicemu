@@ -5046,17 +5046,17 @@ registerCircuit('4 math functions with decimal', `
 
 registerCircuit('4-bit CPU', `
 
-0"A working 4-bit CPU. Full explanation with instruction set is further down."
+0"A 4-bit CPU in action. Full explanation with instruction set is further down."
 
   1                                llll"ALU out"
   3 0                              ^^^^
-  g g                    ==========3210                                    g17 g18
-  * *                    =         ||||                                    v   v
-  * *   3210============ =         iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii14
-  * *   ||||           = =         ^^^^                  ^^^^  ^^^^         ^^^^
-  * *   ||||"registers"= =         ||||      "carr="     ||||  ||||         ||||
-  * *   ||||"memor="   = =         ||||        g19>l     ||||  ||||         ||||
-  * ***>iiiiilllli     = =         |||| 1   0g>i         ||||  ||||         ||||
+  g g                    ==========3210
+  * *                    =         ||||
+  * *   3210============ =         MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<g17
+  * *   ||||           = =         MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<g18
+  * *   ||||"registers"= =         ^^^^                  ^^^^  ^^^^         ^^^^
+  * *   ||||"memory"   = =         ||||        g19>l     ||||  ||||         ||||
+  * ***>iiiiilllli     = =         |||| 1   0g>i "carry" ||||  ||||         ||||
   *-+-->i"r0"^^^^i<b<0 = =         |||| 0  13g>3         ||||  ||||         ||||
   * * *>iiiiiiii32 # = = =         |||| g   1g>0 g10  8g>a|||  ||||         ||||
   * * * ^^^^       # = = =         |||| w      ^ v       ^|||  ||||         ||||
@@ -5080,48 +5080,48 @@ registerCircuit('4-bit CPU', `
   *-+-+>i"r5"^^^^i<b = = = =      ^^^^    ^^^^
   * * *>iiiiiiii32 # = = = =      3210====3210
   * * * ^^^^       # = = = =              ||||
-  * **+>iiiiilllli # = = = =         iiiiiii12<a<g14
+  * **+>iiiiilllli # = = = =         MMMMMMMMM<a<g14
   *-+-+>i"r6"^^^^i<b = = = =         ^^^^ ^^^^
   * * *>iiiiiiii32 # = ==+=+=========3210 3210======
   * * * ^^^^       # =   = =          "B imm"      =
   * **+>iiiiilllli # =   = =                       =
   *---+>i"r7"^^^^i<b ====+=+=========3210          =
       *>iiiiiiii32 #     = =         ||||"A ind"   =
-      * ^^^^       #     = =         iiiiiii12[g15 =
+      * ^^^^       #     = =         MMMMMMMMM[g15 =
       g ||||       #     = =         ^^^^ ^^^^     =
       1 ||||"user" #     = ==========3210 3210===============3210
-        iiiiiiiiii #     =                                   ||||      6g g5
-        i"r8"^^^^i<b     =                                   ||||       * *
-        ii12 SSSS  #     =          "jump"                   ||||"ABC"  v v
-        ^^^^       #     =         ==3210                    iiiiiiiiiiii13
-        iiiiiiiiii #     =         = ||||                    ^^^^ ^^^^ ^^^^
-        i"r9"^^^^i<b     =         = iiiiiii12[g16           |||| |||| c|||
-        ii12 sSSS  #     =         = ^^^^ ^^^^               |||| ||||  |||
-        ^^^^       #     ==========+=3210 ||||          11   |||| |||| 1|||
-        iiiiiiiiii #     =         =      ||||          1098 |||| |||| 2|||
-        i"ra"^^^^i<b     =         =     2||||          gggg |||| |||| g|||
-        ii12 ssSS  #     =         =     1||||"inc"     |||| |||| |||| ||||
-        ^^^^       #     =         =     g||||"IP"      llll llll llll llll
-        iiiiiiiiii #     =         =     *ii20<C        ^^^^ ^^^^ ^^^^ ^^^^
-        i"rb"^^^^i<b     =         =      ^^^^          |||| |||| |||| ||||"instruction ROM"0
-        ii12 sssS  #     =         =      ||||          |||| |||| |||| ||||"put program here"0
-        ^^^^       #     =         =    *-*+++--------->bbbb#Bbbb#bbbb#bbbb"0 0000"
-        iiiiiiiiii #     =         =    |*-*++--------->bbbb#BbbB#bbbb#bbbB"1 0001"
-        i"rc"^^^^i<b     =         ="IP"||*-*+--------->bbbb#BbBb#bbbb#bbBb"2 0010"
-        ii12 ssss  #     =         =    |||*-*--------->bbbb#BbBB#bbbb#bbBB"3 0011"
-        ^^^^       #     =         = 0g>ii31            BBbB#bBbb#bBBb#bbbb"4 0100"
-        iiiiiiiiii #     =         = 7g>iiii            bbbb#BBBB#bbBB#bBbb"5 0101"
-        i"rd"^^^^i<b     =         = 2g>iiii            bBBb#bBbb#bbbb#bBbB"6 0110"
-        ii12 ssss  #     =         =    ^^^^            bbBb#bBbb#bbbB#bBbb"7 0111"
-        ^^^^       #     =         =    llll            bBBb#bBbb#bbbb#bBBb"8 1000"
-        iiiiiiiiii #     =         =    ^^^^            bbBb#bBbB#bBBb#BBBB"9 1001"
-        i"re"^^^^i<b     =         = 0g>ii31            BBBb#bbbb#BBBb#bbbb"a 1010"
-        ii12 ssss  #     =         = 6g>iiii            bBBB#bBbb#bBbB#Bbbb"b 1011"
-        ^^^^       #     =         = 1g>iiii            bbbb#bBbb#bbbB#bBBB"c 1100"
-        iiiiiiiiii #     =         =    ^^^^            bBBB#bBBB#bBBb#Bbbb"d 1101"
-        i"rf"^^^^i<b     =         =====3210            BBbb#BBBB#bBbb#bbbb"e 1110"
-        ii12 ssss        =                              bbbb#bbbb#bbbb#bbbb"f 1111"
-        ^^^^             =                                                 "      "
+        MMMMMMMMMM<b     =                                   ||||
+    "r8"^^^^ ^^^^  #     =                                   ||||"ABC"
+        |||| SSSS  #     =          "jump"                   MMMMMMMMMMMMMM<g5
+        ||||       #     =         ==3210                    MMMMMMMMMMMMMM<g6
+        MMMMMMMMMM<b     =         = ||||                    ^^^^ ^^^^ ^^^^
+    "r9"^^^^ ^^^^  #     =         = MMMMMMMMM[g16           |||| |||| c|||
+        |||| sSSS  #     =         = ^^^^ ^^^^               |||| ||||  |||
+        ||||       #     ==========+=3210 ||||          11   |||| |||| 1|||
+        MMMMMMMMMM<b     =         =      ||||          1098 |||| |||| 2|||
+    "ra"^^^^ ^^^^  #     =         =     2||||          gggg |||| |||| g|||
+        |||| ssSS  #     =         =     1||||"inc"     |||| |||| |||| ||||
+        ||||       #     =         =     g||||"IP"      llll llll llll llll
+    "rb"MMMMMMMMMM<b     =         =     *ii20<C        ^^^^ ^^^^ ^^^^ ^^^^
+        ^^^^ ^^^^  #     =         =      ^^^^          |||| |||| |||| ||||"instruction ROM"0
+        |||| sssS  #     =         =      ||||          |||| |||| |||| ||||"put program here"0
+        ||||       #     =         =    *-*+++--------->bbbb#Bbbb#bbbb#bbbb"0 0000"
+    "rc"MMMMMMMMMM<b     =         =    |*-*++--------->bbbb#BbbB#bbbb#bbbB"1 0001"
+        ^^^^ ^^^^  #     =         ="IP"||*-*+--------->bbbb#BbBb#bbbb#bbBb"2 0010"
+        |||| ssss  #     =         =    |||*-*--------->bbbb#BbBB#bbbb#bbBB"3 0011"
+        ||||       #     =         = 0g>ii31            BBbB#bBbb#bBBb#bbbb"4 0100"
+    "rd"MMMMMMMMMM<b     =         = 7g>iiii            bbbb#BBBB#bbBB#bBbb"5 0101"
+        ^^^^ ^^^^  #     =         = 2g>iiii            bBBb#bBbb#bbbb#bBbB"6 0110"
+        |||| ssss  #     =         =    ^^^^            bbBb#bBbb#bbbB#bBbb"7 0111"
+        ||||       #     =         =    llll            bBBb#bBbb#bbbb#bBBb"8 1000"
+    "rd"MMMMMMMMMM<b     =         =    ^^^^            bbBb#bBbB#bBBb#BBBB"9 1001"
+        ^^^^ ^^^^  #     =         = 0g>ii31            BBBb#bbbb#BBBb#bbbb"a 1010"
+        |||| ssss  #     =         = 6g>iiii            bBBB#bBbb#bBbB#Bbbb"b 1011"
+        ||||       #     =         = 1g>iiii            bbbb#bBbb#bbbB#bBBB"c 1100"
+    "rf"MMMMMMMMMM<b     =         =    ^^^^            bBBB#bBBB#bBBb#Bbbb"d 1101"
+        ^^^^ ^^^^        =         =====3210            BBbb#BBBB#bBbb#bbbb"e 1110"
+        |||| ssss        =                              bbbb#bbbb#bbbb#bbbb"f 1111"
+        ||||             =                                                 "      "
         3210==============                             "oooo aaaa bbbb iccc"
                                                        " op |  A |  B |b indir, C"
 
@@ -5163,18 +5163,6 @@ registerCircuit('4-bit CPU', `
 
 0"Templates of the chips from which the CPU above is built:"
 
-    "mux"            "4-bit 2:1 mux"                "4-bit 3:1 mux"                 "4-bit 4:1 mux"
-    *** l         l     l     l     lI12           llll      s    sI13             llll      s      sI14
-    * w ^         ^     ^     ^     ^              ^^^^      v    *                ^^^^      v      *
-  s*+>a>oI      0>i   1>i   2>i   3>i              iiiiiiiii12    *                iiiiiiiii12      *
-    *   ^1      = 1   = 1   = 1   = 1              ^^^^   ^^^^    *                ^^^^   ^^^^      *
-  s*+>a**0      4>0   5>0   6>0   7>0         iiiiiii12<**++++*****           iiiiiii12<* iiiiiii12<*
-    * ^         = ^   = ^   = ^   = ^         ^^^^ ^^^^   ||||                ^^^^ ^^^^ * ^^^^ ^^^^ *
-    ***         = 8   = 8   = 8   = 8         ssss ssss   ssss                ssss ssss * ssss ssss *
-      *         =====================8s                                                 *           *
-      s         0123 4567                                                               *************
-                ssss ssss
-
 
   "4-bit half adder"          "4-bit full adder"                     "negate 4 bits if flag"
       l   l   l   lI20            l     l     l     lI21                l   l   l   l
@@ -5190,9 +5178,10 @@ registerCircuit('4-bit CPU', `
 
 "logic: and, nand, or, xor"
 
-                  llll                                                      s sI23
-                  ^^^^                                                      v v
-                  iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii14
+                  llll                                                          s sI23
+                  ^^^^                                                          v v
+                  MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<* |
+                  MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<--*
                   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^
                   a<* a<* a<* a<* A<* A<* A<* A<* o<* o<* o<* o<* e<* e<* e<* e<*
                   ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ * ^ *
@@ -5206,7 +5195,7 @@ registerCircuit('4-bit CPU', `
                   ^                 l   l   l   lI31                        "bus"
              ******                 ^   ^   ^   ^                           llllI32
              *    *               ==+===+===+===+=                          ^^^^
-      "C"s***+***>c           "c"s0>i 0>i 0>i 0>i                      iiiiiii12<* llll"state"
+      "C"s***+***>c           "c"s0>i 0>i 0>i 0>i                      MMMMMMMMM<* llll"state"
              *    #           "e"s1>3 1>3 1>3 1>3                      ^^^^ ^^^^ * ^^^^
              *    Q<*         "r"s2>0 2>0 2>0 2>0                 =====3210 3210=+=3210
              *    d *               ^   ^   ^   ^                 =         |||| *

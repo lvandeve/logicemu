@@ -892,6 +892,17 @@ c-+---* *--------+-+---*->l
 c-+-* *----------+-+----->l
 c-* *------------* *----->l
 
+0"Control+Click on something will change it to an inverted type (e.g. AND to"
+0"NAND, or default-off pushbutton to default-on pushbutton)."
+
+p-->a-->e-->o-->l
+
+c-->l
+
+s-->c-->l
+
+s-->z-->l
+
 0"User Interface"
 0"--------------"
 
@@ -3535,45 +3546,75 @@ s**>M**>l
 
 registerCircuit('Multi-input mux (M)', `
 
-    l l
-    ^ ^
-    * *
-    * *
-s**>MMM**>l
-    MMM
-s**>MMM
-    MMM
-s**>MMM
-    MMM
-s**>MMM
-    ^ ^
-    * *
-    * *
-    s s
+    ll
+    ^^
+    ||
+    ||
+s-->MM-->l
+s-->MM
+s-->MM
+s-->MM
+    ^^
+    ||
+    ||
+    ss
 
 `, 'component' + componentid++);
 
 registerCircuit('Multi-output demux (M)', `
 
-    l l
-    ^ ^
-    * *
-    * *
-s**>MMM**>l
-    MMM
-    MMM**>l
-    MMM
-    MMM**>l
-    MMM
-    MMM**>l
-    ^ ^
-    * *
-    * *
-    s s
+    ll
+    ^^
+    ||
+    ||
+s-->MM-->l
+    MM-->l
+    MM-->l
+    MM-->l
+    ^^
+    ||
+    ||
+    ss
 
 `, 'component' + componentid++);
 
-registerCircuit('Mux with swap (M)', `
+registerCircuit('Mux of buses (M)', `
+
+    l
+    ^
+    |
+    |
+s-->M-->l
+s-->M-->l
+    M
+s-->M
+s-->M
+    ^
+    |
+    |
+    s
+
+`, 'component' + componentid++);
+
+registerCircuit('Demux of bus (M)', `
+
+    l
+    ^
+    |
+    |
+s-->M-->l
+s-->M-->l
+    M
+    M-->l
+    M-->l
+    ^
+    |
+    |
+    s
+
+`, 'component' + componentid++);
+
+registerCircuit('Mux with controlled swap (M)', `
 
     l
     ^
@@ -3582,6 +3623,24 @@ registerCircuit('Mux with swap (M)', `
 s**>M**>l
     M
 s**>M**>l
+    ^
+    *
+    *
+    s
+
+`, 'component' + componentid++);
+
+registerCircuit('Mux with controlled swap of buses(M)', `
+
+    l
+    ^
+    *
+    *
+s-->M-->l
+s-->M-->l
+    M
+s-->M-->l
+s-->M-->l
     ^
     *
     *

@@ -391,6 +391,7 @@ typesymbols[TYPE_PUSHBUTTON_OFF] = 'p'; typesymbols[TYPE_PUSHBUTTON_ON] = 'P';
 typesymbols[TYPE_TIMER_OFF] = 'r'; typesymbols[TYPE_TIMER_ON] = 'R'; typesymbols[TYPE_AND] = 'a';
 typesymbols[TYPE_OR] = 'o'; typesymbols[TYPE_XOR] = 'e'; typesymbols[TYPE_NAND] = 'A';
 typesymbols[TYPE_NOR] = 'O'; typesymbols[TYPE_XNOR] = 'E'; typesymbols[TYPE_FLIPFLOP] = 'c';
+typesymbols[TYPE_CONSTANT] = 'c'; // TODO: have 'on' version of typesymbols when needed, so it can have 'C' for on-valued constant
 typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd';
 typesymbols[TYPE_TRISTATE] = 'z'; typesymbols[TYPE_TRISTATE_INV] = 'Z';
 
@@ -694,12 +695,14 @@ function CallSub(id) {
         mux.datainlsbpos = v.mux.datainlsbpos;
         mux.selindir = v.mux.selindir;
         mux.selinlsbpos = v.mux.selinlsbpos;
-        mux.output = v.mux.output;
+        mux.output = clone(v.mux.output);
         mux.numdatain = v.mux.numdatain;
         mux.numselin = v.mux.numselin;
         mux.numdataout = v.mux.numdataout;
         mux.numselout = v.mux.numselout;
         mux.demux = v.mux.demux;
+        mux.swap = v.mux.swap;
+        mux.bussize = v.mux.bussize;
         mux.x0 = v.mux.x0;
         mux.y0 = v.mux.y0;
         mux.x1 = v.mux.x1;
@@ -1609,8 +1612,27 @@ function ROM() {
 
 
 
-
+// TODO: support other shapes than rectangular
 function Mux() {
+  /*
+  with #select = 2 ^ #select_bits
+  An input side with outputs on opposing side is the data in and data out pair
+  Another input side is the select side. If that one has opposite output, that's
+  the select passthrough.
+  If unclear which pair of sides is data and select, the one with most should be
+  data, as select only needs log2 size.
+
+  On the data side:
+  -when #inputs > #outputs, it's a mux.
+  -when #inputs < #outputs, it's a demux.
+  -when #inputs == #outputs, it's a controlled swap.
+
+  When there are more outputs (for mux) or inputs (for demux) than the amount of
+  select bits can choose from, then it will be a mux or demux of buses instead.
+  Similarly for controlled swap.
+
+  When it's mux and not enough inputs, selecting missing address outputs 0.
+  */
   this.master = null;
   this.error = false;
   this.errormessage = null;
@@ -1624,6 +1646,8 @@ function Mux() {
   this.numdataout = 0;
   this.numselout = 0; // passthrough of sel, should be same as numselin
   this.demux = false;
+  this.swap = false;
+  this.bussize = 1;
 
   // should have rectangular shape
   this.x0 = -1;
@@ -1641,17 +1665,44 @@ function Mux() {
       l += l;
     }
 
-    if(this.demux) {
-      for(var i = 0; i < this.numdataout; i++) {
-        this.output[i] = false;
+    if(this.bussize == 1) {
+      if(this.demux) {
+        for(var i = 0; i < this.numdataout; i++) {
+          this.output[i] = false;
+        }
+        this.output[index] = inputs[0]; // the one chosen output
+      } else if(this.swap) {
+        for(var i = 0; i < this.numdataout; i++) {
+          this.output[i] = inputs[i ^ index];
+        }
+      } else {
+        // mux
+        if(index < this.numdatain) this.output[0] = inputs[index];
+        else this.output[0] = false;
       }
-      this.output[index] = inputs[0];
     } else {
-      for(var i = 0; i < this.numdataout; i++) {
-        var j = i;
-        this.output[j] = inputs[j ^ index];
+      if(this.demux) {
+        for(var i = 0; i < this.numdataout; i++) {
+          this.output[i] = false;
+        }
+        // the one chosen output bus
+        for(var i = 0; i < this.bussize; i++) {
+          this.output[index * this.bussize + i] = inputs[i];
+        }
+      } else if(this.swap) {
+        for(var i = 0; i < this.numdataout; i++) {
+          var j = i % this.bussize;
+          var k = Math.floor(i / this.bussize);
+          this.output[i] = inputs[(k ^ index) * this.bussize + j];
+        }
+      } else {
+        for(var i = 0; i < this.bussize; i++) {
+          var j = index * this.bussize + i;
+          this.output[i] = j < this.numdatain ? inputs[j] : false;
+        }
       }
     }
+    // passthrough of the select signal
     for(var i = 0; i < this.numselout; i++) {
       this.output[this.numdataout + i] = inputs[this.numdatain + i];
     }
@@ -1739,15 +1790,15 @@ function Mux() {
 
     //io is of form: [[[nv], nc, nt], [[ev], ec, et], [[sv], sc, st], [[wv], wc, wt], ic, oc], with t meaning type: 0:none,1:input,2:output
 
-    // it's a demux if there is a side with one input and opposite side has multiple outputs.
+    // it's a demux if there is a side with less inputs than outputs
     for(var i = 0; i < 4; i++) {
-      if(io[i][1] == 1 && io[i][2] == 1) { // if one input
-        var j = getOppositeDir(i);
-        if(io[j][1] > 1 && io[j][2] == 2) { // on opposite side, multiple outputs
-          demux = true;
-          demuxdataside = i;
-          break;
-        }
+      var j = getOppositeDir(i);
+      if(io[i][2] == 1 && // is input
+         io[j][2] == 2 && // other is output
+         io[i][1] < io[j][1]) { // less inputs than the other has outputs
+        demux = true;
+        demuxdataside = i;
+        break;
       }
     }
 
@@ -1856,7 +1907,12 @@ function Mux() {
     if(selin[0] == 2 || selin[0] == 3) sellsb = 1;
     selin[1] = selout[1] = sellsb;
 
-    var result = [datain, dataout, selin, selout, demux];
+    var swap = false;
+    if(datain[2] == dataout[2]) {
+      swap = true;
+    }
+
+    var result = [datain, dataout, selin, selout, demux, swap];
 
     return result;
   };
@@ -1975,6 +2031,7 @@ function Mux() {
     if(!dirs) { this.setError('getting dirs error'); return false; }
 
     this.demux = dirs[4];
+    this.swap = dirs[5];
 
     this.dataindir = dirs[0][0];
     this.datainlsbpos = dirs[0][1];
@@ -1985,6 +2042,9 @@ function Mux() {
     this.numselin = dirs[2][2];
     this.numdataout = dirs[1][2];
     this.numselout = dirs[3][2];
+
+    var numsel = (1 << this.numselin);
+    this.bussize = this.demux ? this.numdatain : (this.swap ? Math.ceil(this.numdatain / numsel) : this.numdataout);
 
     this.output.length = this.numdataout + this.numselout;
 
@@ -3169,13 +3229,54 @@ function Component() {
       }
       return;
     }
-    if(toggleMode) {
-      toggleMode = false;
-      this.value = !this.value;
+    // for TYPE_ROM, just do default behavior, it already toggles bit
+    if(e.ctrlKey && this.type != TYPE_ROM) {
+      var didsomething = true;
       if(this.type == TYPE_PUSHBUTTON_OFF) {
-        this.type = TYPE_PUSHBUTTON_ON;
+        // do not change here. The mouseup event will do the change. All we
+        // do here for pushbutton is ignore the mousedown event.
       } else if(this.type == TYPE_PUSHBUTTON_ON) {
-        this.type = TYPE_PUSHBUTTON_OFF;
+        // do not change here. The mouseup event will do the change. All we
+        // do here for pushbutton is ignore the mousedown event.
+      } else if(this.type == TYPE_SWITCH_OFF) {
+        this.type = TYPE_SWITCH_ON;
+      } else if(this.type == TYPE_SWITCH_ON) {
+        this.type = TYPE_SWITCH_OFF;
+      } else if(this.type == TYPE_TIMER_OFF) {
+        this.type = TYPE_TIMER_ON;
+      } else if(this.type == TYPE_TIMER_ON) {
+        this.type = TYPE_TIMER_OFF;
+      } else if(this.type == TYPE_AND) {
+        this.type = TYPE_NAND;
+      } else if(this.type == TYPE_NAND) {
+        this.type = TYPE_AND;
+      } else if(this.type == TYPE_OR) {
+        this.type = TYPE_NOR;
+      } else if(this.type == TYPE_NOR) {
+        this.type = TYPE_OR;
+      } else if(this.type == TYPE_XOR) {
+        this.type = TYPE_XNOR;
+      } else if(this.type == TYPE_XNOR) {
+        this.type = TYPE_XOR;
+      } else if(this.type == TYPE_TRISTATE) {
+        this.type = TYPE_TRISTATE_INV;
+      } else if(this.type == TYPE_TRISTATE_INV) {
+        this.type = TYPE_TRISTATE;
+      } else if(this.type == TYPE_CONSTANT || this.type == TYPE_COUNTER || this.type == TYPE_RANDOM) {
+        this.value = !this.value;
+      } else {
+        didsomething = false;
+      }
+      if(didsomething) {
+        //world[y][x].initDiv2();
+        var symbol = typesymbols[this.type];
+        if(this.type == TYPE_CONSTANT || this.type == TYPE_COUNTER) symbol = this.value ? 'C' : 'c';
+        if(symbol) {
+          this.corecell.symbol = symbol;
+          this.corecell.displaysymbol = symbol;
+          this.corecell.circuitsymbol = symbol;
+          this.corecell.initDiv2();
+        }
       }
       render();
       return;
@@ -3185,6 +3286,10 @@ function Component() {
       var value = this.value;
       var type = changeMode;
       var symbol = typesymbols[type];
+      if(changeMode == 'rem_inputs') {
+        this.inputs = [];
+        return;
+      }
       if(changeMode == 'c') {
         type = this.inputs.length ? TYPE_COUNTER : TYPE_CONSTANT;
         value = false;
@@ -3322,7 +3427,6 @@ document.body.onkeydown = function(e) {
 
 var lastmousedowncomponent = null;
 
-var toggleMode = false;
 var changeMode = null;
 
 
@@ -3795,7 +3899,8 @@ function Cell() {
         if(mux) {
           if(mux.demux) {
             title = 'demux';
-            if(mux.numdataout > 2) title = '' + mux.numdataout + '-output ' + title;
+            if(mux.bussize > 1) title += ' of width-' + mux.bussize + ' buses';
+            if(mux.bussize == 1 && mux.numdataout > 2) title = '' + mux.numdataout + '-output ' + title;
             title += '. ';
             var side0 = '';
             var side1 = '';
@@ -3804,13 +3909,14 @@ function Cell() {
             if((mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'bottom'; side1 = 'top';}
             if((mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'top'; side1 = 'bottom';}
             title += 'Output 0 is at the ' + side0 + ', output ' + (mux.numdataout - 1) + ' is at the ' + side1;
+          } else if(mux.swap) {
+            title = 'controlled swap';
+            if(mux.bussize > 1) title += ' of width-' + mux.bussize + ' buses';
           } else {
-            if(mux.numdataout > 1) {
-              if(mux.numdatain == 2 && mux.numdataout == 2) title += ' (as controlled swap)';
-              else title += ' (with multiple swapped data outputs)';
-            }
+            title = 'mux';
+            if(mux.bussize > 1) title += ' of width-' + mux.bussize + ' buses';
             if(mux.numselout > 0) title += ' (with selection passthrough)';
-            if(mux.numdatain > 2) title = '' + mux.numdatain + '-input ' + title;
+            if(mux.bussize == 1 && mux.numdatain > 2) title = '' + mux.numdatain + '-input ' + title;
             title += '. ';
             var side0 = '';
             var side1 = '';
@@ -3820,15 +3926,23 @@ function Cell() {
             if((mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'top'; side1 = 'bottom';}
             title += 'Input 0 is at the ' + side0 + ', input ' + (mux.numdatain - 1) + ' is at the ' + side1;
           }
-        }
-        if(mux.numselin > 1) {
-          title += '. ';
-          var sellsbname = '';
-          if(!(mux.selindir & 1) && mux.selinlsbpos) sellsbname = 'right';
-          if(!(mux.selindir & 1) && !mux.selinlsbpos) sellsbname = 'left';
-          if((mux.selindir & 1) && mux.selinlsbpos) sellsbname = 'bottom';
-          if((mux.selindir & 1) && !mux.selinlsbpos) sellsbname = 'top';
-          title += 'Selection input LSB is at the ' + sellsbname + ' of its group of ' + mux.numselin;
+          if(mux.numselin > 1) {
+            title += '. ';
+            var sellsbname = '';
+            if(!(mux.selindir & 1) && mux.selinlsbpos) sellsbname = 'right';
+            if(!(mux.selindir & 1) && !mux.selinlsbpos) sellsbname = 'left';
+            if((mux.selindir & 1) && mux.selinlsbpos) sellsbname = 'bottom';
+            if((mux.selindir & 1) && !mux.selinlsbpos) sellsbname = 'top';
+            title += 'There are ' + mux.numselin + ' selection inputs and their LSB is at the ' + sellsbname;
+          }
+          /*title += ' DEBUG: ';
+          title += ' demux: ' + mux.demux + '. ';
+          title += ' swap: ' + mux.swap + '. ';
+          title += ' bussize: ' + mux.bussize + '. ';
+          title += ' numdatain: ' + mux.numdatain + '. ';
+          title += ' numdataout: ' + mux.numdataout + '. ';
+          title += ' numselin: ' + mux.numselin + '. ';
+          title += ' numselout: ' + mux.numselout + '. ';*/
         }
       }
       if(tc == 'T') {
@@ -3875,12 +3989,12 @@ function Cell() {
     }
     this.renderer = getNewRenderer();
 
-    //toggleMode aka clickFun
+    //clickFun
     var f = bind(function(component, x, y, e) {
       clearSelection(); // we allow selection of comments, but not of other items because it's annoying that selections appear when double clicking. However, do clear the comment selection if it happens to exist when clicking anything.
       e.stopPropagation();
       e.preventDefault();
-      if(!toggleMode && !changeMode) lastmousedowncomponent = component;
+      if(!changeMode) lastmousedowncomponent = component;
       if(AUTOUPDATE == 1/* || AUTOUPDATE == 3*/) update();
       if(component) component.mousedown(e, x, y);
       if(autopaused && isPaused() && !e.shiftKey) {
@@ -8785,6 +8899,7 @@ var firstParse = true; // to keep scrolled down if you were scrolled down before
 
 //opt_fragmentAction: 0=use id if possible else clear, 1=set from code if possible else clear, 2=keep as-is (e.g. if it's already #code)
 function parseText(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
+  if(editmode) return;
   if(firstParse) {
     parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction);
     return;
@@ -9283,17 +9398,6 @@ makeElement('option', colorDropdown).innerText = 'blue';
 makeElement('option', colorDropdown).innerText = 'inverted';
 colorDropdown.selectedIndex = colorscheme;
 
-/*
-var toggleButton = makeUIElement('button', menuRow2El);
-toggleButton.innerText = 'spark';
-toggleButton.title = 'after clicking this button, click any component and its state will be toggled. May not take effect in immediate mode.';
-toggleButton.onclick = function() {
-  toggleMode = true;
-};
-*/
-
-
-
 var zoomoutButton = makeUIElement('button', menuRow2El, 1);
 zoomoutButton.innerText = '-';
 zoomoutButton.title = 'Zoom out';
@@ -9335,6 +9439,7 @@ changeDropdown.onchange = function() {
 
 function registerChangeDropdownElement(type) {
   var text = (typesymbols[type] == undefined) ? '[change]' : typesymbols[type];
+  if(type == 'rem_inputs') text = 'disconnect inputs';
   if(type == 'c' || type == 'C') text = type;
   var el = makeElement('option', changeDropdown).innerText = text;
   changeDropdownElements.push(type);
@@ -9361,6 +9466,7 @@ registerChangeDropdownElement('c');
 registerChangeDropdownElement('C');
 registerChangeDropdownElement(TYPE_DELAY);
 registerChangeDropdownElement(TYPE_RANDOM);
+registerChangeDropdownElement('rem_inputs');
 
 
 var editmode = false;
