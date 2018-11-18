@@ -4006,7 +4006,9 @@ function Cell() {
         console.log('CLICKDEBUG enabled!');
         console.log('===================');
         var w = world[y][x];
-        console.log('x: ' + x + ', y: ' + y + ', circuitsymbol: ' + w.circuitsymbol);
+        var s = 'x: ' + x + ', y: ' + y + ', circuitsymbol: ' + w.circuitsymbol;
+        if(w.number >= -2) s += ', number: ' + w.number;
+        console.log(s);
         if(w.antennax != -1 || w.antennay != -1) console.log('antennax: ' + w.antennax + ', antennay: ' + w.antennay);
         for(var i = 0; i < w.components.length; i++) {
           var compo = w.components[i];
@@ -4329,7 +4331,7 @@ function RendererText() {
     this.div0.style.backgroundColor = 'yellow';
     this.div1.style.backgroundColor = 'yellow';
     this.div0.style.color = 'red';
-    this.div1.style.color = 'red';
+    this.div1.style.color = '#f88';
     this.div0.title = errortext;
     this.div1.title = errortext;
   };
@@ -6243,8 +6245,6 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
       drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
 
-      // asdf TODO
-
       // input crossing N
       prepareAt(32, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
@@ -6404,13 +6404,13 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       //this.canvas0.style.backgroundColor = 'yellow';
       //this.canvas1.style.backgroundColor = 'yellow';
       this.ctx0.strokeStyle = 'red';
-      this.ctx1.strokeStyle = 'red';
+      this.ctx1.strokeStyle = '#f88';
       this.ctx0.fillStyle = 'red';
-      this.ctx1.fillStyle = 'red';
+      this.ctx1.fillStyle = '#f88';
       this.text0.style.color = 'red';
       this.text0.title = errortext;
       if(this.usetext) {
-        this.text1.style.color = 'red';
+        this.text1.style.color = '#f88';
         this.text1.title = errortext;
       }
     }
@@ -7432,7 +7432,7 @@ function parseSubs() {
   return true;
 }
 
-// This does nothing more than turn numbers that touch junctions (y)'s circuitsymbol, into y's themselves, so wires can connect to the numbers
+// This does nothing more than turn numbers that touch junctions (=)'s circuitsymbol, into ='s themselves, so wires can connect to the numbers
 // This is similar to the numbers touching i's
 // But this is unlike numbers touching l's and r's, those numbers will be isolators (for example a number for an l is to indicate its color, but you may not want to increase the led size)
 function convertJunctionNumbers() {
@@ -7487,6 +7487,7 @@ function convertJunctionNumbers() {
   }
 
   // resolve numbers of buses touching wires in a very particular useful but heuristic way
+  // TODO: can this be done simpler and better?
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
       if(world[y][x].skipparsing) continue;
@@ -7506,8 +7507,12 @@ function convertJunctionNumbers() {
           }
         }
 
-        if(hor && !ver && world[y][x].numberh >= 0) world[y][x].number = world[y][x].numberh;
-        if(ver && !hor && world[y][x].numberv >= 0) world[y][x].number = world[y][x].numberv;
+        if(hor && !ver && world[y][x].numberh >= 0) {
+          world[y][x].number = world[y][x].numberh;
+        }
+        if(ver && !hor && world[y][x].numberv >= 0) {
+          world[y][x].number = world[y][x].numberv;
+        }
       }
     }
   }
@@ -7516,7 +7521,7 @@ function convertJunctionNumbers() {
       if(world[y][x].skipparsing) continue;
       if(world[y][x].circuitsymbol == '=' && world[y][x].metasymbol == '=') {
         world[y][x].number = world[y][x].numberh = world[y][x].numberv = -1;
-        // this is on purpose! Wires that touch a real y do NOT count for numbered connections
+        // this is on purpose! Wires that touch a real '=' do NOT count for numbered connections
       }
     }
   }
@@ -7579,32 +7584,6 @@ function convertBackplaneNumbers() {
         world[y][x].circuitsymbol = 'g';
         world[y][x].number = number;
         world[y][x].circuitextra = (dir & 1) + 1;
-      }
-    }
-  }
-
-  // resolve numbers of backplane touching wires in a very particular useful but heuristic way
-  for(var y = 0; y < h; y++) {
-    for(var x = line0[y]; x < line1[y]; x++) {
-      if(world[y][x].skipparsing) continue;
-      if(world[y][x].circuitsymbol == 'g') {
-        var hor = false;
-        var ver = false;
-        for(var i = 0; i < 4; i++) {
-          var dx2 = (i == 1) ? 1 : ((i == 3) ? -1 : 0);
-          var dy2 = (i == 0) ? -1 : ((i == 2) ? 1 : 0);
-          var x2 = x + dx2;
-          var y2 = y + dy2;
-          if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
-          if(world[y2][x2].circuitsymbol == 'g') continue;
-          if(connected2(x, y, i)) {
-            if(i == 0 || i == 2) ver = true;
-            if(i == 1 || i == 3) hor = true;
-          }
-        }
-
-        if(hor && !ver && world[y][x].numberh >= 0) world[y][x].number = world[y][x].numberh;
-        if(ver && !hor && world[y][x].numberv >= 0) world[y][x].number = world[y][x].numberv;
       }
     }
   }

@@ -3311,7 +3311,7 @@ a o a o a o a o"1"
 
 registerCircuit('4-bit majority gate', `
 
-0"4-but majority gate"
+0"4-bit majority gate"
 
    l
    ^
@@ -5055,10 +5055,10 @@ registerCircuit('4-bit CPU', `
   * *   3210============ =         MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<g17
   * *   ||||           = =         MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<g18
   * *   ||||"registers"= =         ^^^^                  ^^^^  ^^^^         ^^^^
-  * *   ||||"memory"   = =         ||||        g19>l     ||||  ||||         ||||
-  * ***>iiiiilllli     = =         |||| 1   0g>i "carry" ||||  ||||         ||||
-  *-+-->i"r0"^^^^i<b<0 = =         |||| 0  13g>3         ||||  ||||         ||||
-  * * *>iiiiiiii32 # = = =         |||| g   1g>0 g10  8g>a|||  ||||         ||||
+  * *   ||||"memory"   = =         ||||     0g>c"carry"  ||||  ||||         ||||
+  * ***>iiiiilllli     = =         |||| 1  13g>yg19      ||||  ||||         ||||
+  *-+-->i"r0"^^^^i<b<0 = =         |||| 0   1g>Q         ||||  ||||         ||||
+  * * *>iiiiiiii32 # = = =         |||| g      d g10  8g>a|||  ||||         ||||
   * * * ^^^^       # = = =         |||| w      ^ v       ^|||  ||||         ||||
   * **+>iiiiilllli # = = =   ******++++>a----->o<a<***** g|||  ||||         ||||
   *-+-+>i"r1"^^^^i<b<1 = =   *     ||||                * 1|||  ||||  98     ||||
@@ -5189,24 +5189,26 @@ registerCircuit('4-bit CPU', `
   s s s s s s s s
 
 
- "1-bit reg. w. clock,"         "4-bit reg w. clock,"                "4-bit reg w. clock,"
- "enable and reset"              "enable and reset"                  "reset, enable & bus"
-                  l
-                  ^                 l   l   l   lI31                        "bus"
-             ******                 ^   ^   ^   ^                           llllI32
-             *    *               ==+===+===+===+=                          ^^^^
-      "C"s***+***>c           "c"s0>i 0>i 0>i 0>i                      MMMMMMMMM<* llll"state"
-             *    #           "e"s1>3 1>3 1>3 1>3                      ^^^^ ^^^^ * ^^^^
-             *    Q<*         "r"s2>0 2>0 2>0 2>0                 =====3210 3210=+=3210
-             *    d *               ^   ^   ^   ^                 =         |||| *
-             *    ^ *               s   s   s   s               **+*********++++****s"en. r/w"
- "enable"s***+****+*+**I                                        * =         ||||
-             * *  * * *3                                        v = s>iiiiiiii31
-      "R"s***+*+**+** *0                               "en. w"s>a-+-->iiiiiiiiii
-             * *  *   *                                           = s>iiiiiiiiii
-             * ]a>o<a<*                                           =         ^^^^
-             *  ^   ^                                             ==========3210
-             ****   s                                                       ssss
+       "4-bit reg w. clock,"                "4-bit reg w. clock,"
+        "enable and reset"                  "reset, enable & bus"
+
+           l   l   l   lI31                        "bus"
+           ^   ^   ^   ^                           llllI32
+         ==+===+===+===+=                          ^^^^
+     "c"s0>c 0>c 0>c 0>c                      MMMMMMMMM<* llll"state"
+     "e"s1>y 1>y 1>y 1>y                      ^^^^ ^^^^ * ^^^^
+     "r"s2>Q 2>Q 2>Q 2>Q                 =====3210 3210=+=3210
+           d   d   d   d                 =         |||| *
+           ^   ^   ^   ^               **+*********++++****s"en. r/w"
+           s   s   s   s               * =         ||||
+                                       v = s>iiiiiiii31
+                              "en. w"s>a-+-->iiiiiiiiii
+                                         = s>iiiiiiiiii
+                                         =         ^^^^
+                                         ==========3210
+                                                   ssss
+
+
 
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"3
 
