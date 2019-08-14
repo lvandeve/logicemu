@@ -5386,8 +5386,6 @@ registerCircuit('4-bit CPU', `
 `, 'cpu');
 
 
-
-
 registerCircuit('8-bit divider effect', `
 
 0"MODE:electron"
@@ -5504,5 +5502,58 @@ registerCircuit('8-bit divider effect', `
 
 `, 'div_effect');
 
+registerCircuit('74595 8-bit register shift', `
+0"this is a register shift 8 bit
+0"1. enable or not 'serial data input'
+0"2. enable and disable 'shift clock'
+0"3. enable and disable 'latch clock' and you see the shift bit if you enable 'serial data input' in first times.
 
+"output enable"      s----]o------------------------------*
+                                                          |
+"latch clock"        s---->O-----------------*            *----*
+                                             |            |    v
+"serial data input"  s---->O--]o---->d---*---+------>d>O--+---]z------>l "Qa"
+                            *------->c   |   *------>c    |
+                          *-+------->Q   |   |            |
+                          | |      *-----*   |            *----*
+                          | |      |         |            |    v
+                          | |      *>d---*---+------>d>O--+---]z------>l "Qb"
+                          | *------->c   |   *------>c    |
+                          *-+------->Q   |   |            |
+                          | |      *-----*   |            *----*
+                          | |      |         |            |    v
+                          | |      *>d---*---+------>d>O--+---]z------>l "Qc"
+                          | *------->c   |   *------>c    |
+                          *-+------->Q   |   |            |
+                          | |      *-----*   |            *----*
+                          | |      |         |            |    v
+                          | |      *>d---*---+------>d>O--+---]z------>l "Qd"
+                          | *------->c   |   *------>c    |
+                          *-+------->Q   |   |            |
+                          | |      *-----*   |            *----*
+                          | |      |         |            |    v
+                          | |      *>d---*---+------>d>O--+---]z------>l "Qe"
+                          | *------->c   |   *------>c    |
+                          *-+------->Q   |   |            |
+                          | |      *-----*   |            *----*
+                          | |      |         |            |    v
+                          | |      *>d---*---+------>d>O--+---]z------>l "Qf"
+                          | *------->c   |   *------>c    |
+                          *-+------->Q   |   |            |
+                          | |      *-----*   |            *----*
+                          | |      |         |            |    v
+                          | |      *>d---*---+------>d>O--+---]z------>l "Qg"
+                          | *------->c   |   *------>c    |
+                          *-+------->Q   |   |            |
+                          | |      *-----*   |            *----*
+                          | |      |         |                 v
+                          | |      *>d---*---+------>d>O------]z------>l "Qh"
+                          | *------->c   |   *------>c
+                          *-+------->Q   |
+                          | |            |
+"shift clock"        s->O-+-*            *------------>O------]o------>l "serial data output"
+                          |
+"reset"              S-]o-*
 
+0"Author/Contributor: chezsick
+`, '74hc595');
