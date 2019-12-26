@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018 Lode Vandevenne
+Copyright (c) 2018-2019 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +47,6 @@ function makeElementAt(tag, x, y, opt_parent) {
   return el;
 }
 
-
 function makeAbsElement(tag, x, y, w, h, opt_parent) {
   var el = makeElement(tag, opt_parent);
   el.style.position = 'absolute';
@@ -60,8 +59,9 @@ function makeAbsElement(tag, x, y, w, h, opt_parent) {
 
 function removeElement(el) {
   if(!el) return;
-  if(el.parentNode && el.parentNode.contains(el)) {
-    el.parentNode.removeChild(el);
+  var p = el.parentNode;
+  if(p && p.contains(el)) {
+    p.removeChild(el);
   }
 }
 
@@ -92,7 +92,7 @@ function styleUIElement(el, opt_smallbutton) {
   el.style.backgroundColor = '#eee';
   el.style.cursor = 'pointer';
   el.style.boxShadow = '0.5px 0.5px #aaa';
-  el.style.textAligh = 'center';
+  el.style.textAlign = 'center';
   el.style.boxSizing = 'border-box';
   el.style.font = '400 13px Arial';
 
@@ -120,6 +120,17 @@ function makeUISpacer(width, el) {
   var s = makeElement('span', el);
   s.style.width = width + 'px';
   s.style.display = 'inline-block';
+}
+
+function makeInternalButton(title, parent, x, y, fun) {
+  var button = makeUIElement('button', parent);
+  button.style.position = 'absolute';
+  button.style.left = x + 'px';
+  button.style.top = y + 'px';
+  button.innerText = title;
+  button.onclick = function() {
+    fun();
+  };
 }
 
 //bind a single argument to a function
@@ -242,8 +253,10 @@ function setLocalStorage(data, name) {
   localStorage[name] = data;
 }
 
-function getLocalStorage(name) {
-  if(!localStorageSupported()) return undefined;
+//note: returns values as strings, e.g. booleans will get string 'true' or 'false'
+function getLocalStorage(name, opt_default) {
+  if(!localStorageSupported()) return opt_default;
+  if(localStorage[name] == undefined) return opt_default;
   return localStorage[name];
 }
 
@@ -316,10 +329,10 @@ var graphics_mode = 1; // 0=text, 1=canvas
 var graphics_mode_browser = graphics_mode; //is_chrome ? graphics_mode : 0;
 var graphics_mode_actual = graphics_mode_browser;
 
+var worldstartheight = 160; // under menu
 
-
-var worldDiv = makeDiv(10, 128, 0, 0);
-var renderingMessageDiv = makeDiv(10, 128, 0, 0);
+var worldDiv = makeDiv(10, worldstartheight, 0, 0);
+var renderingMessageDiv = makeDiv(10, worldstartheight, 0, 0);
 
 var numticks = 0;
 
@@ -364,7 +377,7 @@ var TYPE_TRISTATE_INV = TYPE_index++;
 var TYPE_RANDOM = TYPE_index++;
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
-// number types (higher value = higher priority) [numbertype]
+// number types (higher value = higher priority) [numbertype number priority number order numbers priority numbers order]
 var NUMBER_index = 0;
 var NUMBER_NONE = NUMBER_index++;
 var NUMBER_LED = NUMBER_index++;
@@ -3417,6 +3430,11 @@ document.body.onkeypress = function(e) {
 };
 
 document.body.onkeydown = function(e) {
+  if(editmode) {
+    if(edit.onkeydown) {
+      return edit.onkeydown(e);
+    }
+  }
   if(activeVTE && e && e.code == 'Backspace') {
     if(editmode) return;
     activeVTE.doBackspace();
@@ -3467,9 +3485,9 @@ var TERMINALFGCOLOR;
 var BUSCOLORS;
 
 function setColorScheme(index) {
-  if(index == 0) {
+  if(index == 0) { // light
     ONCOLOR = 'black';
-    OFFCOLOR = '#aaa';
+    OFFCOLOR = '#888';
     BGCOLOR = 'white';
     TEXTFGCOLOR = '#000'; // '#940';
     TEXTBGCOLOR = '#fff6ea';
@@ -3500,7 +3518,7 @@ function setColorScheme(index) {
 
     TERMINALBGCOLOR = 'black';
     TERMINALFGCOLOR = '#0d0';
-  } else if(index == 1) {
+  } else if(index == 1) { // dark
     ONCOLOR = '#f44';
     OFFCOLOR = '#080';
     BGCOLOR = 'black';
@@ -3533,7 +3551,7 @@ function setColorScheme(index) {
 
     TERMINALBGCOLOR = '#00f';
     TERMINALFGCOLOR = '#fff';
-  } else if(index == 2) {
+  } else if(index == 2) { // gray
     setColorScheme(0);
 
     BGCOLOR = '#aaa';
@@ -3563,7 +3581,7 @@ function setColorScheme(index) {
     BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
 
     TEXTBGCOLOR = 'none';
-  } else if(index == 3) {
+  } else if(index == 3) { // blue
     setColorScheme(0);
 
     BGCOLOR = '#008';
@@ -3594,52 +3612,108 @@ function setColorScheme(index) {
 
     LINKCOLOR = '#880';
     TITLECOLOR = TEXTFGCOLOR;
-  } else {
+  } else if(index == 4) { // inverted
     setColorScheme(index - 4);
     negateColorScheme(); // this only looks decent for inverting the 'light' color scheme.
+  } else if(index == 5) { // candy
+    setColorScheme(0);
+
+    BGCOLOR = '#fbf';
+
+    ONCOLOR = '#f08';
+    OFFCOLOR = '#888';
+    TEXTFGCOLOR = '#804';
+    TEXTBGCOLOR = '#eae';
+    LINKCOLOR = '#f08';
+    /*TEXTFGCOLOR = '#f08';
+    TEXTBGCOLOR = '#eae';
+    LINKCOLOR = '#f00';*/
+
+    GATEBGCOLOR = '#ccf';
+    SWITCHON_BGCOLOR = '#afa';
+    SWITCHOFF_BGCOLOR = TEXTBGCOLOR;
+
+    led_on_fg_colors[0] = '#f08';
+    led_on_bg_colors[0] = '#f8a';
+
+    var ledoffbg = '#888';
+    led_off_bg_colors = [ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg];
+    led_off_border_colors = led_on_fg_colors;
+
+    SWITCHON_FGCOLOR = led_on_fg_colors[3];
+    SWITCHON_BGCOLOR = led_on_bg_colors[3];
+    SWITCHOFF_FGCOLOR = led_off_fg_colors[3];
+    SWITCHOFF_BGCOLOR = led_off_bg_colors[3];
+    SWITCHON_BORDERCOLOR = SWITCHON_FGCOLOR;
+    SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
+
+    TERMINALBGCOLOR = '#88f';
+    TERMINALFGCOLOR = '#fff';
   }
 }
 
 // warning: does not validate input
 function normalizeCSSColor(css) {
+  // only has named colors used somewhere in here.
   if(css == 'black') css = '#000000';
   if(css == 'white') css = '#ffffff';
   if(css == 'red') css = '#ff0000';
   if(css == 'green') css = '#00ff00';
   if(css == 'blue') css = '#0000ff';
+  if(css == 'yellow') css = '#00ffff';
   if(css.length == 4) {
     css = '#' + css[1] + css[1] + css[2] + css[2] + css[3] + css[3];
   }
   return css;
 }
 
-function negateColor(css) {
+function parseCSSColor(css) {
   css = normalizeCSSColor(css);
-  var r = (255 - parseInt(css.substr(1, 2), 16)).toString(16);
-  var g = (255 - parseInt(css.substr(3, 2), 16)).toString(16);
-  var b = (255 - parseInt(css.substr(5, 2), 16)).toString(16);
+  var r = parseInt(css.substr(1, 2), 16);
+  var g = parseInt(css.substr(3, 2), 16);
+  var b = parseInt(css.substr(5, 2), 16);
+  return [r, g, b];
+}
+
+function formatCSSColor(rgb) {
+  var r = rgb[0].toString(16);
+  var g = rgb[1].toString(16);
+  var b = rgb[2].toString(16);
   if(r.length == 1) r = '0' + r;
   if(g.length == 1) g = '0' + g;
   if(b.length == 1) b = '0' + b;
   return '#' + r + g + b;
 }
 
+function formatCSSColorAlpha(rgba) {
+  return 'rgba(' + rgba[0].toString(10) + ', ' + rgba[1].toString(10) + ', ' +
+         rgba[2].toString(10) + ', ' + (rgba[3] / 255.0) + ')';
+}
+
+function negateColor(css) {
+  var rgb = parseCSSColor(css);
+  rgb[0] = (255 - rgb[0]);
+  rgb[1] = (255 - rgb[1]);
+  rgb[2] = (255 - rgb[2]);
+  return formatCSSColor(rgb);
+}
+
 function negateLigntness(css) {
-  css = normalizeCSSColor(css);
-  var r = parseInt(css.substr(1, 2), 16);
-  var g = parseInt(css.substr(3, 2), 16);
-  var b = parseInt(css.substr(5, 2), 16);
+  var rgb = parseCSSColor(css);
+  var r = rgb[0];
+  var g = rgb[1];
+  var b = rgb[2];
   var mm = Math.min(Math.min(r, g), b) + Math.max(Math.max(r, g), b);
   r = 255 - mm + r;
   g = 255 - mm + g;
   b = 255 - mm + b;
-  var r = r.toString(16);
-  var g = g.toString(16);
-  var b = b.toString(16);
-  if(r.length == 1) r = '0' + r;
-  if(g.length == 1) g = '0' + g;
-  if(b.length == 1) b = '0' + b;
-  return '#' + r + g + b;
+  return formatCSSColor([r, g, b]);
+}
+
+// alpha given in range 0.0-1.0
+function addAlpha(css, alpha) {
+  var rgb = parseCSSColor(css);
+  return formatCSSColorAlpha([rgb[0], rgb[1], rgb[2], alpha * 255]);
 }
 
 function negateColorScheme() {
@@ -3737,7 +3811,10 @@ function Cell() {
   this.callsubindex = -2; // use sub (small i)
   this.callsub = null; // the CallSub
   this.commentalign = -1;
-  this.commentlength = 0;
+  this.commentmono = false; // monospace
+  this.commentchapter = -1;
+  this.commentlength = 0; // the text itself
+  this.commentlength2 = 0; // including any quotes or styling numbers
   this.antennax = -1; // horizontal matching antenna, if any
   this.antennay = -1; // vertical matching antenna, if any
   this.drawchip = false; // when drawing the 'i' of a chip in canvas mode, only do it if this is true, it indicates a good looking "core" cell for it (next to number, ...)
@@ -4230,28 +4307,51 @@ function RendererText() {
 
       // no need to affect div1, it's never shown for comments
 
+      var textel = this.div0;
+
       // allow the text to go to the right
       if(cell.commentalign >= 0 && cell.commentalign <= 2) {
+        var align = cell.commentalign;
+        if(!cell.commentmono) {
+          this.div0.style.fontFamily = 'unset'; // remove monospace
+        }
         this.div0.innerText = '';
         this.div0.style.backgroundColor = 'unset';
         // this span is there so that we can have the background color only over the text, not whitespace parts left or right
         var span0 = makeElement('span', this.div0);
         span0.innerText = symbol;
         span0.style.color = fgcolor;
-        span0.style.backgroundColor = bgcolor;
+        // don't do the bgcolor for standard non-monospace text, that one is distinguishable enough from circuit elements
+        if(cell.commentmono) span0.style.backgroundColor = bgcolor;
         span0.style.whiteSpace = 'pre';
         //span0.style.fontSize = th + 'px';
-        span0.style.fontSize = Math.floor(tw * 0.9) + 'px'; // avoids background overlapping parts of font issues
+        if(cell.commentmono) {
+          span0.style.fontSize = Math.floor(tw * 0.9) + 'px'; // avoids background overlapping parts of font issues
+        } else {
+          span0.style.fontSize = Math.floor(tw * 1.0) + 'px';
+          if(tw < 16) span0.style.letterSpacing = '0.5px'; // this might make it slightly more readable if zoomed out a lot
+        }
         span0.style.height = th + 'px';
         span0.style.lineHeight = th + 'px';
         span0.style.verticalAlign = 'top'; // make the span really go where I want it, not shifted slightly down
-        this.div0.style.width = '' + (tw * cell.commentlength) + 'px';
-        if(cell.commentalign == 0) this.div0.style.textAlign = 'left';
-        else if(cell.commentalign == 1) this.div0.style.textAlign = 'center';
-        else if(cell.commentalign == 2) this.div0.style.textAlign = 'right';
+        this.div0.style.width = '' + (tw * cell.commentlength2) + 'px';
+        //this.div0.style.border = '1px solid red'; // debug comment divs
+        if(align == 0) this.div0.style.textAlign = 'left';
+        else if(align == 1) this.div0.style.textAlign = 'center';
+        else if(align == 2) this.div0.style.textAlign = 'right';
+
+        textel = span0;
       } else {
         this.div0.innerText = symbol;
       }
+
+      if(cell.commentchapter > 0) {
+        if(cell.commentchapter == 1) textel.style.fontSize = Math.floor(1.2 * tw) + 'px';
+        if(cell.commentchapter < 3) textel.style.fontWeight = 'bold';
+        if(cell.commentchapter > 1) textel.style.textDecoration = 'underline';
+        if(cell.commentchapter == 3) textel.style.fontStyle = 'italic';
+      }
+
       // allow text selection of those
       this.div0.onmousedown = null;
     } else if(symbol == 'toc') {
@@ -6570,6 +6670,7 @@ function toggleTimers() {
 }
 
 // must be called after (or at the end of) parseCells
+// this handles various of the numbers, but those affecting comments (which trump all of those) are already done and removed at this point.
 function parseNumbers() {
 
   // .numbertype
@@ -6743,6 +6844,19 @@ function parseNumbers() {
       }
     }
   }
+
+
+  for(var y = 0; y < h; y++) {
+    for(var x = line0[y]; x < line1[y]; x++) {
+      if(world[y][x].skipparsing) continue;
+      if(world[y][x].numbertype == NUMBER_LED) {
+        if(digitmap[world[y][x].metasymbol]) {
+          world[y][x].displaysymbol = ' '; // don't render the numbers next to LEDs, the LED color shows the effect
+          // other numbers, such as IC numbers, bus and global wire indices, or timer durations, are not removed but should be shown.
+        }
+      }
+    }
+  }
 }
 
 // performance log debug log debuglog
@@ -6763,8 +6877,6 @@ function startLogPerformance() {
 
 // should be called asap after parseCells, everything else that has neighbors will depend on this
 function parseAntennas() {
-  logPerformance('parseAntennas start');
-
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
       var c = world[y][x].circuitsymbol;
@@ -6804,7 +6916,65 @@ function parseAntennas() {
       }
     }
   }
-  logPerformance('parseAntennas done');
+  return true;
+}
+
+function parseExtra() {
+  for(var y = 0; y < h; y++) {
+    for(var x = line0[y]; x < line1[y]; x++) {
+      if(digitmap[world[y][x].symbol] && !world[y][x].comment) {
+        world[y][x].circuitsymbol = ' ';
+        //world[y][x].displaysymbol = ' ';
+      }
+      if(world[y][x].symbol == BACKSLASH_ALTERNATIVE && !world[y][x].comment) {
+        world[y][x].displaysymbol = '\\';
+        world[y][x].circuitsymbol = '\\';
+        world[y][x].metasymbol = '\\';
+      }
+      var c = world[y][x].circuitsymbol;
+      var wca, wcb, wcc;
+
+      if(c == '^' || c == 'm') { wca = getNeighbor(x, y, 7); wcb = getNeighbor(x, y, 0); wcc = getNeighbor(x, y, 4); }
+      else if(c == '>' || c == ']') { wca = getNeighbor(x, y, 4); wcb = getNeighbor(x, y, 1); wcc = getNeighbor(x, y, 5); }
+      else if(c == 'v' || c == 'w') { wca = getNeighbor(x, y, 5); wcb = getNeighbor(x, y, 2); wcc = getNeighbor(x, y, 6); }
+      else if(c == '<' || c == '[') { wca = getNeighbor(x, y, 6); wcb = getNeighbor(x, y, 3); wcc = getNeighbor(x, y, 7); }
+      else continue;
+
+
+      var ca = ' ', cb = ' ', cc = ' ';
+
+      // metasymbol instead of circuitsymbol due to the TODO below with using digitmap
+      if(wca) ca = wca.metasymbol;
+      if(wcb) cb = wcb.metasymbol;
+      if(wcc) cc = wcc.metasymbol;
+
+      // digitmap too because those could be IC numbers that count as part of it...
+      // this is a bit sloppy tbh (number is not always chip) but this is an early parse, we don't know which numbers are chip yet
+      // TODO: improve that
+      if(!(devicemapin[cb] || digitmap[cb]) && (devicemapin[ca] || digitmap[ca] || devicemapin[cc] || digitmap[cc])) {
+        // Even if their diagonal backsides have nothing, make them diagonal inputs. Otherwise large repeated IC structures may fail
+        // at the edges when just copypasting the same structure multiple times (see the game of life circuits)
+        world[y][x].circuitextra = 2;
+      }
+
+      if(world[y][x].circuitextra == 0) {
+        // if an input touches a device on its main input side, then ignore devices touching its sides (mostly for special shaped ICs)
+        if(c == '^' || c == 'm') { wca = getNeighbor(x, y, 2); }
+        else if(c == '>' || c == ']') { wca = getNeighbor(x, y, 3); }
+        else if(c == 'v' || c == 'w') { wca = getNeighbor(x, y, 0); }
+        else if(c == '<' || c == '[') { wca = getNeighbor(x, y, 1); }
+        ca = ' ';
+        if(wca) ca = wca.metasymbol; // idem TODO as above about numbers and chips
+        if(devicemapin[ca] || digitmap[ca] || ca == '*' || ca == '+' || ca == ',') {
+          world[y][x].circuitextra = 1;
+        }
+        if(ca == '|' && (c == '^' || c == 'v' || c == 'm' || c == 'w')) world[y][x].circuitextra = 1;
+        if(ca == '-' && (c == '>' || c == '<' || c == ']' || c == '[')) world[y][x].circuitextra = 1;
+      }
+    }
+  }
+
+  return true;
 }
 
 // get neighbor, or if antenna, warps to position on other side
@@ -6913,10 +7083,15 @@ function getOppositeDir(dir) {
   return (dir ^ 2);
 }
 
+function setCommentOptions(o, commentalign, commentmono, commentchapter) {
+  o.commentalign = commentalign;
+  o.commentmono = commentmono;
+  o.commentchapter = commentchapter;
+}
+
 // parse the individual world cells from the text
 function parseCells(text) {
   world = [];
-  logPerformance('parseCells start');
   var lines = text.split('\n');
   h = lines.length;
   w = 1;
@@ -6926,13 +7101,15 @@ function parseCells(text) {
     world[y] = [];
     var comment = false;
     var commentalign = -1;
+    var commentmono = false;
+    var commentchapter = -1;
     var thincommentcell = null;
     line0[y] = 0;
     line1[y] = 0;
     var line0inited = false;
-    var commentstart = 0; // quote
+    var commentstart = 0; // text itself
     var commentstart2 = 0; // quote or number
-    var commentend = 0; // quote
+    var commentend = 0; // text itself
     var commentend2 = 0; // quote or number
 
     for(var x = 0; x < w; x++) {
@@ -6950,9 +7127,11 @@ function parseCells(text) {
       cell.comment = comment;
       cell.x = x;
       cell.y = y;
-      if(!comment && (cell.symbol == '0' || cell.symbol == '1' || cell.symbol == '2')) {
+      if(!comment && (cell.symbol == '0' || cell.symbol == '1' || cell.symbol == '2' || cell.symbol == '3' || cell.symbol == '4' || cell.symbol == '5' || cell.symbol == '6' || cell.symbol == '7' || cell.symbol == '8')) {
         if((x > 0 && lines[y][x - 1] == '"') || (x + 1 < w && lines[y][x + 1] == '"')) {
           cell.displaysymbol = ' ';
+          cell.circuitsymbol = ' ';
+          cell.comment = true; // a number that affects a comment is itself part of the comment, and made invisible. It should not affect LED color etc...
         }
       }
       if(comment) {
@@ -6960,10 +7139,10 @@ function parseCells(text) {
           cell.displaysymbol = ' ';
           cell.circuitsymbol = ' ';
           cell.comment = true;
-          cell.commentalign = commentalign;
+          setCommentOptions(cell, commentalign, commentmono, commentchapter);
           comment = !comment;
 
-          if(commentalign >= 3 && commentalign <= 4) {
+          if(cell.commentalign == 3 || cell.commentalign == 5) {
             if(commentend2 > x) {
               x++;
               world[y][x] = new Cell();
@@ -6973,11 +7152,11 @@ function parseCells(text) {
             var i;
             for(i = commentstart2; i <= commentend2; i++) {
               var j = i;
-              if(commentalign == 4) j = commentend2 - (i - commentstart2); // need to go from other end to not overwrite
+              if(commentalign == 5) j = commentend2 - (i - commentstart2); // need to go from other end to not overwrite
               var shift = (commentalign == 3) ?
-                  (j + 1 + (commentstart - commentstart2)) :
-                  j - 1 - (commentend2 - commentend);
-              if(shift > commentstart && shift < commentend) {
+                  (j + commentstart - commentstart2) :
+                  j - (commentend2 - commentend);
+              if(shift >= commentstart && shift <= commentend) {
                 world[y][j].commentalign = -1;
                 world[y][j].displaysymbol = world[y][shift].displaysymbol;
                 world[y][j].circuitsymbol = world[y][shift].circuitsymbol;
@@ -6997,66 +7176,130 @@ function parseCells(text) {
           }
 
           thincommentcell = null;
-          commentalign = null;
+          commentalign = -1;
+          commentmono = false;
+          commentchapter = -1;
         }
       } else {
         if(cell.symbol == '"') {
-          commentstart = x;
           cell.displaysymbol = ' ';
           cell.circuitsymbol = ' ';
           cell.comment = true;
-          cell.commentlength = 2; // the begin and end quote themselves take place in the alignment room
+          cell.commentlength = 0;
+          cell.commentlength2 = 2; // the begin and end quote themselves take place in the alignment room
+          // they are counted one too much further on, compensate here
+          cell.commentlength--;
+          cell.commentlength2--;
+
           comment = !comment;
           commentalign = -1;
+          commentmono = false;
+          commentchapter = -1;
 
+          var numberleft = true;
           commentend = x + 1;
           for(;;) {
             if(lines[y][commentend] == '"') break;
             if(commentend + 1 >= w) break;
             commentend++;
           }
-          commentend2 = commentend;
+          commentend--;
+
+          commentend2 = commentend + 1;
+          commentstart = x + 1;
+          commentstart2 = x;
+
+          var markdown = false;
 
           var x2 = x - 1;
-          if(x2 >= 0 && (lines[y][x2] == '0')) commentalign = 0;
-          else if(x2 >= 0 && (lines[y][x2] == '1')) commentalign = 1;
-          else if(x2 >= 0 && (lines[y][x2] == '2')) commentalign = 2;
+          if(x2 >= 0 && (lines[y][x2] == '0')) { commentalign = 0; markdown = true; }
+          else if(x2 >= 0 && (lines[y][x2] == '1')) { commentalign = 1; markdown = true; }
+          else if(x2 >= 0 && (lines[y][x2] == '2')) { commentalign = 2; markdown = true; }
           else if(x2 >= 0 && (lines[y][x2] == '3')) commentalign = 3;
           else if(x2 >= 0 && (lines[y][x2] == '4')) commentalign = 4;
+          else if(x2 >= 0 && (lines[y][x2] == '5')) commentalign = 5;
+          else if(x2 >= 0 && (lines[y][x2] == '6')) { commentalign = 0; commentmono = true; }
+          else if(x2 >= 0 && (lines[y][x2] == '7')) { commentalign = 1; commentmono = true; }
+          else if(x2 >= 0 && (lines[y][x2] == '8')) { commentalign = 2; commentmono = true; }
           else {
+            numberleft = false;
             for(x2 = x + 1; x2 < w; x2++) {
               if(lines[y][x2] == '"') break;
             }
             x2++;
-            commentend2++;
-            if(x2 < w && lines[y][x2] == '0') commentalign = 0;
-            else if(x2 < w && lines[y][x2] == '1') commentalign = 1;
-            else if(x2 < w && lines[y][x2] == '2') commentalign = 2;
-            else if(x2 < w && lines[y][x2] == '3') commentalign = 3;
-            else if(x2 < w && lines[y][x2] == '4') commentalign = 4;
-            else commentend2 = commentend;
           }
-          commentstart = x;
-          commentstart2 = x;
-          if(x2 == x - 1 && commentalign >= 0) commentstart2 = x2;
+          if(numberleft) {
+            commentstart2--;
+            cell.commentlength2++; // for correct right alignment that includes the number
+          }
 
-          thincommentcell = (commentalign >= 0 && commentalign <= 2) ? (x2 < x ? world[y][x2] : cell) : null;
-          cell.commentalign = commentalign;
+          var numberright = true;
+          var xe;
+          for(xe = x + 1; xe < w; xe++) {
+            if(lines[y][xe] == '"') break;
+          }
+          xe++;
+          if(xe < w && lines[y][xe] == '0') { commentalign = 0; markdown = true; }
+          else if(xe < w && lines[y][xe] == '1') { commentalign = 1; markdown = true; }
+          else if(xe < w && lines[y][xe] == '2') { commentalign = 2; markdown = true; }
+          else if(xe < w && lines[y][xe] == '3') commentalign = 3;
+          else if(xe < w && lines[y][xe] == '4') commentalign = 4;
+          else if(xe < w && lines[y][xe] == '5') commentalign = 5;
+          else if(xe < w && lines[y][xe] == '6') { commentalign = 0; commentmono = true; }
+          else if(xe < w && lines[y][xe] == '7') { commentalign = 1; commentmono = true; }
+          else if(xe < w && lines[y][xe] == '8') { commentalign = 2; commentmono = true; }
+          else {
+            numberright = false;
+          }
+
+          // markdown header support
+          if(markdown) {
+            if(lines[y][x + 1] == '#' && lines[y][x + 2] == ' ') {
+              commentchapter = 1;
+              commentstart += 2;
+            }
+            if(lines[y][x + 1] == '#' && lines[y][x + 2] == '#' && lines[y][x + 3] == ' ') {
+              commentchapter = 2;
+              commentstart += 3;
+            }
+            if(lines[y][x + 1] == '#' && lines[y][x + 2] == '#' && lines[y][x + 3] == '#' && lines[y][x + 4] == ' ') {
+              commentchapter = 3;
+              commentstart += 3;
+            }
+            // support -, + or * as bullet list item. Markdown supports all those 3 characters, so be consistent
+            if((lines[y][x + 1] == '-' || lines[y][x + 1] == '+' || lines[y][x + 1] == '*') && lines[y][x + 2] == ' ') {
+              //lines[y][x + 1] = '•'
+              //lines[y].replaceAt(x + 1, '•');
+              lines[y] = lines[y].substr(0, x + 1) + '•' + lines[y].substr(x + 2);
+            }
+          }
+
+          if(numberright) {
+            commentend2++;
+            cell.commentlength2++; // for correct right alignment that includes the number
+          }
+
+          setCommentOptions(cell, commentalign, commentmono, commentchapter);
+          thincommentcell = (cell.commentalign >= 0 && cell.commentalign <= 2) ? (commentstart2 < x ? world[y][commentstart2] : cell) : null;
 
           if(thincommentcell && thincommentcell != cell) {
             thincommentcell.circuitsymbol = thincommentcell.metasymbol = '"';
             thincommentcell.comment = cell.comment;
             thincommentcell.commentlength = cell.commentlength;
+            thincommentcell.commentlength2 = cell.commentlength2;
             thincommentcell.commentalign = cell.commentalign;
+            thincommentcell.commentmono = cell.commentmono;
+            thincommentcell.commentchapter = cell.commentchapter;
           }
         }
       }
       if(comment) {
         if(thincommentcell) {
-          if(thincommentcell.commentlength == 3) thincommentcell.displaysymbol = '';
-          thincommentcell.displaysymbol += cell.circuitsymbol;
+          if(thincommentcell.commentlength <= 0) thincommentcell.displaysymbol = '';
+          if(x >= commentstart && x <= commentend) thincommentcell.displaysymbol += cell.circuitsymbol;
           cell.displaysymbol = ' ';
           thincommentcell.commentlength++;
+          thincommentcell.commentlength2++;
         }
         cell.circuitsymbol = ' ';
       }
@@ -7106,63 +7349,7 @@ function parseCells(text) {
     above = above2;
   }
 
-  parseAntennas();
 
-  for(var y = 0; y < h; y++) {
-    for(var x = line0[y]; x < line1[y]; x++) {
-      if(digitmap[world[y][x].symbol] && !world[y][x].comment) {
-        world[y][x].circuitsymbol = ' ';
-        //world[y][x].displaysymbol = ' ';
-      }
-      if(world[y][x].symbol == BACKSLASH_ALTERNATIVE && !world[y][x].comment) {
-        world[y][x].displaysymbol = '\\';
-        world[y][x].circuitsymbol = '\\';
-        world[y][x].metasymbol = '\\';
-      }
-      var c = world[y][x].circuitsymbol;
-      var wca, wcb, wcc;
-
-      if(c == '^' || c == 'm') { wca = getNeighbor(x, y, 7); wcb = getNeighbor(x, y, 0); wcc = getNeighbor(x, y, 4); }
-      else if(c == '>' || c == ']') { wca = getNeighbor(x, y, 4); wcb = getNeighbor(x, y, 1); wcc = getNeighbor(x, y, 5); }
-      else if(c == 'v' || c == 'w') { wca = getNeighbor(x, y, 5); wcb = getNeighbor(x, y, 2); wcc = getNeighbor(x, y, 6); }
-      else if(c == '<' || c == '[') { wca = getNeighbor(x, y, 6); wcb = getNeighbor(x, y, 3); wcc = getNeighbor(x, y, 7); }
-      else continue;
-
-
-      var ca = ' ', cb = ' ', cc = ' ';
-
-      // metasymbol instead of circuitsymbol due to the TODO below with using digitmap
-      if(wca) ca = wca.metasymbol;
-      if(wcb) cb = wcb.metasymbol;
-      if(wcc) cc = wcc.metasymbol;
-
-      // digitmap too because those could be IC numbers that count as part of it...
-      // this is a bit sloppy tbh (number is not always chip) but this is an early parse, we don't know which numbers are chip yet
-      // TODO: improve that
-      if(!(devicemapin[cb] || digitmap[cb]) && (devicemapin[ca] || digitmap[ca] || devicemapin[cc] || digitmap[cc])) {
-        // Even if their diagonal backsides have nothing, make them diagonal inputs. Otherwise large repeated IC structures may fail
-        // at the edges when just copypasting the same structure multiple times (see the game of life circuits)
-        world[y][x].circuitextra = 2;
-      }
-
-      if(world[y][x].circuitextra == 0) {
-        // if an input touches a device on its main input side, then ignore devices touching its sides (mostly for special shaped ICs)
-        if(c == '^' || c == 'm') { wca = getNeighbor(x, y, 2); }
-        else if(c == '>' || c == ']') { wca = getNeighbor(x, y, 3); }
-        else if(c == 'v' || c == 'w') { wca = getNeighbor(x, y, 0); }
-        else if(c == '<' || c == '[') { wca = getNeighbor(x, y, 1); }
-        ca = ' ';
-        if(wca) ca = wca.metasymbol; // idem TODO as above about numbers and chips
-        if(devicemapin[ca] || digitmap[ca] || ca == '*' || ca == '+' || ca == ',') {
-          world[y][x].circuitextra = 1;
-        }
-        if(ca == '|' && (c == '^' || c == 'v' || c == 'm' || c == 'w')) world[y][x].circuitextra = 1;
-        if(ca == '-' && (c == '>' || c == '<' || c == ']' || c == '[')) world[y][x].circuitextra = 1;
-      }
-    }
-  }
-
-  logPerformance('parseCells done');
   return true; // success
 }
 
@@ -7621,7 +7808,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(todir <= 3 && (c == 'x' || c2 == 'x')) return false; // x's do not interact with the sides
 
   if(z > 3 && c != 'i') return false;
-  if(z > 1 && !(c == 'i' || c == 'V' || c == 'W' || c2 == 'V' || c2 == 'W' || c == 'X' || c2 == 'X')) return false;
+  if(z > 1 && !(c == 'i' || c == 'V' || c2 == 'V' || c == 'W' || c2 == 'W' || c == 'X' || c2 == 'X')) return false;
 
   //if(c == 'i' && c2 != 'i') return false; // connecting sub-calls is implemented later. And full subs are marked with 'i' earlier, so u's connect only with u's.
 
@@ -8871,7 +9058,7 @@ function countSlowGraphicalDivs() {
 
 function setDocumentTitle(text) {
   document.title = 'LogicEmu: ' + text;
-  circuitName.innerText = 'Current Circuit: ' + text;
+  circuitNameEl.innerText = /*'Current Circuit: ' +*/ text;
 }
 
 var firstParse = true; // to keep scrolled down if you were scrolled down before refresh
@@ -8879,6 +9066,18 @@ var firstParse = true; // to keep scrolled down if you were scrolled down before
 //opt_fragmentAction: 0=use id if possible else clear, 1=set from code if possible else clear, 2=keep as-is (e.g. if it's already #code)
 function parseText(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
   if(editmode) return;
+
+  var titleindex = text.indexOf('"TITLE:');
+  if(titleindex >= 0) {
+    var titleend = text.indexOf('"', titleindex + 1);
+    //if(titleend < 0) titleend = text.indexOf('\n', titleindex);
+    if(titleend > titleindex && titleend - titleindex < 200) {
+      // override the title with the one marked in the circuit
+      opt_title = text.substr(titleindex + 7, titleend - titleindex - 7);
+    }
+  }
+
+  setDocumentTitle(opt_title || 'unnamed circuit');
   if(firstParse) {
     parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction);
     return;
@@ -8970,7 +9169,18 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
 
   resetForParse();
   startLogPerformance();
+
+  logPerformance('parseCells begin');
   if(!parseCells(text)) return false;
+  logPerformance('parseCells done');
+
+  logPerformance('parseAntennas begin');
+  if(!parseAntennas()) return false;
+  logPerformance('parseAntennas done');
+
+  logPerformance('parseExtra begin');
+  if(!parseExtra()) return false;
+  logPerformance('parseExtra done');
 
   if(tocPos >= 0) {
     world[tocY][tocX].symbol = 'toc';
@@ -9023,8 +9233,9 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
       if(world[y][x].symbol == '"' && world[y][x].commentalign == -1) nonthinw = Math.max(nonthinw, x);
       if(world[y][x].commentlength > 0 && world[y][x].commentalign != -1) {
         var l = 0;
-        if(world[y][x].commentalign == 0) l = Math.ceil(world[y][x].commentlength * 0.66);
-        if(world[y][x].commentalign == 1) l = Math.ceil(world[y][x].commentlength * 0.825); // centered, so bit more space used to the right
+        var mul = world[y][x].commentchapter > 0 ? 1.5 : 1.0; // chapter title is a bit bigger
+        if(world[y][x].commentalign == 0) l = Math.ceil(world[y][x].commentlength * 0.66 * mul);
+        if(world[y][x].commentalign == 1) l = Math.ceil(world[y][x].commentlength * 0.825 * mul); // centered, so bit more space used to the right
         if(world[y][x].commentalign == 2) l = world[y][x].commentlength;
         nonthinw = Math.max(nonthinw, x + l);
       }
@@ -9061,7 +9272,7 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
 
   var fitwidth = true;
   var fitheight = true;
-  var docwidth = /*document.body.clientWidth*/window.innerWidth - 8;
+  var docwidth = /*document.body.clientWidth*/window.innerWidth - 24;
   var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8;
   if(!docwidth) docwidth = 1000;
   if(!docheight) docheight = 800;
@@ -9106,8 +9317,6 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   if(UPDATE_ALGORITHM == 1) update();
   else render();
   logPerformance('initial render done');
-
-  setDocumentTitle(opt_title || 'unnamed circuit');
 
   worldDiv.style.display = 'block';
   return true; // success
@@ -9184,243 +9393,12 @@ function updateRunningState() {
   updatePauseButtonText();
 }
 
-var menuRows = makeElementAt('div', 0, 0);
-menuRows.style.position = 'fixed';
-menuRows.style.display = 'block';
-menuRows.style.width = '100%';
-menuRows.style.height = '100px';
 
-var menuRow1El = makeElementAt('span', 0, 0, menuRows);
-var menuRow2El = makeElementAt('span', 0, 48, menuRows);
-//var menuRow3El = makeElementAt('span', 0, 80, menuRows);
-var menuRow3El = menuRow2El;
-
-menuRows.style.zIndex = 5; // can be anything as long as it's higher than what we assign to editarea
-
-menuRow1El.style.background = '#f8f8f8';
-menuRow1El.style.position = 'absolute';
-menuRow1El.style.width = '100%';
-menuRow1El.style.height = '48px';
-menuRow2El.style.background = '#f8f8f8';
-menuRow2El.style.position = 'absolute';
-menuRow2El.style.width = '100%';
-menuRow2El.style.height = '48px';
-menuRow3El.style.background = '#f8f8f8';
-menuRow3El.style.position = 'absolute';
-menuRow3El.style.width = '100%';
-menuRow3El.style.height = '48px';
-
-// predesigned algorithm/autoupdate combinations
-var modes = [
-  ['immediate', 1, 3], // faster than electron: recursively resolved gates, and keeps updating until things stop changing (in combinational circuits, that's after only 1 tick)
-  ['electron', 3, 3], // designed for gate-level flip-flops (but the built-in flip flops don't need this mode, those work as ideal flipflop in all modes!)
-];
-function getMode() {
-  for(var i = 0; i < modes.length; i++) {
-    if(UPDATE_ALGORITHM == modes[i][1] && AUTOUPDATE == modes[i][2]) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-
-var modeDropdown = makeUIElement('select', menuRow3El);
-modeDropdown.title = 'Choose Emulation Algorithm. *) immediate: does fast updates (all gates at once in sorted order, or as sorted as possible in case of loops) when using a button or timer. Updates until things stop changing (1 tick for combinational circuits).' +
-                     ' *) electron: does slow update (gate-per-gate) every so many milliseconds, emulates flip-flops crafted from gates in more interesting way with even a randomness mechanism to get them out of metastable state.' +
-                     ' When loading a new circuit, a mode is automatically chosen as follows: by default, immediate. If a particular type of loop between gates (such as in SR latch) is detected, electron. If any other loop is present: immediate'
-                     ;
-modeDropdown.onchange = function() {
-  var mode = modeDropdown.selectedIndex;
-  if(mode >= modes.length) mode = 0;
-  UPDATE_ALGORITHM = modes[mode][1];
-  AUTOUPDATE = modes[mode][2];
-  updateModeButtonText();
-  updatePauseButtonText();
-  updateRunningState();
-};
-
-for(var i = 0; i < modes.length; i++) {
-  var el = makeElement('option', modeDropdown).innerText = modes[i][0];
-}
-
-function updateModeButtonText() {
-  var mode = getMode();
-  if(mode == -1) modeDropdown.selectedIndex = -1;
-  else modeDropdown.selectedIndex = mode;
-}
-
-
-var tickButton = makeUIElement('button', menuRow3El);
-tickButton.innerText = 'tick';
-tickButton.title = 'Tick once. This allows ticking the circuit when paused, to investigate the signal. Especially useful in paused electron mode, or paused immediate mode if there are flip-flops or other sequential parts.';
-tickButton.onclick = update;
-
-function isPaused() {
-  return !timerinterval && !autoupdateinterval;
-}
-
-function updatePauseButtonText() {
-  pauseButton.innerText = isPaused() ? 'paused' : 'pause';
-}
-var pauseButton = makeUIElement('button', menuRow3El, 3);
-pauseButton.innerText = 'pause';
-pauseButton.title = 'pauses running circuit and timers, or enables them again if already paused. If paused, use the tick button to manually advance circuit state step by step instead. If you press switches of the circuit while paused, the update will be visible after you use the tick button.';
-pauseButton.onclick = function() {
-  if(isPaused()) {
-    unpause();
-  } else {
-    pause();
-  }
-  updateTimeButtonBorders();
-};
-updatePauseButtonText();
-
-
-var slowerButton = makeUIElement('button', menuRow3El, 3);
-slowerButton.title = 'slows down simulation';
-slowerButton.innerText = 'slow';
-slowerButton.onclick = function() {
-  AUTOSECONDS = NORMALAUTOSECONDS * 10;
-  TIMERSECONDS = NORMALTIMERSECONDS * 10;
-
-  pause();
-  unpause();
-
-  updateTimeButtonBorders();
-};
-
-var normalButton = makeUIElement('button', menuRow3El, 3);
-normalButton.title = 'set to standard speed';
-normalButton.innerText = 'norm';
-normalButton.onclick = function() {
-  AUTOSECONDS = NORMALAUTOSECONDS;
-  TIMERSECONDS = NORMALTIMERSECONDS;
-
-  pause();
-  unpause();
-
-  updateTimeButtonBorders();
-};
-
-var boostButton = makeUIElement('button', menuRow3El, 3);
-boostButton.title = 'speeds up simulation, if possible within the computational resources of the web browser';
-boostButton.innerText = 'fast';
-boostButton.onclick = function() {
-  AUTOSECONDS = NORMALAUTOSECONDS / 10;
-  TIMERSECONDS = NORMALTIMERSECONDS / 10;
-
-  pause();
-  unpause();
-
-  updateTimeButtonBorders();
-};
-
-var timebuttons = [pauseButton, slowerButton, normalButton, boostButton];
-
-function updateTimeButtonBorders() {
-  var j = 0;
-  if(isPaused()) j = 0;
-  else if(AUTOSECONDS > NORMALAUTOSECONDS) j = 1;
-  else if(AUTOSECONDS == NORMALAUTOSECONDS) j = 2;
-  else if(AUTOSECONDS < NORMALAUTOSECONDS) j = 3;
-  for (var i = 0; i < 4; i++) {
-    if(i == j) {
-      highlightUIElementBorder(timebuttons[i], i == 2 ? 'black' : 'red');
-    } else {
-      styleUIElementBorder(timebuttons[i]);
-    }
-  }
-}
-
-
-var ticksCounterEl = makeElement('div', menuRow3El);
-ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
-ticksCounterEl.style.width = '95px';
-ticksCounterEl.style.display = 'inline-block';
-ticksCounterEl.title = 'Amount of ticks so far. Click to reset to 0. If in electron mode, is per gate ticks. In immediate mode, one tick per full update.';
-ticksCounterEl.onclick = function() {
-  numticks = 0;
-  updateTicksDisplay();
-};
-
-function updateTicksDisplay() {
-  ticksCounterEl.innerHTML = '&nbspticks: ' + numticks;
-}
-
-
-
-var rendererDropdown = makeUIElement('select', menuRow2El);
-rendererDropdown.title = 'Choose renderer: graphical or text. Graphical is with HTML5 canvas and has better looking wire connections but may be slower for huge circuits. Text mode is faster and is more closely related to how you edit circuits with ASCII text.';
-rendererDropdown.onchange = function() {
-  graphics_mode = rendererDropdown.selectedIndex;
-  graphics_mode_actual = rendererDropdown.selectedIndex;
-  initDivs();
-  render();
-};
-makeElement('option', rendererDropdown).innerText = 'text';
-makeElement('option', rendererDropdown).innerText = 'graphical';
-rendererDropdown.selectedIndex = graphics_mode;
-
-var colorDropdown = makeUIElement('select', menuRow2El, 3);
-colorDropdown.title = 'Choose color scheme';
-colorDropdown.onchange = function() {
-  setLocalStorage(colorDropdown.selectedIndex, 'color_scheme');
-  setColorScheme(colorDropdown.selectedIndex);
-  initDivs();
-  render();
-};
-makeElement('option', colorDropdown).innerText = 'light';
-makeElement('option', colorDropdown).innerText = 'dark';
-makeElement('option', colorDropdown).innerText = 'gray';
-makeElement('option', colorDropdown).innerText = 'blue';
-makeElement('option', colorDropdown).innerText = 'inverted';
-colorDropdown.selectedIndex = colorscheme;
-
-var zoomoutButton = makeUIElement('button', menuRow2El, 1);
-zoomoutButton.innerText = '-';
-zoomoutButton.title = 'Zoom out';
-zoomoutButton.onclick = function() {
-  if(tw <= 8 && th <= 8) return;
-  tw = Math.floor(tw * 0.66);
-  th = Math.floor(th * 0.66);
-  if(tw < 8) tw = 8;
-  if(th < 8) th = 8;
-  initDivs();
-  render();
-};
-
-var zoominButton = makeUIElement('button', menuRow2El, 1);
-zoominButton.innerText = '+';
-zoominButton.title = 'Zoom in';
-zoominButton.onclick = function() {
-  if(tw >= 64 && th >= 64) return;
-  tw = Math.floor(tw * 1.5);
-  th = Math.floor(th * 1.5);
-  if(tw > 64) tw = 64;
-  if(th > 64) th = 64;
-  initDivs();
-  render();
-};
-
-makeUISpacer(16, menuRow2El);
 
 
 var changeDropdownElements = [];
 
-var changeDropdown = makeUIElement('select', menuRow2El);
-changeDropdown.title = 'A simpler more primitive form of edit, but it works while a circuit is running. Change the type of a gate, switch or LED to this. First click an option from this list, then the main cell of a device (e.g. the "a" of an AND gate).' +
-    ' This is a very limited form of editing. It doesn\'t support creating or removing wire connections. It can only change a device that has one of the types in the list to another type in the list. On other devices it may either do nothing, or cause' +
-    ' unexpected behavior. Changes in IC templates have no effect on instances. Changes are not saved and not visible under the edit button. To do full editing, use the edit button instead.';
-changeDropdown.onchange = function() {
-  changeMode = changeDropdownElements[changeDropdown.selectedIndex];
-};
-
 function registerChangeDropdownElement(type) {
-  var text = (typesymbols[type] == undefined) ? '[change]' : typesymbols[type];
-  if(type == 'rem_inputs') text = 'disconnect inputs';
-  if(type == 'c' || type == 'C') text = type;
-  var el = makeElement('option', changeDropdown).innerText = text;
   changeDropdownElements.push(type);
 }
 
@@ -9448,26 +9426,36 @@ registerChangeDropdownElement(TYPE_RANDOM);
 registerChangeDropdownElement('rem_inputs');
 
 
-var editmode = false;
+
+
+var NEWEDIT = false;
+
+var editmode = false; // could be called modal mode, it's used for some other things than just editing too
 
 var textbeforeedit = '';
+// NOTE: This are used not only by SimpleEditor, but also by the import and export buttons.
 var editdiv;
 var editarea;
-var editButton = makeUIElement('button', menuRow2El, 3);
-editButton.innerText = 'edit';
-editButton.title = 'Opens text field to edit the map. Press this button again to stop editing and run the new circuit. Read the editing tutorial under "help" first. Advice: for large projects, do not actually edit in the text field because that is fiddly, use a good text editor (that has block selection), or copypaste a circuit in here from an external source. ' +
-                   'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead. Note that nothing gets sent to any server or cloud, everything is' +
-                   'local to your computer only.';
-editButton.onclick = function() {
-  if(!editmode) {
-    textbeforeedit = origtext;
-    var docwidth = /*document.body.clientWidth*/window.innerWidth - 8;
-    var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8;
+
+// anything that sets editmode = true, must also assign a function here that does what's needed when setting editmode = false again
+// the function itself should not assign editmode = false, the caller must do that when also calling this function
+// this should not include saving of map or canceling, only the UI cleanup/restore related functionality
+var editModeCancelFun = undefined;
+var editModeFinishFun = undefined;
+
+function SimpleEditor() {
+  editdiv = undefined;
+  editarea = undefined;
+
+  this.setUp = function() {
+    var docwidth = /*document.body.clientWidth*/window.innerWidth - 24 - 80;
+    var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8 - 80;
     var fontsize = 10;
     var ewidth = Math.max(w, 40);
     var eheight = Math.min(Math.max(origtext.split('\n').length, 16));
+    editdiv = makeAbsElement('div', 30, 128, docwidth, docheight);
     //editarea = makeAbsElement('textarea', 30, 128, (fontsize + 2) * ewidth, (fontsize + 2) * eheight);
-    editarea = makeAbsElement('textarea', 30, 128, docwidth - 80, docheight - 80);
+    editarea = makeAbsElement('textarea', 0, 0, docwidth, docheight - 100, editdiv);
     editarea.rows = eheight;
     editarea.cols = ewidth;
     editarea.value = origtext;
@@ -9476,49 +9464,646 @@ editButton.onclick = function() {
     //worldDiv.style.display = 'none';
     //editarea.style.position = 'fixed';
 
-    pause();
-    numticks = 0;
-    resetForParse();
-    initDivs();
+    makeInternalButton('cancel', editdiv, (docwidth - 200), (docheight - 80), function() {
+      editModeCancelFun();
+    });
+    makeInternalButton('done', editdiv, (docwidth - 100), (docheight - 80), function() {
+      editModeFinishFun();
+    });
+  };
 
-    editButton.innerText = 'done';
-    editmode = true;
-  } else {
+  // returns the text
+  this.turnDown = function() {
     var newtext = editarea.value;
-    document.body.removeChild(editarea);
-    editButton.innerText = 'edit';
-    editmode = false;
-    if(newtext != textbeforeedit) {
-      setLocalStorage(newtext, 'circuit_text');
-      parseText(newtext, 'edited circuit', undefined, 1);
-    } else {
-      parseText(newtext, 'edited circuit', undefined, 2);
-    }
-  }
+    removeElement(editdiv);
+    return newtext;
+  };
 };
 
+function finishEdit() {
+  var newtext = edit.turnDown();
+  edit = undefined;
 
-if(getLocalStorage('circuit_text')) {
-  var restoreButton = makeUIElement('button', menuRow2El, 3);
-  restoreButton.innerText = 'restore';
-  restoreButton.title = 'Restore circuit you created before with edit. Only works if an actual circuit was found in local storage.';
-  restoreButton.onclick = function() {
-    if(maybeLoadFromLocalStorage()) {
-      parseText(initialCircuitText, initialTitle, initialId ? linkableCircuits[initialId] : null, 1);
+  editButton.innerText = 'edit';
+  editmode = false;
+  createMenuUI();
+
+  if(newtext.length == 0) return;
+
+  if(newtext != textbeforeedit) {
+    setLocalStorage(newtext, 'circuit_text');
+    parseText(newtext, 'edited circuit', undefined, 1);
+  } else {
+    parseText(newtext, 'edited circuit', undefined, 2);
+  }
+}
+
+function cancelEdit() {
+  edit.turnDown();
+  edit = undefined;
+  editButton.innerText = 'edit';
+  editmode = false;
+  createMenuUI();
+  parseText(textbeforeedit, origtitle, undefined, 2);
+}
+
+//elements created by createMenuUI
+var menuRows;
+var menuRow0El;
+var menuRow1El;
+var menuRow2El;
+var menuRow3El;
+var ticksCounterEl;
+var rendererDropdown;
+var circuitNameEl;
+var circuitDropdownSpan;
+var editbutton;
+
+// functions created by createMenuUI
+var updatePauseButtonText;
+var updateModeButtonText;
+var updateTimeButtonBorders;
+var updateTicksDisplay;
+
+// smaller version of the menu rows shown when editing is active
+function createEditorMenuUI(cancelFun, finishFun) {
+  if(menuRows) removeElement(menuRows);
+
+  menuRows = makeElementAt('div', 0, 0);
+  menuRows.style.position = 'fixed';
+  menuRows.style.display = 'block';
+  menuRows.style.width = '100%';
+  menuRows.style.height = '100px';
+
+  menuRow0El = makeElementAt('span', 0, 0, menuRows);
+  menuRow0El.style.background = '#f8f8f8';
+  menuRow0El.style.position = 'absolute';
+  menuRow0El.style.width = '100%';
+  menuRow0El.style.height = '32px';
+
+
+  if(cancelFun) {
+    var cancelLink = makeElement('span', menuRow0El);
+    cancelLink.title = 'cancel the current modal operation';
+    cancelLink.innerHTML = 'cancel';
+    cancelLink.style.paddingLeft = '10px';
+    cancelLink.style.color = '#00e';
+    cancelLink.style.textDecoration = 'underline';
+    cancelLink.style.cursor = 'pointer';
+    cancelLink.onclick = function() {
+      if(cancelFun) cancelFun();
+    };
+  }
+
+  if(finishFun) {
+    var cancelLink = makeElement('span', menuRow0El);
+    cancelLink.title = 'finish and save the current modal operation';
+    cancelLink.innerHTML = 'finish';
+    cancelLink.style.paddingLeft = '10px';
+    cancelLink.style.color = '#00e';
+    cancelLink.style.textDecoration = 'underline';
+    cancelLink.style.cursor = 'pointer';
+    cancelLink.onclick = function() {
+      if(finishFun) finishFun();
+    };
+  }
+
+  var githubLink = makeElement('span', menuRow0El);
+  githubLink.style.paddingLeft = '10px';
+  githubLink.innerHTML = '<a href="https://github.com/lvandeve/logicemu" target="_blank">github</a>';
+  githubLink.style.paddingRight = '10px';
+}
+
+function isPaused() {
+  return !timerinterval && !autoupdateinterval;
+}
+
+
+function createMenuUI() {
+  if(menuRows) removeElement(menuRows);
+
+  menuRows = makeElementAt('div', 0, 0);
+  menuRows.style.position = 'fixed';
+  menuRows.style.display = 'block';
+  menuRows.style.width = '100%';
+  menuRows.style.height = '100px';
+
+  menuRow0El = makeElementAt('span', 0, 0, menuRows);
+  menuRow1El = makeElementAt('span', 0, 24, menuRows);
+  menuRow2El = makeElementAt('span', 0, 72, menuRows);
+  menuRow3El = makeElementAt('span', 0, 104, menuRows);
+
+  menuRows.style.zIndex = 5; // can be anything as long as it's higher than what we assign to editarea
+
+  menuRow0El.style.background = '#f8f8f8';
+  menuRow0El.style.position = 'absolute';
+  menuRow0El.style.width = '100%';
+  menuRow0El.style.height = '32px';
+  menuRow1El.style.background = '#f8f8f8';
+  menuRow1El.style.position = 'absolute';
+  menuRow1El.style.width = '100%';
+  menuRow1El.style.height = '48px';
+  menuRow2El.style.background = '#f8f8f8';
+  menuRow2El.style.position = 'absolute';
+  menuRow2El.style.width = '100%';
+  menuRow2El.style.height = '32px';
+  menuRow3El.style.background = '#f8f8f8';
+  menuRow3El.style.position = 'absolute';
+  menuRow3El.style.width = '100%';
+  menuRow3El.style.height = '32px';
+  menuRow3El.style.boxShadow = '0px 4px 4px #aaa';
+
+  // predesigned algorithm/autoupdate combinations
+  var modes = [
+    ['immediate', 1, 3], // faster than electron: recursively resolved gates, and keeps updating until things stop changing (in combinational circuits, that's after only 1 tick)
+    ['electron', 3, 3], // designed for gate-level flip-flops (but the built-in flip flops don't need this mode, those work as ideal flipflop in all modes!)
+  ];
+  function getMode() {
+    for(var i = 0; i < modes.length; i++) {
+      if(UPDATE_ALGORITHM == modes[i][1] && AUTOUPDATE == modes[i][2]) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+
+  var modeDropdown = makeUIElement('select', menuRow2El);
+  modeDropdown.title = 'Choose Emulation Algorithm. *) immediate: does fast updates (all gates at once in sorted order, or as sorted as possible in case of loops) when using a button or timer. Updates until things stop changing (1 tick for combinational circuits).' +
+                       ' *) electron: does slow update (gate-per-gate) every so many milliseconds, emulates flip-flops crafted from gates in more interesting way with even a randomness mechanism to get them out of metastable state.' +
+                       ' When loading a new circuit, a mode is automatically chosen as follows: by default, immediate. If a particular type of loop between gates (such as in SR latch) is detected, electron. If any other loop is present: immediate'
+                       ;
+  modeDropdown.onchange = function() {
+    var mode = modeDropdown.selectedIndex;
+    if(mode >= modes.length) mode = 0;
+    UPDATE_ALGORITHM = modes[mode][1];
+    AUTOUPDATE = modes[mode][2];
+    updateModeButtonText();
+    updatePauseButtonText();
+    updateRunningState();
+  };
+
+  for(var i = 0; i < modes.length; i++) {
+    var el = makeElement('option', modeDropdown).innerText = modes[i][0];
+  }
+
+  updateModeButtonText = function() {
+    var mode = getMode();
+    if(mode == -1) modeDropdown.selectedIndex = -1;
+    else modeDropdown.selectedIndex = mode;
+  }
+
+
+  var tickButton = makeUIElement('button', menuRow2El);
+  tickButton.innerText = 'tick';
+  tickButton.title = 'Tick once. This allows ticking the circuit when paused, to investigate the signal. Especially useful in paused electron mode, or paused immediate mode if there are flip-flops or other sequential parts.';
+  tickButton.onclick = update;
+
+  updatePauseButtonText = function() {
+    pauseButton.innerText = isPaused() ? 'paused' : 'pause';
+  }
+  var pauseButton = makeUIElement('button', menuRow2El, 3);
+  pauseButton.innerText = 'pause';
+  pauseButton.title = 'pauses running circuit and timers, or enables them again if already paused. If paused, use the tick button to manually advance circuit state step by step instead. If you press switches of the circuit while paused, the update will be visible after you use the tick button.';
+  pauseButton.onclick = function() {
+    if(isPaused()) {
+      unpause();
+    } else {
+      pause();
+    }
+    updateTimeButtonBorders();
+  };
+  updatePauseButtonText();
+
+
+  var slowerButton = makeUIElement('button', menuRow2El, 3);
+  slowerButton.title = 'slows down simulation';
+  slowerButton.innerText = 'slow';
+  slowerButton.onclick = function() {
+    AUTOSECONDS = NORMALAUTOSECONDS * 10;
+    TIMERSECONDS = NORMALTIMERSECONDS * 10;
+
+    pause();
+    unpause();
+
+    updateTimeButtonBorders();
+  };
+
+  var normalButton = makeUIElement('button', menuRow2El, 3);
+  normalButton.title = 'set to standard speed';
+  normalButton.innerText = 'norm';
+  normalButton.onclick = function() {
+    AUTOSECONDS = NORMALAUTOSECONDS;
+    TIMERSECONDS = NORMALTIMERSECONDS;
+
+    pause();
+    unpause();
+
+    updateTimeButtonBorders();
+  };
+
+  var boostButton = makeUIElement('button', menuRow2El, 3);
+  boostButton.title = 'speeds up simulation, if possible within the computational resources of the web browser';
+  boostButton.innerText = 'fast';
+  boostButton.onclick = function() {
+    AUTOSECONDS = NORMALAUTOSECONDS / 10;
+    TIMERSECONDS = NORMALTIMERSECONDS / 10;
+
+    pause();
+    unpause();
+
+    updateTimeButtonBorders();
+  };
+
+  var timebuttons = [pauseButton, slowerButton, normalButton, boostButton];
+
+  updateTimeButtonBorders = function() {
+    var j = 0;
+    if(isPaused()) j = 0;
+    else if(AUTOSECONDS > NORMALAUTOSECONDS) j = 1;
+    else if(AUTOSECONDS == NORMALAUTOSECONDS) j = 2;
+    else if(AUTOSECONDS < NORMALAUTOSECONDS) j = 3;
+    for (var i = 0; i < 4; i++) {
+      if(i == j) {
+        highlightUIElementBorder(timebuttons[i], i == 2 ? 'black' : 'red');
+      } else {
+        styleUIElementBorder(timebuttons[i]);
+      }
+    }
+  }
+
+
+  ticksCounterEl = makeElement('div', menuRow2El);
+  ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
+  ticksCounterEl.style.width = '95px';
+  ticksCounterEl.style.display = 'inline-block';
+  ticksCounterEl.title = 'Amount of ticks so far. Click to reset to 0. If in electron mode, is per gate ticks. In immediate mode, one tick per full update.';
+  ticksCounterEl.onclick = function() {
+    numticks = 0;
+    updateTicksDisplay();
+  };
+
+  updateTicksDisplay = function() {
+    ticksCounterEl.innerHTML = '&nbspticks: ' + numticks;
+  };
+
+
+
+  rendererDropdown = makeUIElement('select', menuRow2El);
+  rendererDropdown.title = 'Choose renderer: graphical or text. Graphical is with HTML5 canvas and has better looking wire connections but may be slower for huge circuits. Text mode is faster and is more closely related to how you edit circuits with ASCII text.';
+  rendererDropdown.onchange = function() {
+    graphics_mode = rendererDropdown.selectedIndex;
+    graphics_mode_actual = rendererDropdown.selectedIndex;
+    initDivs();
+    render();
+  };
+  makeElement('option', rendererDropdown).innerText = 'text';
+  makeElement('option', rendererDropdown).innerText = 'graphical';
+  rendererDropdown.selectedIndex = graphics_mode;
+
+  var colorDropdown = makeUIElement('select', menuRow2El, 3);
+  colorDropdown.title = 'Choose color scheme';
+  colorDropdown.onchange = function() {
+    setLocalStorage(colorDropdown.selectedIndex, 'color_scheme');
+    setColorScheme(colorDropdown.selectedIndex);
+    initDivs();
+    render();
+  };
+  makeElement('option', colorDropdown).innerText = 'light';
+  makeElement('option', colorDropdown).innerText = 'dark';
+  makeElement('option', colorDropdown).innerText = 'gray';
+  makeElement('option', colorDropdown).innerText = 'blue';
+  makeElement('option', colorDropdown).innerText = 'inverted';
+  makeElement('option', colorDropdown).innerText = 'candy';
+  colorDropdown.selectedIndex = colorscheme;
+
+  var zoomoutButton = makeUIElement('button', menuRow2El, 1);
+  zoomoutButton.innerText = '-';
+  zoomoutButton.title = 'Zoom out';
+  zoomoutButton.onclick = function() {
+    if(tw <= 8 && th <= 8) return;
+    tw = Math.floor(tw * 0.66);
+    th = Math.floor(th * 0.66);
+    if(tw < 8) tw = 8;
+    if(th < 8) th = 8;
+    initDivs();
+    render();
+  };
+
+  var zoominButton = makeUIElement('button', menuRow2El, 1);
+  zoominButton.innerText = '+';
+  zoominButton.title = 'Zoom in';
+  zoominButton.onclick = function() {
+    if(tw >= 64 && th >= 64) return;
+    tw = Math.floor(tw * 1.5);
+    th = Math.floor(th * 1.5);
+    if(tw > 64) tw = 64;
+    if(th > 64) th = 64;
+    initDivs();
+    render();
+  };
+
+  makeUISpacer(16, menuRow2El);
+
+  var changeDropdown = makeUIElement('select', menuRow2El);
+  changeDropdown.title = 'A simpler more primitive form of edit, but it works while a circuit is running. Change the type of a gate, switch or LED to this. First click an option from this list, then the main cell of a device (e.g. the "a" of an AND gate).' +
+      ' This is a very limited form of editing. It doesn\'t support creating or removing wire connections. It can only change a device that has one of the types in the list to another type in the list. On other devices it may either do nothing, or cause' +
+      ' unexpected behavior. Changes in IC templates have no effect on instances. Changes are not saved and not visible under the edit button. To do full editing, use the edit button instead.';
+  changeDropdown.onchange = function() {
+    changeMode = changeDropdownElements[changeDropdown.selectedIndex];
+  };
+  for(var i = 0; i < changeDropdownElements.length; i++) {
+    var type = changeDropdownElements[i];
+    var text = (typesymbols[type] == undefined) ? '[change]' : typesymbols[type];
+    if(type == 'rem_inputs') text = 'disconnect inputs';
+    if(type == 'c' || type == 'C') text = type;
+    var el = makeElement('option', changeDropdown).innerText = text;
+  }
+
+
+
+  editButton = makeUIElement('button', menuRow2El, 3);
+  editButton.innerText = 'edit';
+  editButton.title = 'Opens text field to edit the map. Press this button again to stop editing and run the new circuit. Read the editing tutorial under "help" first. Advice: for large projects, do not actually edit in the text field because that is fiddly, use a good text editor (that has block selection), or copypaste a circuit in here from an external source. ' +
+                     'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead. Note that nothing gets sent to any server or cloud, everything is' +
+                     'local to your computer only.';
+  editButton.onclick = function() {
+    if(!editmode) {
+      textbeforeedit = origtext;
+
+      if (NEWEDIT) {
+        edit = new Editor();
+      } else {
+        edit = new SimpleEditor();
+      }
+
+      //setUpEditor();
+      edit.setUp();
+      var oldw = w;
+      var oldh = h;
+      resetForParse();
+      w = oldw;
+      h = oldh;
+
+      pause();
+      numticks = 0;
+      initDivs();
+
+      editButton.innerText = 'done';
+      window.scrollTo(0, 0);
+      editmode = true;
+      editModeCancelFun = cancelEdit;
+      editModeFinishFun = finishEdit;
+      createEditorMenuUI(editModeCancelFun, editModeFinishFun);
+    } else {
+      editModeFinishFun();
     }
   };
 
-  var forgetButton = makeUIElement('button', menuRow2El, 3);
-  forgetButton.innerText = 'forget';
-  forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button' +
-                       'and also remove URL fragments (#id=... or #code=...), you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
-                       'if you want to keep your circuit, make sure you save it to disk first! That can be done by' +
-                       'copypasting it from the edit field into a text editor and saving to your disk, e.g. as a .txt file.';
-  forgetButton.onclick = function() {
-    setLocalStorage('', 'circuit_text');
-    clearFragment();
+  //go to editor on load, for easy development on it
+  //window.setTimeout(function(){tw = Math.ceil(tw * 0.75); th = Math.ceil(th * 0.75); editButton.click();}, 300);
+
+  if(getLocalStorage('circuit_text')) {
+    var restoreButton = makeUIElement('button', menuRow2El, 3);
+    restoreButton.innerText = 'restore';
+    restoreButton.title = 'Restore circuit you created before with edit. Only works if an actual circuit was found in local storage.';
+    restoreButton.onclick = function() {
+      if(maybeLoadFromLocalStorage()) {
+        parseText(initialCircuitText, initialTitle, initialId ? linkableCircuits[initialId] : null, 1);
+      }
+    };
+
+    var forgetButton = makeUIElement('button', menuRow2El, 3);
+    forgetButton.innerText = 'forget';
+    forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button' +
+                         'and also remove URL fragments (#id=... or #code=...), you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
+                         'if you want to keep your circuit, make sure you save it to disk first! That can be done by' +
+                         'copypasting it from the edit field into a text editor and saving to your disk, e.g. as a .txt file.';
+    forgetButton.onclick = function() {
+      setLocalStorage('', 'circuit_text');
+      clearFragment();
+    };
+  }
+
+  circuitDropdownSpan = makeElement('span', menuRow1El);
+
+  var prevCircuitButton = makeUIElement('button', menuRow1El, 1);
+  prevCircuitButton.innerText = '<';
+  prevCircuitButton.title = 'Previous built-in circuit';
+  prevCircuitButton.onclick = function() {
+    for(;;) {
+      if(currentSelectedCircuit == 0) return;
+      currentSelectedCircuit--;
+      if(!allRegisteredCircuits[currentSelectedCircuit].istitle) break;
+    }
+    parseText(allRegisteredCircuits[currentSelectedCircuit].text,
+        allRegisteredCircuits[currentSelectedCircuit].title,
+        allRegisteredCircuits[currentSelectedCircuit]);
   };
+
+  var nextCircuitButton = makeUIElement('button', menuRow1El, 1);
+  nextCircuitButton.innerText = '>';
+  nextCircuitButton.title = 'Next built-in circuit';
+  nextCircuitButton.onclick = function() {
+    for(;;) {
+      if(currentSelectedCircuit + 1 >= allRegisteredCircuits.length) return;
+      currentSelectedCircuit++;
+      if(!allRegisteredCircuits[currentSelectedCircuit].istitle) break;
+    }
+    parseText(allRegisteredCircuits[currentSelectedCircuit].text,
+        allRegisteredCircuits[currentSelectedCircuit].title,
+        allRegisteredCircuits[currentSelectedCircuit]);
+  };
+
+
+  var importButton = makeUIElement('button', menuRow1El);
+  importButton.innerText = 'import';
+  importButton.title = 'Import a circuit from its ASCII diagram copypasted from elsewhere. Paste it into the field that appears and use the buttons to import or cancel. To export or change a circuit instead, use the "edit" button, or create your own circuit in a text editor.';
+  importButton.onclick = function() {
+    if(!editmode) {
+      var fontsize = 10;
+      var ewidth = 60;
+      var eheight = 60;
+      editdiv = makeDiv(30-5, 128-5, 400+15, 400+15+30);
+      editdiv.style.backgroundColor = '#888';
+      editdiv.style.position = 'fixed';
+      editarea = makeAbsElement('textarea', 5, 5, 400, 400, editdiv);
+      editarea.rows = 40;
+      editarea.cols = 40;
+      editarea.value = '';
+      editarea.style.fontSize = fontsize + 'px';
+      editdiv.style.zIndex = '100';
+      editarea.focus();
+
+      makeInternalButton('import', editdiv, 330, 415, importButton.onclick);
+      makeInternalButton('cancel', editdiv, 245, 415, function() {
+        editModeCancelFun();
+      });
+
+      pause();
+      importButton.innerText = 'done';
+      window.scrollTo(0, 0);
+      editmode = true;
+      editModeCancelFun = function() {
+        document.body.removeChild(editdiv);
+        importButton.innerText = 'import';
+        editmode = false;
+        createMenuUI();
+        unpause();
+      };
+      editModeFinishFun = function() {
+        var newtext = editarea.value;
+        document.body.removeChild(editdiv);
+        importButton.innerText = 'import';
+        editmode = false;
+        createMenuUI();
+        if(newtext.length > 0) parseText(newtext, 'imported circuit', undefined, 1);
+      };
+      createEditorMenuUI(editModeCancelFun, editModeFinishFun);
+    } else {
+      editModeFinishFun();
+    }
+  };
+
+
+  var exportButton = makeUIElement('button', menuRow1El);
+  exportButton.innerText = 'export';
+  exportButton.title = 'Export circuit ASCII diagram, to easily store it elsewhere or share.';
+  exportButton.onclick = function() {
+    if(!editmode) {
+      var fontsize = 10;
+      var ewidth = 60;
+      var eheight = 60;
+      editdiv = makeDiv(30-5, 128-5, 400+15, 400+15+30);
+      editdiv.style.backgroundColor = '#888';
+      editdiv.style.position = 'fixed';
+      editarea = makeAbsElement('textarea', 5, 5, 400, 400, editdiv);
+      editarea.rows = 40;
+      editarea.cols = 40;
+      editarea.value = origtext;
+      editarea.style.fontSize = fontsize + 'px';
+      editdiv.style.zIndex = '100';
+      editarea.select();
+      editarea.focus();
+
+      makeInternalButton('cancel', editdiv, 330, 415, function() {
+        editModeCancelFun();
+      });
+
+      pause();
+      exportButton.innerText = 'done';
+      window.scrollTo(0, 0);
+      editmode = true;
+      editModeCancelFun = function() {
+        document.body.removeChild(editdiv);
+        importButton.innerText = 'import';
+        editmode = false;
+        unpause();
+        createMenuUI();
+      };
+      editModeFinishFun = editModeCancelFun;
+      createEditorMenuUI(editModeCancelFun, editModeFinishFun);
+    } else {
+      editModeFinishFun();
+    }
+  };
+
+  var settingsButton = makeUIElement('button', menuRow1El, 3);
+  settingsButton.innerText = 'settings';
+  settingsButton.title = 'settings';
+  settingsButton.onclick = function() {
+    editdiv = makeDiv(30-5, worldstartheight, 400+15, 400+15+30);
+    editdiv.style.backgroundColor = '#888';
+    editdiv.style.position = 'fixed';
+    window.scrollTo(0, 0);
+    editmode = true;
+    editModeFinishFun = function() {
+      createMenuUI();
+    };
+    editModeCancelFun = editModeFinishFun;
+    createEditorMenuUI(undefined, editModeFinishFun);
+    editdiv.style.zIndex = 100;
+    makeInternalButton('ok', editdiv, 300, 415, function() {
+      document.body.removeChild(editdiv);
+      editmode = false;
+      editModeCancelFun();
+    });
+    var cb = makeElementAt('input', 20, 20, editdiv);
+    cb.type = 'checkbox';
+    cb.value = NEWEDIT;
+    cb.onchange = function() {
+      NEWEDIT = cb.value;
+    };
+    var text = makeElementAt('span', 50, 20, editdiv);
+    text.innerText = 'enable experimental possible new editor';
+  };
+
+  var indexLink = makeElement('span', menuRow0El);
+  indexLink.title = 'go to the main welcome page and remove tokens from URL';
+  if(getCGIParameterByName('id')) {
+    indexLink.innerHTML = '&nbsp;&nbsp;<a href="' + getUrlWithoutQueries() + '">index</a>';
+  } else {
+    indexLink.innerHTML = 'index';
+    //indexLink.style.paddingLeft = '10px';
+    indexLink.style.color = '#00e';
+    indexLink.style.textDecoration = 'underline';
+    indexLink.style.cursor = 'pointer';
+    indexLink.onclick = function() {
+      if(origtext == introText) return;
+      parseText(introText, introTitle, linkableCircuits[introId]);
+    };
+  }
+
+  var helpLink = makeElement('span', menuRow0El);
+  helpLink.title = 'go to the help index page';
+  helpLink.innerHTML = 'help';
+  helpLink.style.paddingLeft = '10px';
+  helpLink.style.color = '#00e';
+  helpLink.style.textDecoration = 'underline';
+  helpLink.style.cursor = 'pointer';
+  helpLink.onclick = function() {
+    var circuit = linkableCircuits['helpindex'];
+
+    parseText(circuit.text, circuit.id, circuit);
+  };
+
+
+  var githubLink = makeElement('span', menuRow0El);
+  githubLink.style.paddingLeft = '10px';
+  githubLink.innerHTML = '<a href="https://github.com/lvandeve/logicemu" target="_blank">github</a>';
+  githubLink.style.paddingRight = '10px';
+
+
+  circuitNameEl = makeElement('span', menuRow3El);
+  circuitNameEl.innerHTML = 'Circuit Name';
+  //circuitNameEl.style.backgroundColor = '#0f0';
+  //circuitNameEl.style.border = '1px solid #080';
+  circuitNameEl.style.fontSize = '27px';
+  circuitNameEl.style.paddingLeft = '8px';
+  circuitNameEl.style.fontWeight = 'bold';
+  //circuitNameEl.style.marginTop = '-8px';
+  //circuitNameEl.style.marginLeft = '520px';
+  //circuitNameEl.style.marginTop = '20px';
+  //circuitNameEl.style.padding = '2px';
+  //circuitNameEl.style.position = 'absolute';
+  //circuitNameEl.style.top = '32px';
+  //circuitNameEl.style.left = '650px'; // 712px
+  //circuitNameEl.style.height = '34px';
+  //circuitNameEl.style.zIndex = '100';
+
+
+  /*var directLinkSpan = makeElement('span', menuRow1El);
+  directLinkSpan.innerHTML = '&nbsp;&nbsp;';//<a href="' + getUrlWithoutQueries() + '">direct link</a>';
+  var directLink = makeElement('a', directLinkSpan);
+  directLink.innerText = 'direct link';
+  directLink.href = getUrlWithoutQueries();
+  directLink.style.visibility = 'hidden';
+  directLink.title = 'external link to link directly to this circuit rather than the index page';*/
+
+  fillRegisteredCircuits();
 }
+
+
 
 // utility functions to mirror/rotate a whole circuit
 // does NOT yet support comments and possibly other things correctly: manual tuning may be needed afterwards
@@ -9529,8 +10114,8 @@ function transpose(text) {
   var lines = text.split('\n');
   while(lines.length > 0 && lines[0].length == 0) lines.splice(0, 1);
   while(lines.length > 0 && lines[lines.length - 1].length == 0) lines.length--;
-  h = lines.length;
-  w = 0;
+  var h = lines.length;
+  var w = 0;
   for(var i = 0; i < lines.length; i++) w = Math.max(w, lines[i].length);
   var grid = [];
   var above = []; // for vertical comments
@@ -9586,7 +10171,8 @@ function transpose(text) {
     above = above2;
   }
 
-  var result = '\n';
+  var result = '';
+  //result += '\n';
   for(var x = 0; x < w; x++) {
     for(var y = 0; y < h; y++) {
       result += grid[y][x];
@@ -9604,8 +10190,8 @@ function mirror(text) {
   var lines = text.split('\n');
   while(lines.length > 0 && lines[0].length == 0) lines.splice(0, 1);
   while(lines.length > 0 && lines[lines.length - 1].length == 0) lines.length--;
-  h = lines.length;
-  w = 0;
+  var h = lines.length;
+  var w = 0;
   for(var i = 0; i < lines.length; i++) w = Math.max(w, lines[i].length);
   var grid = [];
   var above = []; // for vertical comments
@@ -9646,7 +10232,8 @@ function mirror(text) {
     above = above2;
   }
 
-  var result = '\n';
+  var result = '';
+  //result += '\n';
   for(var y = 0; y < h; y++) {
     for(var x = 0; x < w; x++) {
       result += grid[y][w - x - 1];
@@ -9712,172 +10299,6 @@ function applyAllTransforms() {
 function printTransform(text, op) {
   console.log(transform(text, op));
 }
-
-
-var circuitDropdownSpan = makeElement('span', menuRow1El);
-
-var currentSelectedCircuit = 0;
-
-var prevCircuitButton = makeUIElement('button', menuRow1El, 1);
-prevCircuitButton.innerText = '<';
-prevCircuitButton.title = 'Previous built-in circuit';
-prevCircuitButton.onclick = function() {
-  for(;;) {
-    if(currentSelectedCircuit == 0) return;
-    currentSelectedCircuit--;
-    if(!allRegisteredCircuits[currentSelectedCircuit].istitle) break;
-  }
-  parseText(allRegisteredCircuits[currentSelectedCircuit].text,
-      allRegisteredCircuits[currentSelectedCircuit].title,
-      allRegisteredCircuits[currentSelectedCircuit]);
-};
-
-var nextCircuitButton = makeUIElement('button', menuRow1El, 1);
-nextCircuitButton.innerText = '>';
-nextCircuitButton.title = 'Next built-in circuit';
-nextCircuitButton.onclick = function() {
-  for(;;) {
-    if(currentSelectedCircuit + 1 >= allRegisteredCircuits.length) return;
-    currentSelectedCircuit++;
-    if(!allRegisteredCircuits[currentSelectedCircuit].istitle) break;
-  }
-  parseText(allRegisteredCircuits[currentSelectedCircuit].text,
-      allRegisteredCircuits[currentSelectedCircuit].title,
-      allRegisteredCircuits[currentSelectedCircuit]);
-};
-
-
-var importButton = makeUIElement('button', menuRow1El);
-importButton.innerText = 'import';
-importButton.title = 'Import a circuit from its ASCII diagram copypasted from elsewhere. Paste it into the field that appears and use the buttons to import or cancel. To export or change a circuit instead, use the "edit" button, or create your own circuit in a text editor.';
-importButton.onclick = function() {
-  if(!editmode) {
-    var fontsize = 10;
-    var ewidth = 60;
-    var eheight = 60;
-    editdiv = makeDiv(30-5, 128-5, 400+15, 400+15+30);
-    editdiv.style.backgroundColor = '#888';
-    editdiv.style.position = 'fixed';
-    editarea = makeAbsElement('textarea', 5, 5, 400, 400, editdiv);
-    editarea.rows = 40;
-    editarea.cols = 40;
-    editarea.value = '';
-    editarea.style.fontSize = fontsize + 'px';
-    editdiv.style.zIndex = '100';
-    editarea.focus();
-
-    var donebutton = makeUIElement('button', editdiv);
-    donebutton.style.position = 'absolute';
-    donebutton.style.left = '330px';
-    donebutton.style.top = '415px';
-    donebutton.innerText = 'import';
-    donebutton.onclick = importButton.onclick;
-
-    var cancelbutton = makeUIElement('button', editdiv);
-    cancelbutton.style.position = 'absolute';
-    cancelbutton.style.left = '245px';
-    cancelbutton.style.top = '415px';
-    cancelbutton.innerText = 'cancel';
-    cancelbutton.onclick = function() {
-      document.body.removeChild(editdiv);
-      importButton.innerText = 'import';
-      editmode = false;
-      unpause();
-    };
-
-    pause();
-    importButton.innerText = 'done';
-    editmode = true;
-  } else {
-    var newtext = editarea.value;
-    document.body.removeChild(editdiv);
-    importButton.innerText = 'import';
-    editmode = false;
-    parseText(newtext, 'imported circuit', undefined, 1);
-  }
-};
-
-
-var indexLink = makeElement('span', menuRow1El);
-indexLink.title = 'go to the main welcome page and remove tokens from URL';
-if(getCGIParameterByName('id')) {
-  indexLink.innerHTML = '&nbsp;&nbsp;<a href="' + getUrlWithoutQueries() + '">index</a>';
-} else {
-  indexLink.innerHTML = 'index';
-  indexLink.style.paddingLeft = '10px';
-  indexLink.style.color = '#00e';
-  indexLink.style.textDecoration = 'underline';
-  indexLink.style.cursor = 'pointer';
-  indexLink.onclick = function() {
-    if(origtext == introText) return;
-    parseText(introText, introTitle, linkableCircuits[introId]);
-  };
-}
-
-var helpLink = makeElement('span', menuRow1El);
-helpLink.title = 'go to the help index page';
-helpLink.innerHTML = 'help';
-helpLink.style.paddingLeft = '10px';
-helpLink.style.color = '#00e';
-helpLink.style.textDecoration = 'underline';
-helpLink.style.cursor = 'pointer';
-helpLink.onclick = function() {
-  var circuit = linkableCircuits['helpindex'];
-
-  parseText(circuit.text, circuit.id, circuit);
-};
-
-
-var githubLink = makeElement('span', menuRow1El);
-githubLink.style.paddingLeft = '10px';
-githubLink.innerHTML = '<a href="https://github.com/lvandeve/logicemu">github</a>';
-githubLink.style.paddingRight = '10px';
-
-
-var circuitName = makeElement('span', menuRow1El);
-circuitName.innerHTML = 'Circuit Name';
-circuitName.style.backgroundColor = '#0f0';
-circuitName.style.border = '1px solid #080';
-circuitName.style.paddingLeft = circuitName.style.paddingRight = '2px';
-
-
-/*var directLinkSpan = makeElement('span', menuRow1El);
-directLinkSpan.innerHTML = '&nbsp;&nbsp;';//<a href="' + getUrlWithoutQueries() + '">direct link</a>';
-var directLink = makeElement('a', directLinkSpan);
-directLink.innerText = 'direct link';
-directLink.href = getUrlWithoutQueries();
-directLink.style.visibility = 'hidden';
-directLink.title = 'external link to link directly to this circuit rather than the index page';*/
-
-
-// This button is commented out, because exporting a circuit only makes sense if you edited it, and if you edit circuits you already know how to copypaste their ASCII text from the 'edit' textfield
-/*
-var exportButton = makeUIElement('button', menuRow1El);
-exportButton.innerText = 'export';
-exportButton.title = 'Export a circuit. Copypaste its ASCII diagram to store or post it. Then press done (this button itself) to remove the popup textfield. NOTE: nothing gets exported to the cloud. Everything is stored locally and you must copypaste it yourself to share it.';
-exportButton.onclick = function() {
-  if(!editmode) {
-    var fontsize = 10;
-    var ewidth = 60;
-    var eheight = 60;
-    editarea = makeAbsElement('textarea', 30, 128, 400, 400);
-    editarea.rows = h;
-    editarea.cols = w;
-    editarea.value = origtext;
-    editarea.style.fontSize = fontsize + 'px';
-    editarea.style.whiteSpace = 'nowrap';
-
-    pause();
-    exportButton.innerText = 'done';
-    editmode = true;
-  } else {
-    document.body.removeChild(editarea);
-    exportButton.innerText = 'export';
-    editmode = false;
-    unpause();
-  }
-};*/
-
 
 // called by footer.js
 function maybeLoadFromLocalStorage() {
@@ -10349,6 +10770,8 @@ function testCompression(o) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+var currentSelectedCircuit = 0;
+
 function updateCircuitDropdowns(opt_registeredCircuit) {
   if(!opt_registeredCircuit) {
     for(var i = 0; i < circuitGroups.length; i++) {
@@ -10367,23 +10790,8 @@ function updateCircuitDropdowns(opt_registeredCircuit) {
 }
 
 function CircuitGroup(name) {
+  this.name = name;
   this.circuits = [];
-  this.main = makeElement('div', circuitDropdownSpan);
-  this.main.style.display = 'inline-block';
-  this.title = makeElement('span', this.main);
-  this.title.innerText = name;
-  makeElement('br', this.main);
-  this.dropdown = makeUIElement('select', this.main);
-  this.dropdown.style.width = '120px';
-  this.dropdown.title = 'Built-in circuit selector dropdown "' + name + '"';
-  // disabled, using onclick of element instead
-  var that = this;
-  this.dropdown.onchange = function() {
-    var index = that.dropdown.selectedIndex - 1;
-    var c = that.circuits[index];
-    currentSelectedCircuit = c.index;
-    parseText(c.text, c.title, c);
-  };
 }
 
 // must use registerCircuitGroup, then register circuits to add them to the last registered circuitgroup
@@ -10395,9 +10803,6 @@ var circuitGroups = [];
 function registerCircuitGroup(name) {
   currentCircuitGroup = new CircuitGroup(name);
   circuitGroups.push(currentCircuitGroup);
-
-  var el = makeElement('option', currentCircuitGroup.dropdown);
-  el.innerHTML = '[choose circuit]';
 }
 
 var allRegisteredCircuits = [];
@@ -10408,11 +10813,10 @@ function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
   if(!opt_link_id) opt_link_id = 'circuit' + allRegisteredCircuits.length;
   var dropdownname = name;
   if(opt_is_title && name != '--------') dropdownname = '--- ' + name + ' ---';
-  var el = makeElement('option', currentCircuitGroup.dropdown);
-  if(opt_link_id == 'mainhelp') { el.style.fontWeight = 'bold'; }
-  el.innerHTML = dropdownname;
   var index = allRegisteredCircuits.length;
   var c = {};
+  c.name = name;
+  c.dropdownname = dropdownname;
   c.text = circuit;
   c.title = name;
   c.linkid = opt_link_id;
@@ -10436,31 +10840,67 @@ function registerTitle(title) {
 }
 var fallbackhelptext = '0"Load any circuit from the dropdowns above, or press edit to make a new one."\n0"Use help if this is your first time"';
 
+// fills the built-in circuits in the UI
+function fillRegisteredCircuits() {
+  for(var i = 0; i < circuitGroups.length; i++) {
+    var g = circuitGroups[i];
+    g.main = makeElement('div', circuitDropdownSpan);
+    g.main.style.display = 'inline-block';
+    g.title = makeElement('span', g.main);
+    g.title.innerText = g.name + ':';
+    makeElement('br', g.main);
+    g.dropdown = makeUIElement('select', g.main);
+    g.dropdown.style.width = '120px';
+    g.dropdown.title = 'Built-in circuit selector dropdown "' + name + '"';
+    g.dropdown.onchange = bind(function(g) {
+      var index = g.dropdown.selectedIndex - 1;
+      var c = g.circuits[index];
+      currentSelectedCircuit = c.index;
+      parseText(c.text, c.title, c);
+    }, g);
+
+    var el = makeElement('option', g.dropdown);
+    el.innerHTML = '[choose circuit]';
+  }
+  for(var i = 0; i < allRegisteredCircuits.length; i++) {
+    var c = allRegisteredCircuits[i];
+    var currentCircuitGroup = circuitGroups[c.group];
+    var el = makeElement('option', currentCircuitGroup.dropdown);
+    if(c.linkid == 'mainhelp') { el.style.fontWeight = 'bold'; }
+    el.innerHTML = c.dropdownname;
+  }
+
+  updateCircuitDropdowns();
+}
+
+
 var introText = `
-0"Welcome to LogicEmu, a digital logic simulator!"
+0"# Welcome to LogicEmu, a digital logic simulator!"
 
 0"In circuits, press the green 's' inputs with the mouse to change values."
 0"Read results from the red 'l' outputs. For example, below is an AND gate 'a'."
 0"Only if both switches are on, the LED will go on. Try enabling both"
 0"switches by clicking them:""
 
+   7"and gate"
+
   s****>a****>l
         ^
-  s******0"AND GATE"
+  s******
 
 0"There are much more types of gates and devices available: logic gates,"
 0"flip-flops, integrated circuits, ROMs, displays, ... Explore the circuits"
 0"index below or read the help circuits first to learn more!"
 
-  s**>a**>o**>l"carry"0
-     >    ^            s-->jq->l
-  s**>e**>a    0"ADDER"s-->c#    0"JK FLIPFLOP"
-         >             s-->kQ->l
-  s******>e**>l"sum"0
+     7"adder"          7"JK flipflop"
 
+  s**>a**>o**>l 6"carry"
+     >    ^              s-->jq->l
+  s**>e**>a              s-->c#
+         >               s-->kQ->l
+  s******>e**>l 6"sum"
 
-0"Circuits Index"
-0"--------------"
+0"# Circuits Index"
 
 0"INSERT:toc_main"
 
@@ -10473,8 +10913,7 @@ var introText = `
 0"in the 'help' dropdown but hidden in the list and help index above on"
 0"purpose to avoid such redundancy."
 
-0"A note about running in the browser"
-0"-----------------------------------"
+0"## A note about running in the browser"
 
 0"LogicEmu runs completely offline, even though it uses JavaScript in a"
 0"web browser. Once the HTML and JS got fetched, it does not make any"
@@ -10493,7 +10932,7 @@ var introText = `
 
 0"FIT:w"
 
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"`;
+0"LogicEmu. Copyright (C) 2018-2019 by Lode Vandevenne"`;
 
 var introTitle = 'Browser-Based Logic Simulator';
 
@@ -10515,6 +10954,7 @@ function printComponentsDebug() {
   }
 }
 
+
 /*
 Available debug functions:
 printComponentsDebug()
@@ -10524,3 +10964,4 @@ testCompression()
 CLICKDEBUG=true
 
 */
+

@@ -26,6 +26,7 @@ SOFTWARE.
 Final load of LogicEmu, to load the initial circuit after everything has
 been initialized and registered.
 */
+createMenuUI();
 
 var initialCircuitText = introText;
 var initialTitle = introTitle;

@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018 Lode Vandevenne
+Copyright (c) 2018-2019 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +30,7 @@ and injects them into a dropdown from logicemu.js
 registerCircuitGroup('help');
 
 registerCircuit('Main Help', `
-0"LogicEmu Main Help"
-0"------------------"
+0"# LogicEmu Main Help"
 
 0"Welcome to LogicEmu! LogicEmu emulates logic circuits. It has a whole bunch"
 0"of circuits included to play with, including binary adders, multipliers,"
@@ -54,8 +53,7 @@ s****
 
 0"This tutorial is multiple screens long, so scroll down to see all"
 
-0"User Interface"
-0"--------------"
+0"# User Interface"
 
 0"The top bar has buttons of the user interface, such as selecting built-in"
 0"circuits, pausing, changing graphics options, editing, ... Hover over each"
@@ -64,8 +62,7 @@ s****
 0"The rest of this tutorial explains what the different symbols and components"
 0"in circuits do."
 
-0"Input / Output / Wires"
-0"----------------------"
+0"# Input / Output / Wires"
 
 0"In general, a circuit has input switches, some processing logic, possibly"
 0"some state, and finally output LEDs. So the simplest circuit has a switch"
@@ -158,8 +155,7 @@ s*************>l3
 
 s*************>l4
 
-0"Logic Gates"
-0"-----------"
+0"# Logic Gates"
 
 0"Actual logic is done with logic gates. AND, OR and XOR gates are"
 0"represented with the letters a, o and e respectively (e stands for"
@@ -286,8 +282,7 @@ s**>e**>a
 s******>e**>l
 
 
-0"Flip-Flops"
-0"----------"
+0"# Flip-Flops"
 
 0"This describes the built in 'flip-flop' devices. Note that, as in"
 0"real life, all of these can be made from the logic gates above. It is"
@@ -387,12 +382,11 @@ s-->Q-->l
 S-->y-->l
 
 0"So to summarize, the 'c' and 'C' can actually mean three different things:"
-0"-counter (1-input T flip-flop): when standalone with an input"
-0"-constant: when standalone without an input"
-0"-clock: when combined with other flip-flop cells like j, k, ..."
+0"- counter (1-input T flip-flop): when standalone with an input"
+0"- constant: when standalone without an input"
+0"- clock: when combined with other flip-flop cells like j, k, ..."
 
-0"Integrated Circuits"
-0"-------------------"
+0"# Integrated Circuits"
 
 0"An integrated circuit or chip needs to be defined only once, and can then be"
 0"reused in multiple places. It is defined by having an 'I' next to it"
@@ -438,8 +432,7 @@ S-->y-->l
      s s s s
 
 
-0"Special devices"
-0"---------------"
+0"# Special devices"
 
 0"The delay (or buffer), indicated with 'd', introduced a 1-tick delay"
 
@@ -753,8 +746,7 @@ s****                      s****
 0"'Relay Logic'"
 
 
-0"Special wires"
-0"-------------"
+0"# Special wires"
 
 0"Buses are a bundle of wires. Matching numbers of the bus connect to"
 0"corresponding inputs and outputs. This allows to save a lot of space."
@@ -836,8 +828,7 @@ l<----*
    uuuuuuuu
 
 
-0"Epilogue"
-0"--------"
+0"# Epilogue"
 
 0"The end, see the next tutorials for more information, such as about"
 0"the different tick algorithms, rendering modes, editing, ..."
@@ -850,8 +841,7 @@ l<----*
 `, 'mainhelp');
 
 registerCircuit('Controls', `
-0"Controls"
-0"--------"
+0"# Controls"
 
 0"Interact with switches (s), pushbuttons (p) and timers (r) by clicking them:"
 
@@ -903,14 +893,12 @@ s-->c-->l
 
 s-->z-->l
 
-0"User Interface"
-0"--------------"
+0"# User Interface"
 
 0"This briefly describes the controls at the top. You can also hover over them"
 0"to get a tooltip with their explanation."
 
-0"User Interface - First Row"
-0"--------------------------"
+0"## User Interface - First Row"
 
 0"The dropdowns labeled 'help', 'articles', 'circuits' all allow selecting the"
 0"various built-in circuits. The current circuit is 'Controls' under 'help'"
@@ -921,8 +909,7 @@ s-->z-->l
 0"The 'import' button allows to open another circuit, made by yourself or"
 0"someone else. More info for that is in the 'Loading Circuits' help circuit."
 
-0"User Interface - Second Row"
-0"---------------------------"
+0"## User Interface - Second Row"
 
 0"The first dropdown on the second row allows to choose the 'immediate' or"
 0"'electron' algorithm to run the circuits. More information on that is in the"
@@ -962,8 +949,6 @@ s-->z-->l
 `, 'controlshelp');
 
 registerCircuit('Rendering Modes', `
-0"Rendering Modes"
-0"---------------"
 
 0"There are two rendering modes: text (ASCII) and graphical (HTML5 canvas)."
 0"They can be selected with a dropdown in the top menu."
@@ -1008,8 +993,7 @@ s---->a-****-->a>l** *|*>l1
 `, 'renderhelp');
 
 registerCircuit('Ticks and Emulation Algorithms', `
-0"Ticks and Emulation Algorithms"
-0"------------------------------"
+0"# Ticks and Emulation Algorithms"
 
 0"It matters how you emulate circuits: when, how and how fast gates read their"
 0"inputs. For some circuits, it's interesting to look at the signal propagating"
@@ -1035,8 +1019,7 @@ p**>e>e>e>e>e>e>e>e
 0"around with it, read on below."
 
 
-0"The Details"
-0"-----------"
+0"# The Details"
 
 0"The simulation is based on ticks: Each tick, components update their value"
 0"based on their input components. Normally, the ticks run automatically. You"
@@ -1057,23 +1040,23 @@ p**>e>e>e>e>e>e>e>e
 0"There are different emulation algorithms available for circuits (aka update"
 0"modes, what it does per tick). These can be selected by the dropdown with the"
 0"following choices:"
-0"*) immediate: updates propagate through all components in a sorted order. This"
-0"   is done when you press a switch or button or when a timer ticks and keeps"
-0"   ticking until things stop changing (in combintional circuits, that's after"
-0"   one tick, for sequential ones or with loops, can be more)."
-0"*) electron: updates are done every so many milliseconds, but this update is"
-0"   different than the update done for immediate mode. Instead, every component"
-0"   updates only based on the previous state of its input components. This"
-0"   means signals propagage more slowly, as if you can follow the electric"
-0"   signal itself. This mode is good for circuits that build flip-flops from"
-0"   primitive components (rather than using the built-in ideal flip-flops)"
-0"   This mode also adds one more extra igredient: it adds some randomness to a"
-0"   particular kind of double-linked loop as you find in an SR latch, and this"
-0"   is loosely based on realistic physics of a flip-flop in metastable state"
-0"   eventually reaching a stable state anyway. So indeed the electron mode is"
-0"   mainly designed to simulate such behavior in a realistic way. The"
-0"   immediate mode is good and fast but can't simulate matastability, hence"
-0"   the reason to provide the slower 'nanosecond level' electron mode."
+0"- immediate: updates propagate through all components in a sorted order. This"
+0"  is done when you press a switch or button or when a timer ticks and keeps"
+0"  ticking until things stop changing (in combintional circuits, that's after"
+0"  one tick, for sequential ones or with loops, can be more)."
+0"- electron: updates are done every so many milliseconds, but this update is"
+0"  different than the update done for immediate mode. Instead, every component"
+0"  updates only based on the previous state of its input components. This"
+0"  means signals propagage more slowly, as if you can follow the electric"
+0"  signal itself. This mode is good for circuits that build flip-flops from"
+0"  primitive components (rather than using the built-in ideal flip-flops)"
+0"  This mode also adds one more extra igredient: it adds some randomness to a"
+0"  particular kind of double-linked loop as you find in an SR latch, and this"
+0"  is loosely based on realistic physics of a flip-flop in metastable state"
+0"  eventually reaching a stable state anyway. So indeed the electron mode is"
+0"  mainly designed to simulate such behavior in a realistic way. The"
+0"  immediate mode is good and fast but can't simulate matastability, hence"
+0"  the reason to provide the slower 'nanosecond level' electron mode."
 
 
 0"A circuit, when just loaded, will automatically be in one of the modes that"
@@ -1082,7 +1065,7 @@ p**>e>e>e>e>e>e>e>e
 0"In other cases with loops, immediate mode. A mode may also be enforced with a"
 0"comment like this, which in this circuit sets it to electron initially:"
 
-"MODE:electron"
+6"MODE:electron"
 
 0"Now for some demonstrations of the difference between the modes. Use the"
 0"dropdown to switch to the algorithm applicable for each example as explained"
@@ -1198,15 +1181,22 @@ s**>e>e>e>e>e>e>e>e
 registerCircuit('Loading Circuits', `
 0"For loading circuits, there are multiple options:"
 
-0"1. Navigation"
-0"-------------"
+0"# 1. Navigation"
 
 0"First of all, you can load the built-in circuits, like this help one right"
-0"here, with the dropdowns navigation at the top, or the welcome page links."
+0"here, with the dropdowns navigation at the top (labeled 'help', 'articles',
+0"'circuits'), or the clickable links from the welcome and help pages."
+
+0"You can aways reach the welcome and help page with the 'index' and 'help'"
+0"links in the top left corner to get those lists, or use the drop downs at
+0"any time without having to navigate to those pages first."
+
+0"You can also use the next and previous buttons, to the right of the drop"
+0"downs, to go to the next or previous built-in circuits, in the order they are"
+0"in the drop downs".
 
 
-0"2. Importing (Source Code)"
-0"--------------------------"
+0"# 2. Importing (Source Code)"
 
 0"A second method, to load external circuits, is to load a circuit with"
 0"'import' (or 'edit'). Then you need to get the source code from a circuit and"
@@ -1214,9 +1204,9 @@ registerCircuit('Loading Circuits', `
 0"the 'edit' button (see the editing help for that). Source code of a"
 0"circuit looks for example like this:"
 
-0"s--->a---->l"
-0"     ^      "
-0"s----*      "
+6"s--->a---->l"
+6"     ^      "
+6"s----*      "
 
 0"It becomes this when loaded:"
 
@@ -1225,8 +1215,7 @@ s--->a---->l
 s----*
 
 
-0"3. base64 URL code"
-0"------------------"
+0"# 3. base64 URL code"
 
 0"A third method is through a base64 code in the URL. This uses a fragment"
 0"'#code=...' in the URL, and will decompress that base64 string to a circuit."
@@ -1248,8 +1237,7 @@ s----*
 
 
 
-0"4. URL id"
-0"---------"
+0"# 4. URL id"
 
 0"A fourth method is through an id in the URL. This works only for built-in"
 0"circuits. If you see '#id=....' in the URL, it means you can load that"
@@ -1274,6 +1262,7 @@ s----*
 registerTitle('Editing');
 
 registerCircuit('Editing Help', `
+
 0"This tutorial introduces all the parts and cell characters for editing."
 
 0"Editing is done with ASCII text. The simulation is cell based: Every"
@@ -1284,7 +1273,7 @@ registerCircuit('Editing Help', `
 0"force text rendering mode instead of graphical here with the following"
 0"command:"
 
-0"RENDER:text"
+6"RENDER:text"
 
 0"Editing can be done in the browser here with the 'edit' button in the top"
 0"bar. It is possible and more pleasant to do the actual editing itself of that"
@@ -1333,24 +1322,23 @@ s**>l
 
 0"There are in fact 4 types of cells visible in the above circuit:"
 
-s  0": the input switch which can be toggled with the mouse"
+s 0": the input switch which can be toggled with the mouse"
 
-** 0": wire which connects things"
+**0": wire which connects things"
 
->  0": arrowhead: input from the wire to the LED. For other diretions,"
-   0"  use ^>v< for north, east, south, west respectively"
+> 0": arrowhead: input from the wire to the LED. For other diretions,"
+  0"  use ^>v< for north, east, south, west respectively"
 
-l  0": the output LED"
+l 0": the output LED"
 
 0"From here on all those and much more cell types are introduced one by one."
 
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"SECTION I: input/output/wiring"
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"# SECTION I: input/output/wiring"
 
-0"NEW PART: wires"
-0"*: wire, wire split, wire corner."
-0"-, |: horizontal and vertical wires"
+6"NEW PART: wires"
+6"*: wire, wire split, wire corner."
+6"-: horizontal wire"
+6"|: vertical wire"
 
 0"They don't do much below since they're not connected to anything here:"
 
@@ -1360,8 +1348,9 @@ l  0": the output LED"
           |        |
           |        *-----
 
-0"NEW PART: switches"
-0"s, S: initially off and initially on switch"
+6"NEW PART: switches"
+6"s: initially off switch"
+6"S: initially on switch"
 
 0"Switches can be toggled with the mouse. They produce a logic signal traveling"
 0"through the output wires when on. In real life this would make no sense, as"
@@ -1376,8 +1365,11 @@ l  0": the output LED"
 s******   *
           S
 
-0"NEW PART: device inputs"
-0"^, >, v, <: north, east, south, west device inputs"
+6"NEW PART: device inputs"
+6"^: north device input"
+6">: east device input"
+6"v: south device input"
+6"<: west device input"
 
 0"These arrow heads connect a wire to the input side of devices such as logic"
 0"gates and LEDs. While not introduced yet, below we use an 'o' diode to"
@@ -1387,8 +1379,8 @@ s******   *
 
 s****>o****>l
 
-0"NEW PART: LED"
-0"l: LED/light (user output)"
+6"NEW PART: LED"
+6"l: LED/light (user output)"
 
 0"The LED serves as outputs, to indicate the result. Here of course it's used"
 0"on the simplest possible circuit so all the result shows is the same as the"
@@ -1398,8 +1390,9 @@ s****>o****>l
 
 s****>l   S****>l
 
-0"NEW PART: push button"
-0"p and P: initially off and initially on push button"
+6"NEW PART: push button"
+6"p: initially off push button"
+6"P: initially on push button"
 
 0"these toggle back to original state when releasing the mouse button"
 
@@ -1410,7 +1403,7 @@ p****>l   P****>l
 
 p**>s**>l
 
-0"NEW BEHAVIOR: controlled switch"
+6"NEW BEHAVIOR: controlled switch"
 
 0"A switch or pushbutton with an input will only work if its input is on:"
 
@@ -1420,8 +1413,9 @@ p****>s***>l
 
 s****>p***>l
 
-0"NEW PART: wire crossing"
-0"+: wire crossing, x: diagonal wire crossing"
+6"NEW PART: wire crossing"
+0"+: wire crossing"
+0"x: diagonal wire crossing"
 
 0"The wire crossing allows two independent signals to go through"
 
@@ -1438,7 +1432,7 @@ s**** ****>l
      x
 s**** ****>l
 
-0"NEW BEHAVIOUR: wire and device packing"
+6"NEW BEHAVIOUR: wire and device packing"
 
 0"-| can be packed closer together than *, because * would touch on all sides"
 0"Different devices (here l and s) also don't interact if they touch, they are"
@@ -1457,32 +1451,125 @@ s----->l  |||     *****>l
 0"some distance bewteen them and only use --- or | for close packing when"
 0"really needed. This is purely up to personal preference though."
 
-0"NEW PART: comments"
-0"double quote: encloses comment, numbers: alter alignment, colon: vertical
-0"              comment"
+6"NEW PART: comments"
+6"double quote: encloses comment"
+6"numbers: alter alignment"
+6"colon: vertical comment"
 
-0"Comments, like this text here, are made with double quotes. The comment"
+0"Comments, like this text itself here, are made with double quotes. The comment"
 0"starts at a quote and ends at the next quote on the same line. A number"
 0"before the first double quote (or alternatively after the last) can also"
-0"enable aligned text."
+0"enable aligned or differently styled text."
 
-0"Below the different types of alignment are shown. The quotes themselves are"
-0"not visible in the rendering (not even in text mode), only in the source"
-0"code, so use the 'edit' button to see this part"
+0"The numeric styles do the following:"
 
-"In quotes: regular comment, 1 character per cell"
+0"formatted text styles: those support a few markdown features, described further below"
+6"0: left aligned formatted text"
+6"1: center aligned formatted text"
+6"2: right aligned formatted text"
 
-0"In quotes with 0 prepended: left aligned narrow width"
+0"full width text: this has the same width as a circuit element per character (wide fixed width)"
+6"3: full width text, shifted left a bit"
+6"4: standard full width text, same as not using any number at all"
+6"5: full width text, shifted right a bit"
 
-1"In quotes with 1 prepended: center aligned narrow width"
+0"narrow fixed width text: like full width, but narrower (monospace)."
+6"6: left aligned narrow fixed width text"
+6"7: center aligned narrow fixed width text"
+6"8: right aligned narrow fixed width text"
 
-2"In quotes with 2 prepended: right aligned narrow width"
+0"The formatted text styles support a small subset of markdown features:"
+6"# : main chapter (heading 1)"
+6"## : sub-chapter (heading 2)"
+6"### : sub-sub-chapter (heading 3)"
+6"- : bullet list item (indentation not supported)"
+6"+ : bullet list item (same as -)"
+6"* : bullet list item (same as -)"
 
-3"quotes with 3: 1 char per cell, shifted left a bit"
+0"For these, the # or - must come directly after the opening quote, and there"
+0"must be a space after the special symbol. Note that this will remove or"
+0"replace this original special symbol character, so you can't use the"
+0"formatted text to represent a - or # at the start with a space after it."
 
-4"quotes with 4: 1 char per cell, shifted right a bit"
+0"The full width and narrow fixed width styles do not interpret any characters as markdown,"
+0"and so will keep the # as-is"
 
-0"Vertical comments can alternatively be made with a colon above and below:"
+0"NOTE: bold text is not supported. It's too likely a '**' is mentioned in"
+0"comments to mean * as wire, it would cause too many inadvertant markdown"
+0"replacements."
+
+0"Below the different types of alignment and style are shown in a table. The"
+0"first column indicates whether any number or # is present. The second column"
+0"shows the actual formatted text. View the source code in the editor to really"
+0"see how it's made. The 'v' symbols indicate where the quotes are located and"
+0"the '0' symbol where possibly a number is located. The text may look much"
+0"narrower than the table (except for full width text), but in the source code"
+0"the full width of the table is taken up by the text, quotes and numbers in"
+0"each case."
+
+       0v           v
++-----+--------------+
+|     | "hello world"| 0"full width text (best for text integrated in a circuit itself)"
++-----+--------------+
+|0    |0"hello world"| 0"formatted left aligned (best for readability of long texts)"
++-----+--------------+
+|1    |1"hello world"| 0"formatted center aligned"
++-----+--------------+
+|2    |2"hello world"| 0"formatted right aligned"
++-----+--------------+
+|3    |3"hello world"| 0"full width shifted left (starts where the quote/number are)"
++-----+--------------+
+|4    |4"hello world"| 0"standard full width, same as no number"
++-----+--------------+
+|5    |5"hello world"| 0"full width shifted right (ends where the quote/number are)"
++-----+--------------+
+|6    |6"hello world"| 0"narrow fixed width left aligned (best for ASCII art or code)"
++-----+--------------+
+|7    |7"hello world"| 0"narrow fixed width center aligned"
++-----+--------------+
+|8    |8"hello world"| 0"narrow fixed width right aligned"
++-----+--------------+
+|0 #  |0"# head H1  "| 0"chapter (heading 1)"
++-----+--------------+
+|0 ## |0"## head H2 "| 0"sub-chapter (heading 2)"
++-----+--------------+
+|0 ###|0"### head H3"| 0"sub-sub-chapter (heading 3)"
++-----+--------------+
+|0 -  |0"- bullet   "| 0"bullet list item"
++-----+--------------+
+|0 +  |0"+ bullet   "| 0"bullet list item (same as with -)"
++-----+--------------+
+|0 *  |0"* bullet   "| 0"bullet list item (same as with -)"
++-----+--------------+
+
+0"Fixed with text will not use markdown, unless a narrow width and a formatted"
+0"number are combined"
+
+       0v          v0
++-----+--------------+----+
+|6 #  |6"# no head." |    | 0"displays the #"
++-----+--------------+----+
+|6 #  |6"# heading "0|   0| 0"interprets the #"
++-----+--------------+----+
+|6 -  |6"- dash    " |    | 0"displays the -"
++-----+--------------+----+
+|6 -  |6"- bullet  "0|   0| 0"interprets the -"
++-----+--------------+----+
+
+0"NOTE: The color and background color of the text is determined by the chosen"
+0"rendering color scheme (light, dark, ...). In some schemes, text may have a"
+0"subtle background color. This is applied only for fixed width (narrow or"
+0"full width) text, not for formatted text. This is intended to make the text"
+0"distinguishable from circuits. Formatted text already looks different enough"
+0"on its own. Full width text will not have a background color behind spaces"
+0"while narrow fixed width text will have it also behind spaces. This allows"
+0"full width text to only have that color where actual characters are placed"
+0"to indicate inputs/outputs and such, while for narrow width text this would"
+0"not look good and instead its background color can serve to show a"
+0"rectangular area in which ASCII art or code is drawn."
+
+0"Vertical comments can alternatively be made with a colon above and below. This"
+0"doesn't support formatting, only the full width circuit style:"
 
   :
   v
@@ -1498,22 +1585,23 @@ s----->l  |||     *****>l
 0"Note: It's safe to use a colon in a horizontal comment, but you can't use a"
 0"quote in a vertical comment, it'll be used to comment a line horizontally."
 
-0"NEW PART: isolators"
+6"NEW PART: isolators"
+6"(space): isolator"
+6"@: isolator (structural)"
+6"comment: also acts as isolator"
 
-0"(space), @ and comments: isolators, do not connect anything, no signal goes"
-0"through Normally space is used as isolators. @ can be used to indicate"
-0"shapes, such as drawing a case around something. Comments are isolators, no"
-0"matter what is inside them (even if commented-out circuits)"
+0"Isolators do not connect anything, no signal goes through. Normally space"
+0"is used as isolators. @ can be used to indicate shapes, such as drawing a"
+0"case around something, and also connects IC templates. Comments are"
+0"isolators, no matter what is inside them (even if commented-out circuits)"
 
-@ @ @ @ @ @ @ @ @ @
-
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"SECTION II: logic gates"
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"# SECTION II: logic gates"
 
 
-0"NEW PARTS: logic gates OR, AND, XOR"
-0"o: OR gate, a: AND gate, e: XOR gate"
+6"NEW PARTS: logic gates OR, AND, XOR"
+6"o: OR gate"
+6"a: AND gate"
+6"e: XOR gate"
 
 0"These devices operate on 2 (or any other amount of) inputs. The 'e' of XOR"
 0"stands for Exclusive or."
@@ -1522,8 +1610,10 @@ s****      s****      s****
     v          v          v
 s**>o**>l  s**>a**>l  s**>e**>l
 
-0"NEW PARTS: logic gates NOR, NAND, XNOR"
-0"O: NOR gate, A: NAND gate, E: XNOR gate"
+6"NEW PARTS: logic gates NOR, NAND, XNOR"
+6"O: NOR gate"
+6"A: NAND gate"
+6"E: XNOR gate"
 
 0"These are similar but with inverted outputs."
 
@@ -1531,8 +1621,11 @@ s****      s****      s****
     v          v          v
 s**>O**>l  s**>A**>l  s**>E**>l
 
-0"NEW PARTS: inverted device inputs"
-0"m, ], w, [: north, east, south, west facing inverted inputs"
+6"NEW PARTS: inverted device inputs"
+6"m: north inverted device input"
+6"]: east inverted device input"
+6"w: south inverted device input"
+6"[: west inverted device input"
 
 0"These invert the input signal, and will be rendered with a small circle in"
 0"graphics mode."
@@ -1543,7 +1636,7 @@ s****      s****      s****      s****      s****      s****
     w          w          w          w          w          w
 s**]o**>l  s**]a**>l  s**]e**>l  s**]O**>l  s**]A**>l  s**]E**>l
 
-0"NEW BEHAVIOR: multi-input gates"
+6"NEW BEHAVIOR: multi-input gates"
 
 0"Gates can have more than two inputs, for example three below, more is"
 0"possible if the gate would be large enough, how to do that is introduced a"
@@ -1580,7 +1673,7 @@ a**>l       A**>l
 
 e**>l       E**>l
 
-0"NEW BEHAVIOR: NOT gate"
+6"NEW BEHAVIOR: NOT gate"
 
 0"A NOT gate can be made in several ways from the existing parts. The"
 0"recommended form is with a one-input NOR gate:"
@@ -1596,7 +1689,7 @@ s**>A**>l
 
 s**]o**>l
 
-0"NEW BEHAVIOUR: rules for wire with multiple devices"
+6"NEW BEHAVIOUR: rules for wire with multiple devices"
 
 0"A single wire can output to multiple devices. Note that we call the entire"
 0"connected wire shape a single wire in the simulation's terminology. In the"
@@ -1628,8 +1721,9 @@ s***>o
      v
 s***>o****>l
 
-0"NEW PART: device extender"
-0"#: device extender, $: noninteracting device extender"
+6"NEW PART: device extender"
+6"#: device extender"
+6"$: noninteracting device extender"
 
 0"An extender extends the size of a device, for many-input logic gates, or"
 0"large or specially shaped switches and LEDs. Remember, devices like s, l, o,"
@@ -1669,12 +1763,11 @@ sssss    sssss    sssss    ###
 0"i, M, B, b, the extenders are not (always) needed, for those the letters"
 0"themselves usually connect with each other, unlike a, o, e, etc... do."
 
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"SECTION III: Flip-Flops And Memory"
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"# SECTION III: Flip-Flops And Memory"
 
-0"NEW PART: counter"
-0"c,C (standalone): initially off,on counter"
+6"NEW PART: counter"
+6"c (standalone): initially off counter"
+6"C (standalone): initially on counter"
 
 0"This is a counter or mono-input T flip-flop. Whenever the input toggles on,"
 0"the c changes its state, so its output toggles at half the rate as the input."
@@ -1689,9 +1782,17 @@ s**>c**>c**>c**>c**>c**>c**>c**>c**>l
 
 s**>C**>C**>C**>C**>C**>C**>C**>C**>l
 
-0"NEW PARTS: flip flop parts"
-0"c, C, j, k, d, t, q, Q, y: flip-flop parts (clocked with c). combine them"
-0"freely."
+6"NEW PARTS: flip flop parts"
+6"c: flip flop part, can be combined together"
+6"C: flip flop part, can be combined together"
+6"j: flip flop part, can be combined together"
+6"k: flip flop part, can be combined together"
+6"d: flip flop part, can be combined together"
+6"t: flip flop part, can be combined together"
+6"q: flip flop part, can be combined together"
+6"Q: flip flop part, can be combined together"
+6"y: flip flop part, can be combined together"
+6"c: flip flop part, can be combined together"
 
 0"j, k, d and t are inputs for JK, T, D, and SR flip-flops."
 0"c is the clock input and what stores the state. use C to have it initially on."
@@ -1767,8 +1868,8 @@ s-->cQ**>l
 0"can make flip-flops from the ground up with more basic components instead as"
 0"well (e.g. NAND-only). Other built-in circuits demonstrate those."
 
-0"NEW PART: delay"
-0"d (standalone): 1-tick delay (behavior depends on tick algorithm)"
+6"NEW PART: delay"
+6"d (standalone): 1-tick delay (behavior depends on tick algorithm)"
 
 s**>d**>l
 
@@ -1811,8 +1912,9 @@ s******>d**>l
   *     #
   *>d**>c
 
-0"NEW PART: memory"
-0"b and B: ROM and RAM bits"
+6"NEW PART: memory"
+6"b: ROM and RAM bit, value 0"
+6"B: ROM and RAM bit, value 1"
 
 0"ROM, unary adress select"
 
@@ -1869,7 +1971,7 @@ s******>d**>l
            sss"data"
 
 
-0"NEW BEHAVIOR: decoder and encoder"
+6"NEW BEHAVIOR: decoder and encoder"
 
 
 0"Binary N to unary 2^N decoder"
@@ -1897,12 +1999,11 @@ s******>d**>l
  ssssssss
 "76543210"
 
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"SECTION IV: Integrated Circuits"
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"# SECTION IV: Integrated Circuits"
 
-0"NEW PARTS: integrated circuit template and usage"
-0"I: IC definition, i: IC usage"
+6"NEW PARTS: integrated circuit template and usage"
+6"I: IC definition"
+6"i: IC usage"
 
 0"I and i respectively define and use integrated circuit (IC). Numbers are used"
 0"to identify them. This allows to design and reuse templates or sub-circuits."
@@ -1981,7 +2082,7 @@ s-->l   s-->l    s-->i6-->l
                  ^    ^
                  s    s
 
-0"NEW BEHAVIOR: nesting integrated circuit templates"
+6"NEW BEHAVIOR: nesting integrated circuit templates"
 
 0"You can nest templates, 1 template can refer to others, e.g. here we use the"
 0"I5 from above inside a new template I8 (we're making a full adder from two"
@@ -1995,7 +2096,7 @@ ii5 *      ^ ^ ^     ^ ^ ^
 ^ ^ *      * * *     * * *
 s s s      s s s     s s s
 
-0"NEW BEHAVIOR: rotated chips"
+6"NEW BEHAVIOR: rotated chips"
 
 0"Chips can be rotated in steps of 90 degrees if desired. To do this, rotate"
 0"the position of the number compared to the small i in a different position"
@@ -2010,15 +2111,14 @@ l<5<s
   i
 l<i<s
 
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"SECTION V: Extra Parts"
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"# SECTION V: Extra Parts"
 
 0"These parts do not extend the logic abilities, but allow different ways of"
 0"input/output interaction"
 
-0"NEW PARTS: timers"
-0"R: timer initially on, r: timer initially off"
+6"NEW PARTS: timers"
+6"R: timer initially on"
+6"r: timer initially off"
 
 0"This is a realtime timer. It can be toggled on or off with mouse r is"
 0"initially off (does not tick at all and must be enabled with mouse like a"
@@ -2028,8 +2128,8 @@ l<i<s
 
 r****>l   R***>l
 
-0"NEW PARTS: numbers"
-0"0123456789: affect various properties of other parts"
+6"NEW PARTS: numbers"
+6"0123456789: affect various properties of other parts"
 
 0"Numbers were already encountered above for a few parts. Numbers affect many"
 0"things including: LED colors, timer speeds, IC indices, delay durations,"
@@ -2062,19 +2162,42 @@ s s s s s s s s        r r r r r r r r r r r
   R**>l 0"DOES NOT WORK AS INTENDED!"
   15
 
-0"NEW PART: RGB LED"
-0"L: RGB LED"
+0"Numbers are used for several different things, such as style/alignment of"
+0"comments, timer delay duration, LED colors, IC identifiers, and so on. If a"
+0"number touches multiple different kinds parts, then there is a certain order"
+0"of importance of which part exaclty the number will affect. The number will"
+0"usually not have multiple different effects but only the most important one."
+0"E.g. a number used for comment alignment will not change the color of an LED"
+0"that happens to touch the number. The order of important, with the top"
+0"taking priority, is:"
+
+0"- comment alignment and style"
+0"- bus of wires"
+0"- global wire 'g'"
+0"- IC definition"
+0"- IC usage"
+0"- ROM"
+0"- timer timings"
+0"- LED color"
+
+0"Standalone numbers, or numbers touching only a regular wire (when it doesn't"
+0"cause any effect) can also be used as a type of comment, the number will"
+0"remain visible and have different styling than normal comments (matching the"
+0"color of circuits rather than comments)."
+
+6"NEW PART: RGB LED"
+6"L: RGB LED"
 
 s*>L<*s
    ^
    *
    s
 
-0"NEW PART: Mux"
-0"M: Multiplexer (various functions)"
+6"NEW PART: Mux"
+6"M: Multiplexer (various functions)"
 
 0"Multiple M's that touch together form a multiplexer, or, in other"
-0"configurations", a demux, controlled swap, and possibly with more than two"
+0"configurations, a demux, controlled swap, and possibly with more than two"
 0"inputs/outputs and passthrough of the select signal."
 
 0"Mux:"
@@ -2131,8 +2254,8 @@ s**>M**>l
 0"These muxes are optional for convenience, notation or compactness, you can"
 0"also instead make them with AND and OR gates or from NAND gates only."
 
-0"NEW PART: Interactive terminal"
-0"T: Interactive multiline terminal (7-bit ASCII)"
+6"NEW PART: Interactive terminal"
+6"T: Interactive multiline terminal (7-bit ASCII)"
 
 0"This is made from a rectangular grid of T's, but you cannot see the T's when"
 0"rendered, it shows it as a black screen on which arbitrary characters can"
@@ -2218,8 +2341,8 @@ SsssssS"ASCII code in to screen"
                ^
                p
 
-0"NEW PART: Random generator"
-0"?: random generator"
+6"NEW PART: Random generator"
+6"?: random generator"
 
 0"The random generator will change to a random value on any positive or"
 0"negative edge of the input and have a random initial value."
@@ -2234,8 +2357,9 @@ s**>?**>l
 R**>?**>l
 1
 
-0"NEW PART: tri-state buffer (or open collector output)"
-0"z, Z: fake tri-state buffer"
+6"NEW PART: tri-state buffer (or open collector output)"
+6"z: fake tri-state buffer (and-or)"
+6"Z: fake tri-state buffer (or-and)"
 
 0"z is a fake representation of a tristate buffer. It is fake because the"
 0"simulation does not support three states. In real life, you can have states"
@@ -2313,17 +2437,16 @@ s**>Z**                    s**>o**
 s****                      s****
 
 
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"SECTION VI: Parts for shortcuts and compactness"
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"# SECTION VI: Parts for shortcuts and compactness"
 
 0"These parts and behaviors are not necessary to make logic circuits, but can"
 0"help make things more compact. Some are very useful all the time, others are"
 0"included only for rare situations when they actually help make something more"
 0"readable."
 
-0"NEW PARTS: diagonal wires"
-0"'/' and '\\': diagonal wires."
+6"NEW PARTS: diagonal wires"
+6"/: diagonal wire"
+6"\\: diagonal wire"
 
 0"NOTE: because backslash has special meaning in many programming language"
 0"strings, ';' can be used as an alternative. It will still be rendered as \\"
@@ -2335,7 +2458,7 @@ s****                      s****
   /            ;
  s              s
 
-0"NEW BEHAVIOR: diagonal inputs"
+6"NEW BEHAVIOR: diagonal inputs"
 
 0"An input of the form ^ > v < m ] w or [ that touches nothing where it points"
 0"at but touches something diagonally on one or both sides of that point, acts"
@@ -2360,8 +2483,8 @@ s      * *
        s s
 
 
-0"NEW PART: global wire"
-0"g: global wire (backplane)"
+6"NEW PART: global wire"
+6"g: global wire (backplane)"
 
 0"The global wire can output to many loose places at any distance everywhere"
 0"use e.g. for a global clock or reset signal"
@@ -2388,8 +2511,11 @@ l<---g    g--->l
 
   s---g17      71g-->lI17    i17-->l    i17-->l    i17-->l
 
-0"NEW PART: straight backplane connections ('antennas')"
-0"(,),u,n: 'antennas'"
+6"NEW PART: straight backplane connections ('antennas')"
+6"(: 'antenna' east"
+6"): 'antenna' west"
+6"u: 'antenna' north"
+6"n: 'antenna' south"
 
 0"These are another form of 'backplane' wires, connected to the corresponding"
 0"'dish' they're aimed at. Calling them 'antennas' or 'wireless' is just a"
@@ -2443,8 +2569,8 @@ l<---g    g--->l
   (/  /  /  )
    uuuuuuuuu
 
-0"NEW PART: bus"
-0"=: bus"
+6"NEW PART: bus"
+6"=: bus"
 
 0"A bus is a bundle of wires through which multiple connections can go. Numbers"
 0"indicate which internal wire connects to external wire. Matching numbers"
@@ -2488,8 +2614,8 @@ l<---g    g--->l
 0"SUGGESTION: avoid using the parts and behaviors below unless absolutely"
 0"necessary for compactness"
 
-0"NEW PARTS: Non-interacting wire corners"
-0",: non-interacting wire corner"
+6"NEW PART: Non-interacting wire corner"
+6",: non-interacting wire corner"
 
 0"This is a corners or split that can be more closely packed than *. They"
 0"interact with other wires, but not with their own kind."
@@ -2502,8 +2628,9 @@ l<---,,--->l         ||
      ||              ||
      ss              ss
 
-0"NEW PARTS: Double corners"
-0"%: NW plus SE corner, &: NE plus SW corner"
+6"NEW PARTS: Double corners"
+6"%: NW plus SE corner"
+6"&: NE plus SW corner"
 
 0"These corners work independently on both sides"
 
@@ -2516,7 +2643,7 @@ l<---,,--->l         ||
       |             |
       s             s
 
-0"NEW BEHAVIOR: A few more notes about / \\ and x"
+6"NEW BEHAVIOR: A few more notes about / \\ and x"
 
 0"Diagonal wires themselves can also act as a wire crossing due to connecting"
 0"to corners:"
@@ -2534,7 +2661,7 @@ l<---,,--->l         ||
 0"*'s still don't interact diagonally with each other, so no output possible"
 0"here:"
 
-   *>l "no output"
+   *>l 0"no output"
   *
  *
  s
@@ -2542,15 +2669,16 @@ l<---,,--->l         ||
 0"x does not interact with +, |, -, so no output possible here:"
 
 
-lllll
-^^^^^
-|||||
- xxx
-  |
-  s
+1"no output"
+    lllll
+    ^^^^^
+    |||||
+     xxx
+      |
+      s
 
-0"NEW PART: 8-way wire crossing"
-0"X: 8-way wire crossing"
+6"NEW PART: 8-way wire crossing"
+6"X: 8-way wire crossing"
 
 0"X (capital instead of small letter) is a wire crossing that works both"
 0"straight and diagonally, giving it 8 connection points and 4 independent"
@@ -2567,7 +2695,7 @@ lllll
      s
 
 
-0"NEW BEHAVIOR: device inputs connecting to multiple wires"
+6"NEW BEHAVIOR: device inputs connecting to multiple wires"
 
 0"Device inputs > < ^ v ] [ m w output on exactly one side, but can receive"
 0"their input from any of the other sides (3 direct neighbors, and 4 more from x)"
@@ -2592,8 +2720,9 @@ s---v----v----v---->l
 s--v--s
    l
 
-0"NEW PART: multi device input"
-0"U: regular multi device input, G: inverted multi device input"
+6"NEW PART: multi device input"
+6"U: regular multi device input"
+6"G: inverted multi device input"
 
 0"These are normal and inverted device/gate inputs outputting to multiple sides"
 0"they connect to each other and wires, and output to all devices, no matter"
@@ -2603,8 +2732,9 @@ s--v--s
 s------UU-UGl
        l  l
 
-0"NEW PART: device input crossing"
-0"V: regular device input crossing, W: inverted device input crossing"
+6"NEW PART: device input crossing"
+6"V: regular device input crossing"
+6"W: inverted device input crossing"
 
 0"These are a combination of wire crossing and normal or inverted device input"
 
@@ -2641,7 +2771,7 @@ s---V-->l
  /  |  ;
 s   s   s
 
-0"NEW BEHAVIOR: integrated circuits diagonal inputs/outputs"
+6"NEW BEHAVIOR: integrated circuits diagonal inputs/outputs"
 
 0"Chips, too, can have diagonal inputs and outputs:"
 0"For the definition, x from s as inputs, and V to l as outputs"
@@ -2657,34 +2787,37 @@ s   s   s
     / | ;                  s s s
    s  s  s
 
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"SECTION VII: Command Words"
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"# SECTION VII: Command Words"
 
 
-0"NEW BEHAVIOR: force modes and settings"
+6"NEW BEHAVIOR: force modes and settings"
 
-0"Some specific command words in strings make things happen. In all the below,"
-0"replace colon space by just colon, and the commands will work for real. They"
-0"are neutered with the space here to not make them affect this tutorial."
+0"Some specific command words in strings make things happen. They all use a"
+0"keyword and a colon. They are demonstrated below, but with a semicolon so"
+0"that they don't perform the actual effect. Replace the semicolon with a colon"
+0"to make them work for real."
 
-0"'MODE: immediate' --> force immediate mode"
-0"'MODE: electron' --> force electron mode"
-0"'RENDER: text' --> force text mode rendering (ascii)"
-0"'RENDER: graphical' --> force graphics mode rendering (canvas)"
-0"'FIT: w' --> zoom horizontally to full width, even if it means scrolling y"
-0"             (the w means 'full width')
-0"'FIT: r' --> don't take anything to the right of this marker into account for"
-0"             zooming so causes less zoom out (the r is from 'right side')"
-0"'FIT: y' --> if possible zoom vertically such that top up to this marker is"
-0"             visible. If two such markers present, zoom such that height"
-0"             matches their vertical distance."
-0"'INSERT: toc' --> inserts a table of contents of built-in circuits here"
-0"                  this also also works with 'toc_main' and 'toc_help'"
+6"MODE;immediate    : force immediate mode                                            "
+6"MODE;electron     : force electron mode                                             "
+6"RENDER;text       : force text mode rendering (ascii)                               "
+6"RENDER;graphical  : force graphics mode rendering (canvas)                          "
+6"FIT;w             : zoom horizontally to full width, even if it means scrolling y   "
+6"                    (the w means 'full width')                                      "
+6"FIT;r             : don't take anything to the right of this marker into account for"
+6"                    zooming, so it causes less zoom out (the r means 'right side')  "
+6"FIT;y             : if possible zoom vertically such that top up to this marker is  "
+6"                    visible. If two such markers present, zoom such that height     "
+6"                    matches their vertical distance.                                "
+6"INSERT;toc        : inserts a table of contents of built-in circuits here           "
+6"                    this also also works with 'toc_main' and 'toc_help'             "
+6"TITLE;...         : use this as title or name for the circuit. The word TITLE       "
+6"                    must touch a quote and the title is parsed up to the            "
+6"                    ending quote. This title can show up e.g. in the browser        "
+6"                    window titlebar and the circuit menubar. It may also be         "
+6"                    ignored depending on the rendering. Built-in circuits don't     "
+6"                    need this since they get their title in a different way.        "
 
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-0"Epilogue"
-0"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+0"# Epilogue"
 
 0"This concludes the editing help, and showed most of the different"
 0"behaviors of different cells and parts."
@@ -2696,68 +2829,68 @@ s   s   s
 registerCircuit('ASCII symbol summary', `
 0"Summary of characters. See the other tutorials for the full explanation."
 
-0"BASIC"
-0"-----"
+0"# Basic"
 
-0"(space): isolator"
-0"(newline): next line of the 2D drawing"
-0"(quote): comment"
+6"(space): isolator"
+6"(newline): next line of the 2D drawing"
+6"(quote): comment"
 
-0"*: wire, wire split, wire corner"
-0"-|: straight wires"
-0"+: wire crossing"
-0"x: diagonal wire crossing"
+6"*: wire, wire split, wire corner"
+6"-|: straight wires"
+6"/\\: diagonal wires"
+6"+: wire crossing"
+6"x: diagonal wire crossing"
 
-0"^>v<: device/gate inputs"
-0"m]w[: inverted device/gate inputs"
+6"^>v<: device/gate inputs"
+6"m]w[: inverted device/gate inputs"
 
-0"l: LED, lamp or light: user output"
-0"sS: switch: user input"
-0"pP: push button"
+6"l: LED, lamp or light (output)"
+6"sS: switch (input)"
+6"pP: push button (input)"
 
-0"a: AND gate"
-0"o: OR gate"
-0"e: XOR gate"
-0"A: NAND gate"
-0"O: NOR gate, NOT gate"
-0"E: XNOR gate"
+6"a: AND gate"
+6"o: OR gate"
+6"e: XOR gate"
+6"A: NAND gate"
+6"O: NOR gate, NOT gate"
+6"E: XNOR gate"
 
-0"#: extend the surface area of devices"
+6"cC: counter, constant"
 
-0"cC: flip-flop clock, counter, constant"
-0"jkdt: flip-flop inputs"
-0"qQ: flip-flop outputs/asynch inputs"
-0"y: flip-flop enable"
+6"#: extend the surface area of devices"
 
-0"EXTENDED"
-0"--------"
+0"# Extended"
 
-0" @: isolator"
+6"cC: as flip-flop clock"
+6"jkdt: flip-flop inputs"
+6"qQ: flip-flop outputs/asynch inputs"
+6"y: flip-flop enable"
 
-0",: wire corner that doesn't interact with itself"
-0"/\\: diagonal wires"
-0"&%: double wire corners"
-0"g: global backplane wires"
-0"=: bus (bundle of wires)"
-0"()un: straight connected backplane wires, 'antennas'"
+6"@: isolator"
 
-0"I: IC template"
-0"i: IC instance"
+6",: wire corner that doesn't interact with itself"
+6"&%: double wire corners"
+6"g: global backplane wires"
+6"=: bus (bundle of wires)"
+6"()un: straight connected backplane wires, 'antennas'"
 
-0"UG: normal/inverted device inputs that work in 4 directions"
-0"VW: normal/inverted wire crossing device input (works diagonally too)"
+6"I: IC template"
+6"i: IC instance"
 
-0"z: tri-state buffer"
+6"UG: normal/inverted device inputs that work in 4 directions"
+6"VW: normal/inverted wire crossing device input (works diagonally too)"
 
-0"L: RGB LED: 3 inputs, red, green and blue"
-0"rR: real-time timer"
+6"z: tri-state buffer"
 
-0"bB: ROM/RAM bits"
-0"T: terminal (ASCII keyboard/screen)"
-0"?: random generator"
+6"L: RGB LED: 3 inputs, red, green and blue"
+6"rR: real-time timer"
 
-0"$: extend the surface area of devices without input/output interaction"
-0"0123456789: modifiers: LED color, timer speed, bus/ic/backplane id"
+6"bB: ROM/RAM bits"
+6"T: terminal (ASCII keyboard/screen)"
+6"?: random bit generator"
+
+6"$: extend the surface area of devices without input/output interaction"
+6"0123456789: modifiers: LED color, timer speed, bus/ic/backplane id"
 
 0"FIT:y"
 
@@ -2768,8 +2901,7 @@ registerCircuit('Editing Side Notes', `
 
 0"A few extra side notes for editing"
 
-0"Interchangeable ASCII characters"
-0"--------------------------------"
+0"# Interchangeable ASCII characters"
 
 0"There are a few pairs of ASCII charcters that have the same or similar meaning:"
 
@@ -2791,8 +2923,7 @@ registerCircuit('Editing Side Notes', `
 0". and *: the . has the same functionality as * (wire)"
 0"--> this helps with drawing circuits on paper"
 
-0"Style used in built-in circuits"
-0"-------------------------------"
+0"# Style used in built-in circuits"
 
 0"Most built-in circuits use a certain style that is not optimally compact but"
 0"looks better. It works as follows:"
@@ -2819,7 +2950,8 @@ s-->bBB
 
 
 0"Some of the 'compact shortcut' cells are avoided except in rare circumstances,"
-0"in particular 'V', 'W', 'G', '%', '&' and touching >^<v inputs from sides"
+0"in particular 'V', 'W', 'G', '%', '&' and touching >^<v inputs from sides."
+0"But as an exception, ^^^ is used for inputs of half adders and similar circuits."
 
 0"yes:"       0"no:"       0"no:"
 
@@ -2839,9 +2971,9 @@ s**>e**>l     s**>e**>l   s**>e**>l
 3" a-a-a-a"
 
 0"In that grid:"
-0"*) 'a' can be almost anything, such as gates, except gate inputs"
-0"*) '|' and '-' can be gate inputs '^>v<m]w[' or wires '*' or 'x'"
-0"*) '@' may only be empty, or filler of large devices, or the middle"
+0"- 'a' can be almost anything, such as gates, except gate inputs"
+0"- '|' and '-' can be gate inputs '^>v<m]w[' or wires '*' or 'x'"
+0"- '@' may only be empty, or filler of large devices, or the middle"
 0"   (diagonal) one of a ^^^ style gate input."
 
 0"This with various exceptions for numbers, backplane wires, comments, etc..."
@@ -2871,14 +3003,12 @@ s**>c#Q**>l        s**>cQ**>l
 0"possible with compaction tricks. However, there's no need to follow this in"
 0"your own editing."
 
-0"Editing in the Geany Text Editor"
-0"--------------------------------"
+0"# Editing in the Geany Text Editor"
 
-0"Editing is best done in a good plain text editor, at least it must support a"
-0"fixed width font and provide block selection, allowing to paste a rectangular"
-0"selected block anywhere."
+0"Editing is best done in a good plain text editor that supports a fixed-width"
+0"font, rectangular block selection and copypasting of such selections."
 
-0"There are many other editors that can do this, but here are some tips for"
+0"There are many editors that can do this, but here are some tips for"
 0"Geany. Many of these will work in other editors too, there just may be"
 0"different shortcuts and different edge case behaviors. Geany is based on"
 0"scintilla so similar behaviors may work in other scintilla based editors like"
@@ -2886,31 +3016,31 @@ s**>c#Q**>l        s**>cQ**>l
 0"might be useful instead, could be one designed for making 2D ASCII art"
 0"drawings."
 
-0"-Make sure to set a fixed width font. Geany is an editor for programming so"
-0" likely it already is by default. without a fixed width font, characters will"
-0" not line up correctly below each other, and that is quite important since"
-0" circuits are 2-dimensional."
-0"-Turn off line wrapping, only then you can see the 2D layout correctly."
-0"-The insert key is useful. Normally the 'insert' mode of text editors is"
-0" rarely used, but for editing 2-dimensional diagrams it's awesome if you are"
-0" changing something in the middle: it allows to overwrite characters without"
-0" moving stuff to the right of your cursor. Unfortunately, backspace will"
-0" still move said stuff to the left so instead of backspace, use left arrow"
-0" then space to remove something to the left of the cursor. Also, if you have"
-0" no insert mode, then pressing delete after each keystroke will be needed"
-0" instead."
-0"-CTRL+d duplicates a line, which is handy sometimes e.g. to make vertical"
-0" wires longer."
-0"-If you have a circuit without any other circuitry to the left or right of"
-0" it, then copypasting it to another location above or below is quite easy:"
-0" just select it, copy (CTRL+C) and paste it on a different line (CTRL+V). So"
-0" copypasting circuits multiple times vertically is easy in any text editor is"
-0" easy."
-0"-If you want to copypaste something horizontally, or something that is in"
-0" between some stuff on its left and/or right, then you need block selection,"
-0" to select the characters in the rectangle around the part you want to copy."
-0" For example if you want to copypaste only the middle or gate below but not"
-0" the and/xor gates left/right of it:"
+0"- Make sure to set a fixed width font. Geany is an editor for programming so"
+0"  likely it already is by default. Without a fixed width font, characters will"
+0"  not line up correctly below each other, and that is quite important since"
+0"  circuits are 2-dimensional."
+0"- Turn off line wrapping, only then you can see the 2D layout correctly."
+0"- The insert key is useful. Normally the 'overwrite' mode of text editors is"
+0"  rarely used, but for editing 2-dimensional diagrams it's awesome if you are"
+0"  changing something in the middle: it allows to overwrite characters without"
+0"  moving stuff to the right of your cursor. Unfortunately, backspace will"
+0"  still move said stuff to the left so instead of backspace, use left arrow"
+0"  then space to remove something to the left of the cursor. Also, if you have"
+0"  no overwrite mode, then pressing delete after each keystroke will be needed"
+0"  instead."
+0"- CTRL+d duplicates a line, which is handy sometimes e.g. to make vertical"
+0"  wires longer."
+0"- If you have a circuit without any other circuitry to the left or right of"
+0"  it, then copypasting it to another location above or below is quite easy:"
+0"  just select it, copy (CTRL+C) and paste it on a different line (CTRL+V). So"
+0"  copypasting circuits multiple times vertically is easy in any text editor is"
+0"  easy."
+0"- If you want to copypaste something horizontally, or something that is in"
+0"  between some stuff on its left and/or right, then you need block selection,"
+0"  to select the characters in the rectangle around the part you want to copy."
+0"  For example if you want to copypaste only the middle or gate below but not"
+0"  the and/xor gates left/right of it:"
 
 
       l      l      l
@@ -2925,42 +3055,43 @@ s**>c#Q**>l        s**>cQ**>l
 s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s
 
 0"So how to do the block selection in geany:"
-0"-To do it with arrow keys: first place the cursor in one corner of the"
-0" rectangle you want to select. Then hold down alt+shift and press the arrow"
-0" keys up/down and left/right to select a rectangle."
-0"-To do it with the mouse: first place the cursor in one corner of the"
-0" rectangle you want to select. Then hold down ctrl+shift, or in alt+shift"
-0" (depends on OS), and click the mouse to the other corner of the rectangle."
-0" Or hold down just ctrl, and drag the mouse to any rectangle shape."
-0"-Now you have a rectangle selected. Press ctrl+c to copy it. Then place the"
-0" cursor where you want to paste it, and press ctrl+v there."
-0"-Important: make sure the rectangle you selected has all characters filled."
-0" If there were lines that were not filled up to the end, fill them all up"
-0" with spaces first. Only then, when you paste the block, will all content to"
-0" the right of where you pasted shift by the same amount, which is very likely"
-0" what you want to not completely disaling other parts of the circuit."
-0"-To easily get spaces to the right of everything, place the cursor somewhere"
-0" very far on the right (add spaces to 1 line for this if needed). Then use"
-0" mouse block selection and click elsewhere on the right to get a very long"
-0" cursor. Then type any letter, e.g. '@', to type a vertical wall of @ symbols"
-0" on the right. Everything to the left of them will be automatically filled"
-0" with spaces! Which makes editing of the 2D circuit much easier."
-0"-You can also use the block selection as multicursor. Instead of a"
-0" rectangle, select a vertical line to get a long cursor. Then you can insert"
-0" multiple spaces, *'s, or any other character by typing it. Similarly using"
-0" the delete key deletes all characters to the right of the cursor, good for"
-0" selectively deleting a part of the circuit."
-0"-If you paste a block, it will insert itself into all content below. So if"
-0" you have some circuitry below that you don't want affected, first add enough"
-0" newlines below where you will paste, only then paste."
-0"-Don't use the backspace key with multicursor, instead use the delete key."
-0" The delete key guarantees it will delete one character on each line to the"
-0" right of the cursor. With backspace, however, geany may backspace a"
-0" different amount of spaces on each line (it tries to be helpful in a way"
-0" that fails here) which will disalign the circuit to the right of the"
-0" multicursor."
-0"-Similarly, the tab key is kind of unreliable for multicursor, so use space"
-0" to remain evenly spaced."
+
+0"- To do it with arrow keys: first place the cursor in one corner of the"
+0"  rectangle you want to select. Then hold down alt+shift and press the arrow"
+0"  keys up/down and left/right to select a rectangle."
+0"- To do it with the mouse: first place the cursor in one corner of the"
+0"  rectangle you want to select. Then hold down ctrl+shift, or alt+shift"
+0"  (depends on OS), and click the mouse to the other corner of the rectangle."
+0"  Or hold down just ctrl, and drag the mouse to any rectangle shape."
+0"- Now you have a rectangle selected. Press ctrl+c to copy it. Then place the"
+0"  cursor where you want to paste it, and press ctrl+v there."
+0"- Important: make sure the rectangle you selected has all characters filled."
+0"  If there were lines that were not filled up to the end, fill them all up"
+0"  with spaces first. Only then, when you paste the block, will all content to"
+0"  the right of where you pasted shift by the same amount, which is very likely"
+0"  what you want to not completely disaling other parts of the circuit."
+0"- To easily get spaces to the right of everything, place the cursor somewhere"
+0"  very far on the right (add spaces to 1 line for this if needed). Then use"
+0"  mouse block selection and click elsewhere on the right to get a very long"
+0"  cursor. Then type any letter, e.g. '@', to type a vertical wall of @ symbols"
+0"  on the right. Everything to the left of them will be automatically filled"
+0"  with spaces! Which makes editing of the 2D circuit much easier."
+0"- You can also use the block selection as multicursor. Instead of a"
+0"  rectangle, select a vertical line to get a long cursor. Then you can insert"
+0"  multiple spaces, *'s, or any other character by typing it. Similarly using"
+0"  the delete key deletes all characters to the right of the cursor, good for"
+0"  selectively deleting a part of the circuit."
+0"- If you paste a block, it will insert itself into all content below. So if"
+0"  you have some circuitry below that you don't want affected, first add enough"
+0"  newlines below where you will paste, only then paste."
+0"- Don't use the backspace key with multicursor, instead use the delete key."
+0"  The delete key guarantees it will delete one character on each line to the"
+0"  right of the cursor. With backspace, however, geany may backspace a"
+0"  different amount of spaces on each line (it tries to be helpful in a way"
+0"  that fails here) which will disalign the circuit to the right of the"
+0"  multicursor."
+0"- Similarly, the tab key is kind of unreliable for multicursor, so use space"
+0"  to remain evenly spaced."
 
 
 0"As an example of the spaces problem:"
@@ -3004,226 +3135,223 @@ registerCircuit('Electronic Diagram', `
 0"the right our ASCII notation The real life notation is of course also just an"
 0"ascii art approximation here."
 
+7"                ___         "
+7"            ---|   \\        " **>a**
+7"    AND        |   |----    "    ^
+7"            ---|___/        " ****
+7"                            "
+7"               ____         "
+7"            ---\\   \\        " **>o**
+7"     OR        |   }----    "    ^
+7"            ---/___/        " ****
+7"                            "
+7"                ___         "
+7"            ---\\\\  \\        " **>e**
+7"    XOR        ||  }----    "    ^
+7"            ---//__/        " ****
+7"                            "
+7"                ___         "
+7"            ---|   \\        " **>A**
+7"   NAND        |   |o---    "    ^
+7"            ---|___/        " ****
+7"                            "
+7"               ____         "
+7"            ---\\   \\        " **>O**
+7"    NOR        |   }o---    "    ^
+7"            ---/___/        " ****
+7"                            "
+7"                ___         "
+7"            ---\\\\  \\        " **>E**
+7"   XNOR        ||  }o---    "    ^
+7"            ---//__/        " ****
+7"                            "
+7"               ____         "
+7"            --o\\   \\        " **]o**
+7"  IMPLY        |   }----    "    ^
+7"            ---/___/        " ****
+7"                            "
+7"                ___         "
+7"            ---|   \\        " **>a**
+7" NIMPLY        |   |----    "    m
+7"            --o|___/        " ****
+7"                            "
+7"                            "
+7"                            "
+7"    NOT     ----|>o-----    " **>O**
+7"                            "
+7"                            "
+7"                            "
+7"  DIODE     ----|>|-----    " **>o**
+7"                            "
+7"                            "
+7"                 //         "
+7"    LED     ----|>|-----    " **>l**
+7"                            "
+7"                            "
+7"                 /          "
+7" SWITCH   V+ ---o  o----    " s****
+7"                     >      "
+7"                     >      "
+7"                    GND     "
+7"                            "
+7"                            "
+7"                  |         "
+7"                -----       "
+7"   PUSH   V+ ---o   o---    " p****
+7"                      >     "
+7"                      >     "
+7"                     GND    "
+7"                            "
+7"            -----           "
+7"           / _   \\          "
+7" CLOCK    | | |_| |---      " R****
+7"           \\ 1Hz /          " 5
+7"            ----            "
+7"                            "
+7"                            "
+7"                            "
+7"CONSTANT 0     GND-----     " c****
+7"                            "
+7"                            "
+7"CONSTANT 1      V+-----     " C****
+7"                            "
+7"                            "
+7"FLOATING Z      -------     " c****     0"(Not supported, '0' is used)"
+7"                            "
+7"                            "
+7"                            "
+7"                  |         "     *
+7"                  |         "     v
+7"TRISTATE     ----|>----     " ***>z**** 0"(Not truly supported but this represents it)"
+7"BUFFER                      "
+7"                            "
+7"                            "
+7"                            "
+7"                 +-----+    "
+7"              ---|T   Q|----" -->t--
+7" T-FLIPFLOP      |     |    " -->c
+7"              ---|>    |    "
+7"                 +-----+    "
+7"                            "
+7"                 +-----+    "
+7"              ---|D   Q|----" -->d--
+7" D-FLIPFLOP      |     |    " -->c
+7"              ---|>    |    "
+7"                 +-----+    "
+7"                            "
+7"                 +-----+    "
+7"              ---|J   Q|----" -->j--
+7"JK-FLIPFLOP   ---|>    |    " -->c
+7"              ---|K    |    " -->k
+7"                 +-----+    "
+7"                            "
+7"                 +-----+    "
+7"             V+ -|T   Q|----"
+7" COUNTER         |     |    " -->c--
+7"              ---|>    |    "
+7"                 +-----+    "
+7"                            "
+7"                    |       "     |
+7"                 +-----+    "     v
+7"              ---|T S Q|----" -->tq--
+7"T-FLIPFLOP       |    _|    " -->cQ--
+7"W.ASYNCH.SR   ---|> R Q|----"     ^
+7"                 +-----+    "     |
+7"                    |       "
+7"                            "
+7"                    |       "     |
+7"                 +-----+    "     v
+7"              ---|D S Q|----" -->dq--
+7"D-FLIPFLOP       |    _|    " -->cQ--
+7"W.ASYNCH.SR   ---|> R Q|----"     ^
+7"                 +-----+    "     |
+7"                    |       "
+7"                            "
+7"                    |       "     |
+7"                 +-----+    "     v
+7"              ---|J S Q|----" -->jq--
+7"JK-FLIPFLOP   ---|>   _|    " -->c#
+7"W.ASYNCH.SR   ---|K R Q|----" -->kQ--
+7"                 +-----+    "     ^
+7"                    |       "     |
+7"                            "
+7"                            "
+7"                            "
+7" IC USAGE                   "
+7"                            "
+7"        +---u---+           " ->i4081
+7"       -|       |-Vdd       " ->iiiii<-
+7"       -|  IC   |-          " --iiiii<-
+7"       -|       |-          " --iiiii--
+7"       -| 4081  |-          " ->iiiii--
+7"       -|       |-          " ->iiiii<-
+7"       -|       |-          "   iiiii<-
+7"    Vss-|       |-          "
+7"        +-------+           "
+7"                            "
+7"                            "
+7"                            "
+7" IC SCHEMATIC               "
+7"                            "
+7"       +---u---+            " s---v
+7"       |       |            " s-->a@v---s
+7"     1-|--+    |-14Vdd      " l<--, a<--s
+7"     2-|-\\| +--|-13         " l<--, ,-->l
+7"     3-|--u |/-|-12         " s-->a ,-->l
+7"     4-|--n u--|-11         " s---^ a<--s
+7"     5-|-/| n--|-10         "       ^---s
+7"     6-|--+ |\\-|-9          "       I4081
+7"  Vss7-|    +--|-8          "
+7"       |  4081 |            "
+7"       +-------+            "
+7"                            "
+7"                            "
+7"                            "
+7" RELAY (SPST)               "
+7"                            "    *
+7" ---uuuuuu----              "    v
+7"    ======                  " **>z*** 0"(same as tristate buffer, not accurate emulation but close)"
+7" ----o  o-----              "
+7"      \\                     "
+7"                            "
+7"                            "
+7"                            "
+7"                            "
+7" RELAY (SPDT)               "    *
+7"                            "    ***
+7" ---uuuuuu----              "    v |
+7"    ======                  " **>z*+***
+7"        o----               "      w
+7" ----o                      " ****>z***
+7"      \\ o----               "
+7"                            "
+7"                            "
+7"                            "
+7"          _                 "
+7"         | -_               "
+7"       --|   |              " **>M***
+7"         |   |              "    M
+7" MUX     |   |---           " **>M
+7"       --|  _|              "    ^
+7"         |_-                "    *
+7"           |                "    *
+7"           |                "
+7"                            "
+7"                            "
+7"                            "
+7"          _                 "
+7"         | -_               "
+7"         |   |--            " **>M***
+7"         |   |              "    M
+7"DEMUX  --|   |              "    M***
+7"         |  _|--            "    ^
+7"         |_-                "    *
+7"           |                "    *
+7"           |                "
+7"                            "
 
-0"RENDER:text"
+
 0"FIT:w"
-
-1"                ___         "
-1"            ---|   \\        "**>a**
-1"    AND        |   |----    "   ^
-1"            ---|___/        "****
-1"                            "
-1"               ____         "
-1"            ---\\   \\        "**>o**
-1"     OR        |   }----    "   ^
-1"            ---/___/        "****
-1"                            "
-1"                ___         "
-1"            ---\\\\  \\        "**>e**
-1"    XOR        ||  }----    "   ^
-1"            ---//__/        "****
-1"                            "
-1"                ___         "
-1"            ---|   \\        "**>A**
-1"   NAND        |   |o---    "   ^
-1"            ---|___/        "****
-1"                            "
-1"               ____         "
-1"            ---\\   \\        "**>O**
-1"    NOR        |   }o---    "   ^
-1"            ---/___/        "****
-1"                            "
-1"                ___         "
-1"            ---\\\\  \\        "**>E**
-1"   XNOR        ||  }o---    "   ^
-1"            ---//__/        "****
-1"                            "
-1"               ____         "
-1"            --o\\   \\        "**]o**
-1"  IMPLY        |   }----    "   ^
-1"            ---/___/        "****
-1"                            "
-1"                ___         "
-1"            ---|   \\        "**>a**
-1" NIMPLY        |   |----    "   m
-1"            --o|___/        "****
-1"                            "
-1"                            "
-1"                            "
-1"    NOT     ----|>o-----    "**>O**
-1"                            "
-1"                            "
-1"                            "
-1"  DIODE     ----|>|-----    "**>o**
-1"                            "
-1"                            "
-1"                 //         "
-1"    LED     ----|>|-----    "**>l**
-1"                            "
-1"                            "
-1"                 /          "
-1" SWITCH   V+ ---o  o----    "s****
-1"                     >      "
-1"                     >      "
-1"                    GND     "
-1"                            "
-1"                            "
-1"                  |         "
-1"                -----       "
-1"   PUSH   V+ ---o   o---    "p****
-1"                      >     "
-1"                      >     "
-1"                     GND    "
-1"                            "
-1"            -----           "
-1"           / _   \\          "
-1" CLOCK    | | |_| |---      "R****
-1"           \\ 1Hz /          "5
-1"            ----            "
-1"                            "
-1"                            "
-1"                            "
-1"CONSTANT 0     GND-----     "c****
-1"                            "
-1"                            "
-1"CONSTANT 1      V+-----     "C****
-1"                            "
-1"                            "
-1"FLOATING Z      -------     "c****     0"(Not supported, '0' is used)"
-1"                            "
-1"                            "
-1"                            "
-1"                  |         "    *
-1"                  |         "    v
-1"TRISTATE     ----|>----     "***>z**** 0"(Not truly supported but this represents it)"
-1"BUFFER                      "
-1"                            "
-1"                            "
-1"                            "
-1"                 +-----+    "
-1"              ---|T   Q|----"-->t--
-1" T-FLIPFLOP      |     |    "-->c
-1"              ---|>    |    "
-1"                 +-----+    "
-1"                            "
-1"                 +-----+    "
-1"              ---|D   Q|----"-->d--
-1" D-FLIPFLOP      |     |    "-->c
-1"              ---|>    |    "
-1"                 +-----+    "
-1"                            "
-1"                 +-----+    "
-1"              ---|J   Q|----"-->j--
-1"JK-FLIPFLOP   ---|>    |    "-->c
-1"              ---|K    |    "-->k
-1"                 +-----+    "
-1"                            "
-1"                 +-----+    "
-1"             V+ -|T   Q|----"
-1" COUNTER         |     |    "-->c--
-1"              ---|>    |    "
-1"                 +-----+    "
-1"                            "
-1"                    |       "    |
-1"                 +-----+    "    v
-1"              ---|T S Q|----"-->tq--
-1"T-FLIPFLOP       |    _|    "-->cQ--
-1"W.ASYNCH.SR   ---|> R Q|----"    ^
-1"                 +-----+    "    |
-1"                    |       "
-1"                            "
-1"                    |       "    |
-1"                 +-----+    "    v
-1"              ---|D S Q|----"-->dq--
-1"D-FLIPFLOP       |    _|    "-->cQ--
-1"W.ASYNCH.SR   ---|> R Q|----"    ^
-1"                 +-----+    "    |
-1"                    |       "
-1"                            "
-1"                    |       "    |
-1"                 +-----+    "    v
-1"              ---|J S Q|----"-->jq--
-1"JK-FLIPFLOP   ---|>   _|    "-->c#
-1"W.ASYNCH.SR   ---|K R Q|----"-->kQ--
-1"                 +-----+    "    ^
-1"                    |       "    |
-1"                            "
-1"                            "
-1"                            "
-1" IC USAGE                   "
-1"                            "
-1"        +---u---+           "->i4081
-1"       -|       |-Vdd       "->iiiii<-
-1"       -|  IC   |-          "--iiiii<-
-1"       -|       |-          "--iiiii--
-1"       -| 4081  |-          "->iiiii--
-1"       -|       |-          "->iiiii<-
-1"       -|       |-          "  iiiii<-
-1"    Vss-|       |-          "
-1"        +-------+           "
-1"                            "
-1"                            "
-1"                            "
-1" IC SCHEMATIC               "
-1"                            "
-1"       +---u---+            "s---v
-1"       |       |            "s-->a@v---s
-1"     1-|--+    |-14Vdd      "l<--, a<--s
-1"     2-|-\\| +--|-13         "l<--, ,-->l
-1"     3-|--u |/-|-12         "s-->a ,-->l
-1"     4-|--n u--|-11         "s---^ a<--s
-1"     5-|-/| n--|-10         "      ^---s
-1"     6-|--+ |\\-|-9          "      I4081
-1"  Vss7-|    +--|-8          "
-1"       |  4081 |            "
-1"       +-------+            "
-1"                            "
-1"                            "
-1"                            "
-1" RELAY (SPST)               "
-1"                            "   *
-1" ---uuuuuu----              "   v
-1"    ======                  "**>z*** 0"(same as tristate buffer, not accurate emulation but close)"
-1" ----o  o-----              "
-1"      \\                     "
-1"                            "
-1"                            "
-1"                            "
-1"                            "
-1" RELAY (SPDT)               "   *
-1"                            "   ***
-1" ---uuuuuu----              "   v |
-1"    ======                  "**>z*+***
-1"        o----               "     w
-1" ----o                      "****>z***
-1"      \\ o----               "
-1"                            "
-1"                            "
-1"                            "
-1"          _                 "
-1"         | -_               "
-1"       --|   |              "**>M***
-1"         |   |              "   M
-1" MUX     |   |---           "**>M
-1"       --|  _|              "   ^
-1"         |_-                "   *
-1"           |                "   *
-1"           |                "
-1"                            "
-1"                            "
-1"                            "
-1"          _                 "
-1"         | -_               "
-1"         |   |--            "**>M***
-1"         |   |              "   M
-1"DEMUX  --|   |              "   M***
-1"         |  _|--            "   ^
-1"         |_-                "   *
-1"           |                "   *
-1"           |                "
-1"                            "
-
-
 
 `, 'diagram');
 
@@ -3236,12 +3364,24 @@ registerCircuit('Switch (s)', `
  s-->l
 `, 'component' + componentid++);
 
+registerCircuit('Switch Initially On (S)', `
+ S-->l
+`, 'component' + componentid++);
+
 registerCircuit('Pushbutton (p)', `
  p-->l
 `, 'component' + componentid++);
 
-registerCircuit('Timer (r)', `
+registerCircuit('Pushbutton Initially On (P)', `
+ P-->l
+`, 'component' + componentid++);
+
+registerCircuit('Timer (R)', `
  R-->l
+`, 'component' + componentid++);
+
+registerCircuit('Timer Initially Off (r)', `
+ r-->l
 `, 'component' + componentid++);
 
 registerCircuit('LED (l)', `
@@ -3776,8 +3916,7 @@ registerCircuit('Unit Test', `
 0"Note: also test the map 'game of life ship' and enable autotick, and"
 0"'langton's ant' in electron mode"
 
-0"On"
-0"--"
+0"# On"
 
 0"In this section, the LED on the right of each contraption must be ON. If it's"
 0"OFF, something is broken"
@@ -4033,8 +4172,7 @@ S5110g 5110g>l
           |
 S5120g 5120g>l
 
-0"Off"
-0"---"
+0"# Off"
 
 0"In this section, the LED on the right of each contraption must be OFF. If"
 0"it's ON, something is broken"
@@ -4151,8 +4289,7 @@ s-->dy------>l
      S
 
 
-0"Toggle"
-0"------"
+0"# Toggle"
 
 0"In this section, the LED on the right must be have the same state as the"
 0"input switch (slight delay is allowed)"
@@ -4297,23 +4434,22 @@ s##
 *
 
 
-0"Flip Flops"
-0"----------"
+0"# Flip Flops"
 
 0"Expected:"
-0"-main output read from t,c,k,d,q"
-0"-inverted output read from j,Q; inverted to LED so all LEDs should read the"
-0" same"
-0"-q enables immediately on no matter what"
-0"-Q disables immediately on no matter what"
-0"-Q and q together makes it flicker"
-0"-c may change state on positive edge only according to the rules of T,D,J,K"
-0" flip-flop inputs"
-0"-when mixing D/T/JK flip-flop inputs"
-0"--on inputs trump off inputs"
-0"--off D trumps off JK & T"
-0"--toggle trumps everything"
-0"--following combinations make it toggle: T, JK, DK"
+0"- main output read from t,c,k,d,q"
+0"- inverted output read from j,Q; inverted to LED so all LEDs should read the"
+0"  same"
+0"- q enables immediately on no matter what"
+0"- Q disables immediately on no matter what"
+0"- Q and q together makes it flicker"
+0"- c may change state on positive edge only according to the rules of T,D,J,K"
+0"  flip-flop inputs"
+0"- when mixing D/T/JK flip-flop inputs:"
+0"  - on inputs trump off inputs"
+0"  - off D trumps off JK & T"
+0"  - toggle trumps everything"
+0"  - following combinations make it toggle: T, JK, DK"
 
 s-->c-->l
     #
@@ -4332,8 +4468,7 @@ s-->c-->l
 s-->j-->l
 s-->k--]l
 
-0"Errors"
-0"------"
+0"# Errors"
 
 0"In this section, everything extending to the right must be an error, marked"
 0"in yellow"
@@ -4355,21 +4490,20 @@ I197
 s------>e----->l
 I196
 
-0"IC input order"
-0"--------------"
+0"# IC input order"
 
-0"Each input must activate the correct LED"
+0"Each input must activate the correct LED in the IC usage on the right"
 
-                 "ABCD"
+     "ABCD"      "ABCD"
       llll        llll
-      ^^^^        ^^^^
-      ||||#s      ||||
-    I0|||||       iiiiiiiiii0
-      |||&%       i    ^    i
-    s-*|*-s       i    s    i
-       |          i"C  B" s>i
-       #s         i<s    "A"i
-                  i  "D"    i
+      ^^^^  :     ^^^^
+      ||||#sD     ||||
+    I0||||| :     iiiiiiiiii0
+   :  |||&%:      i    ^    i
+   As-*|*-sC      i    s    i
+   :   | : :      i"C  B" s>i
+       #sB        i<s    "A"i
+         :        i  "D"    i
                   i   s     i
                   i   v     i
                   iiiiiiiiiii
@@ -4386,10 +4520,15 @@ registerCircuit('Drawing Test', `
 
 0"This is a unit test for testing and development."
 
+0"# LED Colors"
+
 0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7
 l l l l l l l l   l l l l l l l l   s>L<s   TTTT
 ^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^     ^     ^^^^
 s s s s s s s s   S S S S S S S S     s     ssss
+
+
+0"# Shapes"
 
 s-->l    l   ****
          ^   ****     l       l l   l   l  l       l  l   l   l
@@ -4435,8 +4574,7 @@ s***+**>l   *>a       vvv       *    a<*     vvv      *     l<**+***s
 
 
 
-0"Comment Alignment"
-0"-----------------"
+0"# Comment Alignment"
 
 0"In each test below the word 'hi' is aligned with different methods. The word"
 0"should appear on top of the capital letters indicated with gates below it. In"
@@ -4470,20 +4608,72 @@ EEeee     EEeee
 "hi"3     "hi"3
 EEeee     EEeee
 
-4"hi"     4"hi"
+5"hi"     5"hi"
 eeeEE     eeeEE
 
-"hi"4     "hi"4
+"hi"5     "hi"5
 eeeEE     eeeEE
+
+6"hi"     6"hi"
+Ooooo     Ooooo
+
+"hi"6     "hi"6
+Ooooo     Ooooo
+
+7"hi"     7"hi"
+ooOoo     ooOoo
+
+"hi"7     "hi"7
+ooOoo     ooOoo
+
+8"hi"     8"hi"
+ooooO     ooooO
+
+"hi"8     "hi"8
+ooooO     ooooO
+
+
+
+l<--s3"There should be no space between this comment and the switch"
+
+
+"There should be no space between this comment and the switch"5s-->l
 
 
 l<--s0"There should be no space between this comment and the switch"
+
+
+"There should be no space between this comment and the switch"2s-->l
 
 
 "The number 3 in this comment should NOT make the LED green."
             l
             ^
             s
+
+"The hidden number 3 should NOT make the LED green."3l<--s
+
+
+0"# Comment Styling"
+
+"full width"
+
+0"narrow variable width"
+
+6"narrow monospace"
+
+0"# chapter title"
+
+0"## subchapter title"
+
+0"### subsubchapter title"
+
+0"# monospace chapter"6
+
+0"- bullet"
+0"+ bullet"
+0"* bullet"
+
 
 "FIT:w"
 
@@ -4495,8 +4685,9 @@ registerTitle('Front Page');
 registerCircuit('Welcome', introText, introId);
 
 registerCircuit('Help Index', `
-0"List of help circuits. If this is your first time, the first one ('Main Help'"
-0"under 'Viewing') is recommended."
+0"List of help circuits."
+
+0"If this is your first time, the first one ('Main Help') is recommended."
 
 
 INSERT:toc_help
