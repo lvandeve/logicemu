@@ -47,12 +47,12 @@ registerCircuit('Logic Gates Tutorial', `
 
 0"A truth table shows the output for each combination of inputs:"
 
-6"  a  b | OR  "
-6"  -----+---- "
-6"  0  0 |  0  "
-6"  0  1 |  1  "
-6"  1  0 |  1  "
-6"  1  1 |  1  "
+3"  a  b | OR  "
+3"  -----+---- "
+3"  0  0 |  0  "
+3"  0  1 |  1  "
+3"  1  0 |  1  "
+3"  1  1 |  1  "
 
 0"The AND gate outputs 1 only when input a AND input b are on: An AND gate is"
 0"denoted with an 'a' in this simulation (again, not in real electronics)"
@@ -63,12 +63,12 @@ registerCircuit('Logic Gates Tutorial', `
 
 0"Here is its truth table:"
 
-6"  a  b | AND  "
-6"  -----+----  "
-6"  0  0 |  0   "
-6"  0  1 |  0   "
-6"  1  0 |  0   "
-6"  1  1 |  1   "
+3"  a  b | AND  "
+3"  -----+----  "
+3"  0  0 |  0   "
+3"  0  1 |  0   "
+3"  1  0 |  0   "
+3"  1  1 |  1   "
 
 0"The XOR gate or EXCLUSIVE OR gate outputs 1 whenever exclusively input a OR"
 0"exclusively input b (but not both) are on. A XOR gate is denoted with an 'e'"
@@ -80,12 +80,12 @@ registerCircuit('Logic Gates Tutorial', `
 
 0"Here is its truth table:"
 
-6"  a  b | XOR "
-6"  -----+---- "
-6"  0  0 |  0  "
-6"  0  1 |  1  "
-6"  1  0 |  1  "
-6"  1  1 |  0  "
+3"  a  b | XOR "
+3"  -----+---- "
+3"  0  0 |  0  "
+3"  0  1 |  1  "
+3"  1  0 |  1  "
+3"  1  1 |  0  "
 
 0"The NOT gate has a single input and inverts it, so outputs 1 if the switch is"
 0"off, and outputs 0 if the switch is on. A NOT gate is denoted with an 'O' in"
@@ -95,10 +95,10 @@ registerCircuit('Logic Gates Tutorial', `
 
 0"Here is its truth table:"
 
-6"  a | NOT "
-6"  --+---- "
-6"  0 |  1  "
-6"  1 |  0  "
+3"  a | NOT "
+3"  --+---- "
+3"  0 |  1  "
+3"  1 |  0  "
 
 0"A NOR gate is an OR gate with a NOT behind it (so an OR with inverted"
 0"output), integrated together as a single gate. The NOR gate outputs 1 only if"
@@ -113,12 +113,12 @@ registerCircuit('Logic Gates Tutorial', `
 
 0"Here is its truth table:"
 
-6"  a  b | NOR  "
-6"  -----+----  "
-6"  0  0 |  1   "
-6"  0  1 |  0   "
-6"  1  0 |  0   "
-6"  1  1 |  0   "
+3"  a  b | NOR  "
+3"  -----+----  "
+3"  0  0 |  1   "
+3"  0  1 |  0   "
+3"  1  0 |  0   "
+3"  1  1 |  0   "
 
 0"The NAND gate is an AND gate with a NOT behind it, integrated into a single"
 0"gate A NAND gate is denoted with an 'A' in this simulation (but not in real"
@@ -130,12 +130,12 @@ registerCircuit('Logic Gates Tutorial', `
 
 0"Here is its truth table:"
 
-6"  a  b | NAND "
-6"  -----+----- "
-6"  0  0 |   1  "
-6"  0  1 |   1  "
-6"  1  0 |   1  "
-6"  1  1 |   0  "
+3"  a  b | NAND "
+3"  -----+----- "
+3"  0  0 |   1  "
+3"  0  1 |   1  "
+3"  1  0 |   1  "
+3"  1  1 |   0  "
 
 0"The XNOR gate is a XOR gate with a NOT behind it, integrated into a single"
 0"gate. XNOR is sometimes also called EQV from equivalence, because it outputs"
@@ -149,12 +149,12 @@ registerCircuit('Logic Gates Tutorial', `
 
 0"Here is its truth table:"
 
-6"  a  b | XNOR "
-6"  -----+----- "
-6"  0  0 |   1  "
-6"  0  1 |   0  "
-6"  1  0 |   0  "
-6"  1  1 |   1  "
+3"  a  b | XNOR "
+3"  -----+----- "
+3"  0  0 |   1  "
+3"  0  1 |   0  "
+3"  1  0 |   0  "
+3"  1  1 |   1  "
 
 0"An IMPLY gate outputs 1 except when input a is true and input b is false. Its"
 0"name means 'a implies b', and since 'a=true, b=false' is the only combination"
@@ -176,12 +176,12 @@ registerCircuit('Logic Gates Tutorial', `
 
 0"Here is its truth table:"
 
-6"  a  b | IMPLY "
-6"  -----+------ "
-6"  0  0 |   1   "
-6"  0  1 |   1   "
-6"  1  0 |   0   "
-6"  1  1 |   1   "
+3"  a  b | IMPLY "
+3"  -----+------ "
+3"  0  0 |   1   "
+3"  0  1 |   1   "
+3"  1  0 |   0   "
+3"  1  1 |   1   "
 
 0"There are more gates you can make by inverting different inputs or outputs of"
 0"any of the gates above, e.g. AND with one inverted input gives NIMPLY. Some"
@@ -191,12 +191,12 @@ registerCircuit('Logic Gates Tutorial', `
 
 0"As a final recap, here is the truth table of all gates seen here:"
 
-6"  a  b | NOT  OR  NOR  AND  NAND  XOR  XNOR  IMPLY NIMPLY"
-6"  -----+-------------------------------------------------"
-6"  0  0 |  1    0   1    0     1    0     1     1     0   "
-6"  0  1 |       1   0    0     1    1     0     1     0   "
-6"  1  0 |  0    1   0    0     1    1     0     0     1   "
-6"  1  1 |       1   0    1     0    0     1     1     0   "
+3"  a  b | NOT  OR  NOR  AND  NAND  XOR  XNOR  IMPLY NIMPLY"
+3"  -----+-------------------------------------------------"
+3"  0  0 |  1    0   1    0     1    0     1     1     0   "
+3"  0  1 |       1   0    0     1    1     0     1     0   "
+3"  1  0 |  0    1   0    0     1    1     0     0     1   "
+3"  1  1 |       1   0    1     0    0     1     1     0   "
 
 `, 'logic_gates');
 
@@ -220,27 +220,27 @@ registerCircuit('Binary Numbers Tutorial', `
 
 0"Here are the first few decimal and binary numbers:"
 
-6"decimal | binary"
-6"--------+-------"
-6"      0 |      0"
-6"      1 |      1"
-6"      2 |     10"
-6"      3 |     11"
-6"      4 |    100"
-6"      5 |    101"
-6"      6 |    110"
-6"      7 |    111"
-6"      8 |   1000"
-6"      9 |   1001"
-6"     10 |   1010"
-6"     11 |   1011"
-6"     12 |   1100"
-6"     13 |   1101"
-6"     14 |   1110"
-6"     15 |   1111"
-6"     16 |  10000"
-6"            ^^^^"
-6"            8421"
+3"decimal | binary"
+3"--------+-------"
+3"      0 |      0"
+3"      1 |      1"
+3"      2 |     10"
+3"      3 |     11"
+3"      4 |    100"
+3"      5 |    101"
+3"      6 |    110"
+3"      7 |    111"
+3"      8 |   1000"
+3"      9 |   1001"
+3"     10 |   1010"
+3"     11 |   1011"
+3"     12 |   1100"
+3"     13 |   1101"
+3"     14 |   1110"
+3"     15 |   1111"
+3"     16 |  10000"
+3"            ^^^^"
+3"            8421"
 
 0"Prefix zeroes of a binary number are often shown. For example when one speaks"
 0"of an 8-bit binary number, all 8 bits are shown, even zeroes in front. E.g."
@@ -757,10 +757,17 @@ registerTitle('Flip-flops');
 
 registerCircuit('flip-flops tutorial', `
 
+0"Table of contents:"
+0"INSERT:toc"
+
 0"Flip-flops serve as memory elements, or elements that can keep state,"
 0"in electronic circuits. This tutorial interactively introduces flip-flops"
 
 0"# Flip-Flop Types"
+
+0"Flip flop types can be broken down into their logic behavior, and their"
+0"clock behavior. Logic behavior is discussed here, clock behavior (latch vs"
+0"flip-flop) in the next chapter."
 
 0"There are 4 main flip-flop types: SR, D, T and JK. Before looking at how they"
 0"work at logic-gate level, let's first use the prebuilt components that this"
@@ -789,14 +796,14 @@ registerCircuit('flip-flops tutorial', `
 0"(if any) that happens at each clock cycle: What is the next Q depending on"
 0"the D input and the current Q"
 
-6"+---+---+-------+"
-6"| S | R | Qnext |"
-6"+---+---+-------+"
-6"| 0 | 0 |   Q   |"
-6"| 0 | 1 |   1   |"
-6"| 1 | 0 |   0   |"
-6"| 1 | 1 |invalid|"
-6"+---+---+-------+"
+3"+---+---+-------+"
+3"| S | R | Qnext |"
+3"+---+---+-------+"
+3"| 0 | 0 |   Q   |"
+3"| 0 | 1 |   1   |"
+3"| 1 | 0 |   0   |"
+3"| 1 | 1 |invalid|"
+3"+---+---+-------+"
 
 0"## D Flip-Flop"
 
@@ -814,12 +821,12 @@ registerCircuit('flip-flops tutorial', `
 0"any) that happens at each clock cycle: What is the next Q depending on the D"
 0"input and the current Q"
 
-6"+---+-------+"
-6"| D | Qnext |"
-6"+---+-------+"
-6"| 0 |   0   |"
-6"| 1 |   1   |"
-6"+---+-------+"
+3"+---+-------+"
+3"| D | Qnext |"
+3"+---+-------+"
+3"| 0 |   0   |"
+3"| 1 |   1   |"
+3"+---+-------+"
 
 0"It looks as if the truth table shows that the state is just equal to the"
 0"input D, so it would seem as if it doesn't do much interesting? Well, it"
@@ -839,12 +846,12 @@ registerCircuit('flip-flops tutorial', `
 
 0"In the truth table, Q' represents the inverse of Q"
 
-6"+---+-------+"
-6"| T | Qnext |"
-6"+---+-------+"
-6"| 0 |   Q   |"
-6"| 1 |   Q'  |"
-6"+---+-------+"
+3"+---+-------+"
+3"| T | Qnext |"
+3"+---+-------+"
+3"| 0 |   Q   |"
+3"| 1 |   Q'  |"
+3"+---+-------+"
 
 0"## JK Flip-Flop"
 
@@ -863,14 +870,14 @@ registerCircuit('flip-flops tutorial', `
 0"(if any) that happens at each clock cycle: What is the next Q depending on"
 0"the D input and the current Q"
 
-6"+---+---+-------+"
-6"| S | R | Qnext |"
-6"+---+---+-------+"
-6"| 0 | 0 |   Q   |"
-6"| 0 | 1 |   1   |"
-6"| 1 | 0 |   0   |"
-6"| 1 | 1 |   Q'  |"
-6"+---+---+-------+"
+3"+---+---+-------+"
+3"| S | R | Qnext |"
+3"+---+---+-------+"
+3"| 0 | 0 |   Q   |"
+3"| 0 | 1 |   1   |"
+3"| 1 | 0 |   0   |"
+3"| 1 | 1 |   Q'  |"
+3"+---+---+-------+"
 
 0"The JK flip-flop is universal, it can easily be configured to act as SR, D or"
 0"T flip-flop: T by connecting J and K together, D by making K the inverse of"
@@ -900,26 +907,106 @@ registerCircuit('flip-flops tutorial', `
 0"In real electronics notation, the above flip-flop looks more"
 0"somewhat like this:"
 
-6"       |        "
-6"   +-------+    "
-6"---|J Pr  Q|--- "
-6"   |       |    "
-6"---|>      |    "
-6"   |      _|    "
-6"---|K CLR Q|--- "
-6"   +-------+    "
-6"       |        "
+3"       |        "
+3"   +-------+    "
+3"---|J Pr  Q|--- "
+3"   |       |    "
+3"---|>      |    "
+3"   |      _|    "
+3"---|K CLR Q|--- "
+3"   +-------+    "
+3"       |        "
+
+0"# Latches vs Flip-Flops"
+
+0"In addition to the 4 types above, there are also 3 ways the timing works."
+0"All of the above were the most advanced type, flip-flops. More primitive"
+0"devices with less gates can work as a latch or as a gated latch. The"
+0"different levels are:"
+
+0"- Latch: operates immediately, asynchronously, at the lowest level,"
+0"  the inputs directly affect the outputs (transparent). Does not have"
+0"  a clock or enable input, so one less input than the next types."
+0"- Gated Latch: latch with an enable input 'E'. When the enable input is high,"
+0"  it still works like a latch, when low, it keeps the current state and"
+0"  ignores the other inputs. The enable input is not a true clock yet and is"
+0"  not edge-triggered."
+0"- Flip-Flop: when it has an edge-triggered clock 'C', for the most reliable"
+0"  well-controlled behavior"
+
+0"The latches will come up more in the next tutorials where we build flip-flops"
+0"from primitive components, because latches are the basic primitive to build"
+0"the more advanced types from."
+
+0"Combining these 3 types with the 4 types above gives 12 types of devices,"
+0"although not all make sense:"
+0"- a T or JK flip-flop can only work with an edge-triggered clock, otherwise"
+0"  they would toggle chaotically in the toggle state"
+0"- a D latch would be nothing more than a delay"
+
+0"This table summarizes all those combinations:"
+
+3"+-----+----------+----------------+--------------+"
+3"|     |  latch:  |  gated latch:  |  flip-flop:  |"
+3"+=====+==========+================+==============+"
+3"| SR: | SR latch | gated SR latch | SR flip-flop |"
+3"+-----+----------+----------------+--------------+"
+3"| D:  |    /     | gated D latch  | D flip-flop  |"
+3"+-----+----------+----------------+--------------+"
+3"| T:  |    /     |       /        | T flip-flop  |"
+3"+-----+----------+----------------+--------------+"
+3"| JK: |    /     |       /        | JK flip-flop |"
+3"+-----+----------+----------------+--------------+"
+
+0"This table allows trying all the types, even the nonsensical ones:"
+
+***********************************************
+*     *          *              *             *
+*     * "latch"1 *"gated latch"1*"flip-flop"1 *
+*     *          *              *             *
+***********************************************
+*     * :     :  *   :     :    *  :     :    *
+*1"SR"* Ss>q>lQ: *   Ss>q>lQ:   *  Ss>j>lQ:   *
+*     * Rs>Q>lQ' *   Rs>Q>lQ'   *  Rs>k>lQ'   *
+*     * :     :: *   Es>y  ::   *  Cs>c  ::   *
+*     *          *   :          *  :          *
+***********************************************
+*     * :     :  *   :     :    *  :     :    *
+*1" D"* Ds>d>lQ  *   Ds>d>lQ    *  Ds>d>lQ    *
+*     * :     :  *   Es>y  :    *  Cs>c  :    *
+*     *          *   :          *  :          *
+***********************************************
+*     * :     :  *   :     :    *  :     :    *
+*1" T"* Ts>t>lQ  *   Ts>t>lQ    *  Ts>t>lQ    *
+*     * :C>y  :  *   Es>y  :    *  Cs>c       *
+*     *          *   :          *             *
+*     *          *              *1"1-input:"  *
+*     *          *              *  Cs>c>lQ    *
+*     *          *              *  :     :    *
+***********************************************
+*     * :     :  *   :     :    *  :     :    *
+*1"JK"* Js>q>lQ: *   Js>j>lQ:   *  Js>j>lQ:   *
+*     * Ks>Q>lQ' *   Ks>k>lQ'   *  Ks>k>lQ'   *
+*     * :     :: *   Es>y  ::   *  Cs>c  ::   *
+*     *          *   :          *  :          *
+***********************************************
 
 
 0"# Epilogue"
 
-0"This concludes the first flip-flop tutorial. Enjoy using them in designs :)"
+0"This concludes the first flip-flop tutorial, this explains how to use them"
+0"in designs."
 
-0"This tutorial was only a first introduction describing what they do."
+0"This tutorial was only a first introduction describing what they do and used"
+0"the built-in flip-flop functionality rather than making them from more"
+0"primitive components."
 
 0"The next tutorial shows how to build flip-flops from logic gates, and shows"
 0"the difference between latches, gated latches and true edge-triggered"
 0"flip-flops"
+
+0"Direct link to next tutorial:"
+0"INSERT:link:flip_flops2"
 
 `, 'flip_flops');
 
@@ -942,14 +1029,10 @@ registerCircuit('flip-flops tutorial II: from gates', `
 0"The most basic flip-flop circuit in electronics has two looped-back"
 0"NOR gates, and can flip between two states - and remember them."
 
-0"It's called the SR NOR latch (but originally was called flip-flop"
-0"for its behavior). Today, we use the following terminology:"
-0"*) latch: it operates directly, asynchronously, at the lowest level,"
-0"   the inputs directly affect the outputs (transparent)"
-0"*) gated latch: latch with an enable input. When the enable input is high,"
-0"   it still works like a latch"
-0"*) flip-flop: when it has an edge-triggered clock, for the most reliable"
-0"   well-controlled behavior"
+0"It's called the SR NOR latch today, but originally was called flip-flop"
+0"for its behavior. Naming this latch 'flip-flop' is no longer valid today,"
+0"see the previous tutorial for the distinction between a latch (which is"
+0"asynchronous) and flip-flop (which has an edge-triggered clock input)."
 
 0"It remembers the state of the last switch that was enabled, when both"
 0"switches are off. There is also an invalid state: both switches on is"
@@ -1023,7 +1106,6 @@ registerCircuit('flip-flops tutorial II: from gates', `
 "K" s***>a>O**
          ^ *
          ***
-
 
 0"How the latch works: the right two NORs are an SR latch as seen above. The"
 0"two inputs are AND-ed with the output of their corresponding NOR (they could"
@@ -1272,8 +1354,8 @@ s****>d**]a**>l
 0"additional combinational logic at the input to compute the desired next state"
 0"from the input and the current state. For T, we want next Q on if and only if"
 0"any of the following two conditions:"
-0"*) T is on and Q is off"
-0"*) T is off and Q is on"
+0"- T is on and Q is off"
+0"- T is off and Q is on"
 0"This logic can be compacted: Qnext = (T xor Q)"
 
 
@@ -1290,9 +1372,9 @@ s****>d**]a**>l
 0"We can also solve the full JK flip-flop that way, here the logic is a"
 0"bit bigger because there are more rules. We want next Q on if and only"
 0"if any of the following three conditions:"
-0"*) J is on and K is off"
-0"*) J is on and K is on and Q is off"
-0"*) J is off and K is off and Q is on"
+0"- J is on and K is off"
+0"- J is on and K is on and Q is off"
+0"- J is off and K is off and Q is on"
 0"This logic can be compacted (with a karnough map for example):"
 0"Qnext = (J and !Q) or (!K and Q)"
 
@@ -1333,24 +1415,20 @@ s****>d**]a**>l
 0"if there is no useful circuit (e.g. JK/T latch is not because their toggle is"
 0"chaotic, and D latch is not because it would be simply a pass-through wire)"
 
-6"    | latch | gated l. | flip-flop |"
-6"----+-------+----------+-----------+"
-6" SR |   2   |   3      |    3      |"
-6"----+-------+----------+-----------+"
-6" D  |       |   2      |    2      |"
-6"----+-------+----------+-----------+"
-6" T  |       |          |    2      |"
-6"----+-------+----------+-----------+"
-6" JK |       |          |    3      |"
-6"----+-------+----------+-----------+"
+3"    | latch | gated l. | flip-flop |"
+3"----+-------+----------+-----------+"
+3" SR |   2   |   3      |    3      |"
+3"----+-------+----------+-----------+"
+3" D  |       |   2      |    2      |"
+3"----+-------+----------+-----------+"
+3" T  |       |          |    2      |"
+3"----+-------+----------+-----------+"
+3" JK |       |          |    3      |"
+3"----+-------+----------+-----------+"
 
 0"# Epilogue"
 
 0"This showed how to build flip-flops from mixed gates."
-
-0"The next tutorial will build flip-flops from NAND gates only. It is also an"
-0"important part since a few more canonical typical flip-flop circuits are"
-0"introduced."
 
 0"Don't forget that you don't need to use all those logic gates if you don't"
 0"want to, there are simple built-in flip-flops available in the simulation"
@@ -1361,6 +1439,13 @@ s**>j#q**>l
 s**>k##
     ###
 s**>c#Q**>l
+
+0"The next tutorial will build flip-flops from NAND gates only. It is also an"
+0"important part since a few more canonical typical flip-flop circuits are"
+0"introduced."
+
+0"Direct link to next tutorial:"
+0"INSERT:link:flip_flops_nand"
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -1427,10 +1512,20 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"effectively active-high."
 
 0"The JK latch can also be made with 4 NAND gates. Comparing this to the"
-0"earlier JK latch: this is like using its SR latch with NAND instead of NOR so"
-0"their inputs become active-low, replacing the input ANDs with NANDs to make"
-0"them this active-low, and connecting the opposite output to each input rather"
-0"than inverse of the corresponding output."
+0"earlier JK latch (from ANDs and NORs): this is like using its SR latch with"
+0"NAND instead of NOR so their inputs become active-low and replacing the input"
+0"ANDs with NANDs to make them this active-low. The loop back logic is replaced"
+0"with an assymetrical variant, this version works best in both electron and"
+0"immediate mode."
+
+"J"s**>A>A****>l"Q"
+       ^ ^ *
+"K"s**>A>A *
+       ^ ^ *
+       *****
+
+0"This is another variant, but it flickers less evenly and doesn't work in"
+0"immediate mode at all:"
 
        *****
        v v *
@@ -1442,13 +1537,11 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 
 0"The T latch is straightforward from that:"
 
+"T"s**>A>A****>l"Q"
+     * ^ ^ *
+     *>A>A *
+       ^ ^ *
        *****
-       v v *
-"T"s**>A>A*+****>l"Q"
-     *     * *
-     *>A>A** *
-       ^ ^   *
-       *******
 
 0"# gated NAND latches"
 
@@ -1490,65 +1583,62 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"To make the above JK latch gates, the first NANDs can be used as 3-input"
 0"NAND gates:"
 
-       *****
-       v v *
-"J"s**>A>A*+****>l"Q"
-       ^   * *
-"E"s****   * *
-       v   * *
-"K"s**>A>A** *
-       ^ ^   *
+       ***
+       v *
+"J"s**>A*+>A****>l"Q"
+       ^ * ^ *
+"E"s**** * * *
+       v * * *
+"K"s**>A**>A *
+       ^   ^ *
        *******
 
-0"However! Strictly speaking, NAND-logic only supports 2-input NAND gates. A"
+
+0"However, strictly speaking, NAND-logic only supports 2-input NAND gates. A"
 0"3-input NAND gate requires 3 2-input NANDs to create. So unfortunately with"
 0"only 2-input NAND gates (and 1-input which is a 2-input with the two inputs"
 0"connected), the JK latch looks a bit more expensive, with two regular AND"
 0"gates created from NAND+inverter at the front:"
 
-              *****
-              v v *
-"J"s***>A>A**>A>A*+****>l"Q"
-        ^         * *
-"E"s*****         * *
-        v         * *
-"K"s***>A>A**>A>A** *
-              ^ ^   *
-              *******
-
-0"The T latch can save one of those NAND pairs:"
-
+"J"s**>A>A**>A>A****>l"Q"
+       ^     ^ ^ *
+"E"s****     * * *
+       v     * * *
+"K"s**>A>A**>A>A *
+             ^ ^ *
              *****
-             v v *
-"T"s****   *>A>A*+****>l"Q"
-       v   *     * *
-       A>A**     * *
-       ^   *     * *
-"E"s****   *>A>A** *
-             ^ ^   *
-             *******
 
-0"Note that, as in the previous tutorial, these JK and T latches are not useful"
-0"due to the uncontrolled toggling, even when it has an 'enable' input."
-
-0"Of interest, also, is an alternative form of D latch, the Earle latch It has"
-0"a low and high enable input, for convenience they are both wired to the same"
-0"switch below (that leftmost NAND is not part of the normal Earle latch"
-0"cicruit, it requires you to provide the two opposite enable inputs). Note"
-0"that this one also has a 3-input NAND in it, so purely with 2-input NANDs it"
-0"would take 6 NAND gates (7 including the negation of the enable input) Its"
-0"advantage is that all paths are as long, rather than variable length"
+0"Of interest, also, is an alternative form of D latch, the Earle latch. It has"
+0"a low and high enable input, and the latch only works correctly when making."
+0"those two each others inverse."
+0"This one also has a 3-input NAND in it, so purely with 2-input NANDs it"
+0"would take 6 NAND gates. Its advantage is that all paths are as long, rather"
+0"than variable length"
 
 
-     ***>A****
-     *   ^   *
-     * ***   *
-     * *     v
-"D"s*+**>A**>A**>l"Q"
-     *   ^   ^ *
-     *   ****+**
-     *   v   *
-"E"s**>A>A****
+ "E"s****>A**
+          ^ *
+ "D"s****** *
+          v v
+          A>A**>l"Q"
+          ^ ^ *
+          **+**
+          v *
+"E'"s****>A**
+
+
+0"For convenience, here is the Earle D latch with the enable and inverted"
+0"enable connected together:"
+
+"E"s****>A**
+     *   ^ *
+"D"s*+**** *
+     *   v v
+     *   A>A**>l"Q"
+     *   ^ ^ *
+     *   **+**
+     *   v *
+     *>A>A**
 
 0"# Edge-triggered flip-flop"
 
@@ -1585,67 +1675,10 @@ registerCircuit('flip-flops tutorial III: from NAND', `
       *   v *
       ***>A**
 
-0"Despite having fewer NAND gates here, AFAIK in practice the master-slave"
-0"flip-flop is cheaper in modern chips because there are cheap ways to make"
-0"the two D latches from transistors"
 
-
-0"Now let's add the master-slave JK flip-flop with two JK latches again, though"
-0"remember this one is not TRULY an edge triggered JK flip-flop, as seen in the"
-0"previous flip-flop tutorial (it's broken because, starting with everything"
-0"off, enable J, disable J, enable C. It toggles while it shouldn't)"
-
-0"The version with 3-input NANDs:"
-
-         ***************
-         v           v *
-"J"s****>A>A******>A>A*+****>l"Q"
-         ^ ^ *     ^   * *
-      ****  x   ****   * *
-      *  v v *  *  v   * * 0"broken! see note"
-"K"s**+*>A>A****+*>A>A** *
-      *  ^      *    ^   *
-      A  *******+*********
-      ^         *
-"C"s*************
-
-0"The version with 2-input NANDs:"
-
-               ***************
-               v           v *
-"J"s****>A>A**>A>A******>A>A*+****>l"Q"
-         ^       ^ *     ^   * *
-      ****        x   ****   * *
-      *  v       v *  *  v   * * 0"broken! see note"
-"K"s**+*>A>A**>A>A****+*>A>A** *
-      *        ^      *    ^   *
-      A        *******+*********
-      ^               *
-"C"s*******************
-
-
-0"To make the truly properly edge-triggered T flip-flop with the XOR in front of"
-0"a D flip-flop, we need 4 NAND gates to implement this XOR"
-
-            *******************
-            *                 *
-"T"s***>A>A*+*>A**>A***>A**>A*****>l"Q"
-      * ^ ^ *  ^ * ^ *  ^ * ^ *
-      *>A>A *  * *  x   * *  x
-        ^ ^ *  * v v *  * v v *
-        *****  *>A>A**  *>A>A**
-               *        *
-               A        *
-               ^        *
-"C"s*********************
-
-
-0"Fortunately, to make the JK flip-flop, we don't need any more NAND gates, the"
-0"4 NAND gates of the above XOR gate already serve perfectly well to implement"
-0"the logic. Just give it the two separate inputs. This is because XOR means"
-0"the same as as (T AND !Q) OR (!T AND Q), and for the JK flipflop we saw above"
-0"that its input logic is (J and !Q) OR (!K and Q), which looks similar except"
-0"the !T is replaced by a different input."
+0"Here is a proper edge-triggered JK flip-flop with the same principle as"
+0"before but with only NAND gates to implement the input XOR and the two"
+0"latches:"
 
             *******************
             *                 *
@@ -1659,7 +1692,22 @@ registerCircuit('flip-flops tutorial III: from NAND', `
                ^        *
 "C"s*********************
 
-0"A more compact looking version of the same thing:"
+
+0"The T flip-flop follows directly from that:"
+
+            *******************
+            *                 *
+"T"s***>A>A*+*>A**>A***>A**>A*****>l"Q"
+      * ^ ^ *  ^ * ^ *  ^ * ^ *
+      *>A>A *  * *  x   * *  x
+        ^ ^ *  * v v *  * v v *
+        *****  *>A>A**  *>A>A**
+               *        *
+               A        *
+               ^        *
+"C"s*********************
+
+0"A more compact looking version of the JK flip-flop:"
 
           ***********************
           v v                   *
@@ -1679,6 +1727,30 @@ registerCircuit('flip-flops (from counters)', `
 0"provides the 'c' gate as counter gate. This is a single-input T flip-flop."
 0"The circuits here show how to make any regular flip-flop from those."
 
+0"# latches"
+
+0"SR latch (edge triggered)"
+
+        *****
+        v   *
+"S" s**>o>e>c***>l
+          ^ *
+"R" s****]a<*
+
+0"c supports multiple inputs and will treat their edges independently, so this"
+0"can be slightly compactified. This one flickers when both inputs are high, so"
+0"is not purely edge triggered like the above variant. This multiple-input"
+0"ability to flicker is a bit of an edge-case of an advanced feature of c, not"
+0"something used in the rest of the flip-flops from counters further below"
+0"since 'c' is not purely a simple counter anymore like this."
+
+        ***
+        w *
+"S" s**>a>c*****>l
+          ^ *
+"R" s****>a<*
+
+
 0"Gated D latch. Not a valid D flip-flop, only a gated latch, because it's"
 0"possible to change state while the clock is high instead of only on clock"
 0"rising edge"
@@ -1686,6 +1758,19 @@ registerCircuit('flip-flops (from counters)', `
 "D" s**>e<c**>l
         v ^
 "E" s**>a**
+
+
+0"# flip-flops"
+
+0"It's not possible to do the next flip-flops with only a single c, because"
+0"when looping c's output back to the input, needed for the control logic, it
+0"will disable itself the next tick, like below:"
+
+    ***
+    v *
+s**>c****>l
+
+0"So the flip-flop designs below all use two stages"
 
 0"D flipflop. Two c's are needed to prevent anything from changing except when"
 0"clock goes from low to high."
@@ -1695,16 +1780,6 @@ registerCircuit('flip-flops (from counters)', `
         a>c a>c****>l
         m   ^
 "C" s********
-
-0"It's not possible to do the above or any of the next flip-flops with only a"
-0"single c, because when looping c's output back to the input, needed for the"
-0"control logic, it will disable itself the next tick, like below: (if you've"
-0"ever seen one of those amusing 'useless machines' that powers off its own on"
-0"switch, this does exactly the same)"
-
-    ***
-    v *
-s**>c****>l
 
 
 0"T flip-flop"
@@ -2216,6 +2291,10 @@ registerTitle('Relays');
 
 
 registerCircuit('Relay Logic', `
+0"# Relay Logic"
+
+0"Table of contents:"
+0"INSERT:toc"
 
 0"Here, we simulate different types of relays, and build logic gates out of"
 0"them."
@@ -2568,7 +2647,7 @@ C*****+*****+*****+*****+*********
         z     z     z     z
    ******************************>l
 
-6"XOR gate"
+0"## XOR gate"
 
 0"A XOR gate can be made from two SPDT relays, one flipped compared to the"
 0"other and the wires crossed. This way, toggling one relay crosses the signal"

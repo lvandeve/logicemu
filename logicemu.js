@@ -260,6 +260,38 @@ function getLocalStorage(name, opt_default) {
   return localStorage[name];
 }
 
+
+// Replacement for setInterval that hopefully works a bit better in modern background-tab-throttling browsers
+// This is not attempting to circumvent background throttling, but instead trying to prevent the tab hanging
+// when coming back to it and browsers may make it do all the missed intervals at once...
+// This tries to combine timeouts with the desired timing, with requestAnimationFrame which has better guarantees that
+// the browser will not do any more frames when the tab is in the background (rather than collect more and more "debt" of expensive updates it will try to call all at once)
+// TODO: this may require updating every now and then as browsers change their behavior of background tabs
+function setIntervalSafe(fun, msec) {
+  var clear = false;
+  var fun2 = function() {
+    if(clear) return;
+    fun();
+    // requestAnimationFrame is used because this one will not run in background tab, which is better than being throttled in background tab but then do all updates at once when the tab becomes foreground, causing slow computation
+    // NOTE: this may add an extra delay to the desired msec, of 1/60th of a second probably
+    requestAnimationFrame(function() {
+      // setTimeout is used becuase this one uses the desired milliseconds unlike requestAnimationFrame.
+      window.setTimeout(fun2, msec);
+    });
+  };
+  window.setTimeout(fun2, msec);
+  var clearfun = function() {
+    clear = true;
+  };
+  return clearfun;
+}
+
+function clearIntervalSafe(id) {
+  id(); // id is actually a function.
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -355,8 +387,8 @@ var TYPE_LED = TYPE_index++;
 var TYPE_LED_RGB = TYPE_index++;
 var TYPE_PUSHBUTTON_OFF = TYPE_index++;
 var TYPE_PUSHBUTTON_ON = TYPE_index++;
-var TYPE_TIMER_OFF = TYPE_index++;
-var TYPE_TIMER_ON = TYPE_index++;
+var TYPE_TIMER_OFF = TYPE_index++; // initially off, then will go on, off again, etc...
+var TYPE_TIMER_ON = TYPE_index++; // initially on, then will go off, on again, etc...
 var TYPE_AND = TYPE_index++;
 var TYPE_OR = TYPE_index++;
 var TYPE_XOR = TYPE_index++;
@@ -399,7 +431,7 @@ connected together with a "master".
 // this is mainly for the "change type" dropdown.
 var typesymbols = {}; // cannot use object colon notation because JS then interprets the variable names as strings, not as their numeric values
 typesymbols[TYPE_NULL] = '`'; typesymbols[TYPE_SWITCH_OFF] = 's'; typesymbols[TYPE_SWITCH_ON] = 'S';
-typesymbols[TYPE_LED] = 'l'; typesymbols[TYPE_LED_RGB] = 'L';
+typesymbols[TYPE_LED] = 'l'; typesymbols[TYPE_LED_RGB] = 'Y';
 typesymbols[TYPE_PUSHBUTTON_OFF] = 'p'; typesymbols[TYPE_PUSHBUTTON_ON] = 'P';
 typesymbols[TYPE_TIMER_OFF] = 'r'; typesymbols[TYPE_TIMER_ON] = 'R'; typesymbols[TYPE_AND] = 'a';
 typesymbols[TYPE_OR] = 'o'; typesymbols[TYPE_XOR] = 'e'; typesymbols[TYPE_NAND] = 'A';
@@ -411,7 +443,7 @@ typesymbols[TYPE_TRISTATE] = 'z'; typesymbols[TYPE_TRISTATE_INV] = 'Z';
 
 // all devices except flipflop, those are treated differently because multiple different cells of its type can form one component
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true,
-                 'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
+                 'S':true, 'l':true, 'Y':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
                  'b':true, 'B':true, 'M':true, 'i':true, 'T':true, 'z':true, 'Z':true, '?':true};
 // devicemap as well as # (with which inputs interact), but not $ (with which inputs do not interact)
@@ -428,7 +460,7 @@ var antennamap = {'(':true, ')':true, 'n':true, 'u':true};
 var diagonalmap = {'x':true, 'V':true, 'W':true, '/':true, '\\':true, 'X':true};
 //non-isolators (does not include isolators like ' ' and '0-9' despite being "known"). I is also not part of this, but i is.
 var knownmap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true, '/':true, '\\':true, 'x':true, 'g':true,
-                'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true, 'S':true, 'l':true, 'L':true, 'r':true, 'R':true, 'p':true, 'P':true,
+                'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true, 'S':true, 'l':true, 'Y':true, 'r':true, 'R':true, 'p':true, 'P':true,
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'U':true, 'G':true, 'V':true, 'W':true,
                 '#':true, '=':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true,
@@ -664,6 +696,7 @@ function CallSub(id) {
       component.callsubindex = v.callsubindex;
       component.rgbcolor = v.rgbcolor;
       component.clocked = v.clocked;
+      component.frozen = v.frozen;
 
       for(var j = 0; j < v.inputs.length; j++) {
         var input = this.components[defsub.translateindex[v.inputs[j].index]];
@@ -2801,6 +2834,7 @@ function Component() {
   this.rgbcolor = 0; // index in array of 16 RGB LED colors
   this.issub = false; // is a component copied for a sub
   this.clocked = false; // for realtime timers
+  this.frozen = false; // for realtime timers
   // whether this component changed this frame. Normally can be seen from
   // this.prevvalue != this.value, but, for some components like delays they end
   // up in changed state due to ticking down, even if their value does not
@@ -2833,8 +2867,13 @@ function Component() {
       var ya =  self.inputs_y[a];
       var xb =  self.inputs_x[b];
       var yb =  self.inputs_y[b];
-      var dira = (ya < y) ? 0 : ((xa > x) ? 1 : ((ya > y) ? 2 : 3));
-      var dirb = (yb < y) ? 0 : ((xb > x) ? 1 : ((yb > y) ? 2 : 3));
+      var xa2 =  self.inputs_x2[a];
+      var ya2 =  self.inputs_y2[a];
+      var xb2 =  self.inputs_x2[b];
+      var yb2 =  self.inputs_y2[b];
+      var dira = (ya < ya2) ? 0 : ((xa > xa2) ? 1 : ((ya > ya2) ? 2 : 3));
+      var dirb = (yb < yb2) ? 0 : ((xb > xb2) ? 1 : ((yb > yb2) ? 2 : 3));
+
       if(dira != dirb) return dira - dirb;
       if(dira == 0) return xa - xb;
       if(dira == 1) return yb - ya;
@@ -2912,9 +2951,7 @@ function Component() {
       return false;
     } else if(this.type == TYPE_PUSHBUTTON_ON) {
       return (numoff == 0) || (numon > 0); // same principle as switch
-    } else if(this.type == TYPE_TIMER_OFF) {
-      return false;
-    } else if(this.type == TYPE_TIMER_ON) {
+    } else if(this.type == TYPE_TIMER_OFF || this.type == TYPE_TIMER_ON) {
       return (this.clocked) && ((numoff == 0) || (numon > 0)); // same principle as switch
     } else if(this.type == TYPE_AND) {
       return numoff == 0;
@@ -3212,10 +3249,6 @@ function Component() {
       }
     } else if(this.type == TYPE_TRISTATE || this.type == TYPE_TRISTATE_INV) {
       this.value = this.tristate.update();
-    } else if(this.type == TYPE_TIMER_OFF) {
-      this.value = false;
-    /*} else if(this.type == TYPE_TIMER_ON) {
-      this.value = this.clocked && this.getNewValue(numon, numoff);*/
     } else {
       // regular gate, not flip-flop
       this.value = this.getNewValue(numon, numoff);
@@ -3229,7 +3262,7 @@ function Component() {
   };
 
   this.mousedown = function(e, x, y) {
-    if(e.shiftKey) {
+    if(e.shiftKey && !e.ctrlKey) {
       if(isPaused() && highlightedcomponent == this) {
         highlightedcomponent = null;
         unpause();
@@ -3245,7 +3278,16 @@ function Component() {
     // for TYPE_ROM, just do default behavior, it already toggles bit
     if(e.ctrlKey && this.type != TYPE_ROM) {
       var didsomething = true;
-      if(this.type == TYPE_PUSHBUTTON_OFF) {
+      if(e.shiftKey) {
+        if(this.altType) {
+          this.type = this.altType;
+          this.altType = undefined;
+        } else {
+          this.altType = this.type;
+          this.type = TYPE_CONSTANT;
+          this.value = false;
+        }
+      } else if(this.type == TYPE_PUSHBUTTON_OFF) {
         // do not change here. The mouseup event will do the change. All we
         // do here for pushbutton is ignore the mousedown event.
       } else if(this.type == TYPE_PUSHBUTTON_ON) {
@@ -3257,8 +3299,10 @@ function Component() {
         this.type = TYPE_SWITCH_OFF;
       } else if(this.type == TYPE_TIMER_OFF) {
         this.type = TYPE_TIMER_ON;
+        this.clocked = !this.clocked;
       } else if(this.type == TYPE_TIMER_ON) {
         this.type = TYPE_TIMER_OFF;
+        this.clocked = !this.clocked;
       } else if(this.type == TYPE_AND) {
         this.type = TYPE_NAND;
       } else if(this.type == TYPE_NAND) {
@@ -3301,6 +3345,7 @@ function Component() {
       var symbol = typesymbols[type];
       if(changeMode == 'rem_inputs') {
         this.inputs = [];
+        changeMode = null;
         return;
       }
       if(changeMode == 'c') {
@@ -3345,9 +3390,7 @@ function Component() {
       this.corecell.renderer.setLook(this.corecell, this.type);
     }
     if(this.type == TYPE_TIMER_OFF || this.type == TYPE_TIMER_ON) {
-      if(this.type == TYPE_TIMER_OFF) this.type = TYPE_TIMER_ON;
-      else this.type = TYPE_TIMER_OFF;
-      this.corecell.renderer.setLook(this.corecell, this.type);
+      this.frozen = !this.frozen;
     }
     if(this.type == TYPE_VTE) {
       var vte = this.vte;
@@ -3559,6 +3602,9 @@ function setColorScheme(index) {
     ONCOLOR = 'white';
     OFFCOLOR = 'black';
     TEXTFGCOLOR = '#00a';
+    //TEXTBGCOLOR = 'none';
+    TEXTBGCOLOR = '#bbc';
+    LINKCOLOR = '#22f';
 
     GATEBGCOLOR = '#9b9b9b'; // '#b4b4b4';
     var offbg = GATEBGCOLOR;
@@ -3580,7 +3626,6 @@ function setColorScheme(index) {
 
     BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
 
-    TEXTBGCOLOR = 'none';
   } else if(index == 3) { // blue
     setColorScheme(0);
 
@@ -3800,6 +3845,7 @@ function Cell() {
   this.skipparsing = false; // true for things that can be safely skipped for circuit-related parsing (false for any circuit as well as numbers)
   this.components = [null, null, null, null, null, null, null, null]; // components containing this cell (normally the first is used, but can be 2 for +, /, \, For TYPE_IC, up to 8 can be used, the index matching the output dir)
   this.comment = false;
+  this.toclink = ''; // only if this is a 'toc' with single link id
   this.x = -1;
   this.y = -1;
   this.number = -1; //-1 means no number. For options, like LED color.
@@ -3810,9 +3856,10 @@ function Cell() {
   this.defsubindex = -2; // define sub (capital I). >=-1 means it's part of a sub, indicated with a capital I and that number (-1 means no number - still to be distinguished from 0!)
   this.callsubindex = -2; // use sub (small i)
   this.callsub = null; // the CallSub
-  this.commentalign = -1;
-  this.commentmono = false; // monospace
+  this.commentalign = -1; // -1=none (fullwidth only), 0=left, 1=center, 2=right
+  this.commentstyle = 0; // 0=full width, 1=narrow width monospace, 2=formatted
   this.commentchapter = -1;
+  this.commentanchor = ''; // only used if this is chapter title
   this.commentlength = 0; // the text itself
   this.commentlength2 = 0; // including any quotes or styling numbers
   this.antennax = -1; // horizontal matching antenna, if any
@@ -3886,7 +3933,7 @@ function Cell() {
       if(this.components[0].type == TYPE_SWITCH_ON) virtualsymbol = 'S';
       if(this.components[0].type == TYPE_SWITCH_OFF) virtualsymbol = 's';
       if(this.components[0].type == TYPE_LED) virtualsymbol = 'l';
-      if(this.components[0].type == TYPE_LED_RGB) virtualsymbol = 'L';
+      if(this.components[0].type == TYPE_LED_RGB) virtualsymbol = 'Y';
       if(this.components[0].type == TYPE_PUSHBUTTON_ON) virtualsymbol = 'P';
       if(this.components[0].type == TYPE_PUSHBUTTON_OFF) virtualsymbol = 'p';
       if(this.components[0].type == TYPE_TIMER_ON) virtualsymbol = 'R';
@@ -3905,7 +3952,7 @@ function Cell() {
       if(tc == 'p' || tc == 'P') title = 'pushbutton';
       if(tc == 'r' || tc == 'R') title = 'timer';
       if(tc == 'l') title = 'LED';
-      if(tc == 'L') title = 'RGB LED';
+      if(tc == 'Y') title = 'RGB LED';
       if(tc == '?') title = 'random generator';
       if(tc == 'a') title = 'AND gate';
       if(tc == 'A') title = 'NAND gate';
@@ -3945,7 +3992,7 @@ function Cell() {
       if(tc == 'n') title = 'backplane wire that connects to one matching connector to below';
       if(tc == 'u') title = 'backplane wire that connects to one matching connector to the top';
       if(tc == 'I') title = 'IC definition';
-      if(tc == 'i') title = 'IC instance';
+      if(tc == 'i') title = 'IC instance ' + this.components[0].callsubindex;
       if(tc == 'b' || tc == 'B') {
         title = 'ROM/RAM bit (b=0, B=1)';
         if(this.components[0]) {
@@ -4042,13 +4089,13 @@ function Cell() {
 
     if(!this.comment) {
       // TODO: use component type instead?
-      var pointer = (c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R' || c == 'b' || c == 'B');
+      // TODO: for T, only show the pointer if it accepts keyboard input
+      var pointer = (c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R' || c == 'b' || c == 'B' || c == 'T');
       // currently cursor pointer not enabled for wires etc... that are part of the switch (even though pressing them actually works... but it would look a bit too messy)
       if((c == '#' || c == '$') && this.components[0]) {
         var type = this.components[0].type;
-        if(type == TYPE_SWITCH_OFF || type == TYPE_SWITCH_ON || type == TYPE_PUSHBUTTON_OFF || type == TYPE_PUSHBUTTON_ON ||
-           type == TYPE_TIMER_OFF || type == TYPE_TIMER_ON) {
-           pointer = true;
+        if(type == TYPE_SWITCH_OFF || type == TYPE_SWITCH_ON || type == TYPE_PUSHBUTTON_OFF || type == TYPE_PUSHBUTTON_ON) {
+          pointer = true;
         }
       }
       if(pointer) this.renderer.setCursorPointer();
@@ -4134,7 +4181,7 @@ function Renderer() {
   this.setValue = function(cell, value, type) {
   };
 
-  // for r or R of timer for example
+  // change the look for user inputs depending on user state (s and p), since they have a few more than 2 combinations
   this.setLook = function(cell, type) {
   };
 
@@ -4143,35 +4190,91 @@ function Renderer() {
 }
 
 
+// each element is array: [text, anchorname, depth]
+var chapters = [];
 
-function setTocHTML(toc, el) {
+// the element must already have enough room in the circuit from makeTocRoom
+// linkid only used for tocType == 4
+function setTocHTML(tocType, linkid, el) {
   el.innerText = '';
+  el.style.fontFamily = 'unset'; // remove monospace
   var html = '';
   var j = 0;
-  for(var i = 0; i < allRegisteredCircuits.length; i++) {
-    if(toc == 1 && (allRegisteredCircuits[i].group != 0 /*|| allRegisteredCircuits[i].linkid == 'helpindex' || allRegisteredCircuits[i].linkid == introId*/)) continue;
-    if(toc == 2 && allRegisteredCircuits[i].group == 0 && allRegisteredCircuits[i].linkid != 'helpindex' && allRegisteredCircuits[i].linkid != 'mainhelp') continue;
-    //var div = makeDiv(0, (i * th), w * tw, th, el);
+  if(tocType == 0) {
+    /*var div = makeDiv(0, 0, 800, th, el);
+    div.innerText = 'Table of Contents (in this article):';
+    div.style.textAlign = 'left';*/
+    for(var i = 0; i < chapters.length; i++) {
+      var text = chapters[i][0] || '';
+      if(text.length > 80) text = text.substr(0, 80) + '...';
+      var div = makeDiv(0, i * th, tw, th, el);
+      var indent = (chapters[i][2] - 1) * tw;
+      var width = Math.floor(text.length * tw * 0.66 + indent + tw * 4);
+      div.style.width = width + 'px';
+      var span = makeElementAt('span', indent, 0, div);
+      span.innerText = text;
+      //a.href = '#' + chapters[i][1]; // anchor
+      var anchorname = chapters[i][1];
+      span.onclick = bind(function(anchorname) {
+        var e = document.getElementById(anchorname); // anchor name
+        if(e) e.scrollIntoView({ behavior: 'smooth'/*, block: 'center'*/ });
+      }, anchorname);
+      span.style.color = LINKCOLOR;
+      // no underline for internal links that just scroll the document
+      //span.style.textDecoration = 'underline';
+      span.style.fontWeight = 'bold';
+      span.style.cursor = 'pointer';
+    }
+  }
+  if(tocType == 1 || tocType == 2 || tocType == 3) {
+    for(var i = 0; i < allRegisteredCircuits.length; i++) {
+      if(tocType == 2 && (allRegisteredCircuits[i].group != 0 /*|| allRegisteredCircuits[i].linkid == 'helpindex' || allRegisteredCircuits[i].linkid == introId*/)) continue;
+      if(tocType == 3 && allRegisteredCircuits[i].group == 0 && allRegisteredCircuits[i].linkid != 'helpindex' && allRegisteredCircuits[i].linkid != 'mainhelp') continue;
+      //if(tocType == 4 && allRegisteredCircuits[i].linkid != linkid) continue;
+      //var div = makeDiv(0, (i * th), w * tw, th, el);
+      var div = makeDiv(0, (j * th), tw, th, el);
+      div.style.width = '800px';
+      var span = makeElementAt('span', 0, 0, div);
+      var id = allRegisteredCircuits[i].linkid;
+      var circuit = allRegisteredCircuits[i].text;
+      var title = allRegisteredCircuits[i].title;
+      span.innerText = title;
+      div.style.textAlign = 'left';
+      if(allRegisteredCircuits[i].istitle/* == 1*/) {
+        span.style.color = TITLECOLOR;
+      } else {
+        span.style.color = LINKCOLOR;
+        span.style.textDecoration = 'underline';
+        span.style.cursor = 'pointer';
+        span.onclick = bind(function(circuit, title, id, index) {
+          parseText(circuit, title, allRegisteredCircuits[index]);
+          currentSelectedCircuit = index;
+        }, circuit, title, id, i);
+      }
+      j++;
+    }
+  }
+  if(tocType == 4) {
     var div = makeDiv(0, (j * th), tw, th, el);
+    div.style.textAlign = 'left';
     div.style.width = '800px';
     var span = makeElementAt('span', 0, 0, div);
-    var id = allRegisteredCircuits[i].linkid;
-    var circuit = allRegisteredCircuits[i].text;
-    var title = allRegisteredCircuits[i].title;
-    span.innerText = title;
-    div.style.textAlign = 'left';
-    if(allRegisteredCircuits[i].istitle/* == 1*/) {
-      span.style.color = TITLECOLOR;
-    } else {
+    if(linkableCircuits[linkid]) {
+      var c = linkableCircuits[linkid];
+      var circuit = c.text;
+      var title = c.title;
+      span.innerText = title;
       span.style.color = LINKCOLOR;
       span.style.textDecoration = 'underline';
       span.style.cursor = 'pointer';
-      span.onclick = bind(function(circuit, title, id, index) {
-        parseText(circuit, title, allRegisteredCircuits[index]);
+      span.onclick = bind(function(circuit, title, linkid, index) {
+        parseText(circuit, title, c);
         currentSelectedCircuit = index;
-      }, circuit, title, id, i);
+      }, circuit, title, id, c.index);
+    } else {
+      span.style.color = TITLECOLOR;
+      span.innerText = 'link id "' + linkid + '" not found';
     }
-    j++;
   }
 }
 
@@ -4310,9 +4413,9 @@ function RendererText() {
       var textel = this.div0;
 
       // allow the text to go to the right
-      if(cell.commentalign >= 0 && cell.commentalign <= 2) {
+      if(/*cell.commentalign >= 0 && cell.commentalign <= 2*/cell.commentstyle != 0) {
         var align = cell.commentalign;
-        if(!cell.commentmono) {
+        if(cell.commentstyle == 2) {
           this.div0.style.fontFamily = 'unset'; // remove monospace
         }
         this.div0.innerText = '';
@@ -4322,10 +4425,10 @@ function RendererText() {
         span0.innerText = symbol;
         span0.style.color = fgcolor;
         // don't do the bgcolor for standard non-monospace text, that one is distinguishable enough from circuit elements
-        if(cell.commentmono) span0.style.backgroundColor = bgcolor;
+        if(cell.commentstyle != 2) span0.style.backgroundColor = bgcolor;
         span0.style.whiteSpace = 'pre';
         //span0.style.fontSize = th + 'px';
-        if(cell.commentmono) {
+        if(cell.commentstyle == 1) {
           span0.style.fontSize = Math.floor(tw * 0.9) + 'px'; // avoids background overlapping parts of font issues
         } else {
           span0.style.fontSize = Math.floor(tw * 1.0) + 'px';
@@ -4350,12 +4453,20 @@ function RendererText() {
         if(cell.commentchapter < 3) textel.style.fontWeight = 'bold';
         if(cell.commentchapter > 1) textel.style.textDecoration = 'underline';
         if(cell.commentchapter == 3) textel.style.fontStyle = 'italic';
+
+        // this is a bit hacky, but the intention is that we can scroll to this element with "scrollIntoView". But since
+        // there is a floating top bar, the top bar would cover up the element. So make it bigger, start it higher up than
+        // the real position, to ensure a good boundary area around it will be visible.
+        var anchor = makeDiv(0, -200, 1, 400, this.div0);
+        //when using "block: center" with scrollIntoView, the above hack is not needed, however center is a bit too far
+        //var anchor = makeDiv(0, 0, 1, 1, this.div0);
+        anchor.id = cell.commentanchor;
       }
 
       // allow text selection of those
       this.div0.onmousedown = null;
     } else if(symbol == 'toc') {
-      setTocHTML(cell.circuitextra, this.div0);
+      setTocHTML(cell.circuitextra, cell.toclink, this.div0);
     } else {
       if(virtualsymbol == 'l') {
         var color = cell.components[0] ? cell.components[0].number : 0;
@@ -4367,10 +4478,11 @@ function RendererText() {
         this.div0.style.backgroundColor = led_off_bg_colors[color];
         this.div1.style.color = led_on_fg_colors[color];
         this.div1.style.backgroundColor = led_on_bg_colors[color];
+        if(this.div1.innerText == 'l') this.div1.innerText = 'L';
       }
-      if(virtualsymbol == 'L') {
+      if(virtualsymbol == 'Y') {
         var color = 0;
-        //this.div0.innerText = 'L';
+        //this.div0.innerText = 'Y';
         this.div0.style.color = '#888';
         this.div0.style.backgroundColor = '#888';
         this.div0.style.visibility = 'visible';
@@ -4394,6 +4506,8 @@ function RendererText() {
         this.div1.style.color = SWITCHON_FGCOLOR;
         this.div0.style.backgroundColor = SWITCHOFF_BGCOLOR;
         this.div1.style.backgroundColor = SWITCHON_BGCOLOR;
+        if(this.div0.innerText == 'R') this.div1.innerText = 'r';
+        if(this.div1.innerText == 'r') this.div1.innerText = 'R';
       }
       if(symbol == 'b' || symbol == 'B') {
         //this.div1.style.color = this.div0.style.color;
@@ -4444,7 +4558,7 @@ function RendererText() {
 
   this.setValue = function(cell, value, type) {
     if(!this.div1) return; // e.g. if this is a comment (TODO: fix the fact that comment gets setValue at all, it should not be part of a component)
-    if(type == TYPE_LED_RGB && (cell.circuitsymbol == 'L' || cell.circuitsymbol == '#' || cell.circuitsymbol == '$')) {
+    if(type == TYPE_LED_RGB && (cell.circuitsymbol == 'Y' || cell.circuitsymbol == '#' || cell.circuitsymbol == '$')) {
       value = cell.components[0].rgbcolor;
       if(value != this.prevvalue) {
         this.div0.style.color = rgb_led_fg_colors[value];
@@ -4472,19 +4586,11 @@ function RendererText() {
     Then it will use capital S but div0.
 
     For pushbutton: idem
-
-    For timer: same as with switch! It's still user click that toggles it between TYPE_TIMER_ON and TYPE_TIMER_OFF.
-    It has 3 bits now: its type, the clock pulse, and in case it has input component, that input.
-    The styles now are: type off: always small r, div0 (no bg). type on: capital R. div1 if outputting. div0 if clock
-    pulse off or input off. Clock pulse never animates if user-off or if input-off.
     */
     if(type == TYPE_TIMER_ON || type == TYPE_TIMER_OFF) {
       var clocked = cell.components[0].clocked;
-      var user = (type == TYPE_TIMER_ON);
-      if(this.div0.innerText != 'R' && user) this.div0.innerText = 'R';
-      if(this.div0.innerText != 'r' && !user) this.div0.innerText = 'r';
-      if(this.div1.innerText != 'R' && user) this.div1.innerText = 'R';
-      if(this.div1.innerText != 'r' && !user) this.div1.innerText = 'r';
+      if(this.div0.innerText != 'R' && clocked) this.div0.innerText = 'R';
+      if(this.div0.innerText != 'r' && !clocked) this.div0.innerText = 'r';
     }
     if(type == TYPE_SWITCH_ON || type == TYPE_SWITCH_OFF) {
       var user = (type == TYPE_SWITCH_ON);
@@ -5934,8 +6040,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         }
       } else if(c == 'T') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
-      } else if(virtualsymbol == 'L') {
-        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
+      } else if(virtualsymbol == 'Y') {
+        this.fallback.init2(cell, (symbol == 'Y') ? 'Y' : ' ', virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'g') {
         drawer.drawBGSplit_(cell, ctx);
         drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.4);
@@ -5954,6 +6060,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
             this.text0.style.color = SWITCHOFF_FGCOLOR;
             this.text1.style.color = SWITCHON_FGCOLOR;
           }
+          if(virtualsymbol == 'r' || virtualsymbol == 'R') {
+            symbol = (i == 0) ? 'r' : 'R';
+          }
           if(virtualsymbol == 'l') {
             alreadybg = true;
             var color = cell.components[0] ? cell.components[0].number : 0;
@@ -5965,6 +6074,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
             this.ctx1.strokeStyle = this.ctx1.fillStyle = led_on_border_colors[color];
             this.text0.style.color = led_off_fg_colors[color];
             this.text1.style.color = led_on_fg_colors[color];
+            if(i == 1) symbol = 'L';
           }
           if(virtualsymbol == 'B') {
             // NOTE: this actually may make a loose B (not part of a component) invisible
@@ -6524,11 +6634,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     /* see the RendererText setLook function for comment about styles and types */
     if(type == TYPE_TIMER_ON || type == TYPE_TIMER_OFF) {
       var clocked = cell.components[0].clocked;
-      var user = (type == TYPE_TIMER_ON);
-      if(this.text0.innerText != 'R' && user) this.text0.innerText = 'R';
-      if(this.text0.innerText != 'r' && !user) this.text0.innerText = 'r';
-      if(this.text1.innerText != 'R' && user) this.text1.innerText = 'R';
-      if(this.text1.innerText != 'r' && !user) this.text1.innerText = 'r';
+      if(this.text0.innerText != 'R' && clocked) this.text0.innerText = 'R';
+      if(this.text0.innerText != 'r' && !clocked) this.text0.innerText = 'r';
     }
     if(type == TYPE_SWITCH_ON || type == TYPE_SWITCH_OFF) {
       var user = (type == TYPE_SWITCH_ON);
@@ -6644,7 +6751,7 @@ function updateComponents(components) {
 }
 
 function update() {
-  //console.log('update');
+  //console.log('update ' + (+new Date() / 1000.0));
   if(UPDATE_ALGORITHM == 1) updateComponents(components_order);
   else updateComponents(components);
 }
@@ -6659,7 +6766,9 @@ function toggleTimers() {
       if(n == 0) n = 10; // 0 represents 10x
       if(n == -1) n = 5; // the default is half a second (total period is 1 second here by the way as it toggles per half second)
       if ((timerticks % n) == n - 1) {
-        components[i].clocked = !components[i].clocked;
+        var c = components[i];
+        if(!c.frozen) c.clocked = !c.clocked;
+        c.corecell.renderer.setLook(c.corecell, c.type);
         changed_something = true;
       }
     }
@@ -7083,9 +7192,9 @@ function getOppositeDir(dir) {
   return (dir ^ 2);
 }
 
-function setCommentOptions(o, commentalign, commentmono, commentchapter) {
+function setCommentOptions(o, commentalign, commentstyle, commentchapter) {
   o.commentalign = commentalign;
-  o.commentmono = commentmono;
+  o.commentstyle = commentstyle;
   o.commentchapter = commentchapter;
 }
 
@@ -7097,11 +7206,13 @@ function parseCells(text) {
   w = 1;
   for(var i = 0; i < lines.length; i++) w = Math.max(w, lines[i].length);
 
+  var anchorindex = 0;
+
   for(var y = 0; y < h; y++) {
     world[y] = [];
     var comment = false;
     var commentalign = -1;
-    var commentmono = false;
+    var commentstyle = 0;
     var commentchapter = -1;
     var thincommentcell = null;
     line0[y] = 0;
@@ -7111,6 +7222,7 @@ function parseCells(text) {
     var commentstart2 = 0; // quote or number
     var commentend = 0; // text itself
     var commentend2 = 0; // quote or number
+    var commentanchor = '';
 
     for(var x = 0; x < w; x++) {
       var cell = new Cell();
@@ -7127,19 +7239,25 @@ function parseCells(text) {
       cell.comment = comment;
       cell.x = x;
       cell.y = y;
+      // disable numbers that affected comments
       if(!comment && (cell.symbol == '0' || cell.symbol == '1' || cell.symbol == '2' || cell.symbol == '3' || cell.symbol == '4' || cell.symbol == '5' || cell.symbol == '6' || cell.symbol == '7' || cell.symbol == '8')) {
         if((x > 0 && lines[y][x - 1] == '"') || (x + 1 < w && lines[y][x + 1] == '"')) {
           cell.displaysymbol = ' ';
           cell.circuitsymbol = ' ';
+          cell.metasymbol = '"';
           cell.comment = true; // a number that affects a comment is itself part of the comment, and made invisible. It should not affect LED color etc...
         }
       }
       if(comment) {
-        if(cell.symbol == '"') {
+        if(cell.symbol == '"') { // comment done
           cell.displaysymbol = ' ';
           cell.circuitsymbol = ' ';
           cell.comment = true;
-          setCommentOptions(cell, commentalign, commentmono, commentchapter);
+          setCommentOptions(cell, commentalign, commentstyle, commentchapter);
+          if(commentchapter > 0 && thincommentcell) {
+            cell.commentanchor = commentanchor;
+            chapters.push([thincommentcell.displaysymbol, cell.commentanchor, commentchapter]);
+          }
           comment = !comment;
 
           if(cell.commentalign == 3 || cell.commentalign == 5) {
@@ -7163,7 +7281,7 @@ function parseCells(text) {
                 world[y][j].metasymbol = world[y][shift].metasymbol;
                 world[y][j].symbol = world[y][shift].symbol;
                 world[y][j].comment = true;
-                world[y][j].nuber = true;
+                //world[y][j].number = true;
               } else {
                 world[y][j].commentalign = -1;
                 world[y][j].displaysymbol = ' ';
@@ -7177,7 +7295,7 @@ function parseCells(text) {
 
           thincommentcell = null;
           commentalign = -1;
-          commentmono = false;
+          commentstyle = 0;
           commentchapter = -1;
         }
       } else {
@@ -7193,8 +7311,9 @@ function parseCells(text) {
 
           comment = !comment;
           commentalign = -1;
-          commentmono = false;
+          commentstyle = 0;
           commentchapter = -1;
+          commentanchor = '';
 
           var numberleft = true;
           commentend = x + 1;
@@ -7210,17 +7329,18 @@ function parseCells(text) {
           commentstart2 = x;
 
           var markdown = false;
+          var narrowmono = false;
 
           var x2 = x - 1;
           if(x2 >= 0 && (lines[y][x2] == '0')) { commentalign = 0; markdown = true; }
           else if(x2 >= 0 && (lines[y][x2] == '1')) { commentalign = 1; markdown = true; }
           else if(x2 >= 0 && (lines[y][x2] == '2')) { commentalign = 2; markdown = true; }
-          else if(x2 >= 0 && (lines[y][x2] == '3')) commentalign = 3;
-          else if(x2 >= 0 && (lines[y][x2] == '4')) commentalign = 4;
-          else if(x2 >= 0 && (lines[y][x2] == '5')) commentalign = 5;
-          else if(x2 >= 0 && (lines[y][x2] == '6')) { commentalign = 0; commentmono = true; }
-          else if(x2 >= 0 && (lines[y][x2] == '7')) { commentalign = 1; commentmono = true; }
-          else if(x2 >= 0 && (lines[y][x2] == '8')) { commentalign = 2; commentmono = true; }
+          else if(x2 >= 0 && (lines[y][x2] == '3')) { commentalign = 0; narrowmono = true; }
+          else if(x2 >= 0 && (lines[y][x2] == '4')) { commentalign = 1; narrowmono = true; }
+          else if(x2 >= 0 && (lines[y][x2] == '5')) { commentalign = 2; narrowmono = true; }
+          else if(x2 >= 0 && (lines[y][x2] == '6')) commentalign = 3;
+          else if(x2 >= 0 && (lines[y][x2] == '7')) commentalign = 4;
+          else if(x2 >= 0 && (lines[y][x2] == '8')) commentalign = 5;
           else {
             numberleft = false;
             for(x2 = x + 1; x2 < w; x2++) {
@@ -7242,15 +7362,17 @@ function parseCells(text) {
           if(xe < w && lines[y][xe] == '0') { commentalign = 0; markdown = true; }
           else if(xe < w && lines[y][xe] == '1') { commentalign = 1; markdown = true; }
           else if(xe < w && lines[y][xe] == '2') { commentalign = 2; markdown = true; }
-          else if(xe < w && lines[y][xe] == '3') commentalign = 3;
-          else if(xe < w && lines[y][xe] == '4') commentalign = 4;
-          else if(xe < w && lines[y][xe] == '5') commentalign = 5;
-          else if(xe < w && lines[y][xe] == '6') { commentalign = 0; commentmono = true; }
-          else if(xe < w && lines[y][xe] == '7') { commentalign = 1; commentmono = true; }
-          else if(xe < w && lines[y][xe] == '8') { commentalign = 2; commentmono = true; }
+          else if(xe < w && lines[y][xe] == '3') { commentalign = 0; narrowmono = true; }
+          else if(xe < w && lines[y][xe] == '4') { commentalign = 1; narrowmono = true; }
+          else if(xe < w && lines[y][xe] == '5') { commentalign = 2; narrowmono = true; }
+          else if(xe < w && lines[y][xe] == '6') commentalign = 3;
+          else if(xe < w && lines[y][xe] == '7') commentalign = 4;
+          else if(xe < w && lines[y][xe] == '8') commentalign = 5;
           else {
             numberright = false;
           }
+
+          commentstyle = narrowmono ? 1 : (markdown ? 2 : 0);
 
           // markdown header support
           if(markdown) {
@@ -7274,12 +7396,18 @@ function parseCells(text) {
             }
           }
 
+          if(commentchapter) {
+            commentanchor = 'a' + anchorindex;
+            cell.commentanchor = commentanchor;
+            anchorindex++;
+          }
+
           if(numberright) {
             commentend2++;
             cell.commentlength2++; // for correct right alignment that includes the number
           }
 
-          setCommentOptions(cell, commentalign, commentmono, commentchapter);
+          setCommentOptions(cell, commentalign, commentstyle, commentchapter);
           thincommentcell = (cell.commentalign >= 0 && cell.commentalign <= 2) ? (commentstart2 < x ? world[y][commentstart2] : cell) : null;
 
           if(thincommentcell && thincommentcell != cell) {
@@ -7288,8 +7416,9 @@ function parseCells(text) {
             thincommentcell.commentlength = cell.commentlength;
             thincommentcell.commentlength2 = cell.commentlength2;
             thincommentcell.commentalign = cell.commentalign;
-            thincommentcell.commentmono = cell.commentmono;
+            thincommentcell.commentstyle = cell.commentstyle;
             thincommentcell.commentchapter = cell.commentchapter;
+            thincommentcell.commentanchor = cell.commentanchor;
           }
         }
       }
@@ -7320,33 +7449,66 @@ function parseCells(text) {
   }
 
   // vertical comments
-  var above = [];
   for(var y = 0; y < h; y++) {
-    var above2 = [];
-    //for(var x = line0[y]; x < line1[y]; x++) {
     for(var x = 0; x < w; x++) {
       var cell = world[y][x];
       var c = world[y][x].circuitsymbol;
-      if(c == ':') {
-        if(above[x]) {
-          // nothing, comment done
-        } else {
-          above2[x] = true;
+      if(c == ':' && !cell.comment) {
+        // search for ending ':'. Any ':' already used for another comment already has its circuitsymbol marked as something else so no need to check that.
+        var y2;
+        for(y2 = y + 1; y2 < h; y2++) {
+          if(world[y2][x].circuitsymbol == ':') break;
         }
-        cell.comment = true;
-        cell.circuitsymbol = ' ';
+        // check for numbers that change style
+        var commentstyle = 0;
+        var commentalign = 0;
+        var number0 = (y > 0) ? lines[y - 1][x] : '';
+        var number1 = (y2 + 1 < h) ? lines[y2 + 1][x] : '';
+        var rem0 = true;
+        if(number0 == '0' || number0 == '1' || number0 == '2') commentstyle = 2;
+        else if(number0 == '3' || number0 == '4' || number0 == '5') commentstyle = 1;
+        else if(number0 == '6' || number0 == '7' || number0 == '8') ; // keep as-is, style >0 overrides this
+        else rem0 = false;
+
+        var rem1 = true;
+        if(number1 == '0' || number1 == '1' || number1 == '2') { if(commentstyle != 1) commentstyle = 2; }
+        else if(number1 == '3' || number1 == '4' || number1 == '5') commentstyle = 1;
+        else if(number1 == '6' || number1 == '7' || number1 == '8') ; // keep as-is, style >0 overrides this
+        else rem1 = false;
+
+        if(commentstyle != 0) commentalign = 1;
+
+        // disable numbers that affect comments so they don't affect LED colors etc...
+        if(rem0) {
+          var cell2 = world[y - 1][x];
+          if(!cell2.comment) { // do not disable if it's already marked comment, may contain content of a horizontal comment
+            cell2.displaysymbol = ' ';
+            cell2.circuitsymbol = ' ';
+            cell2.metasymbol = '"';
+            cell2.comment = true;
+          }
+        }
+        if(rem1) {
+          var cell2 = world[y2 + 1][x];
+          if(!cell2.comment) { // do not disable if it's already marked comment, may contain content of a horizontal comment
+            cell2.displaysymbol = ' ';
+            cell2.circuitsymbol = ' ';
+            cell2.metasymbol = '"';
+            cell2.comment = true;
+          }
+        }
+        for(var y3 = y; y3 <= y2; y3++) {
+          if(y3 >= h) break; // there may be no final colon if at bottom
+          var cell2 = world[y3][x];
+          cell2.comment = true;
+          cell2.circuitsymbol = ' ';
+          cell2.metasymbol = '"';
+          setCommentOptions(cell2, commentalign, commentstyle, -1);
+        }
         cell.displaysymbol = ' ';
-        cell.metasymbol = '"';
-      } else {
-        if(above[x]) {
-          cell.comment = true;
-          above2[x] = true;
-          cell.circuitsymbol = ' ';
-          cell.metasymbol = '"';
-        }
+        if(y2 < h) world[y2][x].displaysymbol = ' ';
       }
     }
-    above = above2;
   }
 
 
@@ -8283,11 +8445,11 @@ function parseComponents() {
             if(c == 's') type = TYPE_SWITCH_OFF;
             if(c == 'S') type = TYPE_SWITCH_ON;
             if(c == 'l') type = TYPE_LED;
-            if(c == 'L') type = TYPE_LED_RGB;
+            if(c == 'Y') type = TYPE_LED_RGB;
             if(c == 'p') type = TYPE_PUSHBUTTON_OFF;
             if(c == 'P') type = TYPE_PUSHBUTTON_ON;
             if(c == 'r') type = TYPE_TIMER_OFF;
-            if(c == 'R') type = TYPE_TIMER_ON; //ON = user enabled, OFF = user disabled (this is a different bit than the 'clocked' bit that changes by real time)
+            if(c == 'R') type = TYPE_TIMER_ON;
             if(c == 'a') type = TYPE_AND;
             if(c == 'A') type = TYPE_NAND;
             if(c == 'o') type = TYPE_OR;
@@ -8403,6 +8565,13 @@ function parseComponents() {
             component.callsubindex = callsubindex;
             if(type == TYPE_LOOSE_WIRE_IMPLICIT) globalLooseWireInstanceI = component;
             if(type == TYPE_LOOSE_WIRE_EXPLICIT) globalLooseWireInstanceE = component;
+          }
+
+          if(type == TYPE_TIMER_ON) {
+            component.clocked = true;
+          }
+          if(type == TYPE_TIMER_OFF) {
+            component.clocked = false;
           }
 
           for(var i = 0; i < array.length; i++) {
@@ -9063,7 +9232,7 @@ function setDocumentTitle(text) {
 
 var firstParse = true; // to keep scrolled down if you were scrolled down before refresh
 
-//opt_fragmentAction: 0=use id if possible else clear, 1=set from code if possible else clear, 2=keep as-is (e.g. if it's already #code)
+//opt_fragmentAction: 0=use id if possible else clear, 1=set from code if possible else clear, 2=keep as-is (e.g. if it's already #code). Default: 0
 function parseText(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
   if(editmode) return;
 
@@ -9090,6 +9259,70 @@ function parseText(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
   var dummy = worldDiv.offsetHeight;
   worldDiv.style.display = 'none';
   window.setTimeout(bind(parseText2, text, opt_title, opt_registeredCircuit, opt_fragmentAction), 0);
+}
+
+
+// to do in a stage before setTocHTML, since it edits the source text itself
+function makeTocRoom(text, tocPos, tocType, codelen, outCoords) {
+  var start = tocPos;
+  var end = tocPos + codelen;
+  var numLines = 0;
+
+  if(text[start - 1] == '"') {
+    start--;
+    if(text[start - 1] == '0') start--;
+  }
+  if(text[end] == '"') end++;
+  for(var i = 0; i < start; i++) {
+    if(text[i] == '\n') outCoords[1]++;
+  }
+
+
+  if(tocType == 0) {
+    // find amount of chapters in the text. This is a bit of a hack and unaccurate and duplicates some work of parseCells (
+    // in parsing markDown chapters), but it's still the easiest, for now, if we can insert fake extra lines BEFORE doing parseCells.
+    var numchapters = 0;
+    var pos = -1;
+    for(;;) {
+      pos = text.indexOf('"#', pos + 1);
+      if(pos < 0) break;
+      var digit0pos = pos - 1;
+      var digit1pos = text.indexOf('"', pos + 1) + 1;
+      var d0 = text[digit0pos];
+      var d1 = text[digit1pos];
+      var markdown = (d0 == '0' || d0 == '1' || d0 == '2') || (d1 == '0' || d1 == '1' || d1 == '2');
+      if(!markdown) continue;
+      if(!((text[pos + 2] == ' ') ||
+           (text[pos + 2] == '#' && text[pos + 3] == ' ') ||
+           (text[pos + 2] == '#' && text[pos + 3] == '#' && text[pos + 4] == ' '))) {
+        continue;
+      }
+      numchapters++;
+    }
+    numLines = numchapters + 1;
+  }
+
+  if(tocType >= 1 && tocType <= 3) {
+    var newlines = '';
+    numLines = allRegisteredCircuits.length;
+    if(tocType == 2) {
+      numLines = 0;
+      for(var i = 0; i < allRegisteredCircuits.length; i++) if(allRegisteredCircuits[i].group == 0) numLines++;
+    }
+    if(tocType == 3) {
+      numLines = 0;
+      for(var i = 0; i < allRegisteredCircuits.length; i++) if(allRegisteredCircuits[i].group != 0) numLines++;
+      numLines++; // circuit 'Help' counted for this one
+    }
+  }
+
+  if(tocType == 4) {
+    numLines = 1;
+  }
+
+  for(var i = 1; i < numLines; i++) newlines += '\n';
+  text = text.substr(0, start) + newlines + text.substr(end);
+  return text;
 }
 
 function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
@@ -9129,42 +9362,65 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
 
   updateCircuitDropdowns(opt_registeredCircuit);
 
+  chapters = [];
+
   // remove a first newline if present. typically in long string literal you begin the first line after the quote and really don't want that first empty line created by it
   if(text[0] == '\n') text = text.substr(1); // only the first one, typically in long string literal you begin the first line after the quote and really don't want that first empty line created by it
   // keep other starting newlines: you may want them on purpose to allow scrolling
 
-  var tocPos = text.indexOf('INSERT:toc');
-  var tocType = 0;
-  if(text.indexOf('INSERT:toc_help') == tocPos) tocType = 1;
-  if(text.indexOf('INSERT:toc_main') == tocPos) tocType = 2;
-  var tocX = 0;
-  var tocY = 0;
-  if(tocPos >= 0) {
-    var start = tocPos;
-    var end = tocPos + 10;
-    if(tocType == 1 || tocType == 2) end += 5;
-    if(text[start - 1] == '"') {
-      start--;
-      if(text[start - 1] == '0') start--;
+
+  var tocs = []; // elements are arrays: [x, y, type, linkname]
+  var pos = 0;
+  for(;;) {
+    var tocType = -1;
+    var codelen = 0;
+    var pos = text.indexOf('INSERT:', pos);
+    if(pos < 0) break;
+    var tocPos = pos;
+    var keyword = '';
+    pos += 7;
+    while(pos < text.length) {
+      var c = text[pos];
+      if(c == '"' || c == ' ' || c.charCodeAt(0) < 32 || c == ':') break;
+      keyword += c;
+      if(keyword.length > 80) break;
+      pos++;
     }
-    if(text[end] == '"') end++;
-    for(var i = 0; i < start; i++) {
-      if(text[i] == '\n') tocY++;
+    var linkname = '';
+    if(keyword == 'toc') tocType = 0;
+    else if(keyword == 'links') tocType = 1;
+    else if(keyword == 'links_help') tocType = 2;
+    else if(keyword == 'links_main') tocType = 3;
+    else if(keyword == 'link') {
+      if(text[pos] == ':') {
+        pos++;
+        var name = '';
+        while(pos < text.length) {
+          var c = text[pos];
+          if(c == '"' || c == ' ' || c.charCodeAt(0) < 32 || c == ':') break;
+          name += c;
+          if(name.length > 80) break;
+          pos++;
+        }
+      }
+      if(name.length > 0) {
+        tocType = 4;
+        linkname = name;
+      }
     }
-    var newlines = '';
-    var numLines = allRegisteredCircuits.length;
-    if(tocType == 1) {
-      // TODO: get numlines directly from setTocHTML instead
-      numLines = 0;
-      for(var i = 0; i < allRegisteredCircuits.length; i++) if(allRegisteredCircuits[i].group == 0) numLines++;
+    if(tocType < 0) continue;
+
+    codelen = 7 + keyword.length + linkname.length;
+
+    var tocX = 0;
+    var tocY = 0;
+    if(tocPos >= 0) {
+      var coords = [tocX, tocY];
+      text = makeTocRoom(text, tocPos, tocType, codelen, coords);
+      coords.push(tocType);
+      coords.push(linkname);
+      tocs.push(coords);
     }
-    if(tocType == 2) {
-      numLines = 0;
-      for(var i = 0; i < allRegisteredCircuits.length; i++) if(allRegisteredCircuits[i].group != 0) numLines++;
-      numLines++; // circuit 'Help' counted for this one
-    }
-    for(var i = 1; i < numLines; i++) newlines += '\n';
-    text = text.substr(0, start) + newlines + text.substr(end);
   }
 
   resetForParse();
@@ -9182,13 +9438,17 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   if(!parseExtra()) return false;
   logPerformance('parseExtra done');
 
-  if(tocPos >= 0) {
+  for(var i = 0; i < tocs.length; i++) {
+    var tocX = tocs[i][0];
+    var tocY = tocs[i][1];
+    var tocType = tocs[i][2];
     world[tocY][tocX].symbol = 'toc';
     world[tocY][tocX].circuitsymbol = 'toc';
     world[tocY][tocX].displaysymbol = 'toc';
     world[tocY][tocX].metasymbol = 'toc';
     world[tocY][tocX].skipparsing = false;
     world[tocY][tocX].circuitextra = tocType;
+    world[tocY][tocX].toclink = tocs[i][3];
     line0[tocY] = 0;
     line1[tocY] = 1;
   }
@@ -9329,14 +9589,14 @@ var autoupdateinterval = null; // for AUTOUPDATE 2 and 3
 var timerinterval = null; // for the timer components
 var autopauseinterval = null; // I don't want browser to keep ticking in background when you forget about it in a tab
 
-if(AUTOUPDATE == 2 || AUTOUPDATE == 3) autoupdateinterval = setInterval(function(){ update(); }, AUTOSECONDS * 1000);
+if(AUTOUPDATE == 2 || AUTOUPDATE == 3) autoupdateinterval = setIntervalSafe(function(){ update(); }, AUTOSECONDS * 1000);
 
-timerinterval = setInterval(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
+timerinterval = setIntervalSafe(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
 
 if(USEAUTOPAUSE) setAutoPauseInterval();
 
 function setAutoPauseInterval() {
-  autopauseinterval = setInterval(function(){
+  autopauseinterval = setIntervalSafe(function(){
     pause();
     autopaused = true;
   }, AUTOPAUSESECONDS * 1000);
@@ -9345,15 +9605,15 @@ function setAutoPauseInterval() {
 function pause() {
   autopaused = false;
   if(autoupdateinterval) {
-    clearInterval(autoupdateinterval);
+    clearIntervalSafe(autoupdateinterval);
     autoupdateinterval = null;
   }
   if(timerinterval) {
-    clearInterval(timerinterval);
+    clearIntervalSafe(timerinterval);
     timerinterval = null;
   }
   if(autopauseinterval) {
-    clearInterval(autopauseinterval);
+    clearIntervalSafe(autopauseinterval);
     autopauseinterval = null;
   }
   updatePauseButtonText();
@@ -9362,7 +9622,7 @@ function pause() {
 
 function pauseUpdateOnly() {
   if(autoupdateinterval) {
-    clearInterval(autoupdateinterval);
+    clearIntervalSafe(autoupdateinterval);
     autoupdateinterval = null;
   }
   updateTimeButtonBorders();
@@ -9372,9 +9632,9 @@ function unpause() {
   autopaused = false;
   highlightedcomponent = null;
   if((AUTOUPDATE == 2 || AUTOUPDATE == 3) && !autoupdateinterval) {
-    autoupdateinterval = setInterval(function(){ update(); }, AUTOSECONDS * 1000);
+    autoupdateinterval = setIntervalSafe(function(){ update(); }, AUTOSECONDS * 1000);
   }
-  if(!timerinterval)  timerinterval = setInterval(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
+  if(!timerinterval)  timerinterval = setIntervalSafe(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
   if(USEAUTOPAUSE && !autopauseinterval) {
     setAutoPauseInterval();
     updatePauseButtonText();
@@ -9386,8 +9646,8 @@ function updateRunningState() {
   unpause(); // Required e.g. when switching from combinational to other modes [TODO: remove need for this so that mode switching allows remaining paused if user paused]
   if((AUTOUPDATE != 2 && AUTOUPDATE != 3) && autoupdateinterval) {
     // we're pausing, but however we still want the timer interval to run
-    if(!timerinterval) timerinterval = setInterval(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
-    clearInterval(autoupdateinterval);
+    if(!timerinterval) timerinterval = setIntervalSafe(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
+    clearIntervalSafe(autoupdateinterval);
     autoupdateinterval = null;
   }
   updatePauseButtonText();
@@ -9524,6 +9784,7 @@ var updatePauseButtonText;
 var updateModeButtonText;
 var updateTimeButtonBorders;
 var updateTicksDisplay;
+var changeDropdown;
 
 // smaller version of the menu rows shown when editing is active
 function createEditorMenuUI(cancelFun, finishFun) {
@@ -9657,7 +9918,10 @@ function createMenuUI() {
   var tickButton = makeUIElement('button', menuRow2El);
   tickButton.innerText = 'tick';
   tickButton.title = 'Tick once. This allows ticking the circuit when paused, to investigate the signal. Especially useful in paused electron mode, or paused immediate mode if there are flip-flops or other sequential parts.';
-  tickButton.onclick = update;
+  tickButton.onclick = function() {
+    if(!isPaused()) pause();
+    update();
+  }
 
   updatePauseButtonText = function() {
     pauseButton.innerText = isPaused() ? 'paused' : 'pause';
@@ -9805,7 +10069,7 @@ function createMenuUI() {
 
   makeUISpacer(16, menuRow2El);
 
-  var changeDropdown = makeUIElement('select', menuRow2El);
+  changeDropdown = makeUIElement('select', menuRow2El);
   changeDropdown.title = 'A simpler more primitive form of edit, but it works while a circuit is running. Change the type of a gate, switch or LED to this. First click an option from this list, then the main cell of a device (e.g. the "a" of an AND gate).' +
       ' This is a very limited form of editing. It doesn\'t support creating or removing wire connections. It can only change a device that has one of the types in the list to another type in the list. On other devices it may either do nothing, or cause' +
       ' unexpected behavior. Changes in IC templates have no effect on instances. Changes are not saved and not visible under the edit button. To do full editing, use the edit button instead.';
@@ -10030,9 +10294,9 @@ function createMenuUI() {
     });
     var cb = makeElementAt('input', 20, 20, editdiv);
     cb.type = 'checkbox';
-    cb.value = NEWEDIT;
+    cb.checked = NEWEDIT;
     cb.onchange = function() {
-      NEWEDIT = cb.value;
+      NEWEDIT = cb.checked;
     };
     var text = makeElementAt('span', 50, 20, editdiv);
     text.innerText = 'enable experimental possible new editor';
@@ -10902,7 +11166,7 @@ var introText = `
 
 0"# Circuits Index"
 
-0"INSERT:toc_main"
+0"INSERT:links_main"
 
 
 0"You can also use the 'help', 'articles' and 'circuits' dropdowns"

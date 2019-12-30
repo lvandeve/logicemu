@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018 Lode Vandevenne
+Copyright (c) 2018-2019 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -379,14 +379,14 @@ registerCircuit('4-bit carry lookahead adder', `
 
 registerCircuit('half subtractor', `
 
-6"+-----+-----+   l=loan (borrow)"
-6"| a b | d l |   d=difference   "
-6"+-----+-----+                  "
-6"| 0 0 | 0 0 |                  "
-6"| 0 1 | 1 1 |                  "
-6"| 1 0 | 1 0 |                  "
-6"| 1 1 | 0 0 |                  "
-6"+-----+-----+                  "
+3"+-----+-----+   l=loan (borrow)"
+3"| a b | d l |   d=difference   "
+3"+-----+-----+                  "
+3"| 0 0 | 0 0 |                  "
+3"| 0 1 | 1 1 |                  "
+3"| 1 0 | 1 0 |                  "
+3"| 1 1 | 0 0 |                  "
+3"+-----+-----+                  "
 
 "l d"
 
@@ -410,18 +410,18 @@ registerCircuit('full subtractor', `
 0"need a separate circuit like this to subtract, you can also use a full adder,"
 0"invert the bits of B and add 1 to B"
 
-6"+-------+-----+    l=loan (borrow)"
-6"| a b l | d l |    d=difference   "
-6"+-------+-----+                   "
-6"| 0 0 0 | 0 0 |                   "
-6"| 0 0 1 | 1 1 |                   "
-6"| 0 1 0 | 1 1 |                   "
-6"| 0 1 1 | 0 1 |                   "
-6"| 1 0 0 | 1 0 |                   "
-6"| 1 0 1 | 0 0 |                   "
-6"| 1 1 0 | 0 0 |                   "
-6"| 1 1 1 | 1 1 |                   "
-6"+-------+-----+                   "
+3"+-------+-----+    l=loan (borrow)"
+3"| a b l | d l |    d=difference   "
+3"+-------+-----+                   "
+3"| 0 0 0 | 0 0 |                   "
+3"| 0 0 1 | 1 1 |                   "
+3"| 0 1 0 | 1 1 |                   "
+3"| 0 1 1 | 0 1 |                   "
+3"| 1 0 0 | 1 0 |                   "
+3"| 1 0 1 | 0 0 |                   "
+3"| 1 1 0 | 0 0 |                   "
+3"| 1 1 1 | 1 1 |                   "
+3"+-------+-----+                   "
 
 
               "d"                   "d"
@@ -1404,19 +1404,19 @@ registerTitle('Displays');
 registerCircuit('colored LEDs', `
 
    0 1 2 3 4 5 6 7
-   l l l l l l l l   >L<
+   l l l l l l l l   >Y<
    ^ ^ ^ ^ ^ ^ ^ ^   |^|
    | | | | | | | |   |||
    s s s s s s s s   sss
 
    0 1 2 3 4 5 6 7
-   l l l l l l l l   >L<
+   l l l l l l l l   >Y<
    ^ ^ ^ ^ ^ ^ ^ ^   |^|
    | | | | | | | |   |||
    S S S S S S S S   SSS
 
 
-  >L< >L[ >L< >L[ ]L< ]L[ ]L< ]L[
+  >Y< >Y[ >Y< >Y[ ]Y< ]Y[ ]Y< ]Y[
   *^* *^* *m* *m* *^* *^* *m* *m*
    |   |   |   |   |   |   |   |
    s   s   s   s   s   s   s   s
@@ -1816,7 +1816,7 @@ registerCircuit('parallel-in, serial-out shift register', `
 0"same time, then outputs them one by one."
 
 
-  6"W = write to the register"
+  3"W = write to the register"
 
                      1"parallel input"6
           s     s     s     s     s     s     s     s
@@ -1830,7 +1830,7 @@ registerCircuit('parallel-in, serial-out shift register', `
             * *   v *   v *   v *   v *   v *   v *   v
             * *]a>o *]a>o *]a>o *]a>o *]a>o *]a>o *]a>o
             *   ^ *   ^ *   ^ *   ^ *   ^ *   ^ *   ^
-            *>d** *>d** *>d** *>d** *>d** *>d** *>d******>l6"serial output"
+            *>d** *>d** *>d** *>d** *>d** *>d** *>d******>l3"serial output"
               #     #     #     #     #     #     #
               c>l2  c>l2  c>l2  c>l2  c>l2  c>l2  c>l2
               ^     ^     ^     ^     ^     ^     ^
@@ -2713,22 +2713,22 @@ s*+**>A>A>A>A***>l  "majority"
 s**>A********
 
 0"wire crossing with 10 NANDs (various shapes)"
-
                                            s
-   ***>A****        s**>A**>A**>l          *
-   *   ^   v          * ^   ^            *******
-s***>A**>A>A***>l     *>A**>A            v v   v
-   v ^ v ^            v ^ v ^          *>A>A**>A
-   A** A**            A** A**          * v v v v
-   ^ v ^ v            ^ v ^ v        s**>A>A>A>A**>l
-s***>A**>A>A***>l     *>A**>A          * * v
-   *   v   ^          * v   v          * *>A
-   ***>A****        s**>A**>A**>l      * v v
-                                       *>A>A
+                                           *
+   ***>A****        s**>A**>A**>l        *******
+   *   ^   v          * ^   ^            v v   v
+s***>A**>A>A***>l     *>A**>A          *>A>A**>A
+   v ^ v ^            v ^ v ^          * v v v v
+   A** A**            A** A**        s**>A>A>A>A**>l
+   ^ v ^ v            ^ v ^ v          * * v
+s***>A**>A>A***>l     *>A**>A          * *>A
+   *   v   ^          * v   v          * v v
+   ***>A****        s**>A**>A**>l      *>A>A
                                            *
                                            *
                                            v
                                            l
+
 
 0"SR latch (inputs corrected to be not inverted)"
 
@@ -2838,18 +2838,17 @@ s**>A**
 
 
 0"wire crossing with 10 NANDs, various shapes"
-
                                            s
-   ***>A****        s**>A**>A**>l          *
-   *   ^   v          * ^   ^            *******
-s***>A**>A>A***>l     *>A**>A            v v   v
-   v ^ v ^            v ^ v ^          *>A>A**>A
-   A** A**            A** A**          * v v v v
-   ^ v ^ v            ^ v ^ v        s**>A>A>A>A**>l
-s***>A**>A>A***>l     *>A**>A          * * v
-   *   v   ^          * v   v          * *>A
-   ***>A****        s**>A**>A**>l      * v v
-                                       *>A>A
+                                           *
+   ***>A****        s**>A**>A**>l        *******
+   *   ^   v          * ^   ^            v v   v
+s***>A**>A>A***>l     *>A**>A          *>A>A**>A
+   v ^ v ^            v ^ v ^          * v v v v
+   A** A**            A** A**        s**>A>A>A>A**>l
+   ^ v ^ v            ^ v ^ v          * * v
+s***>A**>A>A***>l     *>A**>A          * *>A
+   *   v   ^          * v   v          * v v
+   ***>A****        s**>A**>A**>l      *>A>A
                                            *
                                            *
                                            v
@@ -2857,24 +2856,31 @@ s***>A**>A>A***>l     *>A**>A          * * v
 
 0"Note that in electron mode, there are some flickering garbage signals in the"
 0"wire crossing due to different path lengths. This is never fixable with NAND"
-0"gates. This can only be fixed with buffers (delays). We can use LEDs as such"
-0"buffers (after all, we're allowed to use l, but not o which you'd normally"
-0"use for that). The longest path goes through 5 gates, so LEDs are added such"
-0"that every possible path from input to output is 5 devices long."
+0"gates. This can only be fixed with buffers (delays). We can use 1-input OR"
+0"gates for that. The longest path goes through 5 gates, so delays are added"
+0"such that every possible path from input to output is 5 devices long."
 
-s****>l>l>A>l>A****>l
-    *     ^   ^
-    *>l>A**>l>A
-    v   ^ v   ^
-    A**** A****
-    ^   v ^   v
-    *>l>A**>l>A
-    *     v   v
-s****>l>l>A>l>A****>l
+                                   s
+                                   *
+                                 ***>o>o
+                                 v   v v
+s****>o>o>A>o>A****>l          *>A**>A>A>o
+    * *   ^   ^                * *   *   v
+    * *>A**>o>A              s** *   *>o A**>l
+    v   ^ v   ^                v v   v v ^
+    A**** A****                o>A**>A>A**
+    ^   v ^   v                v v v v
+    * *>A**>o>A                o>A o>A
+    * *   v   v                  v   *
+s****>o>o>A>o>A****>l            o>A<*
+                                   *
+                                   *
+                                   v
+                                   l
 
 
 
-0"Half adder without wire crossings:"
+0"Half adder:"
 
 s*****>A>A*******>l
      * ^ ^ v
@@ -2883,7 +2889,7 @@ s*****>A>A*******>l
 s*********>A>A***>l
 
 
-0"Full adder without wire crossings:"
+0"Full adder:"
 
 s*********>A>A****>l
        v v ^ ^
@@ -2917,18 +2923,31 @@ s*****>A>A**>A>A******>l
         "carry"
 
 0"The adders also suffer a lot from garbage flickering in electron mode,"
-0"so here is a version with delay-LEDs in between:"
+0"so here is a version with delays in between. Since the longest path"
+0"of the top input to one of the outputs is 9 NAND gates, every other path of"
+0"the top input is made 9 long with delays. Similar for the other two inputs"
+0"and any in-between forks in the paths that merge back."
+
+0"NOTE: this is given for aesthetic reasons here. In reality, one could ensure"
+0"the clock is slow enough for everything to settle."
 
 
-s*******>l>l>l>l>A>l>l>l**>A******>l
+s*******>o>o>o>o>A>o>o>o**>A******>l
        v v       ^         ^
    ***>A>A       A         *
    *   v v       ^         *
-s***>l>A>A********>l>l>l>l>A
+s***>o>A>A********>o>o>o>o>A
                  v v       ^
              ***>A>A       A
              *   v v       ^
-s*************>l>A>A**************>l
+s*************>o>A>A**************>l
+
+
+0"SR latch (inputs inverted (low))"
+
+  "S'"S**>A*****>l "Q"
+          ^ *
+  "R'"S**>A<*
 
 
 0"SR latch (inputs corrected to be not inverted)"
@@ -2938,13 +2957,22 @@ s*************>l>A>A**************>l
   "R"s***>A>A<*
 
 
-0"JK latch"
+0"JK latch:"
 
-          *****
-          *   v
-  "J"s***>A<*>A*****>l "Q"
-          v * *
-  "K"s***>A>A<*
+"J"s**>A>A****>l"Q"
+       ^ ^ *
+"K"s**>A>A *
+       ^ ^ *
+       *****
+
+
+0"T latch:"
+
+"T"s**>A>A****>l"Q"
+     * ^ ^ *
+     *>A>A *
+       ^ ^ *
+       *****
 
 
 0"Gated D Latch"
@@ -2954,7 +2982,7 @@ s*************>l>A>A**************>l
  "E" s****>A>A<*
 
 
-0"D flipflop with NAND and no wire crossings:"
+0"D flipflop:"
 
 
  "D"s**********>A**>A**>A**>A*****>l
@@ -2964,7 +2992,7 @@ s*************>l>A>A**************>l
  "C"s********************
 
 
-0"T flip flop"
+0"T flip flop:"
 
 
           *********************
@@ -2990,7 +3018,7 @@ s*************>l>A>A**************>l
 
 
 
-0"JK flipflop with NAND and no wire crossings:"
+0"JK flipflop:"
 
 
           *******************
@@ -4247,13 +4275,13 @@ registerCircuit('16-bit ripple vs lookahead speed comparison', `
 
       l     l     l     l     l     l     l     l     l     l     l     l     l     l     l     l
       ^     ^     ^     ^     ^     ^     ^     ^     ^     ^     ^     ^     ^     ^     ^     ^ ###
-l<o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e s##6"CARRY"
+l<o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e s##3"CARRY"
   ^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/^ ^^^/###
   a e * a e * a e * a e * a e * a e * a e * a e * a e * a e * a e * a e * a e * a e * a e * a e *
   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^   ^^^
   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *
   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *   * *
-  * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s##6"B1"
+  * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s   * s##3"B1"
   *     *     *     *     *     *     *     *     *     *     *     *     *     *     *     * ###
   S     S     S     S     S     S     S     S     S     S     S     S     S     S     S     S ###
 
@@ -4261,7 +4289,7 @@ l<o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e 
 
                              llll                 llll            llll        llll
                              ^^^^                 ^^^^            ^^^^        ^^^^     ###
-2"c0 "-----------------------++++-------------*---++++--------*---++++----*---++++-*---s##6"CARRY"
+2"c0 "-----------------------++++-------------*---++++--------*---++++----*---++++-*---s##3"CARRY"
 2"p0 "-----*-----------------++++------------*+---++++-------*+---++++---*+--*|||| *   ###
 2"g0 "-----+-------------*---++++--------*---++---++++----*--++---++++-*-++-*||||| *
 2"p4 "----*+------------*+---++++-------*+--*++---++++---*+-*++--*|||| * || |||||| *
@@ -4283,7 +4311,7 @@ l<o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e 
                            iiiiiiii             iiiiiiii        iiiiiiii    iiiiiiii
                            iiiiiii0             iiiiiii0        iiiiiii0    iiiiiii0
                            ^^^^^^^^             ^^^^^^^^        ^^^^^^^^    ^^^^^^^^
-                           SsSsSsSsS            SsSsSsSs        SsSsSsSs    SsSsSsSs##6"B1"
+                           SsSsSsSsS            SsSsSsSs        SsSsSsSs    SsSsSsSs##3"B1"
                                                                                    ###
                                                                                    ###
 0"FIT:y"
@@ -4530,19 +4558,19 @@ registerCircuit('74181 ALU', `
  *   v   *   *       w         *       *   *       w         *       *   *       w         *     *   *       w         *
  *   O   *   *       o         *       *   *       o         *       *   *       o         *     *   *       o         *
  *   *   *   *       *         *       *   *       *         *       *   *       *         *     *   *       *         *    ###
- *   *   *   * ******+*********+*******+***+*******+*********+*******+***+*******+*********+*****+***+*******+*********+****s##"s0"6
+ *   *   *   * ******+*********+*******+***+*******+*********+*******+***+*******+*********+*****+***+*******+*********+****s##"s0"3
  *   *   *   * *     *         *       *   * *     *         *       *   * *     *         *     *   * *     *         *    ###
  *   *   *   * *     *         *       *   * *     *         *       *   * *     *         *     *   * *     *         *
  *   *   *   * *     *         *       *   * *     *         *       *   * *     *         *     *   * *     *         *    ###
- *   *   *   * * ****+*********+*******+***+*+*****+*********+*******+***+*+*****+*********+*****+***+*+*****+*********+****s##"s1"6
+ *   *   *   * * ****+*********+*******+***+*+*****+*********+*******+***+*+*****+*********+*****+***+*+*****+*********+****s##"s1"3
  *   *   *   * * *   *         *       *   * * *   *         *       *   * * *   *         *     *   * * *   *         *    ###
  *   *   *   * * *   *         *       *   * * *   *         *       *   * * *   *         *     *   * * *   *         *
  *   *   *   * * *   *         *       *   * * *   *         *       *   * * *   *         *     *   * * *   *         *    ###
- *   *   *   * * *   *   ******+*******+***+*+*+***+*********+*******+***+*+*+***+*********+*****+***+*+*+***+*********+****s##"s2"6
+ *   *   *   * * *   *   ******+*******+***+*+*+***+*********+*******+***+*+*+***+*********+*****+***+*+*+***+*********+****s##"s2"3
  *   *   *   * * *   *   *     *       *   * * *   *   *     *       *   * * *   *   *     *     *   * * *   *   *     *    ###
  *   *   *   * * *   *   *     *       *   * * *   *   *     *       *   * * *   *   *     *     *   * * *   *   *     *
  *   *   *   * * *   *   *     *       *   * * *   *   *     *       *   * * *   *   *     *     *   * * *   *   *     *    ###
- *   *   *   * * *   *   *     * ******+***+*+*+***+***+*****+*******+***+*+*+***+***+*****+*****+***+*+*+***+***+*****+****s##"s3"6
+ *   *   *   * * *   *   *     * ******+***+*+*+***+***+*****+*******+***+*+*+***+***+*****+*****+***+*+*+***+***+*****+****s##"s3"3
  *   *   *   * * *   *   *     * *     *   * * *   *   *     * *     *   * * *   *   *     * *   *   * * *   *   *     * *  ###
  *   *   *   * * *   *   *     * *     *   * * *   *   *     * *     *   * * *   *   *     * *   *   * * *   *   *     * *
  *   *   *   * * *   *   *     * *     *   * * *   *   *     * *     *   * * *   *   *     * *   *   * * *   *   *     * *
@@ -5514,11 +5542,11 @@ registerCircuit('74595 8-bit register shift', `
 0"2. enable and disable 'shift clock'
 0"3. enable and disable 'latch clock' and you see the shift bit if you enable 'serial data input' in first times.
 
-    6"output enable"2s----]o------------------------------*
+    3"output enable"2s----]o------------------------------*
                                                           |
-      6"latch clock"2s---->O-----------------*            *----*
+      3"latch clock"2s---->O-----------------*            *----*
                                              |            |    v
-6"serial data input"2s---->O--]o---->d---*---+------>d>O--+---]z------>l"Qa"
+3"serial data input"2s---->O--]o---->d---*---+------>d>O--+---]z------>l"Qa"
                             *------->c   |   *------>c    |
                           *-+------->Q   |   |            |
                           | |      *-----*   |            *----*
@@ -5557,9 +5585,9 @@ registerCircuit('74595 8-bit register shift', `
                           | *------->c   |   *------>c
                           *-+------->Q   |
                           | |            |
-      6"shift clock"2s->O-+-*            *------------>O------]o------>l 6"serial data output"
+      3"shift clock"2s->O-+-*            *------------>O------]o------>l 3"serial data output"
                           |
-            6"reset"2S-]o-*
+            3"reset"2S-]o-*
 
 0"Author/Contributor: chezsick
 `, '74hc595');
