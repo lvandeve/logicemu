@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2019 Lode Vandevenne
+Copyright (c) 2018-2020 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -41,9 +41,9 @@ registerCircuit('Logic Gates Tutorial', `
 0"Click the switches with the mouse to toggle them on or off and observe the"
 0"effect on the output LED:"
 
- "a"s**>o**>l"out"
+ "a"s..>o..>l"out"
         ^
- "b"s****
+ "b"s....
 
 0"A truth table shows the output for each combination of inputs:"
 
@@ -57,9 +57,9 @@ registerCircuit('Logic Gates Tutorial', `
 0"The AND gate outputs 1 only when input a AND input b are on: An AND gate is"
 0"denoted with an 'a' in this simulation (again, not in real electronics)"
 
- "a"s**>a**>l"out"
+ "a"s..>a..>l"out"
         ^
- "b"s****
+ "b"s....
 
 0"Here is its truth table:"
 
@@ -74,9 +74,9 @@ registerCircuit('Logic Gates Tutorial', `
 0"exclusively input b (but not both) are on. A XOR gate is denoted with an 'e'"
 0"from 'e'xclusive in this simulation (but not in real electronics)"
 
- "a"s**>e**>l"out"
+ "a"s..>e..>l"out"
         ^
- "b"s****
+ "b"s....
 
 0"Here is its truth table:"
 
@@ -91,7 +91,7 @@ registerCircuit('Logic Gates Tutorial', `
 0"off, and outputs 0 if the switch is on. A NOT gate is denoted with an 'O' in"
 0"this simulation (but not in real electronics)"
 
- "a"s**>O**>l"out"
+ "a"s..>O..>l"out"
 
 0"Here is its truth table:"
 
@@ -107,9 +107,9 @@ registerCircuit('Logic Gates Tutorial', `
 0"letters are used as inverted version of the gate (in real life electronics a"
 0"little circle at the output is used instead)"
 
- "a"s**>O**>l"out"
+ "a"s..>O..>l"out"
         ^
- "b"s****
+ "b"s....
 
 0"Here is its truth table:"
 
@@ -124,9 +124,9 @@ registerCircuit('Logic Gates Tutorial', `
 0"gate A NAND gate is denoted with an 'A' in this simulation (but not in real"
 0"electronics)"
 
- "a"s**>A**>l"out"
+ "a"s..>A..>l"out"
         ^
- "b"s****
+ "b"s....
 
 0"Here is its truth table:"
 
@@ -143,9 +143,9 @@ registerCircuit('Logic Gates Tutorial', `
 0"gates, where it instead acts as an inverted parity [odd/even] gate). An XNOR"
 0"gate is denoted with an 'E' in this simulation (but not in real electronics)"
 
- "a"s**>E**>l"out"
+ "a"s..>E..>l"out"
         ^
- "b"s****
+ "b"s....
 
 0"Here is its truth table:"
 
@@ -170,9 +170,9 @@ registerCircuit('Logic Gates Tutorial', `
 0"commonly seen as an OR gate with an inverted input, in fact the main goal"
 0"here is to demonstrate inverted inputs."
 
- "a"s**]o**>l"out"
+ "a"s..]o..>l"out"
         ^
- "b"s****
+ "b"s....
 
 0"Here is its truth table:"
 
@@ -265,7 +265,7 @@ registerCircuit('Binary Numbers Tutorial', `
    "128 64 32 16 8  4  2  1"
      l  l  l  l  l  l  l  l
      ^  ^  ^  ^  ^  ^  ^  ^
-     *  *  *  *  *  *  *  *
+     .  .  .  .  .  .  .  .
      s  s  s  s  s  s  s  s
    "128 64 32 16 8  4  2  1"
 
@@ -281,7 +281,7 @@ registerCircuit('Binary Numbers Tutorial', `
 
      TTTTTTTTTTTTTTTTTTTTTT"decimal"
      ^  ^  ^  ^  ^  ^  ^  ^
-     *  *  *  *  *  *  *  *
+     .  .  .  .  .  .  .  .
      s  s  s  s  s  s  s  s"binary"
    "128 64 32 16 8  4  2  1"
 
@@ -293,7 +293,7 @@ registerCircuit('Binary Numbers Tutorial', `
    "128 64 32 16 8  4  2  1"
      l  l  l  l  l  l  l  l"binary"
      ^  ^  ^  ^  ^  ^  ^  ^
-     *  *  *  *  *  *  *  *
+     .  .  .  .  .  .  .  .
      TTTTTTTTTTTTTTTTTTTTTT"decimal"
 
 `, 'binary_numbers');
@@ -307,18 +307,18 @@ registerCircuit('3-input logic gates', `
 0"behavior is that of chaining multiple 2-input gates together and that gives"
 0"parity gate in case of XOR."
 
-  s****      s****      s****
+  s....      s....      s....
       v          v          v
-  s**>o**>l  s**>a**>l  s**>e**>l
+  s..>o..>l  s..>a..>l  s..>e..>l
       ^          ^          ^
-  s****      s****      s****
+  s....      s....      s....
 
 
-  s****      s****      s****
+  s....      s....      s....
       v          v          v
-  s**>O**>l  s**>A**>l  s**>E**>l
+  s..>O..>l  s..>A..>l  s..>E..>l
       ^          ^          ^
-  s****      s****      s****
+  s....      s....      s....
 
 
 0"There are a few other interesting 3-input gates, which we can build"
@@ -328,42 +328,42 @@ registerCircuit('3-input logic gates', `
 0"in some electronics applications because it uses a relatively small"
 0"amount of transistors"
 
-s****           s****
+s....           s....
     v               v
-s**>a>O**>l     s**>o>A**>l
+s..>a>O..>l     s..>o>A..>l
       ^               ^
-s******         s******
+s......         s......
 
 
 0"Majority gate"
 
-s****>a**
+s....>a..
      >  v
-s**** a>o**>l
+s.... a>o..>l
      >  ^
-s****>a**
+s....>a..
 
 
 0"One-hot detector gate: outputs only if exactly 1 input is on"
 
-  *******
-  *     v
-s*+****]a**
-  * *  ]  v
-s*+*+**>a>o**>l
-  * *  ]  ^
-s***+**]a**
-    *   ^
-    *****
+  .......
+  .     v
+s.+....]a..
+  . .  ]  v
+s.+.+..>a>o..>l
+  . .  ]  ^
+s...+..]a..
+    .   ^
+    .....
 
 
 0"Equals gate: outputs only if all inputs are equal"
 
-s**>E**
+s..>E..
     ^ v
-s**** a**>l
+s.... a..>l
     v ^
-s**>E**
+s..>E..
 
 
 `, 'gates3');
@@ -377,25 +377,25 @@ registerCircuit('De Morgan\'s law', `
 0"For example, an AND gate can be made by taking an OR gate, inverting"
 0"all inputs and the output. And same for all other combinations below."
 
-  s**>a**>l   s**]O**>l
+  s..>a..>l   s..]O..>l
       ^           m
-  s****       s****
+  s....       s....
 
-  s**>o**>l   s**]A**>l
+  s..>o..>l   s..]A..>l
       ^           m
-  s****       s****
+  s....       s....
 
-  s**>A**>l   s**]o**>l
+  s..>A..>l   s..]o..>l
       ^           m
-  s****       s****
+  s....       s....
 
-  s**>O**>l   s**]a**>l
+  s..>O..>l   s..]a..>l
       ^           m
-  s****       s****
+  s....       s....
 
-  s**]o**>l   s**>A**>l
+  s..]o..>l   s..>A..>l
       ^           m
-  s****       s****
+  s....       s....
 
 0"You can verify this in the english. E.g.:"
 0"'the sun is hot AND round'"
@@ -410,41 +410,41 @@ registerCircuit('NAND logic', `
 
 0"NAND is a universal gate, any other logic gate can be constructed from NANDs"
 
-s****>A****>l"NOT"
+s....>A....>l"NOT"
 
 
-s**>A>A****>l"AND"
+s..>A>A....>l"AND"
     ^
-s****
+s....
 
 
-s**>A>A****>l"OR"
+s..>A>A....>l"OR"
       ^
-s**>A**
+s..>A..
 
 
-s**>A**
+s..>A..
   v ^ v
-  A** A****>l"XOR"
+  A.. A....>l"XOR"
   ^ v ^
-s**>A**
+s..>A..
 
 
-s**>A******>l"NAND"
+s..>A......>l"NAND"
     ^
-s****
+s....
 
 
-s**>A>A>A**>l"NOR"
+s..>A>A>A..>l"NOR"
       ^
-s**>A**
+s..>A..
 
 
-  *****>A
-  *     v
-s*+**>A>A
-  * v   v
-s**>A**>A**>l"XNOR"
+  .....>A
+  .     v
+s.+..>A>A
+  . v   v
+s..>A..>A..>l"XNOR"
 
 
 
@@ -452,66 +452,66 @@ s**>A**>A**>l"XNOR"
 0"smallest possible amount of gates used"
 
 
-s********
+s........
         v
-s**>A>A>A>A******>l"AND"
+s..>A>A>A>A......>l"AND"
     ^
-s****
+s....
 
 
-s**>A******
+s..>A......
           v
-s**>A>A>A>A******>l"OR"
+s..>A>A>A>A......>l"OR"
       ^
-s**>A**
+s..>A..
 
 
-s********>A**
+s........>A..
         v ^ v
-s**>A** A** A****>l"XOR"
+s..>A.. A.. A....>l"XOR"
   v ^ v ^ v ^
-  A** A**>A**
+  A.. A..>A..
   ^ v ^
-s**>A**
+s..>A..
 
 
-s********
+s........
         v
-s**>A>A>A********>l"NAND"
+s..>A>A>A........>l"NAND"
     ^
-s****
+s....
 
 
-s**>A******
+s..>A......
           v
-s**>A>A>A>A>A****>l"NOR"
+s..>A>A>A>A>A....>l"NOR"
       ^
-s**>A**
+s..>A..
 
 
-s**********
-          *
-  *****>A *>A**
-  *     v v ^ v
-s*+**>A>A A** A**>l"XNOR"
-  * v   v ^ v ^
-s**>A**>A**>A**
+s..........
+          .
+  .....>A .>A..
+  .     v v ^ v
+s.+..>A>A A.. A..>l"XNOR"
+  . v   v ^ v ^
+s..>A..>A..>A..
 
 
-"a"s****>A**
+"a"s....>A..
          ^ v
-"s"s****>A A*****>l"MUX"
+"s"s....>A A.....>l"MUX"
        v   ^
-"b"s**>A****
+"b"s..>A....
 
 
-  ***>A**
-  *   ^ *
-s*+**** *
-  *   v v
-s*+**>A>A>A>A***>l  "majority"
-  * v       ^
-s**>A********
+  ...>A..
+  .   ^ .
+s.+.... .
+  .   v v
+s.+..>A>A>A>A...>l  "majority"
+  . v       ^
+s..>A........
 
 
 0"Wire crossing"
@@ -521,60 +521,60 @@ s**>A********
 
 0"XOR with 4 NANDs"
 
-s***>A**
+s...>A..
    v ^ v
-   A** A**>l   "XOR"
+   A.. A..>l   "XOR"
    ^ v ^
-s***>A**
+s...>A..
 
 0"wire crossing with 3 XORs"
 
-s****>e***>l
+s....>e...>l
     v ^
-    e**
+    e..
     ^ v
-s****>e***>l
+s....>e...>l
 
 0"wire crossing with 12 NANDs"
 
 
-   *******>A**
-   *     v ^ v
-   *     A** A***>l
-s***>A** ^ v ^
-   v ^ v *>A**
-   A** A**
-   ^ v ^ *>A**
-s***>A** v ^ v
-   *     A** A***>l
-   *     ^ v ^
-   *******>A**
+   .......>A..
+   .     v ^ v
+   .     A.. A...>l
+s...>A.. ^ v ^
+   v ^ v .>A..
+   A.. A..
+   ^ v ^ .>A..
+s...>A.. v ^ v
+   .     A.. A...>l
+   .     ^ v ^
+   .......>A..
 
 0"wire crossing with 10 NANDs (various shapes)"
 
                                            s
-   ***>A****        s**>A**>A**>l          *
-   *   ^   v          * ^   ^            *******
-s***>A**>A>A***>l     *>A**>A            v v   v
-   v ^ v ^            v ^ v ^          *>A>A**>A
-   A** A**            A** A**          * v v v v
-   ^ v ^ v            ^ v ^ v        s**>A>A>A>A**>l
-s***>A**>A>A***>l     *>A**>A          * * v
-   *   v   ^          * v   v          * *>A
-   ***>A****        s**>A**>A**>l      * v v
-                                       *>A>A
-                                           *
-                                           *
+   ...>A....        s..>A..>A..>l          .
+   .   ^   v          . ^   ^            .......
+s...>A..>A>A...>l     .>A..>A            v v   v
+   v ^ v ^            v ^ v ^          .>A>A..>A
+   A.. A..            A.. A..          . v v v v
+   ^ v ^ v            ^ v ^ v        s..>A>A>A>A..>l
+s...>A..>A>A...>l     .>A..>A          . . v
+   .   v   ^          . v   v          . .>A
+   ...>A....        s..>A..>A..>l      . v v
+                                       .>A>A
+                                           .
+                                           .
                                            v
                                            l
 
 0"wire crossing with 8 NANDs, of which a 3-input and 2 1-input"
 
-s***>A**>A>A**>l
+s...>A..>A>A..>l
    v ^ v ^
-   A**>A**
+   A..>A..
    ^ v ^ v
-s***>A**>A>A**>l
+s...>A..>A>A..>l
 
 `, 'nand_logic');
 
@@ -583,40 +583,40 @@ registerCircuit('NOR logic', `
 
 0"NOR is a universal gate, any other logic gate can be constructed from NORs"
 
-s****>O****>l"NOT"
+s....>O....>l"NOT"
 
 
-s**>O>O****>l"AND"
+s..>O>O....>l"AND"
       ^
-s**>O**
+s..>O..
 
 
-s**>O**>O**>l"OR"
+s..>O..>O..>l"OR"
     ^
-s****
+s....
 
-  *****>O
-  *     v
-s*+**>O>O
-  * v   v
-s**>O**>O**>l"XOR"
+  .....>O
+  .     v
+s.+..>O>O
+  . v   v
+s..>O..>O..>l"XOR"
 
 
-s**>O******>l"NOR"
+s..>O......>l"NOR"
     ^
-s****
+s....
 
 
-s**>O>O>O**>l"NAND"
+s..>O>O>O..>l"NAND"
       ^
-s**>O**
+s..>O..
 
 
-s**>O**
+s..>O..
   v ^ v
-  O** O****>l"XNOR"
+  O.. O....>l"XNOR"
   ^ v ^
-s**>O**
+s..>O..
 
 
 
@@ -624,66 +624,66 @@ s**>O**
 0"smallest possible amount of gates used"
 
 
-s**********
+s..........
           v
-s****>O>O>O>O****>l"OR"
+s....>O>O>O>O....>l"OR"
       ^
-s******
+s......
 
 
-s****>O******
+s....>O......
             v
-s****>O>O>O>O****>l"AND"
+s....>O>O>O>O....>l"AND"
         ^
-s****>O**
+s....>O..
 
 
-s********>O**
+s........>O..
         v ^ v
-s**>O** O** O****>l"XOR"
+s..>O.. O.. O....>l"XOR"
   v ^ v ^ v ^
-  O** O**>O**
+  O.. O..>O..
   ^ v ^
-s**>O**
+s..>O..
 
 
-s**********
+s..........
           v
-s****>O>O>O******>l"NOR"
+s....>O>O>O......>l"NOR"
       ^
-s******
+s......
 
 
-s**>O******
+s..>O......
           v
-s**>O>O>O>O>O****>l"NAND"
+s..>O>O>O>O>O....>l"NAND"
       ^
-s**>O**
+s..>O..
 
 
-s**********
-          *
-  *****>O *>O**
-  *     v v ^ v
-s*+**>O>O O** O**>l"XNOR"
-  * v   v ^ v ^
-s**>O**>O**>O**
+s..........
+          .
+  .....>O .>O..
+  .     v v ^ v
+s.+..>O>O O.. O..>l"XNOR"
+  . v   v ^ v ^
+s..>O..>O..>O..
 
 
-"a"s**>O******
+"a"s..>O......
        ^     v
-"s"s****>O   O***>l"MUX"
+"s"s....>O   O...>l"MUX"
          v   ^
-"b"s****>O****
+"b"s....>O....
 
 
-  ***>O**
-  *   ^ *
-s*+**** *
-  *   v v
-s*+**>O>O>O>O***>l  "majority"
-  * v       ^
-s**>O********
+  ...>O..
+  .   ^ .
+s.+.... .
+  .   v v
+s.+..>O>O>O>O...>l  "majority"
+  . v       ^
+s..>O........
 
 
 0"Wire crossing"
@@ -693,61 +693,61 @@ s**>O********
 
 0"XNOR with 4 NORs"
 
-s***>O**
+s...>O..
    v ^ v
-   O** O**>l   "XNOR"
+   O.. O..>l   "XNOR"
    ^ v ^
-s***>O**
+s...>O..
 
 0"wire crossing with 3 XNORs"
 
-s****>E***>l
+s....>E...>l
     v ^
-    E**
+    E..
     ^ v
-s****>E***>l
+s....>E...>l
 
 0"wire crossing with 12 NORs"
 
-   *******>O**
-   *     v ^ v
-   *     O** O***>l
-s***>O** ^ v ^
-   v ^ v *>O**
-   O** O**
-   ^ v ^ *>O**
-s***>O** v ^ v
-   *     O** O***>l
-   *     ^ v ^
-   *******>O**
+   .......>O..
+   .     v ^ v
+   .     O.. O...>l
+s...>O.. ^ v ^
+   v ^ v .>O..
+   O.. O..
+   ^ v ^ .>O..
+s...>O.. v ^ v
+   .     O.. O...>l
+   .     ^ v ^
+   .......>O..
 
 
 0"wire crossing with 10 NORs (various shapes)"
 
                                            s
-   ***>O****        s**>O**>O**>l          *
-   *   ^   v          * ^   ^            *******
-s***>O**>O>O***>l     *>O**>O            v v   v
-   v ^ v ^            v ^ v ^          *>O>O**>O
-   O** O**            O** O**          * v v v v
-   ^ v ^ v            ^ v ^ v        s**>O>O>O>O**>l
-s***>O**>O>O***>l     *>O**>O          * * v
-   *   v   ^          * v   v          * *>O
-   ***>O****        s**>O**>O**>l      * v v
-                                       *>O>O
-                                           *
-                                           *
+   ...>O....        s..>O..>O..>l          .
+   .   ^   v          . ^   ^            .......
+s...>O..>O>O...>l     .>O..>O            v v   v
+   v ^ v ^            v ^ v ^          .>O>O..>O
+   O.. O..            O.. O..          . v v v v
+   ^ v ^ v            ^ v ^ v        s..>O>O>O>O..>l
+s...>O..>O>O...>l     .>O..>O          . . v
+   .   v   ^          . v   v          . .>O
+   ...>O....        s..>O..>O..>l      . v v
+                                       .>O>O
+                                           .
+                                           .
                                            v
                                            l
 
 
 0"wire crossing with 8 NORs, of which a 3-input and 2 1-input"
 
-s****>O****>O*>O**>l
+s....>O....>O.>O..>l
    v  ^  v  ^
-   O****>O***
+   O....>O...
    ^  v  ^  v
-s****>O****>O*>O**>l
+s....>O....>O.>O..>l
 
 `, 'nor_logic');
 
@@ -786,11 +786,11 @@ registerCircuit('flip-flops tutorial', `
 0"happens to show here does not matter as it is unspecified and may violate"
 0"assumptions"
 
- "S"s**>j#q**>l"Q"
+ "S"s..>j#q..>l"Q"
         ###
- "R"s**>k##
+ "R"s..>k##
         ###
- "C"s**>c##
+ "C"s..>c##
 
 0"The truth table of the SR flip-flop is as follows. It shows the transition"
 0"(if any) that happens at each clock cycle: What is the next Q depending on"
@@ -813,9 +813,9 @@ registerCircuit('flip-flops tutorial', `
 0"Try it out: The way to get the output enabled, is to first enable d, then"
 0"turn the clock c from off to on."
 
- "D"s**>d#q**>l"Q"
+ "D"s..>d#q..>l"Q"
         ###
- "C"s**>c##
+ "C"s..>c##
 
 0"The truth table of the D flip-flop is as follows. It shows the transition (if"
 0"any) that happens at each clock cycle: What is the next Q depending on the D"
@@ -840,9 +840,9 @@ registerCircuit('flip-flops tutorial', `
 0"input is enabled and the clock is triggered. If T is off, it will. keep its"
 0"state when the clock triggers."
 
- "T"s**>t#q**>l"Q"
+ "T"s..>t#q..>l"Q"
         ###
- "C"s**>c##
+ "C"s..>c##
 
 0"In the truth table, Q' represents the inverse of Q"
 
@@ -860,11 +860,11 @@ registerCircuit('flip-flops tutorial', `
 0"both j and k inputs enabled also has well defined behavior: it toggles the"
 0"output similar to a T flip-flop in that case."
 
- "J"s**>j#q**>l"Q"
+ "J"s..>j#q..>l"Q"
         ###
- "K"s**>k##
+ "K"s..>k##
         ###
- "C"s**>c##
+ "C"s..>c##
 
 0"The truth table of the JK flip-flop is as follows. It shows the transition"
 0"(if any) that happens at each clock cycle: What is the next Q depending on"
@@ -890,17 +890,17 @@ registerCircuit('flip-flops tutorial', `
 
       "preset"
           s
-          *
-          *
+          .
+          .
           v
- "J"s**>j#q**>l"Q"
+ "J"s..>j#q..>l"Q"
         ###
- "K"s**>k##
+ "K"s..>k##
         ###
- "C"s**>c#Q**>l"Q'"
+ "C"s..>c#Q..>l"Q'"
           ^
-          *
-          *
+          .
+          .
           s
        "clear"
 
@@ -960,36 +960,36 @@ registerCircuit('flip-flops tutorial', `
 
 0"This table allows trying all the types, even the nonsensical ones:"
 
-***********************************************
-*     *          *              *             *
-*     * "latch"1 *"gated latch"1*"flip-flop"1 *
-*     *          *              *             *
-***********************************************
-*     * :     :  *   :     :    *  :     :    *
-*1"SR"* Ss>q>lQ: *   Ss>q>lQ:   *  Ss>j>lQ:   *
-*     * Rs>Q>lQ' *   Rs>Q>lQ'   *  Rs>k>lQ'   *
-*     * :     :: *   Es>y  ::   *  Cs>c  ::   *
-*     *          *   :          *  :          *
-***********************************************
-*     * :     :  *   :     :    *  :     :    *
-*1" D"* Ds>d>lQ  *   Ds>d>lQ    *  Ds>d>lQ    *
-*     * :     :  *   Es>y  :    *  Cs>c  :    *
-*     *          *   :          *  :          *
-***********************************************
-*     * :     :  *   :     :    *  :     :    *
-*1" T"* Ts>t>lQ  *   Ts>t>lQ    *  Ts>t>lQ    *
-*     * :C>y  :  *   Es>y  :    *  Cs>c       *
-*     *          *   :          *             *
-*     *          *              *1"1-input:"  *
-*     *          *              *  Cs>c>lQ    *
-*     *          *              *  :     :    *
-***********************************************
-*     * :     :  *   :     :    *  :     :    *
-*1"JK"* Js>q>lQ: *   Js>j>lQ:   *  Js>j>lQ:   *
-*     * Ks>Q>lQ' *   Ks>k>lQ'   *  Ks>k>lQ'   *
-*     * :     :: *   Es>y  ::   *  Cs>c  ::   *
-*     *          *   :          *  :          *
-***********************************************
+...............................................
+.     .          .              .             .
+.     . "latch"1 ."gated latch"1."flip-flop"1 .
+.     .          .              .             .
+...............................................
+.     . :     :  .   :     :    .  :     :    .
+.1"SR". Ss>q>lQ: .   Ss>q>lQ:   .  Ss>j>lQ:   .
+.     . Rs>Q>lQ' .   Rs>Q>lQ'   .  Rs>k>lQ'   .
+.     . :     :: .   Es>y  ::   .  Cs>c  ::   .
+.     .          .   :          .  :          .
+...............................................
+.     . :     :  .   :     :    .  :     :    .
+.1" D". Ds>d>lQ  .   Ds>d>lQ    .  Ds>d>lQ    .
+.     . :     :  .   Es>y  :    .  Cs>c  :    .
+.     .          .   :          .  :          .
+...............................................
+.     . :     :  .   :     :    .  :     :    .
+.1" T". Ts>t>lQ  .   Ts>t>lQ    .  Ts>t>lQ    .
+.     . :C>y  :  .   Es>y  :    .  Cs>c       .
+.     .          .   :          .             .
+.     .          .              .1"1-input:"  .
+.     .          .              .  Cs>c>lQ    .
+.     .          .              .  :     :    .
+...............................................
+.     . :     :  .   :     :    .  :     :    .
+.1"JK". Js>q>lQ: .   Js>j>lQ:   .  Js>j>lQ:   .
+.     . Ks>Q>lQ' .   Ks>k>lQ'   .  Ks>k>lQ'   .
+.     . :     :: .   Es>y  ::   .  Cs>c  ::   .
+.     .          .   :          .  :          .
+...............................................
 
 
 0"# Epilogue"
@@ -1040,11 +1040,11 @@ registerCircuit('flip-flops tutorial II: from gates', `
 0"combination of gates, but this breaks the desired mode of operation"
 0"where exactly one of the two outputs is on and the other is its inverse."
 
- "S"s**>O<*>l"Q  on"
-        * *
+ "S"s..>O<.>l"Q  on"
+        . .
          x
-        * *
- "R"s**>O<*>l"Q' off"
+        . .
+ "R"s..>O<.>l"Q' off"
 
 0"Please carefully notice the wiring above: For convenience the LEDs are"
 0"connected to the opposite NOR gate so that the position matches the"
@@ -1053,9 +1053,9 @@ registerCircuit('flip-flops tutorial II: from gates', `
 
 0"A bit more compact representation of the same thing:"
 
- "S"s***>O<***>l "Q"
-         v *
- "R"s***>O**
+ "S"s...>O<...>l "Q"
+         v .
+ "R"s...>O..
 
 0"This latch can also be made from NAND gates instead of NOR gates, but the"
 0"inputs are then active-low."
@@ -1069,11 +1069,11 @@ registerCircuit('flip-flops tutorial II: from gates', `
 0"the input signals are doing other things while enable is off. This can be"
 0"done by adding AND gates in front:"
 
- "S"s**>a>O<*>l"Q  on"
-        ^ * *
- "E"s****  x
-        v * *
- "R"s**>a>O<*>l"Q' off"
+ "S"s..>a>O<.>l"Q  on"
+        ^ . .
+ "E"s....  x
+        v . .
+ "R"s..>a>O<.>l"Q' off"
 
 0"## Gated D Latch"
 
@@ -1083,11 +1083,11 @@ registerCircuit('flip-flops tutorial II: from gates', `
 0"modified into a gated D-latch: Connect the D input to S when on, to R when"
 0"off:"
 
- "D"s****>a>O<*>l"Q  on"
-        * ^ * *
- "E"s***+**  x
-        * v * *
-        *]a>O<*>l"Q' off"
+ "D"s....>a>O<.>l"Q  on"
+        . ^ . .
+ "E"s...+..  x
+        . v . .
+        .]a>O<.>l"Q' off"
 
 
 0"## JK and T Latch"
@@ -1099,13 +1099,13 @@ registerCircuit('flip-flops tutorial II: from gates', `
 0"as well as further below. Here's a JK latch anyway:"
 
 
-         ***
-         v *
-"J" s***>a>O<***>l
-           v *
-"K" s***>a>O**
-         ^ *
-         ***
+         ...
+         v .
+"J" s...>a>O<...>l
+           v .
+"K" s...>a>O..
+         ^ .
+         ...
 
 0"How the latch works: the right two NORs are an SR latch as seen above. The"
 0"two inputs are AND-ed with the output of their corresponding NOR (they could"
@@ -1120,13 +1120,13 @@ registerCircuit('flip-flops tutorial II: from gates', `
 
 0"A T latch can be made by tying J and K together:"
 
-         ***
-         v *
-"T" s***>a>O<***>l"Q"
-       *   v *
-       *>a>O**
-         ^ *
-         ***
+         ...
+         v .
+"T" s...>a>O<...>l"Q"
+       .   v .
+       .>a>O..
+         ^ .
+         ...
 
 0"The toggling makes the output LED blink rapidly. So this toggling"
 0"is not very useful as it's pretty random which state it will be in when"
@@ -1140,26 +1140,26 @@ registerCircuit('flip-flops tutorial II: from gates', `
 0"Note the 3-input AND gates."
 
 
-        ***
-        v *
-"J" s**>a>O<*****>l"Q  on"
-        ^ * *
-"E" s****  x
-        v * *
-"K" s**>a>O<*****>l"Q' off"
-        ^ *
-        ***
+        ...
+        v .
+"J" s..>a>O<.....>l"Q  on"
+        ^ . .
+"E" s....  x
+        v . .
+"K" s..>a>O<.....>l"Q' off"
+        ^ .
+        ...
 
 
-        ***
-        v *
-"T" s**>a>O<*****>l"Q  on"
-      * ^ * *
-"E" s*+**  x
-      * v * *
-      *>a>O<*****>l"Q' off"
-        ^ *
-        ***
+        ...
+        v .
+"T" s..>a>O<.....>l"Q  on"
+      . ^ . .
+"E" s.+..  x
+      . v . .
+      .>a>O<.....>l"Q' off"
+        ^ .
+        ...
 
 
 0"# Attempting edge-triggered clocks"
@@ -1168,9 +1168,9 @@ registerCircuit('flip-flops tutorial II: from gates', `
 0"will turn out to be not optimal, is to turn the clock signal into a very"
 0"short pulse, with an edge-detecter circuit like this:"
 
-s****>d**]a**>l
-    *     ^
-    *******
+s....>d..]a..>l
+    .     ^
+    .......
 
 0"There is a small delay included in the above, and an AND gate with one"
 0"inverted input, so that it only outputs a short pulse when you just enable"
@@ -1180,84 +1180,84 @@ s****>d**]a**>l
 0"However, making sure the update algorithm is set to 'electron' mode, try it"
 0"out and you may notice a problem:"
 
-  "S"s********>a>O<*>l"Q  on"
-               ^ * *
-  "C"s**>d]a****  x
-       *   ^   v * *
-  "R"s*+***+**>a>O<*>l"Q' off"
-       *   *
-       *****
+  "S"s........>a>O<.>l"Q  on"
+               ^ . .
+  "C"s..>d]a....  x
+       .   ^   v . .
+  "R"s.+...+..>a>O<.>l"Q' off"
+       .   .
+       .....
 
 
-  "D"s**********>a>O<*>l"Q  on"
-               * ^ * *
-  "C"s**>d]a***+**  x
-       *   ^   * v * *
-       *****   *]a>O<*>l"Q' off"
+  "D"s..........>a>O<.>l"Q  on"
+               . ^ . .
+  "C"s..>d]a...+..  x
+       .   ^   . v . .
+       .....   .]a>O<.>l"Q' off"
 
 
-                ***
-                v *
-  "T" s********>a>O<*****>l"Q  on"
-              * ^ * *
-  "C" s**>d]a*+**  x
-        *   ^ * v * *
-        ***** *>a>O<*****>l"Q' off"
-                ^ *
-                ***
+                ...
+                v .
+  "T" s........>a>O<.....>l"Q  on"
+              . ^ . .
+  "C" s..>d]a.+..  x
+        .   ^ . v . .
+        ..... .>a>O<.....>l"Q' off"
+                ^ .
+                ...
 
 
-                ***
-                v *
-  "J" s********>a>O<*****>l"Q  on"
-                ^ * *
-  "C" s**>d]a****  x
-        *   ^   v * *
-  "K" s*+***+**>a>O<*****>l"Q' off"
-        *   *   ^ *
-        *****   ***
+                ...
+                v .
+  "J" s........>a>O<.....>l"Q  on"
+                ^ . .
+  "C" s..>d]a....  x
+        .   ^   v . .
+  "K" s.+...+..>a>O<.....>l"Q' off"
+        .   .   ^ .
+        .....   ...
 
 0"Often when enabling the clock, you may find the two output LEDs blinking"
 0"rapidly, and it sometimes even settles at the wrong output. This is because"
 0"the pulse happens to be too short for the latch's circuit to handle. Making"
 0"the delay longer (2 ticks by adding a 2 at the d) helps in this case:"
 
-  "S"s********>a>O<*>l"Q  on"
-         2     ^ * *
-  "C"s**>d]a****  x
-       *   ^   v * *
-  "R"s*+***+**>a>O<*>l"Q' off"
-       *   *
-       *****
+  "S"s........>a>O<.>l"Q  on"
+         2     ^ . .
+  "C"s..>d]a....  x
+       .   ^   v . .
+  "R"s.+...+..>a>O<.>l"Q' off"
+       .   .
+       .....
 
 
-  "D"s**********>a>O<*>l"Q  on"
-         2     * ^ * *
-  "C"s**>d]a***+**  x
-       *   ^   * v * *
-       *****   *]a>O<*>l"Q' off"
+  "D"s..........>a>O<.>l"Q  on"
+         2     . ^ . .
+  "C"s..>d]a...+..  x
+       .   ^   . v . .
+       .....   .]a>O<.>l"Q' off"
 
 
-                ***
-                v *
-  "T" s********>a>O<*****>l"Q  on"
-          2   * ^ * *
-  "C" s**>d]a*+**  x
-        *   ^ * v * *
-        ***** *>a>O<*****>l"Q' off"
-                ^ *
-                ***
+                ...
+                v .
+  "T" s........>a>O<.....>l"Q  on"
+          2   . ^ . .
+  "C" s..>d]a.+..  x
+        .   ^ . v . .
+        ..... .>a>O<.....>l"Q' off"
+                ^ .
+                ...
 
 
-                ***
-                v *
-  "J" s********>a>O<*****>l"Q  on"
-          2     ^ * *
-  "C" s**>d]a****  x
-        *   ^   v * *
-  "K" s*+***+**>a>O<*****>l"Q' off"
-        *   *   ^ *
-        *****   ***
+                ...
+                v .
+  "J" s........>a>O<.....>l"Q  on"
+          2     ^ . .
+  "C" s..>d]a....  x
+        .   ^   v . .
+  "K" s.+...+..>a>O<.....>l"Q' off"
+        .   .   ^ .
+        .....   ...
 
 0"A delay of 2 happens to work in this simulation because the paths in the"
 0"flip-flops are 2 ticks long (that is, in these NOR NOR latches, the longest"
@@ -1286,13 +1286,13 @@ s****>d**]a**>l
 0"by using the inverted output from the first flip-flop)"
 
 
-  "D"s*****>a>O<*****>a>O<*>l"Q  on"
-          * ^ * *   * ^ * *
-        **+**  x  **+**  x
-        * * v * * * * v * *
-        O *]a>O<* * *]a>O<*>l"Q' off"
-        ^         *
-  "C"s*************
+  "D"s.....>a>O<.....>a>O<.>l"Q  on"
+          . ^ . .   . ^ . .
+        ..+..  x  ..+..  x
+        . . v . . . . v . .
+        O .]a>O<. . .]a>O<.>l"Q' off"
+        ^         .
+  "C"s.............
 
 0"In the above circuit, moving the position where the invertor of the clock is"
 0"can make it negative edge-triggered instead of positive edge-triggered"
@@ -1308,17 +1308,17 @@ s****>d**]a**>l
 0"first clock cycle may behave wrongly, and for convenience the switch was made"
 0"initially on for that"
 
-              ***********
-              v         *
-    "J"s*****>a>O<***>a>O<*****>l"Q  on"
-              ^ * *   ^ * *
-            ***  x  ***  x  0"broken, see note!"
-            * v * * * v * *
-    "K"s****+>a>O<**+>a>O<*****>l"Q' off"
-            * ^     *   *
-            O ******+****
-            ^       *
-    "C"S*************
+              ...........
+              v         .
+    "J"s.....>a>O<...>a>O<.....>l"Q  on"
+              ^ . .   ^ . .
+            ...  x  ...  x  0"broken, see note!"
+            . v . . . v . .
+    "K"s....+>a>O<..+>a>O<.....>l"Q' off"
+            . ^     .   .
+            O ......+....
+            ^       .
+    "C"S.............
 
 0"The above is useful but is not a truly perfect edge-triggered JK flip-flop"
 0"however. To be perfect, it should ONLY be affected by the state of the inputs"
@@ -1338,17 +1338,17 @@ s****>d**]a**>l
 0"one more clock cycle that toggles the output anyway, which is quite"
 0"undesirable:"
 
-              ***********
-              v         *
-    "T"s*****>a>O<***>a>O<*****>l"Q  on"
-          *   ^ * *   ^ * *
-          * ***  x  ***  x  0"broken, see note!"
-          * * v * * * v * *
-          **+>a>O<**+>a>O<*****>l"Q' off"
-            * ^     *   *
-            O ******+****
-            ^       *
-    "C"S*************
+              ...........
+              v         .
+    "T"s.....>a>O<...>a>O<.....>l"Q  on"
+          .   ^ . .   ^ . .
+          . ...  x  ...  x  0"broken, see note!"
+          . . v . . . v . .
+          ..+>a>O<..+>a>O<.....>l"Q' off"
+            . ^     .   .
+            O ......+....
+            ^       .
+    "C"S.............
 
 0"One way to solve it, is to take the D flip-flop from above, and instead add"
 0"additional combinational logic at the input to compute the desired next state"
@@ -1359,15 +1359,15 @@ s****>d**]a**>l
 0"This logic can be compacted: Qnext = (T xor Q)"
 
 
-         *********************
-         v                   *
-  "T"s**>e****>a>O<*****>a>O<*>l"Q  on"
-             * ^ * *   * ^ * *
-           **+**  x  **+**  x
-           * * v * * * * v * *
-           O *]a>O<* * *]a>O<*>l"Q' off"
-           ^         *
-  "C"s****************
+         .....................
+         v                   .
+  "T"s..>e....>a>O<.....>a>O<.>l"Q  on"
+             . ^ . .   . ^ . .
+           ..+..  x  ..+..  x
+           . . v . . . . v . .
+           O .]a>O<. . .]a>O<.>l"Q' off"
+           ^         .
+  "C"s................
 
 0"We can also solve the full JK flip-flop that way, here the logic is a"
 0"bit bigger because there are more rules. We want next Q on if and only"
@@ -1379,15 +1379,15 @@ s****>d**]a**>l
 0"Qnext = (J and !Q) or (!K and Q)"
 
 
-        *************************
-        w *                     *
-  "J"s*>a*+>o****>a>O<*****>a>O<*>l"Q  on"
-          v ^   * ^ * *   * ^ * *
-  "K"s***]a** **+**  x  **+**  x
-              * * v * * * * v * *
-              O *]a>O<* * *]a>O<*>l"Q' off"
-              ^         *
-  "C"s*******************
+        .........................
+        w .                     .
+  "J"s.>a.+>o....>a>O<.....>a>O<.>l"Q  on"
+          v ^   . ^ . .   . ^ . .
+  "K"s...]a.. ..+..  x  ..+..  x
+              . . v . . . . v . .
+              O .]a>O<. . .]a>O<.>l"Q' off"
+              ^         .
+  "C"s...................
 
 
 0"Adding asynchronous reset and set (clear and preset) can be done by directly"
@@ -1396,13 +1396,13 @@ s****>d**]a**>l
                     "preset"
                         s
                         v
-  "D"s*****>a>O<*****>a>O<*>l"Q  on"
-          * ^ * *   * ^ * *
-        **+**  x  **+**  x
-        * * v * * * * v * *
-        O *]a>O<* * *]a>O<*>l"Q' off"
-        ^         *     ^
-  "C"s*************     s
+  "D"s.....>a>O<.....>a>O<.>l"Q  on"
+          . ^ . .   . ^ . .
+        ..+..  x  ..+..  x
+        . . v . . . . v . .
+        O .]a>O<. . .]a>O<.>l"Q' off"
+        ^         .     ^
+  "C"s.............     s
                      "clear"
 
 0"# Summary"
@@ -1434,11 +1434,11 @@ s****>d**]a**>l
 0"want to, there are simple built-in flip-flops available in the simulation"
 0"like so:"
 
-s**>j#q**>l
+s..>j#q..>l
     ###
-s**>k##
+s..>k##
     ###
-s**>c#Q**>l
+s..>c#Q..>l
 
 0"The next tutorial will build flip-flops from NAND gates only. It is also an"
 0"important part since a few more canonical typical flip-flop circuits are"
@@ -1486,11 +1486,11 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"state and takes time to settle to a random state, this is emulated when we"
 0"are in 'electron' mode, in real life this happens in nanoseconds."
 
- "S'"S**>A**>l"Q  on"
-         ^ *
+ "S'"S..>A..>l"Q  on"
+         ^ .
           x
-         v *
- "R'"S**>A**>l"Q' off"
+         v .
+ "R'"S..>A..>l"Q' off"
 
 0"Please look carefully at the wiring above: The arrows in the diagonal wires"
 0"are in the opposite direction as they were in the NOR latches above, with as"
@@ -1500,11 +1500,11 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"To try it out more intuitivily with active-high input, here it is with the"
 0"inputs inverted at the cost of two extra NANDs:"
 
- "S"s**>A>A**>l"Q  on"
-          ^ *
+ "S"s..>A>A..>l"Q  on"
+          ^ .
            x
-          v *
- "R"s**>A>A**>l"Q' off"
+          v .
+ "R"s..>A>A..>l"Q' off"
 
 0"Note that most other circuits below will all be nicely active-high while"
 0"using the first active-low latch, because we'll be using NAND gates at the"
@@ -1518,30 +1518,30 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"with an assymetrical variant, this version works best in both electron and"
 0"immediate mode."
 
-"J"s**>A>A****>l"Q"
-       ^ ^ *
-"K"s**>A>A *
-       ^ ^ *
-       *****
+"J"s..>A>A....>l"Q"
+       ^ ^ .
+"K"s..>A>A .
+       ^ ^ .
+       .....
 
 0"This is another variant, but it flickers less evenly and doesn't work in"
 0"immediate mode at all:"
 
-       *****
-       v v *
-"J"s**>A>A*+****>l"Q"
-           * *
-"K"s**>A>A** *
-       ^ ^   *
-       *******
+       .....
+       v v .
+"J"s..>A>A.+....>l"Q"
+           . .
+"K"s..>A>A.. .
+       ^ ^   .
+       .......
 
 0"The T latch is straightforward from that:"
 
-"T"s**>A>A****>l"Q"
-     * ^ ^ *
-     *>A>A *
-       ^ ^ *
-       *****
+"T"s..>A>A....>l"Q"
+     . ^ ^ .
+     .>A>A .
+       ^ ^ .
+       .....
 
 0"# gated NAND latches"
 
@@ -1550,48 +1550,48 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"different from the non-gated JK latch above, just different wiring."
 
 
-"S"s**>A>A******>l"Q"
-       ^ ^ *
-"E"s****  x
-       v v *
-"R"s**>A>A**
+"S"s..>A>A......>l"Q"
+       ^ ^ .
+"E"s....  x
+       v v .
+"R"s..>A>A..
 
 0"From this, a gated D latch could be made with an extra NAND as invertor:"
 
-"D"s**>A>A******>l"Q"
-     * ^ ^ *
-"E"s*+**  x
-     v v v *
-     A>A>A**
+"D"s..>A>A......>l"Q"
+     . ^ ^ .
+"E"s.+..  x
+     v v v .
+     A>A>A..
 
 0"But it's possible to do better and only use 4 NAND gates total as follows,"
 0"making it cheaper than the earlier solution with NORs, ANDs and an inverter"
 
-"D"s**>A**>A******>l"Q"
-       ^ * ^ *
-       * *  x
-       * v v *
-"E"s****>A>A**
+"D"s..>A..>A......>l"Q"
+       ^ . ^ .
+       . .  x
+       . v v .
+"E"s....>A>A..
 
 0"A more compact looking version of the same thing:"
 
-"D"s>A**>A**>l"Q"
-     ^ v ^ *
-"E"s**>A>A<*
+"D"s>A..>A..>l"Q"
+     ^ v ^ .
+"E"s..>A>A<.
 
 
 0"To make the above JK latch gates, the first NANDs can be used as 3-input"
 0"NAND gates:"
 
-       ***
-       v *
-"J"s**>A*+>A****>l"Q"
-       ^ * ^ *
-"E"s**** * * *
-       v * * *
-"K"s**>A**>A *
-       ^   ^ *
-       *******
+       ...
+       v .
+"J"s..>A.+>A....>l"Q"
+       ^ . ^ .
+"E"s.... . . .
+       v . . .
+"K"s..>A..>A .
+       ^   ^ .
+       .......
 
 
 0"However, strictly speaking, NAND-logic only supports 2-input NAND gates. A"
@@ -1600,13 +1600,13 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"connected), the JK latch looks a bit more expensive, with two regular AND"
 0"gates created from NAND+inverter at the front:"
 
-"J"s**>A>A**>A>A****>l"Q"
-       ^     ^ ^ *
-"E"s****     * * *
-       v     * * *
-"K"s**>A>A**>A>A *
-             ^ ^ *
-             *****
+"J"s..>A>A..>A>A....>l"Q"
+       ^     ^ ^ .
+"E"s....     . . .
+       v     . . .
+"K"s..>A>A..>A>A .
+             ^ ^ .
+             .....
 
 0"Of interest, also, is an alternative form of D latch, the Earle latch. It has"
 0"a low and high enable input, and the latch only works correctly when making."
@@ -1616,106 +1616,106 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 0"than variable length"
 
 
- "E"s****>A**
-          ^ *
- "D"s****** *
+ "E"s....>A..
+          ^ .
+ "D"s...... .
           v v
-          A>A**>l"Q"
-          ^ ^ *
-          **+**
-          v *
-"E'"s****>A**
+          A>A..>l"Q"
+          ^ ^ .
+          ..+..
+          v .
+"E'"s....>A..
 
 
 0"For convenience, here is the Earle D latch with the enable and inverted"
 0"enable connected together:"
 
-"E"s****>A**
-     *   ^ *
-"D"s*+**** *
-     *   v v
-     *   A>A**>l"Q"
-     *   ^ ^ *
-     *   **+**
-     *   v *
-     *>A>A**
+"E"s....>A..
+     .   ^ .
+"D"s.+.... .
+     .   v v
+     .   A>A..>l"Q"
+     .   ^ ^ .
+     .   ..+..
+     .   v .
+     .>A>A..
 
 0"# Edge-triggered flip-flop"
 
 0"Same as before: Two D-latches in a row, but now with only NAND gates:"
 
 
-"D"s**>A**>A***>A**>A***>l"Q"
-       ^ * ^ *  ^ * ^ *
-       * *  x   * *  x
-       * v v *  * v v *
-       *>A>A**  *>A>A**
-       A        *
-       ^        *
-"C"s*************
+"D"s..>A..>A...>A..>A...>l"Q"
+       ^ . ^ .  ^ . ^ .
+       . .  x   . .  x
+       . v v .  . v v .
+       .>A>A..  .>A>A..
+       A        .
+       ^        .
+"C"s.............
 
 
 0"There is also an entirely different D flip-flop from NAND gates possible, the"
 0"classical positive-edge-triggered D flip-flop. It requires either 6 NAND"
 0"gates of which one is 3-input, or 8 2-input NAND gates."
 
-      *******
-      *     *
-"D"s**+**>A**
-      *   ^ *
-      *    x
-      *   v *
-      * *>A****>A**
-      * * ^     ^ *
-"C"s**+**  ;     x
-      * *   *   v *
-      * *>A****>A***>l
-      *   ^ *
-      *    x
-      *   v *
-      ***>A**
+      .......
+      .     .
+"D"s..+..>A..
+      .   ^ .
+      .    x
+      .   v .
+      . .>A....>A..
+      . . ^     ^ .
+"C"s..+..  ;     x
+      . .   .   v .
+      . .>A....>A...>l
+      .   ^ .
+      .    x
+      .   v .
+      ...>A..
 
 
 0"Here is a proper edge-triggered JK flip-flop with the same principle as"
 0"before but with only NAND gates to implement the input XOR and the two"
 0"latches:"
 
-            *******************
-            *                 *
-"J"s***>A>A*+*>A**>A***>A**>A*****>l"Q"
-        ^ ^ *  ^ * ^ *  ^ * ^ *
-"K"s***>A>A *  * *  x   * *  x
-        ^ ^ *  * v v *  * v v *
-        *****  *>A>A**  *>A>A**
-               *        *
-               A        *
-               ^        *
-"C"s*********************
+            ...................
+            .                 .
+"J"s...>A>A.+.>A..>A...>A..>A.....>l"Q"
+        ^ ^ .  ^ . ^ .  ^ . ^ .
+"K"s...>A>A .  . .  x   . .  x
+        ^ ^ .  . v v .  . v v .
+        .....  .>A>A..  .>A>A..
+               .        .
+               A        .
+               ^        .
+"C"s.....................
 
 
 0"The T flip-flop follows directly from that:"
 
-            *******************
-            *                 *
-"T"s***>A>A*+*>A**>A***>A**>A*****>l"Q"
-      * ^ ^ *  ^ * ^ *  ^ * ^ *
-      *>A>A *  * *  x   * *  x
-        ^ ^ *  * v v *  * v v *
-        *****  *>A>A**  *>A>A**
-               *        *
-               A        *
-               ^        *
-"C"s*********************
+            ...................
+            .                 .
+"T"s...>A>A.+.>A..>A...>A..>A.....>l"Q"
+      . ^ ^ .  ^ . ^ .  ^ . ^ .
+      .>A>A .  . .  x   . .  x
+        ^ ^ .  . v v .  . v v .
+        .....  .>A>A..  .>A>A..
+               .        .
+               A        .
+               ^        .
+"C"s.....................
 
 0"A more compact looking version of the JK flip-flop:"
 
-          ***********************
-          v v                   *
-"J"s*****>A>A *>A**>A<*>A**>A***+**>l"Q"
-          v v * ^ v v * ^ v ^ * *
-"K"s*****>A>A** A>A>A** *>A>A<* *
-                ^       *   *   *
-"C"s*********************   *****
+          .......................
+          v v                   .
+"J"s.....>A>A .>A..>A<.>A..>A...+..>l"Q"
+          v v . ^ v v . ^ v ^ . .
+"K"s.....>A>A.. A>A>A.. .>A>A<. .
+                ^       .   .   .
+"C"s.....................   .....
 
 0"RENDER:graphical"
 
@@ -1731,11 +1731,11 @@ registerCircuit('flip-flops (from counters)', `
 
 0"SR latch (edge triggered)"
 
-        *****
-        v   *
-"S" s**>o>e>c***>l
-          ^ *
-"R" s****]a<*
+        .....
+        v   .
+"S" s..>o>e>c...>l
+          ^ .
+"R" s....]a<.
 
 0"c supports multiple inputs and will treat their edges independently, so this"
 0"can be slightly compactified. This one flickers when both inputs are high, so"
@@ -1744,20 +1744,20 @@ registerCircuit('flip-flops (from counters)', `
 0"something used in the rest of the flip-flops from counters further below"
 0"since 'c' is not purely a simple counter anymore like this."
 
-        ***
-        w *
-"S" s**>a>c*****>l
-          ^ *
-"R" s****>a<*
+        ...
+        w .
+"S" s..>a>c.....>l
+          ^ .
+"R" s....>a<.
 
 
 0"Gated D latch. Not a valid D flip-flop, only a gated latch, because it's"
 0"possible to change state while the clock is high instead of only on clock"
 0"rising edge"
 
-"D" s**>e<c**>l
+"D" s..>e<c..>l
         v ^
-"E" s**>a**
+"E" s..>a..
 
 
 0"# flip-flops"
@@ -1766,20 +1766,20 @@ registerCircuit('flip-flops (from counters)', `
 0"when looping c's output back to the input, needed for the control logic, it
 0"will disable itself the next tick, like below:"
 
-    ***
-    v *
-s**>c****>l
+    ...
+    v .
+s..>c....>l
 
 0"So the flip-flop designs below all use two stages"
 
 0"D flipflop. Two c's are needed to prevent anything from changing except when"
 0"clock goes from low to high."
 
-"D" s**>e<*>e<*
-        v * v *
-        a>c a>c****>l
+"D" s..>e<.>e<.
+        v . v .
+        a>c a>c....>l
         m   ^
-"C" s********
+"C" s........
 
 
 0"T flip-flop"
@@ -1787,31 +1787,31 @@ s**>c****>l
 0"Despite 'c' being a single-input T flip-flop, two c's are needed to use it"
 0"for one with separate T and clock input."
 
-"T" s**>e<*
-        v *
-        a>c>a>c****>l
+"T" s..>e<.
+        v .
+        a>c>a>c....>l
         m   ^
-"C" s********
+"C" s........
 
 0"SR flipflop"
 
-"S" s**>o>e<*>e<*
-        ^ v * v *
-"R" s**]a a>c a>c****>l
-        ^ m   ^ *
-"C" s***+****** *
-        *       *
-        *********
+"S" s..>o>e<.>e<.
+        ^ v . v .
+"R" s..]a a>c a>c....>l
+        ^ m   ^ .
+"C" s...+...... .
+        .       .
+        .........
 
 0"JK flipflop"
 
-        *************
-        * w         *
-"J" s***+>a *****   *
-        v v v   *   *
-"K" s**>a>o>e>a>c>a>c********>l
+        .............
+        . w         .
+"J" s...+>a .....   .
+        v v v   .   .
+"K" s..>a>o>e>a>c>a>c........>l
               m   ^
-"C" s**************
+"C" s..............
 
 `, 'flip_flops_counters');
 
@@ -1824,54 +1824,54 @@ registerCircuit('flip-flops (from Qq)', `
 
 0"SR latch"
 
-"S" s**>q**>l
+"S" s..>q..>l
         #
-"R" s**>Q
+"R" s..>Q
 
 0"Gated D latch"
 
-"D" s*>A**]q**>l
+"D" s.>A..]q..>l
        ^ v #
-"E" s***>A]Q
+"E" s...>A]Q
 
 0"D flip-flop"
 
-"D" s*>A**]q>A**]q******>l
+"D" s.>A..]q>A..]q......>l
        m v # ^ v #
-       *]A]Q *>A]Q
-       *     *
-"C" s*********
+       .]A]Q .>A]Q
+       .     .
+"C" s.........
 
 
 0"T flip-flop"
 
-        *************
-        v           *
-"T" s**>e>A**]q>A**]q******>l
+        .............
+        v           .
+"T" s..>e>A..]q>A..]q......>l
           m v # ^ v #
-          *]A]Q *>A]Q
-          *     *
-"C" s************
+          .]A]Q .>A]Q
+          .     .
+"C" s............
 
 0"SR flip-flop"
 
-"S" s**>o>A**]q>A**]q******>l
+"S" s..>o>A..]q>A..]q......>l
         ^ m v # ^ v #
-"R" s**]a *]A]Q *>A]Q
-        m *     *   *
-"C" s***+********   *
-        *           *
-        *************
+"R" s..]a .]A]Q .>A]Q
+        m .     .   .
+"C" s...+........   .
+        .           .
+        .............
 
 0"JK flip-flop"
 
-"J" s**>a[***************
-        v  *            *
-        o**+*>A**]q>A**]q******>l
-        ^  *  m v # ^ v #
-"K" s**]a<**  *]A]Q *>A]Q
-              *     *
-"C" s****************
+"J" s..>a[...............
+        v  .            .
+        o..+.>A..]q>A..]q......>l
+        ^  .  m v # ^ v #
+"K" s..]a<..  .]A]Q .>A]Q
+              .     .
+"C" s................
 
 
 
@@ -1903,40 +1903,40 @@ registerCircuit('Quantum logic gates', `
 
 0"Pauli-X gate: acts like a NOT gate:"
 
-s**>O**>l
+s..>O..>l
 
 0"SWAP gate: swaps two inputs:"
 
-s** **>l
+s.. ..>l
    x
-s** **>l
+s.. ..>l
 
 0"Controlled NOT gate: CNOT gate: acts like XOR plus lets the control input"
 0"through."
 
-s******>l
+s......>l
     v
-s**>e**>l
+s..>e..>l
 
 0"Controlled SWAP gate: Fredkin gate:"
 
-"c"s**************>l 0"c"
-           *
-"a"s*******+>e****>l 0"(a AND NOT c) OR (b AND c)"
+"c"s..............>l 0"c"
+           .
+"a"s.......+>e....>l 0"(a AND NOT c) OR (b AND c)"
          v v ^
-"b"s****>e>a**>e**>l 0"(b AND NOT c) OR (a AND c)"
-       *       ^
-       *********
+"b"s....>e>a..>e..>l 0"(b AND NOT c) OR (a AND c)"
+       .       ^
+       .........
 
 0"Controlled-controlled NOT gate: CCNOT gate: Toffoli gate:"
 
-      *****
-      *   *
-"a"s**+***+****>l 0"a"
-      * v *
-"b"s***>a *****>l 0"b"
+      .....
+      .   .
+"a"s..+...+....>l 0"a"
+      . v .
+"b"s...>a .....>l 0"b"
         v
-"c"s***>e******>l 0"(a AND b) XOR c"
+"c"s...>e......>l 0"(a AND b) XOR c"
 
 
 0"Fredkin and Toffoli are able to implement all classical logic gates, they are"
@@ -1971,44 +1971,44 @@ registerCircuit('Fredkin gate', `
 
 0"It is also known as the controlled swap gate (CSWAP)."
 
-"c"s**************>l 0"c"
-           *
-"a"s*******+>e****>l 0"(a AND NOT c) OR (b AND c)"
+"c"s..............>l 0"c"
+           .
+"a"s.......+>e....>l 0"(a AND NOT c) OR (b AND c)"
          v v ^
-"b"s****>e>a**>e**>l 0"(b AND NOT c) OR (a AND c)"
-       *       ^
-       *********
+"b"s....>e>a..>e..>l 0"(b AND NOT c) OR (a AND c)"
+       .       ^
+       .........
            I
 
-"a"s********>e****>l 0"(a AND NOT c) OR (b AND c)"
-         *   ^
-"c"s*****+***+****>l 0"c"
-         v v *
-"b"s****>e>a**>e**>l 0"(b AND NOT c) OR (a AND c)"
-       *       ^
-       *********
+"a"s........>e....>l 0"(a AND NOT c) OR (b AND c)"
+         .   ^
+"c"s.....+...+....>l 0"c"
+         v v .
+"b"s....>e>a..>e..>l 0"(b AND NOT c) OR (a AND c)"
+       .       ^
+       .........
 
 0"The essense of the design here is a wire crossing with 3 XORs, but then"
 0"with an AND gate in the middle controlled by the control gate."
 
 0"wire crossing:"
 
-s**>e**>l
+s..>e..>l
   v ^
-  e**
+  e..
   ^ v
-s**>e**>l
+s..>e..>l
 
 0"control the AND gate (here implicitely in the middle switch, which only goes"
 0"on when also its input is on) to enable/disable the crossing:"
 
     s
-    *
-s***+>e**>l
+    .
+s...+>e..>l
   v v ^
-  e>a**
+  e>a..
   ^   v
-s****>e**>l
+s....>e..>l
 
 0"Of course if no XOR gates are available, the AND/NOT/OR expressions given at"
 0"the output labels above can be used instead (requires 4 ands, 2 ors and an"
@@ -2017,11 +2017,11 @@ s****>e**>l
 0"It's defined as a chip at the beginning so we can use it as follows now (with"
 0"the control input always at the top):"
 
-"c"s**>i**>l
+"c"s..>i..>l
        i
-"a"s**>i**>l
+"a"s..>i..>l
        i
-"b"s**>i**>l
+"b"s..>i..>l
 
 0"LogicEmu also supports controlled swap with its mux notation (M), but it has"
 0"the wrong shape for what we want here so not used:"
@@ -2029,9 +2029,9 @@ s****>e**>l
       "c"
        s
        v
-"a"s**>M**>l
+"a"s..>M..>l
        M
-"b"s**>M**>l
+"b"s..>M..>l
        v
        l
 
@@ -2041,19 +2041,19 @@ s****>e**>l
 
 0"## NOT"
 
-"a"s**>i**>l2
+"a"s..>i..>l2
        i
-"0"c**>i**>l2
+"0"c..>i..>l2
        i
-"1"C**>i**>l 0"not a"
+"1"C..>i..>l 0"not a"
 
 0"## AND"
 
-"a"s**>i**>l2
+"a"s..>i..>l2
        i
-"b"s**>i**>l2
+"b"s..>i..>l2
        i
-"0"c**>i**>l 0"a and b"
+"0"c..>i..>l 0"a and b"
 
 0"## NAND"
 
@@ -2061,50 +2061,50 @@ s****>e**>l
 0"use a NOT instead of the second Fredkin gate instead. Here we do everything"
 0"from fredkin only so need two."
 
-"a"s**>i**********>l2
+"a"s..>i..........>l2
        i
-"b"s**>i* *>i*****>l2
+"b"s..>i. .>i.....>l2
        i x  i
-"0"c**>i* *>i*****>l2
+"0"c..>i. .>i.....>l2
             i
-"1"C*******>i*****>l 0"a nand b"
+"1"C.......>i.....>l 0"a nand b"
 
 0"Nicer version if NOT can be used:"
 
-"a"s**>i******>l2
+"a"s..>i......>l2
        i
-"b"s**>i******>l2
+"b"s..>i......>l2
        i
-"0"c**>i**>O**>l 0"a nand b"
+"0"c..>i..>O..>l 0"a nand b"
 
 
 0"## OR"
 
-"a"s**>i**>l2
+"a"s..>i..>l2
        i
-"b"s**>i**>l 0"a or b"
+"b"s..>i..>l 0"a or b"
        i
-"1"C**>i**>l2
+"1"C..>i..>l2
 
 
 
 0"## NOR"
 
-"a"s**>i**********>l2
+"a"s..>i..........>l2
        i
-"1"C**>i* *>i*****>l2
+"1"C..>i. .>i.....>l2
        i x  i
-"b"s**>i* *>i*****>l 0"a nor b"
+"b"s..>i. .>i.....>l 0"a nor b"
             i
-"0"c*******>i*****>l2
+"0"c.......>i.....>l2
 
 0"Nicer version if NOT can be used:"
 
-"a"s**>i******>l2
+"a"s..>i......>l2
        i
-"b"s**>i**>O**>l 0"a nor b"
+"b"s..>i..>O..>l 0"a nor b"
        i
-"1"C**>i******>l2
+"1"C..>i......>l2
 
 
 0"## XOR, XNOR"
@@ -2113,27 +2113,27 @@ s****>e**>l
 0"Please note how 'antennas' are used to make some wires cross the chip,"
 0"the --(i)-- wire passes through it."
 
-"a"s********>i*******>l2
+"a"s........>i.......>l2
              i
-"b"s**>i***( i )*****>l2
+"b"s..>i...( i ).....>l2
        i     i
-"0"c**>i****>i*******>l 0"a xor b"
+"0"c..>i....>i.......>l 0"a xor b"
        i     i
-"1"C**>i****>i*******>l 0"a xnor b"
+"1"C..>i....>i.......>l 0"a xnor b"
 
 
 
 0"## Full Adder"
 
-"a"s**>i****************************>l2
+"a"s..>i............................>l2
        i
-"b"s*( i )**>i****************>i****>l2
+"b"s.( i )..>i................>i....>l2
        i     i                 i
-"c"s*( i )*( i )**>i*** >i* **>i****>l 0"carry"
+"c"s.( i ).( i )..>i... >i. ..>i....>l 0"carry"
        i     i     i   x i x   i
-"0"c**>i****>i****>i*** >i* *( i )**>l 0"sum"
+"0"c..>i....>i....>i... >i. .( i )..>l 0"sum"
        i     i     i     i     i
-"1"C**>i****>i****>i****>i****>i****>l2
+"1"C..>i....>i....>i....>i....>i....>l2
 
 
 0"FIT:w"
@@ -2159,23 +2159,23 @@ registerCircuit('Toffoli gate', `
 0"If both a and b are true, c gets inverted, else all outputs are the same as"
 0"the inputs"
 
-      *****
-      *   *
-"a"s**+***+****>l 0"a"
-      * v *
-"b"s***>a *****>l 0"b"
+      .....
+      .   .
+"a"s..+...+....>l 0"a"
+      . v .
+"b"s...>a .....>l 0"b"
         v
-"c"s***>e******>l 0"(a AND b) XOR c"
+"c"s...>e......>l 0"(a AND b) XOR c"
         I
 
 0"It's defined as a chip above so we can use it as follows now (with the"
 0"controlled input/output always at bottom):"
 
-s**>i**>l
+s..>i..>l
     i
-s**>i**>l
+s..>i..>l
     i
-s**>i**>l
+s..>i..>l
 
 
 0"It can make all regular gates, but there are 'garbage' input and output"
@@ -2183,77 +2183,77 @@ s**>i**>l
 
 0"## NOT"
 
-"1"C**>i**>l2
+"1"C..>i..>l2
        i
-"1"C**>i**>l2
+"1"C..>i..>l2
        i
-"a"s**>i**>l 0"NOT a"
+"a"s..>i..>l 0"NOT a"
 
 
 0"## AND"
 
-"a"s**>i**>l2
+"a"s..>i..>l2
        i
-"b"s**>i**>l2
+"b"s..>i..>l2
        i
-"0"c**>i**>l 0"a AND b"
+"0"c..>i..>l 0"a AND b"
 
 
 0"## NAND"
 
-"a"s**>i**>l2
+"a"s..>i..>l2
        i
-"b"s**>i**>l2
+"b"s..>i..>l2
        i
-"1"C**>i**>l 0"a NAND b"
+"1"C..>i..>l 0"a NAND b"
 
 
 0"## OR"
 
-"a"s**>i***>i***>l2
+"a"s..>i...>i...>l2
        i    i
-"b"s**>i* *>i***>l2
+"b"s..>i. .>i...>l2
        i x  i
-"1"C**>i* *>i***>l 0"a OR b"
+"1"C..>i. .>i...>l 0"a OR b"
 
 0"Nicer version if NOT can be used (with Morgan's law):"
 
-"a"s**>O**>i**>l2
+"a"s..>O..>i..>l2
            i
-"b"s**>O**>i**>l2
+"b"s..>O..>i..>l2
            i
-"1"C******>i**>l 0"a OR b"
+"1"C......>i..>l 0"a OR b"
 
 
 0"## NOR"
 
 0"(TODO: verify if there is no way with 2 gates)"
 
-"a"s***** ***** *******>l2
-         x    * *
-"b"s**>i* *>i*-X-*>i***>l2
-       i    i * *  i
-"1"C**>i***>i** **>i***>l2
+"a"s..... ..... .......>l2
+         x    . .
+"b"s..>i. .>i.-*-.>i...>l2
+       i    i . .  i
+"1"C..>i...>i.. ..>i...>l2
        i    i      i
-"1"C**>i***>i*****>i***>l 0"a NOR b"
+"1"C..>i...>i.....>i...>l 0"a NOR b"
 
 0"Nicer version if NOT can be used (with Morgan's law):"
 
 0"Nicer if we allow NOT gates:"
 
-"a"s**>O**>i******>l2
+"a"s..>O..>i......>l2
            i
-"b"s**>O**>i******>l2
+"b"s..>O..>i......>l2
            i
-"1"C******>i**>O**>l 0"a NOR b"
+"1"C......>i..>O..>l 0"a NOR b"
 
 0"## XOR"
 
-"a"s**>i**>l2
+"a"s..>i..>l2
        i
-"1"C**>i**>l2
+"1"C..>i..>l2
        i
-"b"s**>i**>l 0"a XOR b"
+"b"s..>i..>l 0"a XOR b"
 
 
 0"## XNOR"
@@ -2261,21 +2261,21 @@ s**>i**>l
 0"Please note how 'antennas' are used to make some wires cross the chip,"
 0"the --(i)-- wire passes through it."
 
-"1"C******>i***>l2
+"1"C......>i...>l2
            i
-"a"s**>i**(i)**>l2
+"a"s..>i..(i)..>l2
        i   i
-"1"C**>i**>i***>l2
+"1"C..>i..>i...>l2
        i   i
-"b"s**>i**>i***>l 0"a XNOR b"
+"b"s..>i..>i...>l 0"a XNOR b"
 
-0"Nicer version if NOT can be used (with Morgan's law):"
+0"Nicer version if NOT can be used:"
 
-"a"s**>i******>l2
+"a"s..>i......>l2
        i
-"1"C**>i******>l2
+"1"C..>i......>l2
        i
-"b"s**>i**>O**>l 0"a XNOR b"
+"b"s..>i..>O..>l 0"a XNOR b"
 
 
 0"FIT:w"
@@ -2300,22 +2300,22 @@ registerCircuit('Relay Logic', `
 0"them."
 
     s
-    *
-    ***
-    v *
-  *>z*+**>l
-  *   *
-s** ***
-  * * w
-  **+>z**>l
-    *
-    ***
-    v *
-  *>z*+**>l
-  *   *
-s**   *
-  *   w
-  ***>z**>l
+    .
+    ...
+    v .
+  .>z.+..>l
+  .   .
+s.. ...
+  . . w
+  ..+>z..>l
+    .
+    ...
+    v .
+  .>z.+..>l
+  .   .
+s..   .
+  .   w
+  ...>z..>l
 
 
 
@@ -2383,9 +2383,9 @@ s**   *
 0"## SPST (NO) relay"
 
    Is
-   1*
+   1.
    1v
-s**>z****>l
+s..>z....>l
 
 0"The SPST (NO) relay (single pole, single throw, normally open) is a simple"
 0"controlled switch. The top input is the coil input. The left input is the"
@@ -2409,9 +2409,9 @@ s**>z****>l
 0"make contact"
 
    Is
-   1*
+   1.
    9w
-s**>z****>l
+s..>z....>l
 
 0"NOTE: the IC id of this one breaks the rule of using #inputs, #outputs in the"
 0"name. The 9 represents the fact that it's an inverted output (9 being decimal"
@@ -2421,14 +2421,14 @@ s**>z****>l
 1"SPDT relay"  1"SPDT relay flipped around"
 
    Is                     Is
-   1*                     2*
-   2***                   1***
-    v *                    v *
-  *>z*+**>l            s**>z*+**
-  *   *                      * *
-s**   *                      * *>l
-  *   w                      w *
-  ***>z**>l            s****>z**
+   1.                     2.
+   2...                   1...
+    v .                    v .
+  .>z.+..>l            s..>z.+..
+  .   .                      . .
+s..   .                      . .>l
+  .   w                      w .
+  ...>z..>l            s....>z..
 
 0"The SPDT relay (single pole, double throw) is very similar to the SPST relay,"
 0"except the switch will also connect to a contact when in the 'off' position"
@@ -2446,22 +2446,22 @@ s**   *                      * *>l
 1"DPDT relay"1"DPDT relay flipped"1"DPDT relay one side flipped"
 
    Is                  Is                     Is
-   2*                  4*                     3*
-   4***                2***                   3***
-    v *                 v *                    v *
-  *>z*+**>l         s**>z*+**                *>z*+**>l
-  *   *                   * *                *   *
-s** ***                 *** *>l            s** ***
-  * * w                 * w *                * * w
-  **+>z**>l         s***+>z**                **+>z**>l
-    *                   *                      *
-    ***                 ***                    ***
-    v *                 v *                    v *
-  *>z*+**>l         s**>z*+**                **z<+***s
-  *   *                   * *                *   *
-s**   *                   * *>l            l<*   *
-  *   w                   w *                *   w
-  ***>z**>l         s****>z**                ****z<**s
+   2.                  4.                     3.
+   4...                2...                   3...
+    v .                 v .                    v .
+  .>z.+..>l         s..>z.+..                .>z.+..>l
+  .   .                   . .                .   .
+s.. ...                 ... .>l            s.. ...
+  . . w                 . w .                . . w
+  ..+>z..>l         s...+>z..                ..+>z..>l
+    .                   .                      .
+    ...                 ...                    ...
+    v .                 v .                    v .
+  .>z.+..>l         s..>z.+..                ..z<+...s
+  .   .                   . .                .   .
+s..   .                   . .>l            l<.   .
+  .   w                   w .                .   w
+  ...>z..>l         s....>z..                ....z<..s
 
 0"The DPDT relay (double pole, double throw) is in fact two SPDT relays"
 0"controlled by the same coil."
@@ -2470,23 +2470,23 @@ s**   *                   * *>l            l<*   *
 1"4PDT relay"  1"4PDT relay flipped around"
 
      s I                  s I
-    ***4                 ***8
-    v *8                 v *4
- *->z-+-->l           s->z-+-*
-s*  %-w                  %-w *>l
- *--+>z-->l           s--+>z-*
+    ...4                 ...8
+    v .8                 v .4
+ .->z-+-->l           s->z-+-.
+s.  %-w                  %-w .>l
+ .--+>z-->l           s--+>z-.
     v-&                  v-&
- *->z-+-->l           s->z-+-*
-s*  %-w                  %-w *>l
- *--+>z-->l           s--+>z-*
+ .->z-+-->l           s->z-+-.
+s.  %-w                  %-w .>l
+ .--+>z-->l           s--+>z-.
     v-&                  v-&
- *->z-+-->l           s->z-+-*
-s*  %-w                  %-w *>l
- *--+>z-->l           s--+>z-*
+ .->z-+-->l           s->z-+-.
+s.  %-w                  %-w .>l
+ .--+>z-->l           s--+>z-.
     v-&                  v-&
- *->z-+-->l           s->z-+-*
-s*    w                    w *>l
- *--->z-->l           s--->z-*
+ .->z-+-->l           s->z-+-.
+s.    w                    w .>l
+ .--->z-->l           s--->z-.
 
 
 
@@ -2496,26 +2496,26 @@ s*    w                    w *>l
 1"DPST (NO) relay"
 
       s
-      ***
-      v *
-  s**>z*+**>lI
-        *    2
-      ***    2
+      ...
+      v .
+  s..>z.+..>lI
+        .    2
+      ...    2
       v
-  s**>z****>l
+  s..>z....>l
 
 0"The DPST (normally open) relay is two SPST relays to a single coil."
 
 1"DPST (NC) relay"
 
       s
-      ***
-      w *
-  s**>z*+**>lI
-        *    2
-      ***    8
+      ...
+      w .
+  s..>z.+..>lI
+        .    2
+      ...    8
       w
-  s**>z****>l
+  s..>z....>l
 
 0"The DPST (normally closed) relay is two SPST relays to a single coil."
 
@@ -2600,7 +2600,7 @@ s*    w                    w *>l
   s   s
   v   v
   i   i
-C>1**>1**>l
+C>1..>1..>l
   1   1
 
 0"This is a two-input AND gate: only if the two coils are activates, will the"
@@ -2620,15 +2620,15 @@ C>1>1>1>1>l
 0"An OR gate can be made with relays in parallel"
 
       s     s
-      *     *
-C*****+**** *
-    * v   * v
-    * i   * i
-    *>1** *>1**
-      1 *   1 *
+      .     .
+C.....+.... .
+    . v   . v
+    . i   . i
+    .>1.. .>1..
+      1 .   1 .
         v     v
         z     z
-        *************>l
+        .............>l
 
 0"NOTE: remember those two z's on the bottom are not needed in real life. It's"
 0"just there due to a limitation of the simulation. The wires are connected,"
@@ -2637,15 +2637,15 @@ C*****+**** *
 0"## Multi-input OR gate"
 
       s     s     s     s
-      *     *     *     *
-C*****+*****+*****+*****+*********
-    * v   * v   * v   * v
-    * i   * i   * i   * i
-    *>1** *>1** *>1** *>1**
-      1 *   1 *   1 *   1 *
+      .     .     .     .
+C.....+.....+.....+.....+.........
+    . v   . v   . v   . v
+    . i   . i   . i   . i
+    .>1.. .>1.. .>1.. .>1..
+      1 .   1 .   1 .   1 .
         v     v     v     v
         z     z     z     z
-   ******************************>l
+   ..............................>l
 
 0"## XOR gate"
 
@@ -2662,9 +2662,9 @@ C*****+*****+*****+*****+*********
 
     s   s
     v   v
-    i* >i
-C**>1 x 2**>l
-    2* >1
+    i. >i
+C..>1 x 2..>l
+    2. >1
 
 0"## Multi-input XOR gate"
 
@@ -2683,23 +2683,23 @@ C**>1 x 2**>l
 
     s     s     s
     v     v     v
-    i****>i****>i
-C**>1 *   i     2**>l
-    2*+**>i****>1
-      * * i
-      * *>i
-      *   4
-      ***>2
+    i....>i....>i
+C..>1 .   i     2..>l
+    2.+..>i....>1
+      . . i
+      . .>i
+      .   4
+      ...>2
 
     s     s     s     s
     v     v     v     v
-    i****>i****>i** *>i
-C**>1 *   i *   i  x  2**>l
-    2*+**>i*+**>i** *>1
-      * * i * * i
-      * *>i * *>i
-      *   4 *   4
-      ***>2 ***>2
+    i....>i....>i.. .>i
+C..>1 .   i .   i  x  2..>l
+    2.+..>i.+..>i.. .>1
+      . . i . . i
+      . .>i . .>i
+      .   4 .   4
+      ...>2 ...>2
 
 
 0"## NOT gate"
@@ -2710,16 +2710,16 @@ C**>1 *   i *   i  x  2**>l
     s
     v
     i
-C**>1**>l
+C..>1..>l
     9
 
 0"It can be made easily with an SPDT as well:"
 
     s
     v
-    i**
-C**>1
-    2**>l
+    i..
+C..>1
+    2..>l
 
 0"## Two NOT gates"
 
@@ -2727,15 +2727,15 @@ C**>1
 0"multiple to show that both need a power source input."
 
     s
-    *
-    *
-    * *****
-    v *   v
-    i *   i
-  *>1 * *>1
-  * 9** * 9**>l
-  *     *
-C********
+    .
+    .
+    . .....
+    v .   v
+    i .   i
+  .>1 . .>1
+  . 9.. . 9..>l
+  .     .
+C........
 
 0"## NAND gate"
 
@@ -2748,28 +2748,28 @@ C********
 0"relays with the inverted output chosen)."
 
       s     s
-      *     *
-C*****+**** *
-    * v   * v
-    * i   * i
-    *>1   *>1
-      9**   9**
+      .     .
+C.....+.... .
+    . v   . v
+    . i   . i
+    .>1   .>1
+      9..   9..
         v     v
         z     z
-        *************>l
+        .............>l
 
 0"## Multi-input NAND gate"
 
       s     s     s     s
-      *     *     *     *
-C*****+*****+*****+*****+*********
-    * v   * v   * v   * v
-    * i   * i   * i   * i
-    *>1** *>1** *>1** *>1**
-      9 *   9 *   9 *   9 *
+      .     .     .     .
+C.....+.....+.....+.....+.........
+    . v   . v   . v   . v
+    . i   . i   . i   . i
+    .>1.. .>1.. .>1.. .>1..
+      9 .   9 .   9 .   9 .
         v     v     v     v
         z     z     z     z
-   ******************************>l
+   ..............................>l
 
 0"## NOR gate"
 
@@ -2784,7 +2784,7 @@ C*****+*****+*****+*****+*********
   s   s
   v   v
   i   i
-C>1**>1**>l
+C>1..>1..>l
   9   9
 
 0"## Multi-input NOR gate"
@@ -2792,7 +2792,7 @@ C>1**>1**>l
   s s s s
   v v v v
   i i i i
-C>1>1>1>1**>l
+C>1>1>1>1..>l
   9 9 9 9
 
 
@@ -2803,9 +2803,9 @@ C>1>1>1>1**>l
 
     s   s
     v   v
-    i**>i
-C**>1   2**>l
-    2**>1
+    i..>i
+C..>1   2..>l
+    2..>1
 
 0"## Multi-input XNOR gate"
 
@@ -2817,23 +2817,23 @@ C**>1   2**>l
 
     s     s     s
     v     v     v
-    i****>i** *>i
-C**>1 *   i  x  2**>l
-    2*+**>i** *>1
-      * * i
-      * *>i
-      *   4
-      ***>2
+    i....>i.. .>i
+C..>1 .   i  x  2..>l
+    2.+..>i.. .>1
+      . . i
+      . .>i
+      .   4
+      ...>2
 
     s     s     s     s
     v     v     v     v
-    i****>i****>i****>i
-C**>1 *   i *   i     2**>l
-    2*+**>i*+**>i****>1
-      * * i * * i
-      * *>i * *>i
-      *   4 *   4
-      ***>2 ***>2
+    i....>i....>i....>i
+C..>1 .   i .   i     2..>l
+    2.+..>i.+..>i....>1
+      . . i . . i
+      . .>i . .>i
+      .   4 .   4
+      ...>2 ...>2
 
 0"# Other Contraptions"
 
@@ -2848,21 +2848,21 @@ C**>1 *   i *   i     2**>l
 
 
      s        s
-     *        *
+     .        .
      v        v
-     i*****   i*******>l"AND"
-C***>i    ***>i
-   * i**      i**
-   * i        i
-   * i****    i<****
-   *>2   *  **3    *
-     4** *  * 3<** *
-       * *  *    * *
-       * ***+***** *
-       *    *      *
-       *****+*******
-            *
-            **********>l"XOR"
+     i.....   i.......>l"AND"
+C...>i    ...>i
+   . i..      i..
+   . i        i
+   . i....    i<....
+   .>2   .  ..3    .
+     4.. .  . 3<.. .
+       . .  .    . .
+       . ...+..... .
+       .    .      .
+       .....+.......
+            .
+            ..........>l"XOR"
 
 0"There are a few extra loose outputs available, for in case they would"
 0"be useful. The left one outputs the inverse of the first input. The"
@@ -2876,18 +2876,18 @@ C***>i    ***>i
        "R" "S"
 
         s   s
-        *   *
-        *   v
-        *   z
-        *   *z<*
-        v   v  *
-        i   i***
-    C**>1**>i
-      * 9   i**
-      *     i
-      *     i*********>l"Q"
-      *****>2
-            4*********>l"Q'"
+        .   .
+        .   v
+        .   z
+        .   .z<.
+        v   v  .
+        i   i...
+    C..>1..>i
+      . 9   i..
+      .     i
+      .     i.........>l"Q"
+      .....>2
+            4.........>l"Q'"
 
 0"The first relay acts as an inverter for the first switch. So it's only the"
 0"second relay that is the essense of the latch. The set switch enables its"
@@ -2915,15 +2915,15 @@ C***>i    ***>i
 0"also made from this relay as shown in a different circuit schematic included"
 0"in LogicEmu, titled 'Fredkin Gate'."
 
-   s**************>l
+   s..............>l
           v
-     ****>i
-     *    i
-   s*+***>i*******>l
-     * *  i
-     * **>i
-     *    4
-   s*****>2*******>l
+     ....>i
+     .    i
+   s.+...>i.......>l
+     . .  i
+     . ..>i
+     .    4
+   s.....>2.......>l
 
 0"## Demultiplexer"
 
@@ -2932,45 +2932,45 @@ C***>i    ***>i
 
     s
     v
-    i**>l
-s**>1
-    2**>l
+    i..>l
+s..>1
+    2..>l
 
 0"A 1:4 demultiplexer, allowing to choose between 4 outputs with 2 control"
 0"inputs, can be made as follows:"
 
     s s
-    * *
-    * v
-    * i**>l
+    . .
+    . v
+    . i..>l
     v i
-    i>i**>l
-s**>1 i
-    2>i**>l
+    i>i..>l
+s..>1 i
+    2>i..>l
       2
-      4**>l
+      4..>l
 
 0"A 1:8 demultiplexer, allowing to choose between 8 outputs with 3 control"
 0"inputs, can be made as follows:"
 
     s s s
-    * * *
-    * * v
-    * * i**>l
-    * * i
-    * * i**>l
-    * v i
-    * i>i**>l
+    . . .
+    . . v
+    . . i..>l
+    . . i
+    . . i..>l
+    . v i
+    . i>i..>l
     v i i
-    i>i>i**>l
-s**>1 i i
-    2>i>i**>l
+    i>i>i..>l
+s..>1 i i
+    2>i>i..>l
       2 i
-      4>i**>l
+      4>i..>l
         i
-        i**>l
+        i..>l
         4
-        8**>l
+        8..>l
 
 0"## Multiplexer"
 
@@ -2979,22 +2979,22 @@ s**>1 i i
 
     s
     v
-s**>i
-    2**>l
-s**>1
+s..>i
+    2..>l
+s..>1
 
 0"A 4:1 multiplexer, allowing to choose between 4 switches with 2 control"
 0"inputs, can be made as follows:"
 
     s s
-    v *
-s**>i *
+    v .
+s..>i .
     i v
-s**>i>i
-    i 2**>l
-s**>i>1
+s..>i>i
+    i 2..>l
+s..>i>1
     4
-s**>2
+s..>2
 
 0"The 4:1 multiplexer can also be used as a programmable logic gate, which you"
 0"can program to behave like any of the 16 possible 2-input logic gates using"
@@ -3006,23 +3006,23 @@ s**>2
 
 
     s s s
-    * * *
-    v * *
-s**>i * *
-    i * *
-s**>i * *
-    i v *
-s**>i>i *
+    . . .
+    v . .
+s..>i . .
+    i . .
+s..>i . .
+    i v .
+s..>i>i .
     i i v
-s**>i>i>i
-    i i 2**>l
-s**>i>i>1
+s..>i>i>i
+    i i 2..>l
+s..>i>i>1
     i 4
-s**>i>2
+s..>i>2
     i
-s**>i
+s..>i
     8
-s**>4
+s..>4
 
 
 

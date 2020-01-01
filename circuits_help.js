@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2019 Lode Vandevenne
+Copyright (c) 2018-2020 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -41,9 +41,9 @@ registerCircuit('Main Help', `
 
 0"E.g. like this AND gate with switches and LED:"
 
-s**>a**>l
+s..>a..>l
     ^
-s****
+s....
 
 0"LogicEmu is cell-based. A side effect of that is the notation isn't standard"
 0"notation. On the other hand, this has as advantage that a lot of logic fits"
@@ -73,13 +73,13 @@ s****
 
 0"Toggle the switch (s) with the mouse to toggle the LED (l)".
 
-s****>l
+s....>l
 
 0"There are in fact 4 types of cells visible in the above circuit:"
 
 s  0": the input switch which can be toggled with the mouse to output 0 or 1"
 
-** 0": wire which connects things"
+.. 0": wire which connects things"
 
 >  0": arrowhead: input from the wire to the LED"
 
@@ -87,7 +87,7 @@ l  0": the output LED"
 
 0"A 'p' is a push button instead of a switch:"
 
-p****>l
+p....>l
 
 0"As you can see, the electrical circuits above are not closed. That is"
 0"because we only simulate the logic here. Power sources and closing of"
@@ -100,32 +100,32 @@ p****>l
 
 0"Wires can cross or split. If they cross, the signals don't interfere."
 
-0"Wire split (indicated with a little dot at the connection, or * in text"
+0"Wire split (indicated with a little dot at the connection, or . in text"
 0"mode): The input switch activates all connected outout devices. This is also"
 0"known as fanout."
 
 
     l
     ^
-    *
-    *
-s******>l
-    *
-    *
+    .
+    .
+s......>l
+    .
+    .
     v
     l
 
 0"Wire crossing (indicated with the wires rendered slightly disconnected, or a"
-0"+ in text mode): Both switch/LED pairs work independently and don't interact:"
+0"'+' in text mode): Both switch/LED pairs work independently and don't interact:"
 
 
     s
-    *
-    *
-    *
-s***+**>l
-    *
-    *
+    .
+    .
+    .
+s...+..>l
+    .
+    .
     v
     l
 
@@ -134,29 +134,29 @@ s***+**>l
 
            l     l
             ^   ^
-s*** **>l    ; /
+s... ..>l    ; /
     x         x
-s*** **>l    / ;
+s... ..>l    / ;
             /   ;
            s     s
 
 0"Diagonal wire crossing at the arrowhead itself (causing 2 diagonal crossing"
 0"inputs):"
 
-s****** l
+s...... l
        >
-s****** l
+s...... l
 
 0"LEDs can also come in various different colors (using numeric digits)"
 
 
-s*************>l0
+s.............>l0
 
-s*************>l2
+s.............>l2
 
-s*************>l3
+s.............>l3
 
-s*************>l4
+s.............>l4
 
 0"# Logic Gates"
 
@@ -166,21 +166,21 @@ s*************>l4
 
 0"AND gate: the LED only goes on if both input switches are enabled:"
 
-s**>a**>l
+s..>a..>l
     ^
-s****
+s....
 
 0"OR gate: the LED goes on if any input switch is enabled:"
 
-s**>o**>l
+s..>o..>l
     ^
-s****
+s....
 
 0"XOR gate: the LED goes on if any single input switch is enabled, but not both:"
 
-s**>e**>l
+s..>e..>l
     ^
-s****
+s....
 
 0"More theory about these logic gates is in several of the built-in circuits"
 0"from the 'circuits' drop-down. This tutorial here is about viewing circuits"
@@ -191,59 +191,80 @@ s****
 
 0"NAND:"
 
-s**>A**>l
+s..>A..>l
     ^
-s****
+s....
 
 0"NOR:"
 
-s**>O**>l
+s..>O..>l
     ^
-s****
+s....
 
 0"XNOR:"
 
-s**>E**>l
+s..>E..>l
     ^
-s****
+s....
 
 0"A simple NOT gate can be done with O with a single input:"
 
-s**>O**>l
+s..>O..>l
 
-0"3-input gates are also possible, and XOR gates then work like parity gates:"
+0"So to summarize, the 6 main logic gates are:"
 
-s****
+3"a: AND       "
+3"o: OR        "
+3"e: XOR       "
+3"A: NAND      "
+3"O: NOR (+NOT)"
+3"E: XNOR      "
+
+
+0"3-input gates are also possible, and XOR gates then work like parity gates"
+0"(outputs 1 if an odd amount of inputs is 1)"
+
+s....
     v
-s**>A**>l
+s..>e..>l
     ^
-s****
+s....
 
-s****
+s....
     v
-s**>e**>l
+s..>A..>l
     ^
-s****
+s....
 
 0"0-input and 1-input gates are also possible. A 0-input AND gate outputs"
-0"true due to the empty product:"
+0"true due to the empty product (or, because it has no 'off' inputs):"
 
-a****>l
+a....>l    s....>a....>l
+
+o....>l    s....>o....>l
+
+e....>l    s....>e....>l
+
+A....>l    s....>A....>l
+
+O....>l    s....>O....>l
+
+E....>l    s....>E....>l
 
 
 0"There also exist negated inputs. Normal inputs are indicated with an"
 0"arrow head, negated inputs instead with a little circle (or in text"
 0"mode, that is m]w[ for NESW respectively):"
 
-s**]l
+s..]l
 
 0"For example logic gates can get negated inputs that way:"
 
-s**]o***>l
+s..]o...>l
 
-s**]a***>l
+s..]a...>l
     ^
-s****
+s....
 
 0"NOTE: In real life electronics, logic gates normally don't have such"
 0"easy way of negating inputs and invertors are needed. In real life,"
@@ -252,25 +273,25 @@ s****
 
                   l
                   ^
-                  o<*
-                  ^ *
-                *>a a<*
-                * ^ ^ *
-       %>O------*-+-+-+-------- 0"A'"
- "A"s--*----------+-*-+-------- 0"A"
-       %>O--------+---*-------- 0"B'"
- "B"s--*----------*------------ 0"B"
+                  o<.
+                  ^ .
+                .>a a<.
+                . ^ ^ .
+       %>O------.-+-+-+-------- 0"A'"
+ "A"s--.----------+-.-+-------- 0"A"
+       %>O--------+---.-------- 0"B'"
+ "B"s--.----------.------------ 0"B"
 
 0"To make gates with more than 3 inputs, their size can be increased"
 0"In text mode, you can see that character '#' is used for this"
 
-s**>e**>l
+s..>e..>l
     #
-s**>#
+s..>#
     #
-s**>#
+s..>#
     #
-s**>#
+s..>#
 
 0"An example of combining multiple logic gates: The full adder: (NOTE: This is"
 0"an example for the notation here. There are circuits explaining full adders"
@@ -278,11 +299,11 @@ s**>#
 0"means, just enjoy the response to the switches :)"
 
 
-s**>a**>o**>l
-   >    ^
-s**>e**>a
-       >
-s******>e**>l
+s..>a>o..>l
+   >  ^
+s..>e>a
+     >
+s....>e..>l
 
 
 0"# Flip-Flops"
@@ -299,24 +320,25 @@ s******>e**>l
 0"it halves the frequency of the signal. This is a component that keeps"
 0"a state and is positive edge triggered"
 
-s**>c**>l
+s..>c..>l
 
 0"Multiple of them makes a binary counter"
 
     l   l   l   l
     ^   ^   ^   ^
-s**>c**>c**>c**>c
+s..>c..>c..>c..>c
 
 0"The c can also used as a 'constant' when it has no inputs (it then keeps"
-0"its state forever, hence constant). A small 'c' is off, a large 'C' is"
-0"on:"
+0"its state forever, hence constant). A small 'c' is off, a large 'C' is on in"
+0"text mode. In graphical mode, these are rendered with '0' and '1' instead."
 
-c****>l
+c....>l
 
-C****>l
+C....>l
 
 0"Other gates without inputs, like o and O, could be used for this purpose"
-0"but in most built-in circuits 'c' is chosen for consistency."
+0"but in most built-in circuits 'c' is chosen for consistency and because they"
+0"render nicely with the '0' and '1' symbol in graphical mode"
 
 0"Real ideal flip-flops can be made from 'c', 'd', 'j', 'k', 't', 'q' and 'Q',"
 0"and in this case the c stands for 'clock'. Here is how to interpret each"
@@ -336,37 +358,37 @@ C****>l
 0"that. These parts can be combined in any way, with # (visible in text mode)"
 0"as filler"
 
-s**>d**>l
+s..>d..>l
     #       0"D flip-flop: when triggering c, the output will remember the state of d"
-s**>c
+s..>c
 
 
-s**>t**>l
+s..>t..>l
     #       0"D flip-flop: when triggering c, the output will toggle if t is on"
-s**>c
+s..>c
 
 
-s**>j#q**>l
+s..>j#q..>l
     ###
-s**>c##     0"Serves as SR or as JK flip-flop"
+s..>c##     0"Serves as SR or as JK flip-flop"
     ###
-s**>k#Q**>l
+s..>k#Q..>l
 
 
       p
       v
-s**>j#q**>l
+s..>j#q..>l
     ###
-s**>c##     0"Same with asynch set/reset inputs added"
+s..>c##     0"Same with asynch set/reset inputs added"
     ###
-s**>k#Q**>l
+s..>k#Q..>l
       ^
       p
 
 
-s**>q**>l
+s..>q..>l
     #      0"SR latch: no clock, output remembers single switch"
-s**>Q**>l
+s..>Q..>l
 
 
 
@@ -402,13 +424,13 @@ S-->y-->l
                I12
                l
                ^
-               *
-     l<****o<a e *****s
+               .
+     l<....o<a e .....s
            ^ ^^^/
-           a e *
+           a e .
            ^^^
-           * *
-           * *
+           . .
+           . .
            s s
 
 0"And here we use multiple instances of chip 12:"
@@ -444,6 +466,15 @@ s-->d-->l
 
 s-->d-->d-->d-->d-->d-->d-->d-->d-->l
 
+0"or it can have a higher delay indicated with a number:"
+
+    4
+s-->d-->l
+
+    2
+    0
+s-->d-->l
+
 0"A timer 'r' or 'R' blinks with a certain speed. The speed is given in tenths"
 0"of a second, and the total period is twice that. If no number is given, the
 0"default is 0.5 seconds to toggle (so 1 second full period)."
@@ -464,7 +495,7 @@ s-->d-->d-->d-->d-->d-->d-->d-->d-->l
 
 0"An RGB LED 'Y' takes a red, green and blue input:"
 
-2"B"s--->Y<---s0"R"
+8"B"s--->Y<---s"R"6
          ^
          |
          |
@@ -479,53 +510,56 @@ s-->d-->d-->d-->d-->d-->d-->d-->d-->l
 
 0"Mux:"
 
-    l               l l
-    ^               ^ ^
-    *               * *
-    *               * *
-s**>M**>l       s**>MMM**>l
-    M               MMM
-s**>M           s**>MMM
-    ^               MMM
-    *           s**>MMM
-    *               MMM
-    s           s**>MMM
-                    ^ ^
-                    * *
-                    * *
-                    s s
-
+    4"control"4         4"control"4
+         l                  l l
+         ^                  ^ ^
+    :    .                  . .
+    i    .             :    . .
+    ns..>M..>l0"out"   is..>MMM..>l3"out"
+    p    M             n    MMM
+    us..>M             ps..>MMM
+    t    ^             u    MMM
+    s    .             ts..>MMM
+    :    .             s    MMM
+         s             :s..>MMM
+    4"control"4             ^ ^
+                            . .
+                            . .
+                            s s
+                        4"control"4
 
 0"Demux:"
 
-    l               l l
-    ^               ^ ^
-s**>M**>l           * *
-    M               * *
-    M**>l       s**>MMM**>l
-    ^               MMM
-    s               MMM**>l
-                    MMM
-                    MMM**>l
-                    MMM
-                    MMM**>l
-                    ^ ^
-                    * *
-                    * *
-                    s s
+    4"control"4         4"control"4
+         l                  l l
+         ^                  ^ ^
+         .                  . .
+         .    :             . .    :
+5"in"s..>M..>lo    5"in"s..>MMM..>lo
+         M    u             MMM    u
+         M..>lt             MMM..>lt
+         ^    :             MMM    p
+         .                  MMM..>lu
+         .                  MMM    t
+         s                  MMM..>ls
+    4"control"4             ^ ^    :
+                            . .
+                            . .
+                            s s
+                        4"control"4
 
 0"Controlled swap:"
 
     l
     ^
-    *
-    *
-s**>M**>l
+    .
+    .
+s..>M..>l
     M
-s**>M**>l
+s..>M..>l
     ^
-    *
-    *
+    .
+    .
     s
 
 
@@ -682,11 +716,11 @@ R-->?-->l
 0"yellow), and one solution is to OR them. An alternative solution here is to"
 0"use tri-state buffers (or open collector outputs if you will)."
 
-s*****          s*****          s**>z***
-     *               v                 *
-s*****          s***>o          s**>z***
-     *               v                 *
-s*********>l    s***>o****>l    s**>z*******>l
+s.....          s.....          s..>z...
+     .               v                 .
+s.....          s...>o          s..>z...
+     .               v                 .
+s.........>l    s...>o....>l    s..>z.......>l
 
 0"Note that in real life enabling multiple z's at the same time could cause a"
 0"short but that is not simulated here."
@@ -703,48 +737,48 @@ s*********>l    s***>o****>l    s**>z*******>l
 0"use to actually represent a tri-state buffer with a control signal."
 
     s
-    *
-    *
+    .
+    .
     v
-s**>z**>l
+s..>z..>l
 
 0"Multiple could output to some shared bus, each with a control of which only"
 0"one should be active at the time, like this:"
 
      p
      v
- s**>z***
-        *
-     p  *
-     v  *
- s**>z***
-        *
-     p  *
-     v  *
- s**>z******>l
+ s..>z...
+        .
+     p  .
+     v  .
+ s..>z...
+        .
+     p  .
+     v  .
+ s..>z......>l
 
 0"To summarize it:"
 
-s****                   s****
+s....                   s....
     v                       v
-s**>z**                 s**>a**
-      *                       v
-      *>l1"corresponds to"    o>l
-      *                       ^
-s**>z**                 s**>a**
+s..>z..                 s..>a..
+      .                       v
+      .>l1"corresponds to"    o>l
+      .                       ^
+s..>z..                 s..>a..
     ^                       ^
-s****                   s****
+s....                   s....
 
 
-s****                   s****
+s....                   s....
     v                       v
-s**>Z**                 s**>o**
-      *                       v
-      *>l1"corresponds to"    a>l
-      *                       ^
-s**>Z**                 s**>o**
+s..>Z..                 s..>o..
+      .                       v
+      .>l1"corresponds to"    a>l
+      .                       ^
+s..>Z..                 s..>o..
     ^                       ^
-s****                   s****
+s....                   s....
 
 
 0"The built-in circuit where these z's are used the most, is the one named"
@@ -811,13 +845,13 @@ s---g1         0g----->l
           ^
 s--(      |       )--->l
           s
-s-----*
+s-----.
       n
 
 
 
       u
-l<----*
+l<----.
 
 0"Antennas can make wrap-around circuits:"
 
@@ -842,8 +876,66 @@ l<----*
 
 0"RENDER:graphical"
 
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
+0"LogicEmu. Copyright (C) 2018-2020 by Lode Vandevenne"
 `, 'mainhelp');
+
+
+registerCircuit('Glossary', `
+0"This lists some of the LogicEmu-specific terms that appear in some articles:"
+
+0"- Backplane: This usually refers to any kind of way that parts of wires can"
+0"connect to each other from a distance without having to draw all cells"
+0"between them. It's considered that this happens on another hidden circuit"
+0"board, the 'backplane'. For example the global wires and antennas."
+
+0"- Built-in circuit: One of the circuits (or articles) that are loaded"
+0"and available automatically, built into this program itself, as opposed to"
+0"user-created and edited circuits. This glossary itself is one of them."
+
+0"- Cell: a single square on the grid, on which the circuits are built with one"
+0"letter or other ASCII character per cell."
+
+0"- Chip: see Integrated Circuit."
+
+0"- Component: a device, such as an AND gate, a switch, an LED, an interactive"
+0"terminal, and so on. A component can occupy multiple cells, and all its"
+0"output wires are also considered part of the component."
+
+0"- Counter Gate: A 'gate' that acts as a single-input T flip-flop, it flips"
+0"its state each time the input goes from low to high. Example:"
+s-->c-->l
+
+0"- Electron Mode: emulation mode that works gate per gate, slower but lower"
+0"level than immediate mode. Chooseable with one of the top dropdowns. See:"
+0"INSERT:link:algohelp"
+
+0"- Graphical Mode: Rendering where things are drawn with boxes, arrows and"
+0"generally look more graphical than the text mode."
+0"INSERT:link:renderhelp"
+
+0"- IC: see Integrated Circuit."
+
+0"- Immediate Mode: emulation mode that works globally and faster than electron"
+0"mode, for sequential circuits or combinational circuits without loops."
+0"Chooseable with one of the top dropdowns. See:"
+0"INSERT:link:algohelp"
+
+0"- Integrated Circuit: the ability to define a circuit and reuse it multiple"
+0" times elsewhere on the board. The definition or template is indicated with"
+0"a capital 'I' and a usage or instance with a small 'i'"
+
+0"- Part: a character on a single cell (see Cell), as opposed to a Component"
+0"which is made from one or more parts (or cells)."
+
+0"- Text Mode: Rendering where things are drawn with individual letter characters"
+0"and other ASCII characters. Less nice looking than graphical mode, but more"
+0"similar to the source code, and may be faster in some browsers."
+0"INSERT:link:renderhelp"
+
+0"- Ticks: The amount of emulation steps done so far. Individual ticks can"
+0"be seen by using the tick button when the circuit is paused."
+
+`, 'glossary');
 
 registerCircuit('Controls', `
 0"# Controls"
@@ -878,14 +970,14 @@ s>BBBb
 0"This pauses the running circuit until you activate it again."
 
 
-c>a------------------* *->l
+c>a------------------. .->l
 c-V--------,,--------+-+->l
-c-+-----* *+* *----* *-+->l
-c-+-----+-++--*  *-+---+->l
+c-+-----. .+. .----. .-+->l
+c-+-----+-++--.  .-+---+->l
 c-+-----+-,,-----+-+---+->l
-c-+---* *--------+-+---*->l
-c-+-* *----------+-+----->l
-c-* *------------* *----->l
+c-+---. .--------+-+---.->l
+c-+-. .----------+-+----->l
+c-. .------------. .----->l
 
 0"Control+Click on something will change it to an inverted type (e.g. AND to"
 0"NAND, or default-off pushbutton to default-on pushbutton)."
@@ -993,19 +1085,17 @@ registerCircuit('Rendering Modes', `
       |   |ll  ####
    p--+---%--->l###   l
       |   |           ^
-s---*******--->e>l** *|*>T
-      v       >     x X
-s---->a-****-->a>l** *|*>l1
-      |  ***          s
-    s-Vl ***     l
+s---.......--->e>l.. .|.>T
+      v       >     x *
+s---->a-....-->a>l.. .|.>l1
+      |  ...          s
+    s-Vl ...     l
       l     ;   ^
              ; /
-              *
+              .
 
 0"You can also zoom in and out with the - and + buttons, and change the color"
 0"scheme. These controls, too, are in the top bar."
-
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 
 0"FIT:y"
 `, 'renderhelp');
@@ -1024,7 +1114,7 @@ registerCircuit('Ticks and Emulation Algorithms', `
 0"would not be visible."
 
 
-p**>e>e>e>e>e>e>e>e
+p..>e>e>e>e>e>e>e>e
     ^             v
     e             e
     ^             v
@@ -1033,8 +1123,9 @@ p**>e>e>e>e>e>e>e>e
     e<e<e<e<e<e<e<e
 
 0"Normally you don't have to set this yourself, as the best mode is chosen"
-0"automatically for each circuit loaded. But if you are interested to mess"
-0"around with it, read on below."
+0"automatically for each circuit loaded, based on the presense of particular"
+0"loop-like structures. But if you are interested to mess around with it, read"
+0"on below."
 
 
 0"# The Details"
@@ -1113,14 +1204,14 @@ s->d->d->d->d->d->d->d->d->l
           "8       4       2       1"
            l       l       l       l
            ^       ^       ^       ^
-     **a<*>e **a<*>e **a<*>e **a<*>e
-     v ^ * ^ v ^ * ^ v ^ * ^ v ^ * ^
-"c"l<o **+***o **+***o **+***o **+***s"c"
-     ^   *   ^   *   ^   *   ^   *
-     a<*>e   a<*>e   a<*>e   a<*>e
-     ^ * ^   ^ * ^   ^ * ^   ^ * ^
-     **+**   **+**   **+**   **+**
-       * *     * *     * *     * *
+     ..a<.>e ..a<.>e ..a<.>e ..a<.>e
+     v ^ . ^ v ^ . ^ v ^ . ^ v ^ . ^
+"c"l<o ..+...o ..+...o ..+...o ..+...s"c"
+     ^   .   ^   .   ^   .   ^   .
+     a<.>e   a<.>e   a<.>e   a<.>e
+     ^ . ^   ^ . ^   ^ . ^   ^ . ^
+     ..+..   ..+..   ..+..   ..+..
+       . .     . .     . .     . .
        s s     s s     s s     s s
      "b8 a8   b4 a4   b2 a2   b1 a1"
 
@@ -1131,27 +1222,27 @@ s->d->d->d->d->d->d->d->d->l
 0"computation happens on the memory, then the result is stored back into the"
 0"original memory."
 
-    ***
-    v *
-s**>c**>l
+    ...
+    v .
+s..>c..>l
 
 0"Another example of something that needs multiple immediate ticks is the delay."
 
-s**>d**>l
+s..>d..>l
 
 0"An example of something that requires electron mode is a 1-tick pulse made"
 0"from gate delays (without using 'd' but regular gates). In electron mode,"
 0"this will pulse once when activating the switch. In immediate mode, it'll"
 0"just stay off."
 
-p****>o**]a**>l
-    *     ^
-    *******
+p....>o..]a..>l
+    .     ^
+    .......
 
 0"Another electron example: in electron mode, the signal you make with"
 0"the switch will loop around in a much nicer way than in immediate mode."
 
-s**>e>e>e>e>e>e>e>e
+s..>e>e>e>e>e>e>e>e
     ^             v
     e             e
     ^             v
@@ -1175,11 +1266,11 @@ s**>e>e>e>e>e>e>e>e
 0"randomness here too."
 
 
-          O-*
+          O-.
           ^ |
-  s------>e<*--->l
+  s------>e<.--->l
           v |
-          O<*
+          O<.
 
 0"The randomness is not present in immediate mode. Due to the way those"
 0"algorithms work, such loopy circuits settle to a well defined state"
@@ -1192,7 +1283,6 @@ s**>e>e>e>e>e>e>e>e
 
 0"FIT:w"
 
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `, 'algohelp');
 
 
@@ -1224,13 +1314,13 @@ registerCircuit('Loading Circuits', `
 
 3"s--->a---->l"
 3"     ^      "
-3"s----*      "
+3"s----.      "
 
 0"It becomes this when loaded:"
 
 s--->a---->l
      ^
-s----*
+s----.
 
 
 0"# 3. base64 URL code"
@@ -1268,9 +1358,7 @@ s----*
 0"built-in circuits), they are not sent to any web server or cloud and require"
 0"no internet connectivity."
 
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `, 'loadinghelp');
-
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -1307,9 +1395,9 @@ registerCircuit('Editing Help', `
 0"gate, by turning the 'a' into an 'o'. Press the 'edit' button, find this and"
 0"gate in it, change the a into an o, and press 'done'."
 
-s**>a**>l
+s..>a..>l
     ^
-s****
+s....
 
 0"Note how not only that logic gate but also this text itself was in there."
 0"That is because this whole page including all text is a circuit you can edit!"
@@ -1340,13 +1428,13 @@ s****
 
 0"The most simple circuit that does something is a switch connected to a LED:"
 
-s**>l
+s..>l
 
 0"There are in fact 4 types of cells visible in the above circuit:"
 
 s 0": the input switch which can be toggled with the mouse"
 
-**0": wire which connects things"
+..0": wire which connects things"
 
 > 0": arrowhead: input from the wire to the LED. For other diretions,"
   0"  use ^>v< for north, east, south, west respectively"
@@ -1358,17 +1446,17 @@ l 0": the output LED"
 0"# SECTION I: input/output/wiring"
 
 3"NEW PART: wires"
-3"*: wire, wire split, wire corner."
+3".: wire, wire split, wire corner."
 3"-: horizontal wire"
 3"|: vertical wire"
 
 0"They don't do much below since they're not connected to anything here:"
 
-          |        *-----
+          |        .-----
           |        |
--------   |    ----*       ********
+-------   |    ----.       ........
           |        |
-          |        *-----
+          |        .-----
 
 3"NEW PART: switches"
 3"s: initially off switch"
@@ -1383,8 +1471,8 @@ l 0": the output LED"
 
 0"Click the green switches with the mouse to toggle them"
 
-          *
-s******   *
+          .
+s......   .
           S
 
 3"NEW PART: device inputs"
@@ -1399,7 +1487,7 @@ s******   *
 0"of that device, while when connected with an arrowhead it's an input. so the"
 0"signal below goes from the switch s to the o and then from the o to the l:"
 
-s****>o****>l
+s....>o....>l
 
 3"NEW PART: LED"
 3"l: LED/light (user output)"
@@ -1410,7 +1498,7 @@ s****>o****>l
 0"and an output. It's not closed, like a real electric circuit, because wiring"
 0"to power sources is implicit."
 
-s****>l   S****>l
+s....>l   S....>l
 
 3"NEW PART: push button"
 3"p: initially off push button"
@@ -1418,22 +1506,22 @@ s****>l   S****>l
 
 0"these toggle back to original state when releasing the mouse button"
 
-p****>l   P****>l
+p....>l   P....>l
 
 0"This switch will only leave through the push button signal if the switch is"
 0"on itself"
 
-p**>s**>l
+p..>s..>l
 
 3"NEW BEHAVIOR: controlled switch"
 
 0"A switch or pushbutton with an input will only work if its input is on:"
 
-s****>s***>l
+s....>s...>l
 
-p****>s***>l
+p....>s...>l
 
-s****>p***>l
+s....>p...>l
 
 3"NEW PART: wire crossing"
 3"+: wire crossing"
@@ -1442,34 +1530,34 @@ s****>p***>l
 0"The wire crossing allows two independent signals to go through"
 
      s
-     *
-     *
-s****+****>l
-     *
-     *
+     .
+     .
+s....+....>l
+     .
+     .
      v
      l
 
-s**** ****>l
+s.... ....>l
      x
-s**** ****>l
+s.... ....>l
 
 3"NEW BEHAVIOUR: wire and device packing"
 
-0"-| can be packed closer together than *, because * would touch on all sides"
+0"-| can be packed closer together than ., because . would touch on all sides"
 0"Different devices (here l and s) also don't interact if they touch, they are"
-0"individual LEDs and switches The circuit with * instead of -| operates as one"
-0"because those *'s are all connected"
+0"individual LEDs and switches The circuit with . instead of -| operates as one"
+0"because those .'s are all connected"
 
           lll
           ^^^
-s----->l  |||     *****>l
-s----->l  |||    s*****>l
-s----->l  |||     *****>l
+s----->l  |||     .....>l
+s----->l  |||    s.....>l
+s----->l  |||     .....>l
           |||
           sss
 
-0"NOTE: for style reasons, most built-in circuits use '*' for most wires with"
+0"NOTE: for style reasons, most built-in circuits use '.' for most wires with"
 0"some distance bewteen them and only use --- or | for close packing when"
 0"really needed. This is purely up to personal preference though."
 
@@ -1506,7 +1594,7 @@ s----->l  |||     *****>l
 3"### : sub-sub-chapter (heading 3)"
 3"- : bullet list item (indentation not supported)"
 3"+ : bullet list item (same as -)"
-3"* : bullet list item (same as -)"
+3". : bullet list item (same as -)"
 
 0"NOTE: numbers placed left or right of a quote will be used for the text style"
 0"and take priority over other uses of numbers (see further). Do not place a quote"
@@ -1521,9 +1609,7 @@ s----->l  |||     *****>l
 0"The full width and narrow fixed width styles do not interpret any characters as markdown,"
 0"and so will keep the # as-is"
 
-0"NOTE: bold text is not supported. It's too likely a '**' is mentioned in"
-0"comments to mean * as wire, it would cause too many inadvertant markdown"
-0"replacements."
+0"NOTE: other markdown features, such as bold and italic, are currently not supported."
 
 0"Below the different types of alignment and style are shown in a table. The"
 0"first column indicates whether any number or # is present. The second column"
@@ -1567,10 +1653,10 @@ s----->l  |||     *****>l
 +-----+--------------+
 |0 +  |0"+ bullet   "| 0"bullet list item (same as with -)"
 +-----+--------------+
-|0 *  |0"* bullet   "| 0"bullet list item (same as with -)"
+|0 .  |0". bullet   "| 0"bullet list item (same as with -)"
 +-----+--------------+
 
-0"Fixed with text will not use markdown, unless a narrow width and a formatted"
+0"Fixed width text will not use markdown, unless a narrow width and a formatted"
 0"number are combined"
 
        0v          v0
@@ -1648,9 +1734,9 @@ s----->l  |||     *****>l
 0"These devices operate on 2 (or any other amount of) inputs. The 'e' of XOR"
 0"stands for Exclusive or."
 
-s****      s****      s****
+s....      s....      s....
     v          v          v
-s**>o**>l  s**>a**>l  s**>e**>l
+s..>o..>l  s..>a..>l  s..>e..>l
 
 3"NEW PARTS: logic gates NOR, NAND, XNOR"
 3"O: NOR gate"
@@ -1659,9 +1745,9 @@ s**>o**>l  s**>a**>l  s**>e**>l
 
 0"These are similar but with inverted outputs."
 
-s****      s****      s****
+s....      s....      s....
     v          v          v
-s**>O**>l  s**>A**>l  s**>E**>l
+s..>O..>l  s..>A..>l  s..>E..>l
 
 3"NEW PARTS: inverted device inputs"
 3"m: north inverted device input"
@@ -1672,11 +1758,11 @@ s**>O**>l  s**>A**>l  s**>E**>l
 0"These invert the input signal, and will be rendered with a small circle in"
 0"graphics mode."
 
-s****]l   S****]l
+s....]l   S....]l
 
-s****      s****      s****      s****      s****      s****
+s....      s....      s....      s....      s....      s....
     w          w          w          w          w          w
-s**]o**>l  s**]a**>l  s**]e**>l  s**]O**>l  s**]A**>l  s**]E**>l
+s..]o..>l  s..]a..>l  s..]e..>l  s..]O..>l  s..]A..>l  s..]E..>l
 
 3"NEW BEHAVIOR: multi-input gates"
 
@@ -1686,22 +1772,22 @@ s**]o**>l  s**]a**>l  s**]e**>l  s**]O**>l  s**]A**>l  s**]E**>l
 0"parity gates"
 
     s          s          s
-    *          *          *
-    *          *          *
+    .          .          .
+    .          .          .
     v          v          v
-s**>o**>l  s**>a**>l  s**>e**>l
+s..>o..>l  s..>a..>l  s..>e..>l
     ^          ^          ^
-    *          *          *
-    *          *          *
+    .          .          .
+    .          .          .
     s          s          s
 
 0"Gates can also work as expected with just 1 input."
 
-s**>o**>l       s**>O**>l
+s..>o..>l       s..>O..>l
 
-s**>a**>l       s**>A**>l
+s..>a..>l       s..>A..>l
 
-s**>e**>l       s**>E**>l
+s..>e..>l       s..>E..>l
 
 0"Gates can also work as expected with 0 inputs, and that includes the 0-input"
 0"AND gate outputting a signal and the NAND gate not outputting a signal. The"
@@ -1709,27 +1795,27 @@ s**>e**>l       s**>E**>l
 0"AND gate is: it outputs when it does not have any 'off' inputs. This is also"
 0"known as the empty product"
 
-o**>l       O**>l
+o..>l       O..>l
 
-a**>l       A**>l
+a..>l       A..>l
 
-e**>l       E**>l
+e..>l       E..>l
 
 3"NEW BEHAVIOR: NOT gate"
 
 0"A NOT gate can be made in several ways from the existing parts. The"
 0"recommended form is with a one-input NOR gate:"
 
-s**>O**>l
+s..>O..>l
 
 0"but depending on the situation, you may find yourself using inverted device"
 0"inputs, NAND gates, and so on instead"
 
-s******]l
+s......]l
 
-s**>A**>l
+s..>A..>l
 
-s**]o**>l
+s..]o..>l
 
 3"NEW BEHAVIOUR: rules for wire with multiple devices"
 
@@ -1738,30 +1824,30 @@ s**]o**>l
 0"internals of the simulation, the entire wire, with all splits and arrow"
 0"heads, is actually an extension of s (its output), and internally part of s."
 
-s*********>l
-      *
-      ****>l
-      *
-      ****>l
+s.........>l
+      .
+      ....>l
+      .
+      ....>l
 
 0"But multiple different outputs inputting to the same wire is an error As seen"
 0"above, the wire is an extension of the part it outputs from. So here it would"
 0"be three different switches at the same time, which is of course impossible."
 
-s*****
-     *
-s*****
-     *
-s*********>l
+s.....
+     .
+s.....
+     .
+s.........>l
 
 0"If you do want to output multiple devices to 1 wire, use an OR gate,"
 0"(or as seen further, a tristate buffer)"
 
-s*****
+s.....
      v
-s***>o
+s...>o
      v
-s***>o****>l
+s...>o....>l
 
 3"NEW PART: device extender"
 3"#: device extender"
@@ -1786,11 +1872,11 @@ sssss    sssss    sssss    ###
 0"with unwanted segments:"
 
 
-    $$l<-*
+    $$l<-.
    $   $ |
   >l   l<|
   |$   $||
- *+>l$$ ||
+ .+>l$$ ||
  ||$   $||
  ||$   $||
  ||l   l||
@@ -1816,13 +1902,13 @@ sssss    sssss    sssss    ###
 0"capital C starts in on state instead of off state, other than that behaves"
 0"the same."
 
-s**>c**>l     s**>C**>l
+s..>c..>l     s..>C..>l
 
 0"This can make a binary counter, although it counts backwards in this simple form"
 
-s**>c**>c**>c**>c**>c**>c**>c**>c**>l
+s..>c..>c..>c..>c..>c..>c..>c..>c..>l
 
-s**>C**>C**>C**>C**>C**>C**>C**>C**>l
+s..>C..>C..>C..>C..>C..>C..>C..>C..>l
 
 3"NEW PARTS: flip flop parts"
 3"c: flip flop part, can be combined together"
@@ -1846,48 +1932,48 @@ s**>C**>C**>C**>C**>C**>C**>C**>C**>l
 0"These parts can be combined in any way, with # (visible in text mode) as"
 0"filler"
 
-s**>c**>l
+s..>c..>l
     #       0"D flip-flop: when triggering c, the output will remember the state of d"
-s**>d
+s..>d
 
 
-s**>c**>l
+s..>c..>l
     #       0"D flip-flop: when triggering c, the output will toggle if t is on"
-s**>t
+s..>t
 
 
-s**>j#q**>l
+s..>j#q..>l
     ###
-s**>c##     0"JK flip-flop (also usable as SR flip-flop)"
+s..>c##     0"JK flip-flop (also usable as SR flip-flop)"
     ###
-s**>k#Q**>l
+s..>k#Q..>l
 
 
       s
       v
-s**>j#q**>l
+s..>j#q..>l
     ###
-s**>c##     0"JK flip-flop with additional asynch set/reset"
+s..>c##     0"JK flip-flop with additional asynch set/reset"
     ###
-s**>k#Q**>l
+s..>k#Q..>l
       ^
       s
 
-s**>q**>l
+s..>q..>l
     #      0"SR latch: no clock"
-s**>Q**>l
+s..>Q..>l
 
 
-s**>j**>l
+s..>j..>l
     #
-s**>c**>l 0"JK flip-flop with q and Q left out, they are not required to get outputs"
+s..>c..>l 0"JK flip-flop with q and Q left out, they are not required to get outputs"
     #
-s**>k**>l
+s..>k..>l
 
 
-s**>q**>l
+s..>q..>l
     #      0"SR latch: no clock, output remembers single switch"
-s**>Q**>l
+s..>Q..>l
 
 
 
@@ -1898,11 +1984,11 @@ s-->dy-->l 0"D-latch (enable input instead of clock)"
 
      s
      v
-s-->jq**>l
+s-->jq..>l
 s-->k#
-s-->dy<**S 0"Combining every single part (not useful but possible)"
+s-->dy<..S 0"Combining every single part (not useful but possible)"
 s-->t#
-s-->cQ**>l
+s-->cQ..>l
      ^
      s
 
@@ -1913,17 +1999,17 @@ s-->cQ**>l
 3"NEW PART: delay"
 3"d (standalone): 1-tick delay (behavior depends on tick algorithm)"
 
-s**>d**>l
+s..>d..>l
 
-s**>d**>d**>d**>d**>d**>d**>l
+s..>d..>d..>d..>d..>d..>d..>l
 
 0"Numbers from 2-256 make d become an N-tick delay, with buffer that remembers"
 0"all upcoming tick values, so it behaves like N d's in a row"
 
-s**>d**>l
+s..>d..>l
     6
 
-s**>d**>l
+s..>d..>l
     1
     6
 
@@ -1931,9 +2017,9 @@ s**>d**>l
 0"just is delayed. If you want to guarantee a certain minimum pulse length (at"
 0"least for a single short input), try the following:"
 
-   *****
-   *   v
- p**>d>c**>l
+   .....
+   .   v
+ p..>d>c..>l
      1
      6
 
@@ -1943,16 +2029,16 @@ s**>d**>l
 0"wouldn't work. For example this d flip-flop cannot be toggled on due to the d"
 0"input arriving at same time as clock which is too late:"
 
-s**>d**>l
-  * #
-  *>c
+s..>d..>l
+  . #
+  .>c
 
 0"Putting a delay at the clock input solves this (note that in this silly"
 0"example once on it can't be turned off):"
 
-s******>d**>l
-  *     #
-  *>d**>c
+s......>d..>l
+  .     #
+  .>d..>c
 
 3"NEW PART: memory"
 3"b: ROM and RAM bit, value 0"
@@ -2058,8 +2144,8 @@ s******>d**>l
     ^   ^      ^^    ^^
     a< >e      ||    ||
     ^ x ^      i5    i5
-    ** **      ^^    ^^
-    *   *      ||    ||
+    .. ..      ^^    ^^
+    .   .      ||    ||
     s   s      ss    ss
 
 0"The master template must use exactly s as input and l as output, to mark"
@@ -2084,10 +2170,10 @@ s******>d**>l
 
  l  l
  ^  ^
- *  *
+ .  .
  iii5
  ^  ^
- *  *
+ .  .
  s  s
 
 0"While the template must use 's' to indicate inputs and 'l' to indicate"
@@ -2098,8 +2184,8 @@ l   l
 ^   ^
 o<ii5
 ^ ^ ^
-ii5 *
-^ ^ *
+ii5 .
+^ ^ .
 s s s
 
 0"Multiple definitions for the same number results in an error:".
@@ -2116,7 +2202,7 @@ s-->l   s-->l    s-->i6-->l
                  llllll
     llllll       ^^^^^^
     ^^^^^^     s>iiiiii
-   s*||||*sI7    i ^^ i
+   s.||||.sI7    i ^^ i
      ssss        i ss i
                  i<p  i
                  i    i
@@ -2132,10 +2218,10 @@ s-->l   s-->l    s-->i6-->l
 
 l   lI8    l   l     l   l
 ^   ^      ^   ^     ^   ^
-o<ii5      *   *     *   *
+o<ii5      .   .     .   .
 ^ ^ ^      iiii8     iiii8
-ii5 *      ^ ^ ^     ^ ^ ^
-^ ^ *      * * *     * * *
+ii5 .      ^ ^ ^     ^ ^ ^
+^ ^ .      . . .     . . .
 s s s      s s s     s s s
 
 3"NEW BEHAVIOR: rotated chips"
@@ -2166,11 +2252,11 @@ l<i<s
 0"initially off, R is initially on, so r and R blink with opposite timings"
 0"(they are 180 degrees out of phase)"
 
-r****>l   R***>l
+r....>l   R...>l
 
 0"A timer with an input will only work while the input is enabled"
 
-s**>r**>l   S**>r**>l
+s..>r..>l   S..>r..>l
 
 0"You can click a timer with the mouse to freeze or unfreeze it."
 
@@ -2189,7 +2275,7 @@ s**>r**>l   S**>r**>l
 0 1 2 3 4 5 6 7
 l l l l l l l l        l l l l l l l l l l l
 ^ ^ ^ ^ ^ ^ ^ ^        ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
-* * * * * * * *        * * * * * * * * * * *
+. . . . . . . .        . . . . . . . . . . .
 s s s s s s s s        r r r r r r r r r r r
                        1 2 3 4 5 6 7 8 9 1 1
                                          0 1
@@ -2197,7 +2283,7 @@ s s s s s s s s        r r r r r r r r r r r
 0"Numbers are parsed from the component outward. So this works correctly:"
 
 
-  R**>l
+  R..>l
   1
   5
 
@@ -2205,7 +2291,7 @@ s s s s s s s s        r r r r r r r r r r r
 0"speed of 1, not as 15, because it only parses the number in a straight line"
 0"from the r:"
 
-  R**>l 0"does not work as intended (too fast)"
+  R..>l 0"does not work as intended (too fast)"
   15
 
 0"Numbers are used for several different things, such as style/alignment of"
@@ -2234,9 +2320,9 @@ s s s s s s s s        r r r r r r r r r r r
 3"NEW PART: RGB LED"
 3"Y: RGB LED"
 
-s*>Y<*s
+s.>Y<.s
    ^
-   *
+   .
    s
 
 3"NEW PART: Mux"
@@ -2251,18 +2337,18 @@ s*>Y<*s
     4"control"4         4"control"4
          l                  l l
          ^                  ^ ^
-    :    *                  * *
-    i    *             :    * *
-    ns**>M**>l0"out"   is**>MMM**>l3"out"
+    :    .                  . .
+    i    .             :    . .
+    ns..>M..>l0"out"   is..>MMM..>l3"out"
     p    M             n    MMM
-    us**>M             ps**>MMM
+    us..>M             ps..>MMM
     t    ^             u    MMM
-    s    *             ts**>MMM
-    :    *             s    MMM
-         s             :s**>MMM
+    s    .             ts..>MMM
+    :    .             s    MMM
+         s             :s..>MMM
     4"control"4             ^ ^
-                            * *
-                            * *
+                            . .
+                            . .
                             s s
                         4"control"4
 
@@ -2271,18 +2357,18 @@ s*>Y<*s
     4"control"4         4"control"4
          l                  l l
          ^                  ^ ^
-         *                  * *
-         *    :             * *    :
-5"in"s**>M**>lo    5"in"s**>MMM**>lo
+         .                  . .
+         .    :             . .    :
+5"in"s..>M..>lo    5"in"s..>MMM..>lo
          M    u             MMM    u
-         M**>lt             MMM**>lt
+         M..>lt             MMM..>lt
          ^    :             MMM    p
-         *                  MMM**>lu
-         *                  MMM    t
-         s                  MMM**>ls
+         .                  MMM..>lu
+         .                  MMM    t
+         s                  MMM..>ls
     4"control"4             ^ ^    :
-                            * *
-                            * *
+                            . .
+                            . .
                             s s
                         4"control"4
 
@@ -2290,14 +2376,14 @@ s*>Y<*s
 
     l
     ^
-    *
-    *
-s**>M**>l
+    .
+    .
+s..>M..>l
     M
-s**>M**>l
+s..>M..>l
     ^
-    *
-    *
+    .
+    .
     s
 
 0"These muxes are optional for convenience, notation or compactness, you can"
@@ -2317,7 +2403,7 @@ s**>M**>l
 0"With only inputs, it acts as a screen that can read 7-bit ASCII codes from"
 0"any circuit inputs:"
 
-TTTTTTT<***p3"read"
+TTTTTTT<...p3"read"
 TTTTTTT
 TTTTTTT
 TTTTTTT
@@ -2339,9 +2425,9 @@ SsssssS3"ASCII code in to screen"
          lllllll3"keyboard ASCII code out"
          ^^^^^^^
          |||||||
-"out"p**>TTTTTTT
+"out"p..>TTTTTTT
          TTTTTTT
-"eof"l<**TTTTTTT
+"eof"l<..TTTTTTT
 
 0"If you give the VTE both inputs and outputs, it acts as both a screen and a"
 0"buffered keyboard. The screen shows both typed characters and characters read"
@@ -2352,9 +2438,9 @@ SsssssS3"ASCII code in to screen"
           lllllll3"keyboard ASCII code out"0
           ^^^^^^^
           |||||||
-"out"p**>TTTTTTTT<***p3"read from in to screen"0
+"out"p..>TTTTTTTT<...p3"read from in to screen"0
          TTTTTTTT
-"eof"l<**TTTTTTTT
+"eof"l<..TTTTTTTT
          TTTTTTTT
          TTTTTTTT
           ^^^^^^^
@@ -2401,9 +2487,9 @@ SsssssS3"ASCII code in to screen"
 ?-->l  ?-->l  ?-->l  ?-->l
 ?-->l  ?-->l  ?-->l  ?-->l
 
-s**>?**>l
+s..>?..>l
 
-R**>?**>l
+R..>?..>l
 1
 
 3"NEW PART: tri-state buffer (or open collector output)"
@@ -2421,11 +2507,11 @@ R**>?**>l
 0"error, and one solution is to OR them. An alternative solution here is to"
 0"use tri-state buffers (or open collector outputs if you will)."
 
-s*****          s*****          s**>z***
-     *               v                 *
-s*****          s***>o          s**>z***
-     *               v                 *
-s*********>l    s***>o****>l    s**>z*******>l
+s.....          s.....          s..>z...
+     .               v                 .
+s.....          s...>o          s..>z...
+     .               v                 .
+s.........>l    s...>o....>l    s..>z.......>l
 
 0"Note that in real life enabling multiple z's at the same time could cause a"
 0"short but that is not simulated here."
@@ -2442,48 +2528,48 @@ s*********>l    s***>o****>l    s**>z*******>l
 0"use to actually represent a tri-state buffer with a control signal."
 
     s
-    *
-    *
+    .
+    .
     v
-s**>z**>l
+s..>z..>l
 
 0"Multiple could output to some shared bus, each with a control of which only"
 0"one should be active at the time, like this:"
 
      p
      v
- s**>z***
-        *
-     p  *
-     v  *
- s**>z***
-        *
-     p  *
-     v  *
- s**>z******>l
+ s..>z...
+        .
+     p  .
+     v  .
+ s..>z...
+        .
+     p  .
+     v  .
+ s..>z......>l
 
 0"To summarize it:"
 
-s****                      s****
+s....                      s....
     v                          v
-s**>z**                    s**>a**
-      *                          v
-      *>l 1"corresponds to"      o>l
-      *                          ^
-s**>z**                    s**>a**
+s..>z..                    s..>a..
+      .                          v
+      .>l 1"corresponds to"      o>l
+      .                          ^
+s..>z..                    s..>a..
     ^                          ^
-s****                      s****
+s....                      s....
 
 
-s****                      s****
+s....                      s....
     v                          v
-s**>Z**                    s**>o**
-      *                          v
-      *>l 1"corresponds to"      a>l
-      *                          ^
-s**>Z**                    s**>o**
+s..>Z..                    s..>o..
+      .                          v
+      .>l 1"corresponds to"      a>l
+      .                          ^
+s..>Z..                    s..>o..
     ^                          ^
-s****                      s****
+s....                      s....
 
 
 0"# SECTION VI: Parts for shortcuts and compactness"
@@ -2527,8 +2613,8 @@ s****                      s****
        l l
   l    ^ ^
  ^     a e
-*      ^^^
-s      * *
+.      ^^^
+s      . .
        s s
 
 
@@ -2666,7 +2752,7 @@ l<---g    g--->l
 3"NEW PART: Non-interacting wire corner"
 3",: non-interacting wire corner"
 
-0"This is a corners or split that can be more closely packed than *. They"
+0"This is a corners or split that can be more closely packed than .. They"
 0"interact with other wires, but not with their own kind."
 
                      ll
@@ -2706,13 +2792,13 @@ l<---,,--->l         ||
   /  ;
  s    s
 
-0"Even though x, / and \\ can interact with * diagonally,"
-0"*'s still don't interact diagonally with each other, so no output possible"
+0"Even though x, / and \\ can interact with . diagonally,"
+0".'s still don't interact diagonally with each other, so no output possible"
 0"here:"
 
-   *>l 0"no output"
-  *
- *
+   .>l 0"no output"
+  .
+ .
  s
 
 0"x does not interact with +, |, -, so no output possible here:"
@@ -2727,17 +2813,16 @@ l<---,,--->l         ||
       s
 
 3"NEW PART: 8-way wire crossing"
-3"X: 8-way wire crossing"
+3"*: 8-way wire crossing"
 
-0"X (capital instead of small letter) is a wire crossing that works both"
-0"straight and diagonally, giving it 8 connection points and 4 independent"
-0"signals:"
+0"* is a wire crossing that works both straight and diagonally, giving it 8"
+0"connection points and 4 independent signals:"
 
      l
   s  ^  l
    ; | ^
     ;|/
-  s--X-->l
+  s--*-->l
     /|;
    / | v
   s  |  l
@@ -2750,9 +2835,9 @@ l<---,,--->l         ||
 0"their input from any of the other sides (3 direct neighbors, and 4 more from x)"
 
                                           s
-s---v              >l       s--* >l        ;l<
-    l        s-----*            x           x
-                   >l       s--* >l        /l<
+s---v              >l       s--. >l        ;l<
+    l        s-----.            x           x
+                   >l       s--. >l        /l<
                                           s
 
 0"Normally you connect 1 wire to 1 input side of a device input. It is possible"
@@ -2799,7 +2884,7 @@ s------UU-UGl
 
 s     s              l      s s s  s s s
  ;     ;            V        ;|/    ;|/
-  V     W     s----*          V      W
+  V     W     s----.          V      W
    l     l          V        lll    lll
                      l
 
@@ -2811,7 +2896,7 @@ s     s              l      s s s  s s s
 0"to see better what exactly the input is connecting to above."
 
 0"V and W can also work as a regular wire crossing, in fact it does the same as"
-0"capital X in that case. That's just a side effect of what they are."
+0"'*' in that case. That's just a side effect of what they are."
 
 l   l   l
  V  ^  V
@@ -2831,11 +2916,11 @@ s   s   s
 
    s  s  s  l
     ; | /  V               s s s >l
-     vvv  *                * | */
+     vvv  .                . | ./
      e###>O                 VvV/
   s->#I9#-->l              s>i9-->l
      ####                   V^V
-     ^^^                   * | *
+     ^^^                   . | .
     / | ;                  s s s
    s  s  s
 
@@ -2896,7 +2981,7 @@ s   s   s
 0"This concludes the editing help, and showed most of the different"
 0"behaviors of different cells and parts."
 
-
+0"LogicEmu. Copyright (C) 2018-2020 by Lode Vandevenne"
 `, 'editing');
 
 
@@ -2909,11 +2994,9 @@ registerCircuit('ASCII symbol summary', `
 3"(newline): next line of the 2D drawing"
 3"(quote): comment"
 
-3"*: wire, wire split, wire corner"
+3".: wire, wire split, wire corner"
 3"-|: straight wires"
-3"/\\: diagonal wires"
 3"+: wire crossing"
-3"x: diagonal wire crossing"
 
 3"^>v<: device/gate inputs"
 3"m]w[: inverted device/gate inputs"
@@ -2942,6 +3025,9 @@ registerCircuit('ASCII symbol summary', `
 
 3"@: isolator"
 
+3"/\\: diagonal wires"
+3"x: diagonal wire crossing"
+3"*: straight and diagonal wire crossing"
 3",: wire corner that doesn't interact with itself"
 3"&%: double wire corners"
 3"g: global backplane wires"
@@ -2955,6 +3041,7 @@ registerCircuit('ASCII symbol summary', `
 3"VW: normal/inverted wire crossing device input (works diagonally too)"
 
 3"z: tri-state buffer"
+3"Z: inverted tri-state buffer"
 
 3"Y: RGB LED: 3 inputs, red, green and blue"
 3"rR: real-time timer"
@@ -2987,6 +3074,8 @@ registerCircuit('Editing Side Notes', `
 0"double quotes, for text in circuits"
 0"--> this helps with defining circuits in double quoted strings in"
 0"    programming languages. Tip: use raw string literals when available."
+0"--> the single quote does not have such meaning, the single quote can freely"
+0"    be typed in comment texts as apostrophe."
 
 0"; and \\ (ASCII backslash): the ; will be replaced by backslash in the"
 0"circuit (but not inside comments)"
@@ -2994,25 +3083,22 @@ registerCircuit('Editing Side Notes', `
 0"    Tip: use raw string literals when available (but in JS \\ still has"
 0"    special meaning in raw strings)."
 
-0". and *: the . has the same functionality as * (wire)"
-0"--> this helps with drawing circuits on paper"
-
 0"# Style used in built-in circuits"
 
 0"Most built-in circuits use a certain style that is not optimally compact but"
-0"looks better. It works as follows:"
+0"gives a consistent overall look. It works as follows:"
 
-0"For wires, mostly * is used, no - or |, forcing to have a 1-cell gat between"
+0"For wires, mostly . is used, no - or |, forcing to have a 1-cell gap between"
 0"neighbor wires. So no closely packed wires. The only exception is for ROM and"
 0"Terminals and sometimes for multi-bit signals."
 
 0"yes:"     0"no:"
 
-s****>l   s---->l
+s....>l   s---->l
           s---->l
-s****>l   s---->l
+s....>l   s---->l
 
-s****>l
+s....>l
 
 0"but, yes for ROM:"
 
@@ -3029,9 +3115,9 @@ s-->bBB
 
 0"yes:"       0"no:"       0"no:"
 
-s**>a**>l     s*&>a**>l   s**>a**>l
+s..>a..>l     s.&>a..>l   s..>a..>l
    >            &+U          V
-s**>e**>l     s**>e**>l   s**>e**>l
+s..>e..>l     s..>e..>l   s..>e..>l
 
 0"Centers and corners of devices are aligned on a certain grid for aesthetic"
 0"reasons:"
@@ -3046,7 +3132,7 @@ s**>e**>l     s**>e**>l   s**>e**>l
 
 0"In that grid:"
 0"- 'a' can be almost anything, such as gates, except gate inputs"
-0"- '|' and '-' can be gate inputs '^>v<m]w[' or wires '*' or 'x'"
+0"- '|' and '-' can be gate inputs '^>v<m]w[' or wires '.' or 'x'"
 0"- '@' may only be empty, or filler of large devices, or the middle"
 0"   (diagonal) one of a ^^^ style gate input."
 
@@ -3057,20 +3143,20 @@ s**>e**>l     s**>e**>l   s**>e**>l
 
 0"yes:"            0"no:"
 
-s>l                s*>l
+s>l                s.>l
 
 
-s**>l              s***>l
-          s**
+s..>l              s...>l
+          s..
             v
-s**>a**>l   a>l    s***v
-    ^       ^          a**>l
-s****     s**      s***^
+s..>a..>l   a>l    s...v
+    ^       ^          a..>l
+s....     s..      s...^
 
 
-s**>d#q**>l        s**>dq**>l
+s..>d#q..>l        s..>dq..>l
     ###                ##
-s**>c#Q**>l        s**>cQ**>l
+s..>c#Q..>l        s..>cQ..>l
 
 0"This is just a principle followed in many built-in circuits. This turned out"
 0"to make nicer looking circuits than trying to make everything as small as"
@@ -3152,7 +3238,7 @@ s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s
 0"  with spaces! Which makes editing of the 2D circuit much easier."
 0"- You can also use the block selection as multicursor. Instead of a"
 0"  rectangle, select a vertical line to get a long cursor. Then you can insert"
-0"  multiple spaces, *'s, or any other character by typing it. Similarly using"
+0"  multiple spaces, .'s, or any other character by typing it. Similarly using"
 0"  the delete key deletes all characters to the right of the cursor, good for"
 0"  selectively deleting a part of the circuit."
 0"- If you paste a block, it will insert itself into all content below. So if"
@@ -3172,7 +3258,7 @@ s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s s>o<s
 
 s
 v
-o**>l
+o..>l
 ^
 s
 
@@ -3182,7 +3268,7 @@ s
 
 ssss
 vvvv
-o**>lo**>lo**>lo**>l
+o..>lo..>lo..>lo..>l
 ^^^^
 ssss
 
@@ -3193,7 +3279,7 @@ ssss
 
 s     s     s     s
 v     v     v     v
-o**>l o**>l o**>l o**>l
+o..>l o..>l o..>l o..>l
 ^     ^     ^     ^
 s     s     s     s
 
@@ -3201,7 +3287,6 @@ s     s     s     s
 
 0"FIT:w"
 
-0"LogicEmu. Copyright (C) 2018 by Lode Vandevenne"
 `, 'editingextra');
 
 registerCircuit('Electronic Diagram', `
@@ -3209,220 +3294,220 @@ registerCircuit('Electronic Diagram', `
 0"the right our ASCII notation The real life notation is of course also just an"
 0"ascii art approximation here."
 
-7"                ___         "
-7"            ---|   \\        " **>a**
-7"    AND        |   |----    "    ^
-7"            ---|___/        " ****
-7"                            "
-7"               ____         "
-7"            ---\\   \\        " **>o**
-7"     OR        |   }----    "    ^
-7"            ---/___/        " ****
-7"                            "
-7"                ___         "
-7"            ---\\\\  \\        " **>e**
-7"    XOR        ||  }----    "    ^
-7"            ---//__/        " ****
-7"                            "
-7"                ___         "
-7"            ---|   \\        " **>A**
-7"   NAND        |   |o---    "    ^
-7"            ---|___/        " ****
-7"                            "
-7"               ____         "
-7"            ---\\   \\        " **>O**
-7"    NOR        |   }o---    "    ^
-7"            ---/___/        " ****
-7"                            "
-7"                ___         "
-7"            ---\\\\  \\        " **>E**
-7"   XNOR        ||  }o---    "    ^
-7"            ---//__/        " ****
-7"                            "
-7"               ____         "
-7"            --o\\   \\        " **]o**
-7"  IMPLY        |   }----    "    ^
-7"            ---/___/        " ****
-7"                            "
-7"                ___         "
-7"            ---|   \\        " **>a**
-7" NIMPLY        |   |----    "    m
-7"            --o|___/        " ****
-7"                            "
-7"                            "
-7"                            "
-7"    NOT     ----|>o-----    " **>O**
-7"                            "
-7"                            "
-7"                            "
-7"  DIODE     ----|>|-----    " **>o**
-7"                            "
-7"                            "
-7"                 //         "
-7"    LED     ----|>|-----    " **>l**
-7"                            "
-7"                            "
-7"                 /          "
-7" SWITCH   V+ ---o  o----    " s****
-7"                     >      "
-7"                     >      "
-7"                    GND     "
-7"                            "
-7"                            "
-7"                  |         "
-7"                -----       "
-7"   PUSH   V+ ---o   o---    " p****
-7"                      >     "
-7"                      >     "
-7"                     GND    "
-7"                            "
-7"            -----           "
-7"           / _   \\          "
-7" CLOCK    | | |_| |---      " R****
-7"           \\ 1Hz /          " 5
-7"            ----            "
-7"                            "
-7"                            "
-7"                            "
-7"CONSTANT 0     GND-----     " c****
-7"                            "
-7"                            "
-7"CONSTANT 1      V+-----     " C****
-7"                            "
-7"                            "
-7"FLOATING Z      -------     " c****     0"(Not supported, '0' is used)"
-7"                            "
-7"                            "
-7"                            "
-7"                  |         "     *
-7"                  |         "     v
-7"TRISTATE     ----|>----     " ***>z**** 0"(Not truly supported but this represents it)"
-7"BUFFER                      "
-7"                            "
-7"                            "
-7"                            "
-7"                 +-----+    "
-7"              ---|T   Q|----" -->t--
-7" T-FLIPFLOP      |     |    " -->c
-7"              ---|>    |    "
-7"                 +-----+    "
-7"                            "
-7"                 +-----+    "
-7"              ---|D   Q|----" -->d--
-7" D-FLIPFLOP      |     |    " -->c
-7"              ---|>    |    "
-7"                 +-----+    "
-7"                            "
-7"                 +-----+    "
-7"              ---|J   Q|----" -->j--
-7"JK-FLIPFLOP   ---|>    |    " -->c
-7"              ---|K    |    " -->k
-7"                 +-----+    "
-7"                            "
-7"                 +-----+    "
-7"             V+ -|T   Q|----"
-7" COUNTER         |     |    " -->c--
-7"              ---|>    |    "
-7"                 +-----+    "
-7"                            "
-7"                    |       "     |
-7"                 +-----+    "     v
-7"              ---|T S Q|----" -->tq--
-7"T-FLIPFLOP       |    _|    " -->cQ--
-7"W.ASYNCH.SR   ---|> R Q|----"     ^
-7"                 +-----+    "     |
-7"                    |       "
-7"                            "
-7"                    |       "     |
-7"                 +-----+    "     v
-7"              ---|D S Q|----" -->dq--
-7"D-FLIPFLOP       |    _|    " -->cQ--
-7"W.ASYNCH.SR   ---|> R Q|----"     ^
-7"                 +-----+    "     |
-7"                    |       "
-7"                            "
-7"                    |       "     |
-7"                 +-----+    "     v
-7"              ---|J S Q|----" -->jq--
-7"JK-FLIPFLOP   ---|>   _|    " -->c#
-7"W.ASYNCH.SR   ---|K R Q|----" -->kQ--
-7"                 +-----+    "     ^
-7"                    |       "     |
-7"                            "
-7"                            "
-7"                            "
-7" IC USAGE                   "
-7"                            "
-7"        +---u---+           " ->i4081
-7"       -|       |-Vdd       " ->iiiii<-
-7"       -|  IC   |-          " --iiiii<-
-7"       -|       |-          " --iiiii--
-7"       -| 4081  |-          " ->iiiii--
-7"       -|       |-          " ->iiiii<-
-7"       -|       |-          "   iiiii<-
-7"    Vss-|       |-          "
-7"        +-------+           "
-7"                            "
-7"                            "
-7"                            "
-7" IC SCHEMATIC               "
-7"                            "
-7"       +---u---+            " s---v
-7"       |       |            " s-->a@v---s
-7"     1-|--+    |-14Vdd      " l<--, a<--s
-7"     2-|-\\| +--|-13         " l<--, ,-->l
-7"     3-|--u |/-|-12         " s-->a ,-->l
-7"     4-|--n u--|-11         " s---^ a<--s
-7"     5-|-/| n--|-10         "       ^---s
-7"     6-|--+ |\\-|-9          "       I4081
-7"  Vss7-|    +--|-8          "
-7"       |  4081 |            "
-7"       +-------+            "
-7"                            "
-7"                            "
-7"                            "
-7" RELAY (SPST)               "
-7"                            "    *
-7" ---uuuuuu----              "    v
-7"    ======                  " **>z*** 0"(same as tristate buffer, not accurate emulation but close)"
-7" ----o  o-----              "
-7"      \\                     "
-7"                            "
-7"                            "
-7"                            "
-7"                            "
-7" RELAY (SPDT)               "    *
-7"                            "    ***
-7" ---uuuuuu----              "    v |
-7"    ======                  " **>z*+***
-7"        o----               "      w
-7" ----o                      " ****>z***
-7"      \\ o----               "
-7"                            "
-7"                            "
-7"                            "
-7"          _                 "
-7"         | -_               "
-7"       --|   |              " **>M***
-7"         |   |              "    M
-7" MUX     |   |---           " **>M
-7"       --|  _|              "    ^
-7"         |_-                "    *
-7"           |                "    *
-7"           |                "
-7"                            "
-7"                            "
-7"                            "
-7"          _                 "
-7"         | -_               "
-7"         |   |--            " **>M***
-7"         |   |              "    M
-7"DEMUX  --|   |              "    M***
-7"         |  _|--            "    ^
-7"         |_-                "    *
-7"           |                "    *
-7"           |                "
-7"                            "
+4"                ___         "
+4"            ---|   \\        " ..>a..
+4"    AND        |   |----    "    ^
+4"            ---|___/        " ....
+4"                            "
+4"               ____         "
+4"            ---\\   \\        " ..>o..
+4"     OR        |   }----    "    ^
+4"            ---/___/        " ....
+4"                            "
+4"                ___         "
+4"            ---\\\\  \\        " ..>e..
+4"    XOR        ||  }----    "    ^
+4"            ---//__/        " ....
+4"                            "
+4"                ___         "
+4"            ---|   \\        " ..>A..
+4"   NAND        |   |o---    "    ^
+4"            ---|___/        " ....
+4"                            "
+4"               ____         "
+4"            ---\\   \\        " ..>O..
+4"    NOR        |   }o---    "    ^
+4"            ---/___/        " ....
+4"                            "
+4"                ___         "
+4"            ---\\\\  \\        " ..>E..
+4"   XNOR        ||  }o---    "    ^
+4"            ---//__/        " ....
+4"                            "
+4"               ____         "
+4"            --o\\   \\        " ..]o..
+4"  IMPLY        |   }----    "    ^
+4"            ---/___/        " ....
+4"                            "
+4"                ___         "
+4"            ---|   \\        " ..>a..
+4" NIMPLY        |   |----    "    m
+4"            --o|___/        " ....
+4"                            "
+4"                            "
+4"                            "
+4"    NOT     ----|>o-----    " ..>O..
+4"                            "
+4"                            "
+4"                            "
+4"  DIODE     ----|>|-----    " ..>o..
+4"                            "
+4"                            "
+4"                 //         "
+4"    LED     ----|>|-----    " ..>l..
+4"                            "
+4"                            "
+4"                 /          "
+4" SWITCH   V+ ---o  o----    " s....
+4"                     >      "
+4"                     >      "
+4"                    GND     "
+4"                            "
+4"                            "
+4"                  |         "
+4"                -----       "
+4"   PUSH   V+ ---o   o---    " p....
+4"                      >     "
+4"                      >     "
+4"                     GND    "
+4"                            "
+4"            -----           "
+4"           / _   \\          "
+4" CLOCK    | | |_| |---      " R....
+4"           \\ 1Hz /          " 5
+4"            ----            "
+4"                            "
+4"                            "
+4"                            "
+4"CONSTANT 0     GND-----     " c....
+4"                            "
+4"                            "
+4"CONSTANT 1      V+-----     " C....
+4"                            "
+4"                            "
+4"FLOATING Z      -------     " c....     0"(Not supported, '0' is used)"
+4"                            "
+4"                            "
+4"                            "
+4"                  |         "     .
+4"                  |         "     v
+4"TRISTATE     ----|>----     " ...>z.... 0"(Not truly supported but this represents it)"
+4"BUFFER                      "
+4"                            "
+4"                            "
+4"                            "
+4"                 +-----+    "
+4"              ---|T   Q|----" -->t--
+4" T-FLIPFLOP      |     |    " -->c
+4"              ---|>    |    "
+4"                 +-----+    "
+4"                            "
+4"                 +-----+    "
+4"              ---|D   Q|----" -->d--
+4" D-FLIPFLOP      |     |    " -->c
+4"              ---|>    |    "
+4"                 +-----+    "
+4"                            "
+4"                 +-----+    "
+4"              ---|J   Q|----" -->j--
+4"JK-FLIPFLOP   ---|>    |    " -->c
+4"              ---|K    |    " -->k
+4"                 +-----+    "
+4"                            "
+4"                 +-----+    "
+4"             V+ -|T   Q|----"
+4" COUNTER         |     |    " -->c--
+4"              ---|>    |    "
+4"                 +-----+    "
+4"                            "
+4"                    |       "     |
+4"                 +-----+    "     v
+4"              ---|T S Q|----" -->tq--
+4"T-FLIPFLOP       |    _|    " -->cQ--
+4"W.ASYNCH.SR   ---|> R Q|----"     ^
+4"                 +-----+    "     |
+4"                    |       "
+4"                            "
+4"                    |       "     |
+4"                 +-----+    "     v
+4"              ---|D S Q|----" -->dq--
+4"D-FLIPFLOP       |    _|    " -->cQ--
+4"W.ASYNCH.SR   ---|> R Q|----"     ^
+4"                 +-----+    "     |
+4"                    |       "
+4"                            "
+4"                    |       "     |
+4"                 +-----+    "     v
+4"              ---|J S Q|----" -->jq--
+4"JK-FLIPFLOP   ---|>   _|    " -->c#
+4"W.ASYNCH.SR   ---|K R Q|----" -->kQ--
+4"                 +-----+    "     ^
+4"                    |       "     |
+4"                            "
+4"                            "
+4"                            "
+4" IC USAGE                   "
+4"                            "
+4"        +---u---+           " ->i4081
+4"       -|       |-Vdd       " ->iiiii<-
+4"       -|  IC   |-          " --iiiii<-
+4"       -|       |-          " --iiiii--
+4"       -| 4081  |-          " ->iiiii--
+4"       -|       |-          " ->iiiii<-
+4"       -|       |-          "   iiiii<-
+4"    Vss-|       |-          "
+4"        +-------+           "
+4"                            "
+4"                            "
+4"                            "
+4" IC SCHEMATIC               "
+4"                            "
+4"       +---u---+            " s---v
+4"       |       |            " s-->a@v---s
+4"     1-|--+    |-14Vdd      " l<--, a<--s
+4"     2-|-\\| +--|-13         " l<--, ,-->l
+4"     3-|--u |/-|-12         " s-->a ,-->l
+4"     4-|--n u--|-11         " s---^ a<--s
+4"     5-|-/| n--|-10         "       ^---s
+4"     6-|--+ |\\-|-9          "       I4081
+4"  Vss7-|    +--|-8          "
+4"       |  4081 |            "
+4"       +-------+            "
+4"                            "
+4"                            "
+4"                            "
+4" RELAY (SPST)               "
+4"                            "    .
+4" ---uuuuuu----              "    v
+4"    ======                  " ..>z... 0"(same as tristate buffer, not accurate emulation but close)"
+4" ----o  o-----              "
+4"      \\                     "
+4"                            "
+4"                            "
+4"                            "
+4"                            "
+4" RELAY (SPDT)               "    .
+4"                            "    ...
+4" ---uuuuuu----              "    v |
+4"    ======                  " ..>z.+...
+4"        o----               "      w
+4" ----o                      " ....>z...
+4"      \\ o----               "
+4"                            "
+4"                            "
+4"                            "
+4"          _                 "
+4"         | -_               "
+4"       --|   |              " ..>M...
+4"         |   |              "    M
+4" MUX     |   |---           " ..>M
+4"       --|  _|              "    ^
+4"         |_-                "    .
+4"           |                "    .
+4"           |                "
+4"                            "
+4"                            "
+4"                            "
+4"          _                 "
+4"         | -_               "
+4"         |   |--            " ..>M...
+4"         |   |              "    M
+4"DEMUX  --|   |              "    M...
+4"         |  _|--            "    ^
+4"         |_-                "    .
+4"           |                "    .
+4"           |                "
+4"                            "
 
 
 0"FIT:w"
@@ -3474,11 +3559,11 @@ registerCircuit('RGB LED (Y)', `
      s
 `, 'component' + componentid++);
 
-registerCircuit('Wire Split (*)', `
+registerCircuit('Wire Split (.)', `
     l
     ^
     |
- s--*->l
+ s--.->l
     |
     v
     l
@@ -3506,12 +3591,12 @@ registerCircuit('Diagonal Wire Crossing (x)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('8-Way Wire Crossing (X)', `
+registerCircuit('8-Way Wire Crossing (*)', `
 
  s  s  l
   ; | V
    ;|/
- s--X->l
+ s--*->l
    /|;
   / v V
  s  l  l
@@ -3521,43 +3606,43 @@ registerCircuit('8-Way Wire Crossing (X)', `
 registerCircuit('AND gate (a)', `
 s-->a-->l
     ^
-s---*
+s---.
 `, 'component' + componentid++);
 
 registerCircuit('OR Gate (o)', `
 s-->o-->l
     ^
-s---*
+s---.
 `, 'component' + componentid++);
 
 registerCircuit('XOR Gate (e)', `
 s-->e-->l
     ^
-s---*
+s---.
 `, 'component' + componentid++);
 
 registerCircuit('NAND Gate (A)', `
 s-->A-->l
     ^
-s---*
+s---.
 `, 'component' + componentid++);
 
 registerCircuit('NOR Gate (O)', `
 s-->O-->l
     ^
-s---*
+s---.
 `, 'component' + componentid++);
 
 registerCircuit('XNOR Gate (E)', `
 s-->E-->l
     ^
-s---*
+s---.
 `, 'component' + componentid++);
 
 registerCircuit('Negative Input (m]w[)', `
 s--]o-->l
     ^
-s---*
+s---.
 `, 'component' + componentid++);
 
 registerCircuit('Constant Off (c)', `
@@ -3733,14 +3818,14 @@ registerCircuit('Mux (M)', `
 
     l
     ^
-    *
-    *
-s**>M**>l
+    .
+    .
+s..>M..>l
     M
-s**>M
+s..>M
     ^
-    *
-    *
+    .
+    .
     s
 
 `, 'component' + componentid++);
@@ -3750,9 +3835,9 @@ registerCircuit('Demux (M)', `
 
     l
     ^
-s**>M**>l
+s..>M..>l
     M
-    M**>l
+    M..>l
     ^
     s
 
@@ -3832,14 +3917,14 @@ registerCircuit('Mux with controlled swap (M)', `
 
     l
     ^
-    *
-    *
-s**>M**>l
+    .
+    .
+s..>M..>l
     M
-s**>M**>l
+s..>M..>l
     ^
-    *
-    *
+    .
+    .
     s
 
 `, 'component' + componentid++);
@@ -3848,16 +3933,16 @@ registerCircuit('Mux with controlled swap of buses(M)', `
 
     l
     ^
-    *
-    *
+    .
+    .
 s-->M-->l
 s-->M-->l
     M
 s-->M-->l
 s-->M-->l
     ^
-    *
-    *
+    .
+    .
     s
 
 `, 'component' + componentid++);
@@ -3883,9 +3968,9 @@ registerCircuit('Backplane Wrap-Around ((u)n)', `
 
 registerCircuit('Tristate Buffer as OR (z)', `
 
-s-->z**-->l
-      *
-s-->z**
+s-->z..-->l
+      .
+s-->z..
 
 `, 'component' + componentid++);
 
@@ -3893,15 +3978,15 @@ registerCircuit('Tristate Buffer as AND (z)', `
 
 s-->z-->l
     ^
-s---*
+s---.
 
 `, 'component' + componentid++);
 
 registerCircuit('Tristate Buffer (inverted) as AND (Z)', `
 
-S-->Z**-->l
-      *
-S-->Z**
+S-->Z..-->l
+      .
+S-->Z..
 
 `, 'component' + componentid++);
 
@@ -3909,11 +3994,11 @@ registerCircuit('Tristate Buffer (inverted) as OR (Z)', `
 
 S-->Z-->l
     ^
-S---*
+S---.
 
 `, 'component' + componentid++);
 
-registerCircuit('Double Corner (&%)', `
+registerCircuit('Double Corner (&)', `
     s
     |
     |
@@ -3921,6 +4006,16 @@ registerCircuit('Double Corner (&%)', `
     |
     v
     l
+`, 'component' + componentid++);
+
+registerCircuit('Double Corner (%)', `
+    l
+    ^
+    |
+ s--%->l
+    |
+    |
+    s
 `, 'component' + componentid++);
 
 registerCircuit('Multi-input (U)', `
@@ -3968,8 +4063,8 @@ l   l     l l
 ^   ^     ^ ^
 o<a eI5   #i5
 ^ ^^^     ^^^
-a e *     sss
-^^^ *
+a e .     sss
+^^^ .
 s s s
 `, 'component' + componentid++);
 
@@ -3988,48 +4083,48 @@ registerCircuit('Unit Test', `
 0"Note: also try: applyTransform(4), applyTransform(2)"
 
 0"Note: also test the map 'game of life ship' and enable autotick, and"
-0"'langton's ant' in electron mode"
+0"'langton's ant' in electron mode. Also try '4 math functions with decimal'"
 
 0"# On"
 
 0"In this section, the LED on the right of each contraption must be ON. If it's"
 0"OFF, something is broken"
 
-C***********>l
+C...........>l
 
 C----------->l
 
-C>e-ha-UUo+*>l
+C>e-ha-UUo+.>l
 
-c****>O*****>l
+c....>O.....>l
 
-c****>O#****>l
+c....>O#....>l
 
-a***********>l
+a...........>l
 
-O***********>l
+O...........>l
 
-E***********>l
+E...........>l
 
-P***********>l
+P...........>l
 
-S***********>l
+S...........>l
 
-Q***********>l
+Q...........>l
 
-C***********>lI11
+C...........>lI11
 
-i11*********>l
+i11.........>l
 
-O***********>lI10
+O...........>lI10
 
-i10*********>l
+i10.........>l
 
-i10*********>l
+i10.........>l
 
->bB*********>l
+>bB.........>l
 
-s****>C*****>l
+s....>C.....>l
 
 s---->c--->O>l
 s---->j--->O>l
@@ -4037,13 +4132,13 @@ s---->k----->l
 s---->q--->O>l
 s---->Q----->l
 
-       *-->O>l
+       .-->O>l
 C------+---->l
-c------*
+c------.
 
-c *--------->l
+c .--------->l
  x
-C *------->O>l
+C .------->O>l
 
 c---v
 c-->a-------]l
@@ -4086,44 +4181,44 @@ BB---------->l
 bB-------->O>l
 
 
-C**( )* )*>O>l
-      *
-      ******>l
+C..( ). ).>O>l
+      .
+      ......>l
 
-C***
+C...
     x
-     *******>l
+     .......>l
 
-C***
+C...
     V
-     *******>l
+     .......>l
 
-C***V*******>l
+C...V.......>l
 
 c->O-------->lI5
 
 i5---------->l
 
-c->O-------*
+c->O-------.
             V
 i6           lI6
   x
-   *********>l
+   .........>l
 
 S-->C>C>C>C->l
 
 
-C-----*
+C-----.
        \\
-        *--->l
+        .--->l
 
-        *--->l
+        .--->l
        /
-C-----*
+C-----.
 
 C           >l
  ;         /
-  *-------*
+  .-------.
 
 C-------&
         &--->l
@@ -4169,9 +4264,9 @@ c---34=12--->l
 C---45=23--->l
 
   I8
-S*(@@@)*****>l
+S.(@@@).....>l
 
-S>i8********>l
+S>i8........>l
 
 s->lI
 
@@ -4216,13 +4311,13 @@ S------>2--->l
 
 #------->O-->l
 
-C**>C*******>l
+C..>C.......>l
 
-O**>C*******>l
+O..>C.......>l
 
-S**>C*******>l
+S..>C.......>l
 
-O*****>d****>l
+O.....>d....>l
 
          e-->l
         >
@@ -4234,29 +4329,29 @@ S-->dy------>l
      ^
      S
 
-C**>z*******>l
+C..>z.......>l
 
     c
     v
-C**>z*******]l
+C..>z.......]l
 
     C
     v
-C**>z*******>l
-     *
-c**>z*
+C..>z.......>l
+     .
+c..>z.
 
     c
     v
-C**>Z*******>l
-     *
-C**>Z*
+C..>Z.......>l
+     .
+C..>Z.
 
     C
     v
-C**>Z*******]l
-     *
-c**>Z*
+C..>Z.......]l
+     .
+c..>Z.
     ^
     c
 
@@ -4266,44 +4361,83 @@ S5110g 5110g>l
           |
 S5120g 5120g>l
 
+
+C--.
+   |
+C. | .------>l
+  ;|/
+C--*-------->l
+  /|;
+C. | .------>l
+   |
+   .-------->l
+
+
+C--.
+   |
+C. | .------]l
+  ;|/
+c--*--------]l
+  /|;
+c. | .------>l
+   |
+   .-------->l
+
+
+C--.
+   |
+c. | .------]l
+  ;|/
+C--*-------->l
+  /|;
+c. | .------]l
+   |
+   .-------->l
+
+
+    .------->l
+C---,------->l
+c...,.......]l
+    .-------]l
+
 0"# Off"
 
 0"In this section, the LED on the right of each contraption must be OFF. If"
 0"it's ON, something is broken"
 
-************>l
+............>l
 
-c***********>l
+c...........>l
 
-C*****@*****>l
+C.....@.....>l
 
-      ******>l
-C*****+
+      ......>l
+C.....+
 
-C*****|*****>l
+C.....|.....>l
 
-o***********>l
+o...........>l
 
-e***********>l
+e...........>l
 
-A***********>l
+A...........>l
 
-s***********>l
+s...........>l
 
-p***********>l
+p...........>l
 
-s*****>o****>l
+s.....>o....>l
 
-s*****>a****>l
+s.....>a....>l
 
-s*****>e****>l
+s.....>e....>l
 
-C*****( (***>l
+C.....( (...>l
 
-C***( ( )***>l
+C...( ( )...>l
 
-C*****
-      V*****>l
+C.....
+      V.....>l
 
 c---- ------>l
      x
@@ -4315,7 +4449,7 @@ C-----------
 C-----------U
              l
 
-C----------*
+C----------.
             Ul
 1Rw
   E--------->l
@@ -4325,21 +4459,21 @@ s---->R----->l
 
 r---->R----->l
 
-C***********]l
+C...........]l
 
 C---------->Vl
 
 C----------U>l
 
       :
-C***********>l
+C...........>l
       :
 
-C******
-      *
-     "*"
-      *
-      ******>l
+C......
+      .
+     "."
+      .
+      ......>l
 
 s->oI9
 
@@ -4355,7 +4489,7 @@ S----->i92-->l
          :
 S----->i92-->l
 
-C*****>o
+C.....>o
       >o---->l
 
 
@@ -4369,19 +4503,19 @@ C---=====--->l
 
 C----=0=---->l
 
-S***********]l
+S...........]l
 
-s****>S*****>l
+s....>S.....>l
 
 
-S***(")"
-      ******>l
+S...(")"
+      ......>l
 
-C**>c*******>l
+C..>c.......>l
 
-O**>c*******>l
+O..>c.......>l
 
-S**>c*******>l
+S..>c.......>l
 
 
        e---->l
@@ -4405,141 +4539,141 @@ s-->dy------>l
 ###
 s##
 ###
-*
-************>l
-*
-*******>o***>l
-*
-*******>a***>l
-*
-*******>e***>l
-*
-*******>d***>l
-*
-*******>S***>l
-*
-*******>a***>l
-*       ^
-*********
-*
-*******>o***>l
-*       ^
-*********
-*
-*         c
-*         v
-*******>e***>l
-*
-***>d>e>c***>l
-* *   ^
-* *****
-*
-***g12 12g**>l
-*
-*
-*       =1>O>l
-*     ===
-*     * =2**>l
-*     *
-***1= * =2>O>l
-*   ==+==
-*>O2= * =1**>l
-*     *
-***2= *
-*   ===
-*>O1=
-*
-*
-***(    )***>l
-*
-*
-* s>e#>lI6416
-*
-***>i6416***>l
-*
-***>O*******]l
-*
-*  d-* C>jq->l
-*  ^ v C>kQ-]l
-*--*>e-->c-->l
-*
-* C--*>a---->l
-*     V
-*----*>e----]l
-*
-******
-*     x
-*      W
-*       O--->l
-*
-*---*>o>q--->l
-*   *>O>Q---]l
-*
-*  o***v     l
-*  ^   o     ^
-***+** **>o***
-*  * *       v
-*  o<*       l
-*
-*--( )-*
-*      n
-* *--------->l
-* n    u
-*      *&
-* u     |
-* *--( )%
-*
-*
-******>o>c**>l
-*    *   ^
-*    *>O**
-*
-*
-*-->dy------>l
-*    ^
-*    S
-*
-*     ******>l
-*     *
-* c**>M*****>l
-*     M
-* C**>M*****]l
-*     ^
-*******
-*
-*     ******>l
-*     *
-* C**>M*****]l
-*     M
-*     M*****>l
-*     ^
-*******
-*
-*8612g 8612g>l
-*
-*8613g g8613>l
-*
-*g8614 8614g>l
-*
-*g8615 g8615>l
-*
-*8710g 8710g>l
-*8711g 8711g>l
-*8712g 8712g>l
-*
-*8713g g8713>l
-*8714g g8714>l
-*8715g g8715>l
-*
-*g8716 8716g>l
-*g8717 8717g>l
-*g8718 8718g>l
-*
-*g8719 g8719>l
-*g8720 g8720>l
-*g8721 g8721>l
-*
-*
+.
+............>l
+.
+.......>o...>l
+.
+.......>a...>l
+.
+.......>e...>l
+.
+.......>d...>l
+.
+.......>S...>l
+.
+.......>a...>l
+.       ^
+.........
+.
+.......>o...>l
+.       ^
+.........
+.
+.         c
+.         v
+.......>e...>l
+.
+...>d>e>c...>l
+. .   ^
+. .....
+.
+...g12 12g..>l
+.
+.
+.       =1>O>l
+.     ===
+.     . =2..>l
+.     .
+...1= . =2>O>l
+.   ==+==
+.>O2= . =1..>l
+.     .
+...2= .
+.   ===
+.>O1=
+.
+.
+...(    )...>l
+.
+.
+. s>e#>lI6416
+.
+...>i6416...>l
+.
+...>O.......]l
+.
+.  d-. C>jq->l
+.  ^ v C>kQ-]l
+.--.>e-->c-->l
+.
+. C--.>a---->l
+.     V
+.----.>e----]l
+.
+......
+.     x
+.      W
+.       O--->l
+.
+.---.>o>q--->l
+.   .>O>Q---]l
+.
+.  o...v     l
+.  ^   o     ^
+...+.. ..>o...
+.  . .       v
+.  o<.       l
+.
+.--( )-.
+.      n
+. .--------->l
+. n    u
+.      .&
+. u     |
+. .--( )%
+.
+.
+......>o>c..>l
+.    .   ^
+.    .>O..
+.
+.
+.-->dy------>l
+.    ^
+.    S
+.
+.     ......>l
+.     .
+. c..>M.....>l
+.     M
+. C..>M.....]l
+.     ^
+.......
+.
+.     ......>l
+.     .
+. C..>M.....]l
+.     M
+.     M.....>l
+.     ^
+.......
+.
+.8612g 8612g>l
+.
+.8613g g8613>l
+.
+.g8614 8614g>l
+.
+.g8615 g8615>l
+.
+.8710g 8710g>l
+.8711g 8711g>l
+.8712g 8712g>l
+.
+.8713g g8713>l
+.8714g g8714>l
+.8715g g8715>l
+.
+.g8716 8716g>l
+.g8717 8717g>l
+.g8718 8718g>l
+.
+.g8719 g8719>l
+.g8720 g8720>l
+.g8721 g8721>l
+.
+.
 
 
 0"# Flip Flops"
@@ -4581,9 +4715,9 @@ s-->k--]l
 0"In this section, everything extending to the right must be an error, marked"
 0"in yellow"
 
-s---*
-    *--------->l
-s---*
+s---.
+    .--------->l
+s---.
 
 s--->i741----->l
 
@@ -4608,7 +4742,7 @@ I196
       ||||#sD     ||||
     I0||||| :     iiiiiiiiii0
    :  |||&%:      i    ^    i
-   As-*|*-sC      i    s    i
+   As-.|.-sC      i    s    i
    :   | : :      i"C  B" s>i
        #sB        i<s    "A"i
          :        i  "D"    i
@@ -4638,46 +4772,46 @@ s s s s s s s s   S S S S S S S S     sss     ssss
 
 0"# Shapes"
 
-s-->l    l   ****
-         ^   ****     l       l l   l   l  l       l  l   l   l
-   l     |   ****      V     V   V  ^  V    V     V    V  ^  V       l
-   ^     |   ****       ;   /     ; | /      ;   /      ; | /        ^
+s-->l    l   ....
+         ^   ....     l       l l   l   l  l       l  l   l   l
+   l     |   ....      V     V   V  ^  V    V     V    V  ^  V       l
+   ^     |   ....       ;   /     ; | /      ;   /      ; | /        ^
    |     s               ; /       ;|/        ; /        ;|/         |
-s--+-->l       s          x      s--X-->l   s--X-->l      X       s--X-->l
-   |           *         / ;       /|;        / ;        /|;         |
-   s       l<*****>l    /   ;     / | ;      /   ;      / | ;        s
-               *       s     s   s  s  s    s     s    s  s  s
+s--+-->l       s          x      s--*-->l   s--*-->l      *       s--*-->l
+   |           .         / ;       /|;        / ;        /|;         |
+   s       l<.....>l    /   ;     / | ;      /   ;      / | ;        s
+               .       s     s   s  s  s    s     s    s  s  s
     l  l l  l  v
     ^   V   ^  l       l       l     l   l   l   l
     |  / ;  |           V     V      ^  V     V  ^        l       l
-s---+-X---X-+------->l   ;   /       | /       ; |        ^       ^
+s---+-*---*-+------->l   ;   /       | /       ; |        ^       ^
     |/     ;|             ; /        |/         ;|        |       |
-    X       X              X      s--X-->l    s--X-->l s--%--s s--&--s
+    *       *              *      s--*-->l    s--*-->l s--%--s s--&--s
    /|       |;            / ;       /|           |;       |       |
-s-X-+-------+-X----->l   /   ;     / |           | ;      v       v
+s-*-+-------+-*----->l   /   ;     / |           | ;      v       v
  /  |       |  ;        s     s   s  s           s  s     l       l
 S   s       s   s
                                             s-g->l
        s    s s    s       s    s s    s                  s->a>l       s
-  l l  * l  * *  l *  l l  * l  * *  l *      l     l     p->e>l       v
-   V    V    V    V    W    W    W    W     s*Ul  s*Gl    r->o>l       e*
-  * *  * l  l l  l *  * *  * l  l l  l *      l     l     S->A>l  s--->$|
+  l l  . l  . .  l .  l l  . l  . .  l .      l     l     p->e>l       v
+   V    V    V    V    W    W    W    W     s.Ul  s.Gl    r->o>l       e.
+  . .  . l  l l  l .  . .  . l  l l  l .      l     l     S->A>l  s--->$|
   s s  s           s  s s  s           s                  P->E>l       $v
                                               s     s     R->O>l       |l
        s   s                 s   s            |     |     s->?>l       |
-  l    *   *    l       l    *   *    l     s*Vl  s*Wl                 v
-s*Vl s*Vl lV*s lV*s   s*Wl s*Wl lW*s lW*s     |     |                  l
-  *    l   l    *       *    l   l    *       v     v
+  l    .   .    l       l    .   .    l     s.Vl  s.Wl                 v
+s.Vl s.Vl lV.s lV.s   s.Wl s.Wl lW.s lW.s     |     |                  l
+  .    l   l    .       .    l   l    .       v     v
   s             s       s             s       l     l
 
   a e       s         s         l      s       s      l         e a
-  ^^^       *     l<**+***s     ^      *   s***+**>l  ^         ^^^
-s***+**>l   *>a       vvv       *    a<*     vvv      *     l<**+***s
-    s       *>        e a       *     <*     a e      *         s
+  ^^^       .     l<..+...s     ^      .   s...+..>l  ^         ^^^
+s...+..>l   .>a       vvv       .    a<.     vvv      .     l<..+...s
+    s       .>        e a       .     <.     a e      .         s
            s+>e               e<+s   e<+s            s+>e
-            *                  <*      *              *>
-            *                 a<*      *              *>a
-            v                   *      v              *
+            .                  <.      .              .>
+            .                 a<.      .              .>a
+            v                   .      v              .
             l                   s      l              s
 
 
@@ -4780,7 +4914,7 @@ l<--s0"There should be no space between this comment and the switch"
 
 0"- bullet"
 0"+ bullet"
-0"* bullet"
+0". bullet"
 
 0"vertical styling:"
      0  1  2  3  4  5  6  7  8

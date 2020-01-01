@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2019 Lode Vandevenne
+Copyright (c) 2018-2020 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -355,7 +355,6 @@ var origtitle = null;
 
 var BACKSLASH_ALTERNATIVE = ';'; // because backslash in `` type strings does not work
 var DQUOT_ALTERNATIVE = '`'; // JS strings can use `, in other languages " is already the string quotes
-var ASTERIX_ALTERNATIVE = '.'; // because . is easier to write on paper than *
 
 var graphics_mode = 1; // 0=text, 1=canvas
 var graphics_mode_browser = graphics_mode; //is_chrome ? graphics_mode : 0;
@@ -454,16 +453,16 @@ var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':tru
 var rommap = {'b':true, 'B':true};
 var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'U':true, 'G':true, 'V':true, 'W':true};
 var dinputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true}; // directional inputs only
-var wiremap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true, '/':true, '\\':true, 'x':true, 'g':true, '=':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true}; // TODO: remove antennas from wiremap?
+var wiremap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x':true, 'g':true, '=':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true}; // TODO: remove antennas from wiremap?
 var antennamap = {'(':true, ')':true, 'n':true, 'u':true};
 // only those actively interact diagonally (plus diaginputs but those are not identified by character...)
-var diagonalmap = {'x':true, 'V':true, 'W':true, '/':true, '\\':true, 'X':true};
+var diagonalmap = {'x':true, 'V':true, 'W':true, '/':true, '\\':true, '*':true};
 //non-isolators (does not include isolators like ' ' and '0-9' despite being "known"). I is also not part of this, but i is.
-var knownmap = {'-':true, '|':true, '+':true, '*':true, ASTERIX_ALTERNATIVE:true, '/':true, '\\':true, 'x':true, 'g':true,
+var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x':true, 'g':true,
                 'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true, 'S':true, 'l':true, 'Y':true, 'r':true, 'R':true, 'p':true, 'P':true,
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'U':true, 'G':true, 'V':true, 'W':true,
-                '#':true, '=':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, 'X':true,
+                '#':true, '=':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
                 '$':true, 'z':true, 'Z':true, '?':true, 'toc':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
@@ -3945,12 +3944,13 @@ function Cell() {
     if(!this.comment) {
       var tc = c;
       if(tc == '#' || tc == '$') tc = this.components[0].corecell.circuitsymbol;
-      if(tc == '-' || tc == '|' || tc == '*') {
+      if(tc == '-' || tc == '|' || tc == '.') {
         title = 'wire. Shift+click to highlight.';
       }
-      if(tc == 's' || tc == 'S') title = 'switch';
-      if(tc == 'p' || tc == 'P') title = 'pushbutton';
-      if(tc == 'r' || tc == 'R') title = 'timer';
+      if(tc == 's' || tc == 'S') title = 'switch (click to toggle on/off)';
+      if(tc == 'p') title = 'pushbutton (hold mouse down to enable)';
+      if(tc == 'P') title = 'pushbutton (hold mouse down to disable)';
+      if(tc == 'r' || tc == 'R') title = 'timer (click to freeze/unfreeze)';
       if(tc == 'l') title = 'LED';
       if(tc == 'Y') title = 'RGB LED';
       if(tc == '?') title = 'random generator';
@@ -4468,6 +4468,12 @@ function RendererText() {
     } else if(symbol == 'toc') {
       setTocHTML(cell.circuitextra, cell.toclink, this.div0);
     } else {
+      if(symbol == '.' || symbol == ',') {
+        // shift the wire '.' and ',' up a bit so it is better centered in the div,
+        // since the . and , characters are normally at the bottom of the a text line
+        this.div0.style.marginTop = '-' + (th >> 2) + 'px';
+        this.div1.style.marginTop = '-' + (th >> 2) + 'px';
+      }
       if(virtualsymbol == 'l') {
         var color = cell.components[0] ? cell.components[0].number : 0;
         if(color == -1) color = 0;
@@ -4586,6 +4592,9 @@ function RendererText() {
     Then it will use capital S but div0.
 
     For pushbutton: idem
+
+    For timer: a R without the changed background indicates the timer is on internally, but
+    is not outputting it because it has inputs and none of those inputs are on.
     */
     if(type == TYPE_TIMER_ON || type == TYPE_TIMER_OFF) {
       var clocked = cell.components[0].clocked;
@@ -4659,7 +4668,7 @@ function connected2g(x, y, dir) {
 }
 
 // another for graphics, treats middle cell as a 'g', for drawing split from it,
-// for backplane wires and antennas. Connects to slightly less things than '*' would.
+// for backplane wires and antennas. Connects to slightly less things than '.' would.
 function connected2b(x, y, dir) {
   var temp = world[y][x].circuitsymbol;
   world[y][x].circuitsymbol = 'g';
@@ -5069,7 +5078,7 @@ function RendererDrawer() {
     return [num, code];
   };
 
-  // specifically made for dynamic rendering of the 4-way X crossing. Value and code use different bits.
+  // specifically made for dynamic rendering of the 8-way * crossing. Value and code use different bits.
   this.drawCrossing2_ = function(ctx, code, value, color0, color1) {
     var full = 0; // which one gets the full length
     if(code & 2) full = 2; // horizontal full looks best
@@ -5197,8 +5206,8 @@ function RendererDrawer() {
 
           a e
           ^^^
-      s***+***>l
-          *
+      s...+...>l
+          .
           s
   */
   this.drawPlusDiagSplit_ = function(cell, ctx) {
@@ -5421,7 +5430,7 @@ function hasRealComponent(cell) {
 
 var rglobal = new RendererImgGlobal();
 
-var NOUSETEXTMAP = {'-':true, '|':true, '*':true, '+':true, 'x':true, 'X':true,
+var NOUSETEXTMAP = {'-':true, '|':true, '.':true, '+':true, 'x':true, '*':true,
                     '>':true, 'v':true, '<':true, '^':true, ']':true, 'w':true, '[':true, 'm':true,
                     'U':true, 'G':true, 'V':true, 'W':true}
 
@@ -5657,7 +5666,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           this.drawextrai1 = 1;
           this.drawextrag = 31;
         }
-      } else if(c == '*' || c == ',') {
+      } else if(c == '.' || c == ',') {
         drawer.drawSplit_(cell, ctx);
       } else if(c == '^') {
         if(cell.circuitextra == 2) {
@@ -5920,7 +5929,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           this.drawextrai1 = 1;
           this.drawextrag = 23;
         }
-      } else if(c == 'X') {
+      } else if(c == '*') {
         var a = drawer.drawCrossing_(cell, ctx);
         var code = a[1];
         if(code == 3) {
@@ -6052,6 +6061,12 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       } else {
         var alreadybg = error;
         if(!error) {
+          if(cell.components[0] && cell.components[0].type == TYPE_CONSTANT) {
+            /*this.div0.innerText = '0';
+            this.div1.innerText = '1';*/
+            //symbol = (i == 0) ? '0' : '1';
+            symbol = (cell.components[0].value) ? '1' : '0';
+          }
           if(virtualsymbol == 's' || virtualsymbol == 'S' || virtualsymbol == 'p' || virtualsymbol == 'P' || virtualsymbol == 'r' || virtualsymbol == 'R') {
             alreadybg = true;
             drawer.fillBg_(ctx, i == 0 ? SWITCHOFF_BGCOLOR : SWITCHON_BGCOLOR);
@@ -6530,7 +6545,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       var tweak = 0; // set to 1 to fix a few graphics are not perfectly aligned to the cell. This is a quick fix for that... TODO: this too gives issues. Fix all rendering above to let each symbol stay only inside of its own cell (not as easy as it seems near borders).
       var source;
 
-      // for the X with its up to 16 possible graphics (and more if some legs are
+      // for the * with its up to 16 possible graphics (and more if some legs are
       // not present), do dynamic drawing. Not done for other components because possibly slower.
       if(this.dynamicdraw) {
         drawer.tx = dx;
@@ -6577,7 +6592,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           else if(c == '%' && value == 1) { qx = 11; qy = 0; }
           else if(c == '%' && value == 2) { qx = 11; qy = 1; }
           else isextra = false;
-          if(c == 'X' || c == 'V' || c == 'W' || c == '+') {
+          if(c == '*' || c == 'V' || c == 'W' || c == '+') {
             isextra = true;
             if(value == this.drawextrai0) { qx = this.drawextrag;  qy = 0; }
             else if(value == this.drawextrai1) { qx = this.drawextrag;  qy = 1; }
@@ -7074,7 +7089,7 @@ function parseExtra() {
         else if(c == '<' || c == '[') { wca = getNeighbor(x, y, 1); }
         ca = ' ';
         if(wca) ca = wca.metasymbol; // idem TODO as above about numbers and chips
-        if(devicemapin[ca] || digitmap[ca] || ca == '*' || ca == '+' || ca == ',') {
+        if(devicemapin[ca] || digitmap[ca] || ca == '.' || ca == '+' || ca == ',') {
           world[y][x].circuitextra = 1;
         }
         if(ca == '|' && (c == '^' || c == 'v' || c == 'm' || c == 'w')) world[y][x].circuitextra = 1;
@@ -7231,7 +7246,6 @@ function parseCells(text) {
       if (s == DQUOT_ALTERNATIVE) s = '"';
       cell.symbol = s;
       cell.displaysymbol = s;
-      if (!comment && s == ASTERIX_ALTERNATIVE) s = '*';
       cell.circuitsymbol = s;
       //cell.metasymbol = comment ? commentalign : s;
       cell.metasymbol = comment ? '"' : s;
@@ -7389,7 +7403,7 @@ function parseCells(text) {
               commentstart += 3;
             }
             // support -, + or * as bullet list item. Markdown supports all those 3 characters, so be consistent
-            if((lines[y][x + 1] == '-' || lines[y][x + 1] == '+' || lines[y][x + 1] == '*') && lines[y][x + 2] == ' ') {
+            if((lines[y][x + 1] == '-' || lines[y][x + 1] == '+' || lines[y][x + 1] == '.') && lines[y][x + 2] == ' ') {
               //lines[y][x + 1] = '•'
               //lines[y].replaceAt(x + 1, '•');
               lines[y] = lines[y].substr(0, x + 1) + '•' + lines[y].substr(x + 2);
@@ -7970,7 +7984,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(todir <= 3 && (c == 'x' || c2 == 'x')) return false; // x's do not interact with the sides
 
   if(z > 3 && c != 'i') return false;
-  if(z > 1 && !(c == 'i' || c == 'V' || c2 == 'V' || c == 'W' || c2 == 'W' || c == 'X' || c2 == 'X')) return false;
+  if(z > 1 && !(c == 'i' || c == 'V' || c2 == 'V' || c == 'W' || c2 == 'W' || c == '*' || c2 == '*')) return false;
 
   //if(c == 'i' && c2 != 'i') return false; // connecting sub-calls is implemented later. And full subs are marked with 'i' earlier, so u's connect only with u's.
 
@@ -8001,7 +8015,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(c == '\\' && !(todir == 5 || todir == 7)) return false;
 
   if(c == 'x' && !(z == 0 && (todir == 4 || todir == 6)) && !(z == 1 && (todir == 5 || todir == 7))) return false;
-  if((c == 'V' || c == 'W' || c == 'X') &&
+  if((c == 'V' || c == 'W' || c == '*') &&
       !(z == 0 && (todir == 1 || todir == 3)) &&
       !(z == 1 && (todir == 0 || todir == 2)) &&
       !(z == 2 && (todir == 5 || todir == 7)) &&
@@ -8102,8 +8116,8 @@ function getZ2(c, c2, ce, ce2, todir, z) {
   }
 
   if(c2 == '+' && (todir2 == 0 || todir2 == 2)) z2 = 1;
-  if(c2 == 'X' || c2 == 'V' || c2 == 'W') {
-    // X's meaning for z coordinate: z=0:-, z=1:|, z=2:/, z=3:\ (backspace)
+  if(c2 == '*' || c2 == 'V' || c2 == 'W') {
+    // *'s meaning for z coordinate: z=0:-, z=1:|, z=2:/, z=3:\ (backspace)
     if(todir == 0 || todir == 2) z2 = 1;
     else if(todir == 4 || todir == 6) z2 = 3;
     else if(todir == 5 || todir == 7) z2 = 2;
@@ -8513,9 +8527,9 @@ function parseComponents() {
           for(var i = 0; i < array.length; i++) {
             var c = world[array[i][1]][array[i][0]].circuitsymbol;
             // when using such wires, then it's clear that it's a desired explicit loose wire, not a stray wire
-            // part of a V,X,%,& or so that only exists as side effect of those having possibly undesired wires
+            // part of a V,*,%,& or so that only exists as side effect of those having possibly undesired wires
             // even + and x are considered explicit! Since you can always avoid their extra wire with a different ascii char. Not so for V or % etc....
-            if(c == '-' || c == '|' || c == '/' || c == '\\' || c == ',' || c == '*' || c == '+' || c == 'x' ||
+            if(c == '-' || c == '|' || c == '/' || c == '\\' || c == ',' || c == '.' || c == '+' || c == 'x' ||
                 (dinputmap[c] && world[array[i][1]][array[i][0]].circuitextra == 0)) { // only straight inputs considered explicit, diagonal ones may be misplaced ones
               type = TYPE_LOOSE_WIRE_EXPLICIT;
               break;
@@ -11148,9 +11162,9 @@ var introText = `
 
    7"and gate"
 
-  s****>a****>l
+  s....>a....>l
         ^
-  s******
+  s......
 
 0"There are much more types of gates and devices available: logic gates,"
 0"flip-flops, integrated circuits, ROMs, displays, ... Explore the circuits"
@@ -11158,11 +11172,11 @@ var introText = `
 
      7"adder"          7"JK flipflop"
 
-  s**>a**>o**>l 6"carry"
+  s..>a..>o..>l 6"carry"
      >    ^              s-->jq->l
-  s**>e**>a              s-->c#
+  s..>e..>a              s-->c#
          >               s-->kQ->l
-  s******>e**>l 6"sum"
+  s......>e..>l 6"sum"
 
 0"# Circuits Index"
 
@@ -11196,7 +11210,7 @@ var introText = `
 
 0"FIT:w"
 
-0"LogicEmu. Copyright (C) 2018-2019 by Lode Vandevenne"`;
+0"LogicEmu. Copyright (C) 2018-2020 by Lode Vandevenne"`;
 
 var introTitle = 'Browser-Based Logic Simulator';
 
