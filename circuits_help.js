@@ -116,29 +116,20 @@ s......>l
     l
 
 0"Wire crossing (indicated with the wires rendered slightly disconnected, or a"
-0"'+' in text mode): Both switch/LED pairs work independently and don't interact:"
+0"'+' or 'x' in text mode): Both switch/LED pairs work independently and don't"
+0"interact:"
 
 
     s
-    .
-    .
-    .
-s...+..>l
-    .
-    .
-    v
+    .                  l     l
+    .                   ^   ^
+    .       s... ..>l    ; /
+s...+..>l       x         x
+    .       s... ..>l    / ;
+    .                   /   ;
+    v                  s     s
     l
 
-0"Diagonal wire crossing:"
-
-
-           l     l
-            ^   ^
-s... ..>l    ; /
-    x         x
-s... ..>l    / ;
-            /   ;
-           s     s
 
 0"Diagonal wire crossing at the arrowhead itself (causing 2 diagonal crossing"
 0"inputs):"
@@ -251,6 +242,13 @@ O....>l    s....>O....>l
 
 E....>l    s....>E....>l
 
+0"Instead of 0-input gates, constants can be used to have a 0 or 1 signal."
+0"In text mode, these are shown with 'c' and 'C' instead of '0' and '1'."
+
+c....>l
+
+C....>l
+
 
 0"There also exist negated inputs. Normal inputs are indicated with an"
 0"arrow head, negated inputs instead with a little circle (or in text"
@@ -328,17 +326,6 @@ s..>c..>l
     ^   ^   ^   ^
 s..>c..>c..>c..>c
 
-0"The c can also used as a 'constant' when it has no inputs (it then keeps"
-0"its state forever, hence constant). A small 'c' is off, a large 'C' is on in"
-0"text mode. In graphical mode, these are rendered with '0' and '1' instead."
-
-c....>l
-
-C....>l
-
-0"Other gates without inputs, like o and O, could be used for this purpose"
-0"but in most built-in circuits 'c' is chosen for consistency and because they"
-0"render nicely with the '0' and '1' symbol in graphical mode"
 
 0"Real ideal flip-flops can be made from 'c', 'd', 'j', 'k', 't', 'q' and 'Q',"
 0"and in this case the c stands for 'clock'. Here is how to interpret each"
@@ -493,9 +480,9 @@ s-->d-->l
 
 
 
-0"An RGB LED 'Y' takes a red, green and blue input:"
+0"An RGB LED 'G' takes a red, green and blue input:"
 
-8"B"s--->Y<---s"R"6
+8"B"s--->G<---s"R"6
          ^
          |
          |
@@ -971,7 +958,7 @@ s>BBBb
 
 
 c>a------------------. .->l
-c-V--------,,--------+-+->l
+c-X--------,,--------+-+->l
 c-+-----. .+. .----. .-+->l
 c-+-----+-++--.  .-+---+->l
 c-+-----+-,,-----+-+---+->l
@@ -1081,7 +1068,7 @@ registerCircuit('Rendering Modes', `
 0"top between 'graphical' and 'text':"
 
       l   lll
-      m  lUUGl
+      m  lVVWl
       |   |ll  ####
    p--+---%--->l###   l
       |   |           ^
@@ -1089,7 +1076,7 @@ s---.......--->e>l.. .|.>T
       v       >     x *
 s---->a-....-->a>l.. .|.>l1
       |  ...          s
-    s-Vl ...     l
+    s-Xl ...     l
       l     ;   ^
              ; /
               .
@@ -1330,7 +1317,7 @@ s----.
 0"For example something like this (all those characters after 'code=' are the"
 0"base64 code):"
 
-0"lodev.org/logicemu/#code=0AHMtLS0-YS2BBmwKIIEBXgqBFC0qCg"
+0"lodev.org/logicemu/#code=0AHMtLS0-YS2BBmwKIIEBXgqBFC0uCg"
 
 0"Note that those codes contain the entire circuit encoded inside of them and"
 0"are decoded locally in the browser, these are not codes used by a web server"
@@ -1768,7 +1755,7 @@ s..]o..>l  s..]a..>l  s..]e..>l  s..]O..>l  s..]A..>l  s..]E..>l
 
 0"Gates can have more than two inputs, for example three below, more is"
 0"possible if the gate would be large enough, how to do that is introduced a"
-0"bit further (extending with # or $). Note that multi-input XOR gates act as"
+0"bit further (extending with #). Note that multi-input XOR gates act as"
 0"parity gates"
 
     s          s          s
@@ -1851,7 +1838,6 @@ s...>o....>l
 
 3"NEW PART: device extender"
 3"#: device extender"
-3"$: noninteracting device extender"
 
 0"An extender extends the size of a device, for many-input logic gates, or"
 0"large or specially shaped switches and LEDs. Remember, devices like s, l, o,"
@@ -1866,21 +1852,17 @@ o####    e####    e####     ^
 |||||    |||||    |||||    #s#
 sssss    sssss    sssss    ###
 
-0"$ is similar to #, but it does not interact with inputs or wires (and can be"
-0"considered to only extend surface area, nothing more), it can be used to"
-0"allow squeezing inputs through the following LCD display without interacting"
-0"with unwanted segments:"
+0"This also allows extending LEDs to form, for example, a 7-segment display:"
 
-
-    $$l<-.
-   $   $ |
+    ##l<-.
+   #   # |
   >l   l<|
-  |$   $||
- .+>l$$ ||
- ||$   $||
- ||$   $||
+  |#   #||
+ .+>l## ||
+ ||#   #||
+ ||#   #||
  ||l   l||
- ||^$l$^||
+ ||^#l#^||
  ||| ^ |||
  ||| | |||
  ||| | |||
@@ -2074,11 +2056,11 @@ s......>d..>l
            |||
    "a 0"s->bbb<-p"store"
    "d 1"s->bbb
-   "r 2"s->bbb
-   "e 3"s->bbb
-   "s"     ^^^
+   "d 2"s->bbb
+   "r 3"s->bbb
+   "e"     ^^^
    "s"     |||
-           sss"data"
+   "s"     sss"data"
 
 0"RAM, binary address select. 16 lines, only 5 visible here, so you won't see"
 0"the line in hardware if you select an address higher than 4 but it can still"
@@ -2091,11 +2073,11 @@ s......>d..>l
            |||
    "a 1"s->bbb<-p"store"
    "d 2"s->bbb
-   "r 4"s->bbb
-   "e 8"s->bbb
-   "s"     bbb
+   "d 4"s->bbb
+   "r 8"s->bbb
+   "e"     bbb
    "s"     ^^^
-           |||
+   "s"     |||
            sss"data"
 
 
@@ -2318,9 +2300,9 @@ s s s s s s s s        r r r r r r r r r r r
 0"color of circuits rather than comments)."
 
 3"NEW PART: RGB LED"
-3"Y: RGB LED"
+3"G: RGB LED"
 
-s.>Y<.s
+s.>G<.s
    ^
    .
    s
@@ -2855,54 +2837,54 @@ s--v--s
    l
 
 3"NEW PART: multi device input"
-3"U: regular multi device input"
-3"G: inverted multi device input"
+3"V: regular multi device input"
+3"W: inverted multi device input"
 
 0"These are normal and inverted device/gate inputs outputting to multiple sides"
 0"they connect to each other and wires, and output to all devices, no matter"
 0"what direction. They do not interact with other gate input types"
 
        l  l
-s------UU-UGl
+s------VV-VWl
        l  l
 
 3"NEW PART: device input crossing"
-3"V: regular device input crossing (8-directional)"
-3"W: inverted device input crossing (8-directional)"
+3"X: regular device input crossing (8-directional)"
+3"Y: inverted device input crossing (8-directional)"
 
 0"These are a combination of wire crossing and normal or inverted device input"
 
 
   l       l       s---->o--------->l
- lV-s    lW-s     s-----Ve-------->l
-  |       |       s-----+Va------->l
+ lX-s    lY-s     s-----Xe-------->l
+  |       |       s-----+Xa------->l
   s       s             ||^
                         sss
 
-0"V and W work also diagonally. So can serve also as simple diagonal device"
+0"X and Y also work diagonally. So can serve also as simple diagonal device"
 0"inputs"
 
 s     s              l      s s s  s s s
- ;     ;            V        ;|/    ;|/
-  V     W     s----.          V      W
-   l     l          V        lll    lll
+ ;     ;            X        ;|/    ;|/
+  X     Y     s----.          X      Y
+   l     l          X        lll    lll
                      l
 
 0"NOTE: the diagonal usage of ^ seen earler above is also a type of wire"
 0"crossing input, and the diagonal ^ is a nicer looking style than what you can"
-0"make with V."
+0"make with X and can be a bit more compact."
 
 0"NOTE: view this circuit in graphical instead of text mode with the dropdown"
 0"to see better what exactly the input is connecting to above."
 
-0"V and W can also work as a regular wire crossing, in fact it does the same as"
-0"'*' in that case. That's just a side effect of what they are."
+0"X and Y can also work as a regular wire crossing, in fact it does the same as"
+0"'*' in that case. That's just a side effect, not their main use case."
 
 l   l   l
- V  ^  V
+ ^  ^  ^
   ; | /
    ;|/
-s---V-->l
+s---X-->l
    /|;
   / | ;
  /  |  ;
@@ -2911,15 +2893,15 @@ s   s   s
 3"NEW BEHAVIOR: integrated circuits diagonal inputs/outputs"
 
 0"Chips, too, can have diagonal inputs and outputs:"
-0"For the definition, x from s as inputs, and V to l as outputs"
-0"For the usages, V to the chip as its inputs, x from the chip as outputs"
+0"For the definition, x from s as inputs, and X to l as outputs"
+0"For the usages, X to the chip as its inputs, x from the chip as outputs"
 
    s  s  s  l
-    ; | /  V               s s s >l
+    ; | /  X               s s s >l
      vvv  .                . | ./
-     e###>O                 VvV/
+     e###>O                 XvX/
   s->#I9#-->l              s>i9-->l
-     ####                   V^V
+     ####                   X^X
      ^^^                   . | .
     / | ;                  s s s
    s  s  s
@@ -3037,20 +3019,20 @@ registerCircuit('ASCII symbol summary', `
 3"I: IC template"
 3"i: IC instance"
 
-3"UG: normal/inverted device inputs that work in 4 directions"
-3"VW: normal/inverted wire crossing device input (works diagonally too)"
+3"VW: normal/inverted device inputs that work in 4 directions"
+3"XY: normal/inverted wire crossing device input (works diagonally too)"
 
 3"z: tri-state buffer"
 3"Z: inverted tri-state buffer"
 
-3"Y: RGB LED: 3 inputs, red, green and blue"
+3"G: RGB LED: 3 inputs, red, green and blue"
 3"rR: real-time timer"
+3"?: random bit generator"
 
 3"bB: ROM/RAM bits"
 3"T: terminal (ASCII keyboard/screen)"
-3"?: random bit generator"
+3"M: MUX"
 
-3"$: extend the surface area of devices without input/output interaction"
 3"0123456789: modifiers: LED color, timer speed, bus/ic/backplane id"
 
 0"FIT:y"
@@ -3110,13 +3092,13 @@ s-->bBB
 
 
 0"Some of the 'compact shortcut' cells are avoided except in rare circumstances,"
-0"in particular 'V', 'W', 'G', '%', '&' and touching >^<v inputs from sides."
+0"in particular 'V', 'W', 'X', 'Y', '%', '&' and touching >^<v inputs from sides."
 0"But as an exception, ^^^ is used for inputs of half adders and similar circuits."
 
 0"yes:"       0"no:"       0"no:"
 
 s..>a..>l     s.&>a..>l   s..>a..>l
-   >            &+U          V
+   >            &+V          X
 s..>e..>l     s..>e..>l   s..>e..>l
 
 0"Centers and corners of devices are aligned on a certain grid for aesthetic"
@@ -3551,8 +3533,8 @@ registerCircuit('Colored LED (l)', `
  s-->l2
 `, 'component' + componentid++);
 
-registerCircuit('RGB LED (Y)', `
- s-->Y<--s
+registerCircuit('RGB LED (G)', `
+ s-->G<--s
      ^
      |
      |
@@ -3582,11 +3564,11 @@ registerCircuit('Wire Crossing (+)', `
 registerCircuit('Diagonal Wire Crossing (x)', `
 
  s     l
-  ;   V
+  ;   X
    ; /
     x
    / ;
-  /   V
+  /   X
  s     l
 
 `, 'component' + componentid++);
@@ -3594,11 +3576,11 @@ registerCircuit('Diagonal Wire Crossing (x)', `
 registerCircuit('8-Way Wire Crossing (*)', `
 
  s  s  l
-  ; | V
+  ; | X
    ;|/
  s--*->l
    /|;
-  / v V
+  / v X
  s  l  l
 
 `, 'component' + componentid++);
@@ -3712,6 +3694,18 @@ registerCircuit('ASCII Terminal Screen (T)', `
      Sssssss
 `, 'component' + componentid++);
 
+registerCircuit('Terminal With Both (T)', `
+
+                lllllll
+                ^^^^^^^
+                |||||||
+   2"output"p-->TTTTTTT<--p0"read"
+       "EOF"l<--TTTTTTT
+                ^^^^^^^
+                |||||||
+                sssssss
+`, 'component' + componentid++);
+
 registerCircuit('Decimal Display Terminal (T)', `
      TTTTTTT
      ^^^^^^^
@@ -3731,6 +3725,7 @@ registerCircuit('Terminal Counter With Reset (T)', `
            ^
            p
 `, 'component' + componentid++);
+
 
 registerCircuit('ROM one-hot (bB)', `
    lll
@@ -4018,37 +4013,47 @@ registerCircuit('Double Corner (%)', `
     s
 `, 'component' + componentid++);
 
-registerCircuit('Multi-input (U)', `
+registerCircuit('Multi-input (V)', `
    l
-s--Ul
-   l
-`, 'component' + componentid++);
-
-registerCircuit('Negated multi-input (G)', `
-   l
-s--Gl
+s--Vl
    l
 `, 'component' + componentid++);
 
-registerCircuit('Wire Crossing Input (V)', `
+registerCircuit('Negated multi-input (W)', `
+   l
+s--Wl
+   l
+`, 'component' + componentid++);
+
+registerCircuit('Wire Crossing Input (X)', `
 
     s
     |
-  s-Vl
+  s-Xl
     l
 
 `, 'component' + componentid++);
 
-registerCircuit('Negated Wire Crossing Input (W)', `
+registerCircuit('Negated Wire Crossing Input (Y)', `
 
     s
     |
-  s-Wl
+  s-Yl
     l
 
 `, 'component' + componentid++);
 
-registerCircuit('Diagonal Crossing Input (^^^)', `
+registerCircuit('Diagonal Crossing Regular Input (^)', `
+
+l l
+^ ^     l
+a e    ^
+ ^    s
+s s
+
+`, 'component' + componentid++);
+
+registerCircuit('Diagonal Crossing Input Triplet (^^^)', `
 
 l l
 ^ ^
@@ -4088,13 +4093,13 @@ registerCircuit('Unit Test', `
 0"# On"
 
 0"In this section, the LED on the right of each contraption must be ON. If it's"
-0"OFF, something is broken"
+0"OFF, something is broken. There should also be no errors indicated."
 
 C...........>l
 
 C----------->l
 
-C>e-ha-UUo+.>l
+C>e-ha-VVo+.>l
 
 c....>O.....>l
 
@@ -4190,17 +4195,17 @@ C...
      .......>l
 
 C...
-    V
+    X
      .......>l
 
-C...V.......>l
+C...X.......>l
 
 c->O-------->lI5
 
 i5---------->l
 
 c->O-------.
-            V
+            X
 i6           lI6
   x
    .........>l
@@ -4239,17 +4244,17 @@ C--( ( ) )-->l
 
             ]l
 
-            Gl
+            Wl
 
              l
-            Wl
+            Yl
              l
 
 C---------->#l
 
-C----------UUl
+C----------VVl
 
-C----------UVl
+C----------VXl
 
 C----0=0---->l
 
@@ -4274,18 +4279,11 @@ S------->i-->l
 
 s-------]i-->l
 
-S--->i$-----]l
-      #----->l
+S--->i##i--->l
 
-S--->i$$i--->l
+S------>i##->l
 
-S--->i
-     $------]l
-     i------>l
-
-S------>i$#->l
-
-S------>i$i->l
+S------>i#i->l
 
 s->i->lI2
 
@@ -4400,10 +4398,16 @@ C---,------->l
 c...,.......]l
     .-------]l
 
+S---------->o
+s-----------]l
+
+S---------->o
+            >l
+
 0"# Off"
 
 0"In this section, the LED on the right of each contraption must be OFF. If"
-0"it's ON, something is broken"
+0"it's ON, something is broken. There should also be no errors indicated."
 
 ............>l
 
@@ -4437,20 +4441,20 @@ C.....( (...>l
 C...( ( )...>l
 
 C.....
-      V.....>l
+      X.....>l
 
 c---- ------>l
      x
 C---- ------>l
 
 C-----------
-            Ul
+            Vl
 
-C-----------U
+C-----------V
              l
 
 C----------.
-            Ul
+            Vl
 1Rw
   E--------->l
 1R^
@@ -4461,9 +4465,9 @@ r---->R----->l
 
 C...........]l
 
-C---------->Vl
+C---------->Xl
 
-C----------U>l
+C----------V>l
 
       :
 C...........>l
@@ -4529,6 +4533,14 @@ S-->dy------>l
 s-->dy------>l
      ^
      S
+
+s-->l-->l
+
+S---------->o
+s----------->l
+
+S---------->o
+            ]l
 
 
 0"# Toggle"
@@ -4598,12 +4610,12 @@ s##
 .--.>e-->c-->l
 .
 . C--.>a---->l
-.     V
+.     X
 .----.>e----]l
 .
 ......
 .     x
-.      W
+.      Y
 .       O--->l
 .
 .---.>o>q--->l
@@ -4765,25 +4777,25 @@ registerCircuit('Drawing Test', `
 0"# LED Colors"
                                       ###
 0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7     ###
-l l l l l l l l   l l l l l l l l     Y##     TTTT
+l l l l l l l l   l l l l l l l l     G##     TTTT
 ^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^     ^^^     ^^^^
 s s s s s s s s   S S S S S S S S     sss     ssss
                                      "BGR"   "8421"
 
 0"# Shapes"
 
-s-->l    l   ....
-         ^   ....     l       l l   l   l  l       l  l   l   l
-   l     |   ....      V     V   V  ^  V    V     V    V  ^  V       l
-   ^     |   ....       ;   /     ; | /      ;   /      ; | /        ^
+s-->l    l
+         ^            l       l l   l   l  l       l  l   l   l
+   l     |             ^     ^   ^  ^  ^    ^     ^    ^  ^  ^       l
+   ^     |              ;   /     ; | /      ;   /      ; | /        ^
    |     s               ; /       ;|/        ; /        ;|/         |
 s--+-->l       s          x      s--*-->l   s--*-->l      *       s--*-->l
    |           .         / ;       /|;        / ;        /|;         |
    s       l<.....>l    /   ;     / | ;      /   ;      / | ;        s
                .       s     s   s  s  s    s     s    s  s  s
     l  l l  l  v
-    ^   V   ^  l       l       l     l   l   l   l
-    |  / ;  |           V     V      ^  V     V  ^        l       l
+    ^   X   ^  l       l       l     l   l   l   l
+    |  / ;  |           X     X      ^  X     X  ^        l       l
 s---+-*---*-+------->l   ;   /       | /       ; |        ^       ^
     |/     ;|             ; /        |/         ;|        |       |
     *       *              *      s--*-->l    s--*-->l s--%--s s--&--s
@@ -4792,15 +4804,15 @@ s-*-+-------+-*----->l   /   ;     / |           | ;      v       v
  /  |       |  ;        s     s   s  s           s  s     l       l
 S   s       s   s
                                             s-g->l
-       s    s s    s       s    s s    s                  s->a>l       s
-  l l  . l  . .  l .  l l  . l  . .  l .      l     l     p->e>l       v
-   V    V    V    V    W    W    W    W     s.Ul  s.Gl    r->o>l       e.
-  . .  . l  l l  l .  . .  . l  l l  l .      l     l     S->A>l  s--->$|
-  s s  s           s  s s  s           s                  P->E>l       $v
-                                              s     s     R->O>l       |l
-       s   s                 s   s            |     |     s->?>l       |
-  l    .   .    l       l    .   .    l     s.Vl  s.Wl                 v
-s.Vl s.Vl lV.s lV.s   s.Wl s.Wl lW.s lW.s     |     |                  l
+       s    s s    s       s    s s    s                  s->a>l
+  l l  . l  . .  l .  l l  . l  . .  l .      l     l     p->e>l
+   X    X    X    X    Y    Y    Y    Y     s.Vl  s.Wl    r->o>l
+  . .  . l  l l  l .  . .  . l  l l  l .      l     l     S->A>l
+  s s  s           s  s s  s           s                  P->E>l
+                                              s     s     R->O>l
+       s   s                 s   s            |     |     s->?>l
+  l    .   .    l       l    .   .    l     s.Xl  s.Yl
+s.Xl s.Xl lX.s lX.s   s.Yl s.Yl lY.s lY.s     |     |
   .    l   l    .       .    l   l    .       v     v
   s             s       s             s       l     l
 
@@ -4813,6 +4825,73 @@ s...+..>l   .>a       vvv       .    a<.     vvv      .     l<..+...s
             .                 a<.      .              .>a
             v                   .      v              .
             l                   s      l              s
+
+
+"---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx ****"
+
+ ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx ****
+ ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx ****
+ ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx ****
+ ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx ****
+
+
+s-->r-->l     s-->s-->l
+s-->R-->l     s-->S-->l
+S-->r-->l     S-->s-->l
+S-->R-->l     S-->S-->l
+
+
+0"Due to the way the rendering works, some of the combined wire/input crossings inputs below will"
+0"show as either all on or all off even if only a subset of the wires are on. This is a"
+0"limitation of how the rendering works, only for a common subset of shapes it supports up to"
+0"4 graphical patterns combining on and off in a cell instead of only 2."
+
+        s S          s   S             s              s        s    s s    s s       s
+s--Xl   | |     l    |    ; l      l    ;      l       ; l     |l    ;|     ;|l     l|l
+        X X    X  S--Xl    X   S--Xl  S--Xl  S--Xl   S--Xl  S--Xl  S--Xl  S--Xl   S--Xl
+S--Xl   l l   /      l    / l    /        l      ;     / l    /l      ll    /ll     /l;
+             S           s      s                 s   s      s             s       s   s
+
+        l l     S  s        S            s              s    s      s s    s s     s
+lX--s   X X    /   |     l /   l        /      l     l /    l|      |/    l|/     l|l
+        | |   X   lX--S   X    lX--S  lX--S  lX--S   lX--S  lX--S  lX--S  lX--S   lX--S
+lX--S   s S  l     l     l ;     ;    l      /       l ;     l;    ll     ll;     /l;
+                            s     s         s           s      s             s   s   s
+
+
+
+
+        s S          s   S             s              s        s    s s    s s       s
+s--Yl   | |     l    |    ; l      l    ;      l       ; l     |l    ;|     ;|l     l|l
+        Y Y    Y  S--Yl    Y   S--Yl  S--Yl  S--Yl   S--Yl  S--Yl  S--Yl  S--Yl   S--Yl
+S--Yl   l l   /      l    / l    /        l      ;     / l    /l      ll    /ll     /l;
+             S           s      s                 s   s      s             s       s   s
+
+        l l     S  s        S            s              s    s      s s    s s     s
+lY--s   Y Y    /   |     l /   l        /      l     l /    l|      |/    l|/     l|l
+        | |   Y   lY--S   Y    lY--S  lY--S  lY--S   lY--S  lY--S  lY--S  lY--S   lY--S
+lY--S   s S  l     l     l ;     ;    l      /       l ;     l;    ll     ll;     /l;
+                            s     s         s           s      s             s   s   s
+
+
+
+
+ s       s           s   S             s              s        s    s s    s s       s
+  ;       ;          |    ; /      /    ;      ;       ; l     |l    ;|     ;|/     ;|l
+S--X-   S--X-     S--Xl    X   S--Xl  S--X-  S--Xl   S--X-  S--X-  S--Xl  S--Xl   S--Xl
+    ;       ;        |    / l    /        l      ;     / l    /l      l;    /l;     /l;
+                         s      s                 s   s      s             s       s   s
+
+   s       s       s        S            s              s    s      s s    s s     s
+  /       /        |     l /   ;        /      /     l /    l|      |/    ;|/     l|/
+-X--S   -X--S     lX--S   X    lX--S  -X--S  lX--S   -X--S  -X--S  lX--S  lX--S   lX--S
+/       /          |     / ;     ;    l      /       l ;     l;    /l     /l;     /l;
+                            s     s         s           s      s             s   s   s
+
+
+
+
+
 
 
 

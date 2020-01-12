@@ -378,7 +378,7 @@ var th = 9;
 var TYPE_index = 0;
 var TYPE_NULL = TYPE_index++; // uninited
 var TYPE_LOOSE_WIRE_EXPLICIT = TYPE_index++; // it has no core, it's just a loose wire, always outputs 0 (in real life, would be "floating" instead)
-var TYPE_LOOSE_WIRE_IMPLICIT = TYPE_index++; // like TYPE_LOOSE_WIRE_EXPLICIT, but without any explicit added things like -, |, ^, ..., only implicit part of +, x, V, ...
+var TYPE_LOOSE_WIRE_IMPLICIT = TYPE_index++; // like TYPE_LOOSE_WIRE_EXPLICIT, but without any explicit added things like -, |, ^, ..., only implicit part of +, x, X, ...
 var TYPE_UNKNOWN_DEVICE = TYPE_index++; // e.g. a # without proper core cell
 var TYPE_SWITCH_OFF = TYPE_index++;
 var TYPE_SWITCH_ON = TYPE_index++;
@@ -430,7 +430,7 @@ connected together with a "master".
 // this is mainly for the "change type" dropdown.
 var typesymbols = {}; // cannot use object colon notation because JS then interprets the variable names as strings, not as their numeric values
 typesymbols[TYPE_NULL] = '`'; typesymbols[TYPE_SWITCH_OFF] = 's'; typesymbols[TYPE_SWITCH_ON] = 'S';
-typesymbols[TYPE_LED] = 'l'; typesymbols[TYPE_LED_RGB] = 'Y';
+typesymbols[TYPE_LED] = 'l'; typesymbols[TYPE_LED_RGB] = 'G';
 typesymbols[TYPE_PUSHBUTTON_OFF] = 'p'; typesymbols[TYPE_PUSHBUTTON_ON] = 'P';
 typesymbols[TYPE_TIMER_OFF] = 'r'; typesymbols[TYPE_TIMER_ON] = 'R'; typesymbols[TYPE_AND] = 'a';
 typesymbols[TYPE_OR] = 'o'; typesymbols[TYPE_XOR] = 'e'; typesymbols[TYPE_NAND] = 'A';
@@ -442,28 +442,26 @@ typesymbols[TYPE_TRISTATE] = 'z'; typesymbols[TYPE_TRISTATE_INV] = 'Z';
 
 // all devices except flipflop, those are treated differently because multiple different cells of its type can form one component
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true,
-                 'S':true, 'l':true, 'Y':true, 'r':true, 'R':true, 'p':true, 'P':true,
+                 'S':true, 'l':true, 'G':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
                  'b':true, 'B':true, 'M':true, 'i':true, 'T':true, 'z':true, 'Z':true, '?':true};
-// devicemap as well as # (with which inputs interact), but not $ (with which inputs do not interact)
-var devicemapin = clone(devicemap); devicemapin['#'] = true;
-// everything that forms the surface of devices, so that includes $
-var devicemaparea = clone(devicemapin); devicemaparea['$'] = true;
+// devicemap as well as # (with extends devices)
+var devicemaparea = clone(devicemap); devicemaparea['#'] = true;
 var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true};
 var rommap = {'b':true, 'B':true};
-var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'U':true, 'G':true, 'V':true, 'W':true};
+var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true};
 var dinputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true}; // directional inputs only
 var wiremap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x':true, 'g':true, '=':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true}; // TODO: remove antennas from wiremap?
 var antennamap = {'(':true, ')':true, 'n':true, 'u':true};
 // only those actively interact diagonally (plus diaginputs but those are not identified by character...)
-var diagonalmap = {'x':true, 'V':true, 'W':true, '/':true, '\\':true, '*':true};
+var diagonalmap = {'x':true, 'X':true, 'Y':true, '/':true, '\\':true, '*':true};
 //non-isolators (does not include isolators like ' ' and '0-9' despite being "known"). I is also not part of this, but i is.
 var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x':true, 'g':true,
-                'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true, 'S':true, 'l':true, 'Y':true, 'r':true, 'R':true, 'p':true, 'P':true,
+                'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's':true, 'S':true, 'l':true, 'G':true, 'r':true, 'R':true, 'p':true, 'P':true,
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true,
-                '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'U':true, 'G':true, 'V':true, 'W':true,
+                '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
                 '#':true, '=':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
-                '$':true, 'z':true, 'Z':true, '?':true, 'toc':true};
+                'z':true, 'Z':true, '?':true, 'toc':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
 var defsubs = {}; // key is number of the sub (but those are not consecutive like in an array, e.g. one could make a I555 and the index would be 555)
@@ -520,10 +518,10 @@ function DefSub() {
         else if(x > 0 && world[y][x - 1].circuitsymbol == '>') dir = 1;
         else if(y > 0 && world[y - 1][x].circuitsymbol == 'v') dir = 2;
         else if(x + 1 < w && world[y][x + 1].circuitsymbol == '<') dir = 3;
-        else if(x + 1 < w && y > 0 && world[y - 1][x + 1].circuitsymbol == 'V') dir = 4;
-        else if(x + 1 < w && y + 1 < h && world[y + 1][x + 1].circuitsymbol == 'V') dir = 5;
-        else if(x > 0 && y + 1 < h && world[y + 1][x - 1].circuitsymbol == 'V') dir = 6;
-        else if(x > 0 && y > 0 && world[y - 1][x - 1].circuitsymbol == 'V') dir = 7;
+        else if(x + 1 < w && y > 0 && world[y - 1][x + 1].circuitsymbol == 'X') dir = 4;
+        else if(x + 1 < w && y + 1 < h && world[y + 1][x + 1].circuitsymbol == 'X') dir = 5;
+        else if(x > 0 && y + 1 < h && world[y + 1][x - 1].circuitsymbol == 'X') dir = 6;
+        else if(x > 0 && y > 0 && world[y - 1][x - 1].circuitsymbol == 'X') dir = 7;
         else if(x + 1 < w && y > 0 && world[y - 1][x + 1].circuitextra == 2 && (world[y - 1][x + 1].circuitsymbol == 'v' || world[y - 1][x + 1].circuitsymbol == '<')) dir = 4;
         else if(x + 1 < w && y + 1 < h && world[y + 1][x + 1].circuitextra == 2 && (world[y + 1][x + 1].circuitsymbol == '<' || world[y + 1][x + 1].circuitsymbol == '^')) dir = 5;
         else if(x > 0 && y + 1 < h && world[y + 1][x - 1].circuitextra == 2 && (world[y + 1][x - 1].circuitsymbol == '^' || world[y + 1][x - 1].circuitsymbol == '>')) dir = 6;
@@ -539,7 +537,7 @@ function DefSub() {
       var y0 = this.externalinputs[i][1];
       /*
       Normally we could just look at 8 neighbors to see where the 's' touches
-      the chip. However, if it's a large switch extended with ### or $$$, we
+      the chip. However, if it's a large switch extended with ###, we
       need to look in the entire area where it touches the chip, and not count
       the connections inside this area itself. Hence the stack and array.
       */
@@ -556,7 +554,7 @@ function DefSub() {
           var x = neigh.x;
           var y = neigh.y;
           if(used[y * w + x]) continue;
-          if(neigh.circuitsymbol == '#' || neigh.circuitsymbol == '$') {
+          if(neigh.circuitsymbol == '#') {
             used[y * w + x] = true;
             stack.push([x, y]);
           }
@@ -570,7 +568,7 @@ function DefSub() {
         for(var d = 0; d < 8; d++) {
           var neigh = getNeighbor(x, y, d);
           if(!neigh) continue;
-          if(neigh.circuitsymbol == '#' || neigh.circuitsymbol == '$' || neigh.circuitsymbol == 's') continue;
+          if(neigh.circuitsymbol == '#' || neigh.circuitsymbol == 's') continue;
 
           if(connected2(x, y, d)) {
             dir = getOppositeDir(d);
@@ -811,7 +809,6 @@ function CallSub(id) {
 
     for(var i = 0; i < this.cells.length; i++) {
       var cell = world[this.cells[i][1]][this.cells[i][0]];
-      if(cell.circuitsymbol == '$') continue; // because $ does not interact with inputs
       for(var j = 0; j < cell.components.length; j++) {
         var component = cell.components[j];
         if(parent && component) {
@@ -845,9 +842,7 @@ function CallSub(id) {
             inputs.push([component.inputs[k], dir, x2, y2, component.inputs_negated[k]]);
           }
           if(connected2(x, y, j)) {
-            if(getNeighbor(x, y, j).circuitsymbol != '$') { // because $ does not interact with outputs
-              outputs.push([component, j, x, y]);
-            }
+            outputs.push([component, j, x, y]);
           }
         }
       }
@@ -1230,7 +1225,7 @@ function ROM() {
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
-        if(!(rommap[c.circuitsymbol] || c.circuitsymbol == '#' || c.circuitsymbol == '$')) return false;
+        if(!(rommap[c.circuitsymbol] || c.circuitsymbol == '#')) return false;
         if(c.components[0]) {
           this.master = c.components[0];
           this.master_orig_x = x;
@@ -1252,7 +1247,7 @@ function ROM() {
       }
     }
     this.master.rom = this;
-    this.master.type = TYPE_ROM; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with $ or #
+    this.master.type = TYPE_ROM; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with #
     return true;
   };
 
@@ -1796,7 +1791,7 @@ function Mux() {
       }
     }
     this.master.mux = this;
-    this.master.type = TYPE_MUX; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with $ or #
+    this.master.type = TYPE_MUX; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with #
     return true;
   };
 
@@ -3927,12 +3922,12 @@ function Cell() {
     var c = this.circuitsymbol;
     var symbol = this.displaysymbol;
     var virtualsymbol = symbol;
-    if((symbol == '#' || symbol == '$') && this.components[0]) {
+    if((symbol == '#') && this.components[0]) {
       // TODO: use "typesymbols"
       if(this.components[0].type == TYPE_SWITCH_ON) virtualsymbol = 'S';
       if(this.components[0].type == TYPE_SWITCH_OFF) virtualsymbol = 's';
       if(this.components[0].type == TYPE_LED) virtualsymbol = 'l';
-      if(this.components[0].type == TYPE_LED_RGB) virtualsymbol = 'Y';
+      if(this.components[0].type == TYPE_LED_RGB) virtualsymbol = 'G';
       if(this.components[0].type == TYPE_PUSHBUTTON_ON) virtualsymbol = 'P';
       if(this.components[0].type == TYPE_PUSHBUTTON_OFF) virtualsymbol = 'p';
       if(this.components[0].type == TYPE_TIMER_ON) virtualsymbol = 'R';
@@ -3943,7 +3938,7 @@ function Cell() {
     var title = null;
     if(!this.comment) {
       var tc = c;
-      if(tc == '#' || tc == '$') tc = this.components[0].corecell.circuitsymbol;
+      if(tc == '#') tc = this.components[0].corecell.circuitsymbol;
       if(tc == '-' || tc == '|' || tc == '.') {
         title = 'wire. Shift+click to highlight.';
       }
@@ -3952,7 +3947,7 @@ function Cell() {
       if(tc == 'P') title = 'pushbutton (hold mouse down to disable)';
       if(tc == 'r' || tc == 'R') title = 'timer (click to freeze/unfreeze)';
       if(tc == 'l') title = 'LED';
-      if(tc == 'Y') title = 'RGB LED';
+      if(tc == 'G') title = 'RGB LED';
       if(tc == '?') title = 'random generator';
       if(tc == 'a') title = 'AND gate';
       if(tc == 'A') title = 'NAND gate';
@@ -4075,11 +4070,12 @@ function Cell() {
           var master = this.components[0].master;
           var vte = master ? master.vte : this.components[0].vte;
           if(vte) {
-            if(vte.numinputs > 0 && !vte.counter) title += ' (with keyboard input)';
+            if(vte.numinputs > 0 && !vte.counter) title += ' (with keyboard input, click to put cursor here)';
             if(vte.numoutputs > 0 && !vte.counter) title += ' (with ascii output)';
+            if(vte.numoutputs > 0 && vte.numinputs > 0 && !vte.counter) title += ' (only outputs what was typed with keyboard using active cursor, not from the component inputs. The inputs are displayed as ascii on screen only.)';
             if(vte.counter) title += ' (as counter)';
             if(vte.decimaldisplay && !vte.counter) title += ' (as decimal display)';
-            if(vte.decimalinput && !vte.counter) title += ' (as decimal input)';
+            if(vte.decimalinput && !vte.counter) title += ' (as decimal input, click to put cursor here)';
           }
         }
       }
@@ -4092,7 +4088,7 @@ function Cell() {
       // TODO: for T, only show the pointer if it accepts keyboard input
       var pointer = (c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R' || c == 'b' || c == 'B' || c == 'T');
       // currently cursor pointer not enabled for wires etc... that are part of the switch (even though pressing them actually works... but it would look a bit too messy)
-      if((c == '#' || c == '$') && this.components[0]) {
+      if((c == '#') && this.components[0]) {
         var type = this.components[0].type;
         if(type == TYPE_SWITCH_OFF || type == TYPE_SWITCH_ON || type == TYPE_PUSHBUTTON_OFF || type == TYPE_PUSHBUTTON_ON) {
           pointer = true;
@@ -4486,9 +4482,9 @@ function RendererText() {
         this.div1.style.backgroundColor = led_on_bg_colors[color];
         if(this.div1.innerText == 'l') this.div1.innerText = 'L';
       }
-      if(virtualsymbol == 'Y') {
+      if(virtualsymbol == 'G') {
         var color = 0;
-        //this.div0.innerText = 'Y';
+        //this.div0.innerText = 'G';
         this.div0.style.color = '#888';
         this.div0.style.backgroundColor = '#888';
         this.div0.style.visibility = 'visible';
@@ -4564,7 +4560,7 @@ function RendererText() {
 
   this.setValue = function(cell, value, type) {
     if(!this.div1) return; // e.g. if this is a comment (TODO: fix the fact that comment gets setValue at all, it should not be part of a component)
-    if(type == TYPE_LED_RGB && (cell.circuitsymbol == 'Y' || cell.circuitsymbol == '#' || cell.circuitsymbol == '$')) {
+    if(type == TYPE_LED_RGB && (cell.circuitsymbol == 'G' || cell.circuitsymbol == '#')) {
       value = cell.components[0].rgbcolor;
       if(value != this.prevvalue) {
         this.div0.style.color = rgb_led_fg_colors[value];
@@ -4635,7 +4631,7 @@ function hasDevice(x, y, dir) {
   var n = getNeighbor(x, y, dir);
   if(!n) return false;
   var c2 = world[n.y][n.x].circuitsymbol;
-  return devicemap[c2] || c2 == '#' || c2 == '$';
+  return devicemaparea[c2];
 }
 
 // very similar to connected, but with a few tweaks for graphics.
@@ -4712,9 +4708,9 @@ function sameDevice(x, y, dir) {
     return !!ff1 && ff1 == ff2;
   }
   if(devicemap[c] && devicemap[c2]) return false;
-  //if(c == '#' || c2 == '#' || c == '$' || c2 == '$') return true;
-  if((c == '#' || c == '$') && (devicemap[c2] || c2 == '#' || c2 == '$')) return true;
-  if((c2 == '#' || c2 == '$') && (devicemap[c] || c == '#' || c == '$')) return true;
+  //if(c == '#' || c2 == '#') return true;
+  if((c == '#') && (devicemaparea[c2])) return true;
+  if((c2 == '#') && (devicemaparea[c])) return true;
   return false;
 }
 
@@ -4889,40 +4885,56 @@ function RendererDrawer() {
   };
 
   this.drawAntiArrowCore_ = function(ctx, x0, y0, x1, y1, opt_r) {
-    var r = opt_r || 0.25;
-    var d = r * 2;
-    var d1 = d - 0.1; // just trying to make the line and circle join just right... see the 3-input logic gate circuit's one hot detector with diagonal anti-inputs
-    if(y0 == y1 && x1 > x0) {
-      this.drawCircleCore_(ctx, x1 - r, y1, r);
-      this.drawLineCore_(ctx, x0, y0, x1 - d, y1);
-    } else if(y0 == y1) {
-      this.drawCircleCore_(ctx, x1 + r, y1, r);
-      this.drawLineCore_(ctx, x0, y0, x1 + d, y1);
-    } else if(x0 == x1 && y1 > y0) {
-      this.drawCircleCore_(ctx, x1, y1 - r, r);
-      this.drawLineCore_(ctx, x0, y0, x1, y1 - d);
-    } else if(x0 == x1) {
-      this.drawCircleCore_(ctx, x1, y1 + r, r);
-      this.drawLineCore_(ctx, x0, y0, x1, y1 + d);
-    } else if(x1 > x0 && y1 > y0) {
-      this.drawCircleCore_(ctx, x1 - r, y1 - r, r);
-      this.drawLineCore_(ctx, x0, y0, x1 - d1, y1 - d1);
-    } else if(x1 > x0 && y1 < y0) {
-      this.drawCircleCore_(ctx, x1 - r, y1 + r, r);
-      this.drawLineCore_(ctx, x0, y0, x1 - d1, y1 + d1);
-    } else if(x1 < x0 && y1 > y0) {
-      this.drawCircleCore_(ctx, x1 + r, y1 - r, r);
-      this.drawLineCore_(ctx, x0, y0, x1 + d1, y1 - d1);
-    } else {
-      this.drawCircleCore_(ctx, x1 + r, y1 + r, r);
-      this.drawLineCore_(ctx, x0, y0, x1 + d1, y1 + d1);
-    }
   };
 
   // this one has a circle instead of arrow head (for negated inputs)
-  this.drawAntiArrow_ = function(ctx, x0, y0, x1, y1, opt_r) {
+  this.drawAntiArrow_ = function(ctx, oppositeColor, x0, y0, x1, y1, opt_r) {
+    var c0 = ctx.strokeStyle;
+    var c1 = oppositeColor;
+    var r = opt_r || 0.25;
+    var d = r * 2;
+    var d1 = d - 0.1; // just trying to make the line and circle join just right... see the 3-input logic gate circuit's one hot detector with diagonal anti-inputs
+
+    ctx.strokeStyle = c1;
     ctx.beginPath();
-    this.drawAntiArrowCore_(ctx, x0, y0, x1, y1, opt_r);
+    if(y0 == y1 && x1 > x0) {
+      this.drawCircleCore_(ctx, x1 - r, y1, r);
+    } else if(y0 == y1) {
+      this.drawCircleCore_(ctx, x1 + r, y1, r);
+    } else if(x0 == x1 && y1 > y0) {
+      this.drawCircleCore_(ctx, x1, y1 - r, r);
+    } else if(x0 == x1) {
+      this.drawCircleCore_(ctx, x1, y1 + r, r);
+    } else if(x1 > x0 && y1 > y0) {
+      this.drawCircleCore_(ctx, x1 - r, y1 - r, r);
+    } else if(x1 > x0 && y1 < y0) {
+      this.drawCircleCore_(ctx, x1 - r, y1 + r, r);
+    } else if(x1 < x0 && y1 > y0) {
+      this.drawCircleCore_(ctx, x1 + r, y1 - r, r);
+    } else {
+      this.drawCircleCore_(ctx, x1 + r, y1 + r, r);
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = c0;
+    ctx.beginPath();
+    if(y0 == y1 && x1 > x0) {
+      this.drawLineCore_(ctx, x0, y0, x1 - d, y1);
+    } else if(y0 == y1) {
+      this.drawLineCore_(ctx, x0, y0, x1 + d, y1);
+    } else if(x0 == x1 && y1 > y0) {
+      this.drawLineCore_(ctx, x0, y0, x1, y1 - d);
+    } else if(x0 == x1) {
+      this.drawLineCore_(ctx, x0, y0, x1, y1 + d);
+    } else if(x1 > x0 && y1 > y0) {
+      this.drawLineCore_(ctx, x0, y0, x1 - d1, y1 - d1);
+    } else if(x1 > x0 && y1 < y0) {
+      this.drawLineCore_(ctx, x0, y0, x1 - d1, y1 + d1);
+    } else if(x1 < x0 && y1 > y0) {
+      this.drawLineCore_(ctx, x0, y0, x1 + d1, y1 - d1);
+    } else {
+      this.drawLineCore_(ctx, x0, y0, x1 + d1, y1 + d1);
+    }
     ctx.stroke();
   };
 
@@ -5006,23 +5018,6 @@ function RendererDrawer() {
     return num;
   };
 
-  this.drawSplit_h_ = function(cell, ctx, num0) {
-    var num = num0 || 0;
-    ctx.beginPath();
-    if(connected2g(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { num++; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5); }
-    if(connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5); }
-    if(connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1); }
-    if(connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { num++; this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5); }
-    if(connected2g(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0); }
-    if(connected2g(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 1); }
-    if(connected2g(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 1); }
-    if(connected2g(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 0); }
-    ctx.stroke();
-    if(num >= 3) {
-      ctx.fillRect(this.tx + (tw >> 1) - 1.5, this.ty + (th >> 1) - 1.5, 3.5, 3.5);
-    }
-  };
-
   // draws wire crossing only for wires connected on any side. Returns array with amount, and code indicating ('|' ? 1) + ('-' ? 2) + ('/' ? 4) + ('\' ? 8), e.g. 3 if it's a + without diagonals
   this.drawCrossing_ = function(cell, ctx) {
     var num = 0;
@@ -5078,7 +5073,24 @@ function RendererDrawer() {
     return [num, code];
   };
 
-  // specifically made for dynamic rendering of the 8-way * crossing. Value and code use different bits.
+  // Designed for the wire crossing input 'X' and 'Y' to draw the non-arrow parts. Returns similar value as this.drawCrossing_, but with 8 possible separate directions for the num and code.
+  this.drawCrossing_crossingInput_ = function(cell, ctx) {
+    var num = 0;
+    var code = 0;
+    ctx.beginPath();
+    if(connected2g(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { num++; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5); code |= 1; }
+    if(connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5); code |= 2; }
+    if(connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1); code |= 4; }
+    if(connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { num++; this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5); code |= 8; }
+    if(connected2g(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0); code |= 16; }
+    if(connected2g(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 1); code |= 32; }
+    if(connected2g(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 1); code |= 64; }
+    if(connected2g(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 0); code |= 128; }
+    ctx.stroke();
+    return [num, code];
+  };
+
+  // specifically made for dynamic rendering of the 8-way '*' crossing. Value and code use different bits.
   this.drawCrossing2_ = function(ctx, code, value, color0, color1) {
     var full = 0; // which one gets the full length
     if(code & 2) full = 2; // horizontal full looks best
@@ -5432,7 +5444,7 @@ var rglobal = new RendererImgGlobal();
 
 var NOUSETEXTMAP = {'-':true, '|':true, '.':true, '+':true, 'x':true, '*':true,
                     '>':true, 'v':true, '<':true, '^':true, ']':true, 'w':true, '[':true, 'm':true,
-                    'U':true, 'G':true, 'V':true, 'W':true}
+                    'V':true, 'W':true, 'X':true, 'Y':true}
 
 var drawer = new RendererDrawer();
 
@@ -5455,6 +5467,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   this.ty = 0;
   // if false: avoid using the few fixed graphics from the 'extra' canvas for 2+ connection things if their graphics are too custom
   // if true: see the drawGlobalExtras_ function for more info
+  // NOTE: this value is updated on the fly depending on whather what's being drawn needs it
   this.drawextra = false;
   // what value must input match to use this extra graphic
   this.drawextrai0 = 0;
@@ -5571,6 +5584,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       var ctx = (i == 0) ? this.ctx0 : this.ctx1;
       var canvas = (i == 0) ? this.canvas0 : this.canvas1;
       var textel = (i == 0) ? this.text0 : this.text1;
+      var oppositeColor = (i == 0) ? ONCOLOR : OFFCOLOR;
 
       // for big devices like IC and FlipFlop with multiple possible output values, it's
       // ugly if borders get different colors for 'on' and 'off' sub-parts of it, so set to
@@ -5579,7 +5593,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         var type = cell.components[0].type;
         if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM || type == TYPE_MUX) {
           // only for the solid parts, wires part of this component must still use on color
-          if(devicemap[c] || c == '#' || c == '$') {
+          if(devicemaparea[c]) {
             ctx.strokeStyle = OFFCOLOR;
             ctx.fillStyle = OFFCOLOR;
           }
@@ -5711,59 +5725,60 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       } else if(c == 'm') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
-          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, 1, 1, 0, 0); num++; }
-          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, 0, 1, 1, 0); num++; }
+          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, oppositeColor, 1, 1, 0, 0); num++; }
+          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0, 1, 1, 0); num++; }
           if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);
+          drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 0);
         }
       } else if(c == ']') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
-          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, 0, 1, 1, 0); num++; }
-          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, 0, 0, 1, 1); num++; }
+          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0, 1, 1, 0); num++; }
+          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0, 0, 1, 1); num++; }
           if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);
+          drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 0.5);
         }
       } else if(c == 'w') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
-          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, 1, 0, 0, 1); num++; }
-          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, 0, 0, 1, 1); num++; }
+          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, oppositeColor, 1, 0, 0, 1); num++; }
+          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0, 0, 1, 1); num++; }
           if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);
+          drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 1);
         }
       } else if(c == '[') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
           var num = 0;
-          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, 1, 1, 0, 0); num++; }
-          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, 1, 0, 0, 1); num++; }
+          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, oppositeColor, 1, 1, 0, 0); num++; }
+          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, oppositeColor, 1, 0, 0, 1); num++; }
           if(num == 2) this.drawextra = true;
         } else {
           drawer.drawSplit_(cell, ctx, 1);
-          drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);
+          drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 0.5);
         }
-      } else if(c == 'U') {
+      } else if(c == 'V') {
         var num = 0;
         if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19);}
         if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19);}
         if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19);}
         if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19);}
         drawer.drawSplit_(cell, ctx, num);
-      } else if(c == 'G') {
+      } else if(c == 'W') {
         var num = 0;
-        if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0);}
-        if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5);}
-        if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1);}
-        if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5);}
+        if(hasDevice(cell.x, cell.y, 0)) {num++; drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 0);}
+        if(hasDevice(cell.x, cell.y, 1)) {num++; drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 0.5);}
+        if(hasDevice(cell.x, cell.y, 2)) {num++; drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 1);}
+        if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 0.5);}
         drawer.drawSplit_(cell, ctx, num);
-      } else if(c == 'V') {
-        drawer.drawSplit_h_(cell, ctx, -8);
+      } else if(c == 'X') {
+        var r = drawer.drawCrossing_crossingInput_(cell, ctx);
+        var code2 = r[1];
         var code = 0;
         if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19); code |= 1; }
         if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19); code |= 2; }
@@ -5773,157 +5788,182 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1); code |= 32; }
         if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1); code |= 64; }
         if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0); code |= 128; }
-        if(code == 1) {
+        var code3 = code + code2;
+
+
+        // temporary debug help
+        /*var div = makeDiv(cell.x * tw, cell.y * th, tw, th, worldDiv);
+        div.title = 'code: ' + code + ' ' + code2;
+        div.style.zIndex = '1000';*/
+
+        if(code == 0 && r[0] > 1) {
+          // no actual inputs, it acts as a '*'
+          this.dynamicdraw = true;
+          this.dynamicdrawcode = drawer.drawCrossing_(cell, ctx)[1];
+        }
+        // TODO: 1,2,4,8 commented out because wrong, this is case of only single direction so only 2 total states, but may be necessary for cases where there's a genuine regular wire
+        // TODO: there are more cases that go wrong with combinations of crossing of wire and nonwire, either causing too much or too little drawn
+        else if(code == 1 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 32;
         }
-        if(code == 2) {
+        else if(code == 2 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 33;
         }
-        if(code == 4) {
+        else if(code == 4 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 34;
         }
-        if(code == 8) {
+        else if(code == 8 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 35;
         }
-        if(code == 144) {
+        else if(code == 144 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 4;
           this.drawextrag = 2;
         }
-        if(code == 48) {
+        else if(code == 48 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 4;
           this.drawextrai1 = 8;
           this.drawextrag = 3;
         }
-        if(code == 96) {
+        else if(code == 96 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 4;
           this.drawextrai1 = 8;
           this.drawextrag = 4;
         }
-        if(code == 192) {
+        else if(code == 192 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 4;
           this.drawextrag = 5;
         }
-        if(code == 3) {
+        else if(code == 3 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 16;
         }
-        if(code == 6) {
+        else if(code == 6 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 2;
           this.drawextrai1 = 1;
           this.drawextrag = 17;
         }
-        if(code == 12) {
+        else if(code == 12 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 18;
         }
-        if(code == 9) {
+        else if(code == 9 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 2;
           this.drawextrai1 = 1;
           this.drawextrag = 19;
         }
-      } else if(c == 'W') {
-        drawer.drawSplit_h_(cell, ctx, -8);
+      } else if(c == 'Y') {
+        var r = drawer.drawCrossing_crossingInput_(cell, ctx);
+        var code2 = r[1];
         var code = 0;
-        // no "isInterestingComponent" checks for W, unlike V, because W can affect things, it's negating (for V any effect, like as AND input, is negated if it's a dummy, but not for W)
-        if(hasDevice(cell.x, cell.y, 0)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 0); code |= 1; }
-        if(hasDevice(cell.x, cell.y, 1)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0.5); code |= 2; }
-        if(hasDevice(cell.x, cell.y, 2)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0.5, 1); code |= 4; }
-        if(hasDevice(cell.x, cell.y, 3)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0.5); code |= 8; }
-        if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 0); code |= 16; }
-        if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 1, 1); code |= 32; }
-        if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 1); code |= 64; }
-        if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, 0.5, 0.5, 0, 0); code |= 128; }
-        if(code == 1) {
+        // no "isInterestingComponent" checks for Y, unlike X, because Y can affect things, it's negating (for X any effect, like as AND input, is negated if it's a dummy, but not for Y)
+        if(hasDevice(cell.x, cell.y, 0)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 0); code |= 1; }
+        if(hasDevice(cell.x, cell.y, 1)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 0.5); code |= 2; }
+        if(hasDevice(cell.x, cell.y, 2)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 1); code |= 4; }
+        if(hasDevice(cell.x, cell.y, 3)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 0.5); code |= 8; }
+        if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 0); code |= 16; }
+        if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 1); code |= 32; }
+        if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 1); code |= 64; }
+        if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 0); code |= 128; }
+        var code3 = code + code2;
+
+        if(code == 0 && r[0] > 1) {
+          // no actual inputs, it acts as a '*'
+          this.dynamicdraw = true;
+          this.dynamicdrawcode = drawer.drawCrossing_(cell, ctx)[1];
+        }
+        // TODO: 1,2,4,8 commented out because wrong, this is case of only single direction so only 2 total states, but may be necessary for cases where there's a genuine regular wire
+        // TODO: there are more cases that go wrong with combinations of crossing of wire and nonwire, either causing too much or too little drawn
+        else if(code == 1 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 36;
         }
-        if(code == 2) {
+        else if(code == 2 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 37;
         }
-        if(code == 4) {
+        else if(code == 4 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 38;
         }
-        if(code == 8) {
+        else if(code == 8 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 39;
         }
-        if(code == 144) {
+        else if(code == 144 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 4;
           this.drawextrag = 6;
         }
-        if(code == 48) {
+        else if(code == 48 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 4;
           this.drawextrai1 = 8;
           this.drawextrag = 7;
         }
-        if(code == 96) {
+        else if(code == 96 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 4;
           this.drawextrai1 = 8;
           this.drawextrag = 8;
         }
-        if(code == 192) {
+        else if(code == 192 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 4;
           this.drawextrag = 9;
         }
-        if(code == 3) {
+        else if(code == 3 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 20;
         }
-        if(code == 6) {
+        else if(code == 6 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 2;
           this.drawextrai1 = 1;
           this.drawextrag = 21;
         }
-        if(code == 12) {
+        else if(code == 12 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 22;
         }
-        if(code == 9) {
+        else if(code == 9 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 2;
           this.drawextrai1 = 1;
@@ -6049,8 +6089,11 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         }
       } else if(c == 'T') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
-      } else if(virtualsymbol == 'Y') {
-        this.fallback.init2(cell, (symbol == 'Y') ? 'Y' : ' ', virtualsymbol); this.usefallbackonly = true; break;
+      } else if(virtualsymbol == 'G') {
+        // don't render #, only G
+        this.fallback.init2(cell, (symbol == 'G') ? 'G' : ' ', virtualsymbol); this.usefallbackonly = true; break;
+        // alternative: always pass space: render the RGB LED purely as a plane color, no letter symbols
+        //this.fallback.init2(cell, ' ', virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'g') {
         drawer.drawBGSplit_(cell, ctx);
         drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.4);
@@ -6102,66 +6145,18 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
             textel.style.color = BGCOLOR;
           }
         }
-        if(devicemap[c] || c == '#' || c == '$') {
+        if(devicemaparea[c]) {
           if(!alreadybg) {
             drawer.fillBg_(ctx, GATEBGCOLOR);
           }
-          if(c == '$') {
-            // subtle (but large code) graphics effect: for $ cells, that don't connect to inputs or outputs,
-            // draw a notch when there is an input or wire explicitely trying to connect to this, to show that
-            // it ignores it (to make that clear to the viewer). Only for those where the other graphics doesn't
-            // already show it, e.g. *'s already are obvious because they won't extend there line all the way to
-            // the side.
-            if(!sameDevice(cell.x, cell.y, 0)) {
-              var n2 = getNeighbor(cell.x, cell.y, 0);
-              var c2 = n2 ? n2.circuitsymbol : '';
-              if(c == '$' && (c2 == '^' || c2 == 'v' || c2 == 'm' || c2 == 'w' || c2 == '|' || c2 == '+')) {
-                drawer.drawLine_(ctx, 0, 0, 0.5, 0.25);
-                drawer.drawLine_(ctx, 0.5, 0.25, 1, 0);
-              } else {
-                drawer.drawLine_(ctx, 0, 0, 1, 0);
-              }
-            }
-            if(!sameDevice(cell.x, cell.y, 1)) {
-              var n2 = getNeighbor(cell.x, cell.y, 1);
-              var c2 = n2 ? n2.circuitsymbol : '';
-              if(c == '$' && (c2 == '>' || c2 == '<' || c2 == ']' || c2 == '[' || c2 == '-' || c2 == '+')) {
-                drawer.drawLine_(ctx, 1, 0, 0.75, 0.5);
-                drawer.drawLine_(ctx, 0.75, 0.5, 1, 1);
-              } else {
-                drawer.drawLine_(ctx, 1, 0, 1, 1);
-              }
-            }
-            if(!sameDevice(cell.x, cell.y, 2)) {
-              var n2 = getNeighbor(cell.x, cell.y, 2);
-              var c2 = n2 ? n2.circuitsymbol : '';
-              if(c == '$' && (c2 == '^' || c2 == 'v' || c2 == 'm' || c2 == 'w' || c2 == '|' || c2 == '+')) {
-                drawer.drawLine_(ctx, 0, 1, 0.5, 0.75);
-                drawer.drawLine_(ctx, 0.5, 0.75, 1, 1);
-              } else {
-                drawer.drawLine_(ctx, 1, 1, 0, 1);
-              }
-            }
-            if(!sameDevice(cell.x, cell.y, 3)) {
-              var n2 = getNeighbor(cell.x, cell.y, 3);
-              var c2 = n2 ? n2.circuitsymbol : '';
-              if(c == '$' && (c2 == '>' || c2 == '<' || c2 == ']' || c2 == '[' || c2 == '-' || c2 == '+')) {
-                drawer.drawLine_(ctx, 0, 0, 0.25, 0.5);
-                drawer.drawLine_(ctx, 0.25, 0.5, 0, 1);
-              } else {
-                drawer.drawLine_(ctx, 0, 1, 0, 0);
-              }
-            }
-          } else {
-            // standard box drawing
-            if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
-            if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
-            if(!sameDevice(cell.x, cell.y, 2)) drawer.drawLine_(ctx, 1, 1, 0, 1);
-            if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
-          }
+          // box drawing for components
+          if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
+          if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
+          if(!sameDevice(cell.x, cell.y, 2)) drawer.drawLine_(ctx, 1, 1, 0, 1);
+          if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
         }
         var okdraw = true;
-        if(c == '#' || c == '$') okdraw = false;
+        if(c == '#') okdraw = false;
         if(c == 'i' && !(cell.drawchip || digitmap[cell.metasymbol])) okdraw = false;
         if(okdraw) {
           /*ctx.textAlign = 'center';
@@ -6267,30 +6262,30 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       // 'diagonal crossing m'
       prepareAt(6, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
+      drawer.drawAntiArrow_(ctx, color1, 1, 1, 0, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
+      drawer.drawAntiArrow_(ctx, color0, 0, 1, 1, 0);
 
       // 'diagonal crossing ]'
       prepareAt(7, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, 0, 1, 1, 0);
+      drawer.drawAntiArrow_(ctx, color1, 0, 1, 1, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, 0, 0, 1, 1)
+      drawer.drawAntiArrow_(ctx, color0, 0, 0, 1, 1)
 
       // 'diagonal crossing w'
       prepareAt(8, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
+      drawer.drawAntiArrow_(ctx, color1, 1, 0, 0, 1);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, 0, 0, 1, 1);
+      drawer.drawAntiArrow_(ctx, color0, 0, 0, 1, 1);
 
       // 'diagonal crossing ['
       prepareAt(9, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, 1, 1, 0, 0);
+      drawer.drawAntiArrow_(ctx, color1, 1, 1, 0, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, 1, 0, 0, 1);
+      drawer.drawAntiArrow_(ctx, color0, 1, 0, 0, 1);
 
       // '&'
       prepareAt(10, ty);
@@ -6379,30 +6374,30 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       // negated input crossing NE
       prepareAt(20, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, 0.5, 1, 0.5, 0);
+      drawer.drawAntiArrow_(ctx, color1, 0.5, 1, 0.5, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, 0, 0.5, 1, 0.5);
+      drawer.drawAntiArrow_(ctx, color0, 0, 0.5, 1, 0.5);
 
       // negated input crossing ES
       prepareAt(21, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, 0, 0.5, 1, 0.5);
+      drawer.drawAntiArrow_(ctx, color1, 0, 0.5, 1, 0.5);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, 0.5, 0, 0.5, 1);
+      drawer.drawAntiArrow_(ctx, color0, 0.5, 0, 0.5, 1);
 
       // negated input crossing SW
       prepareAt(22, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, 0.5, 0, 0.5, 1);
+      drawer.drawAntiArrow_(ctx, color1, 0.5, 0, 0.5, 1);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, 1, 0.5, 0, 0.5);
+      drawer.drawAntiArrow_(ctx, color0, 1, 0.5, 0, 0.5);
 
       // negated input crossing WN
       prepareAt(23, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, 1, 0.5, 0, 0.5);
+      drawer.drawAntiArrow_(ctx, color1, 1, 0.5, 0, 0.5);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, 0.5, 1, 0.5, 0);
+      drawer.drawAntiArrow_(ctx, color0, 0.5, 1, 0.5, 0);
 
       shift = 0.2;
 
@@ -6501,7 +6496,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       // negated input crossing N
       prepareAt(36, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, 0.5, 1, 0.5, 0);
+      drawer.drawAntiArrow_(ctx, color1, 0.5, 1, 0.5, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
 
@@ -6510,12 +6505,12 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0.5, 1, 0.5, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, 0, 0.5, 1, 0.5);
+      drawer.drawAntiArrow_(ctx, color0, 0, 0.5, 1, 0.5);
 
       // negated input crossing S
       prepareAt(38, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, 0.5, 0, 0.5, 1);
+      drawer.drawAntiArrow_(ctx, color1, 0.5, 0, 0.5, 1);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
 
@@ -6524,7 +6519,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0.5, 1, 0.5, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, 1, 0.5, 0, 0.5);
+      drawer.drawAntiArrow_(ctx, color0, 1, 0.5, 0, 0.5);
     }
   };
 
@@ -6592,7 +6587,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           else if(c == '%' && value == 1) { qx = 11; qy = 0; }
           else if(c == '%' && value == 2) { qx = 11; qy = 1; }
           else isextra = false;
-          if(c == '*' || c == 'V' || c == 'W' || c == '+') {
+          if(c == '*' || c == 'X' || c == 'Y' || c == '+') {
             isextra = true;
             if(value == this.drawextrai0) { qx = this.drawextrag;  qy = 0; }
             else if(value == this.drawextrai1) { qx = this.drawextrag;  qy = 1; }
@@ -7075,7 +7070,7 @@ function parseExtra() {
       // digitmap too because those could be IC numbers that count as part of it...
       // this is a bit sloppy tbh (number is not always chip) but this is an early parse, we don't know which numbers are chip yet
       // TODO: improve that
-      if(!(devicemapin[cb] || digitmap[cb]) && (devicemapin[ca] || digitmap[ca] || devicemapin[cc] || digitmap[cc])) {
+      if(!(devicemaparea[cb] || digitmap[cb]) && (devicemaparea[ca] || digitmap[ca] || devicemaparea[cc] || digitmap[cc])) {
         // Even if their diagonal backsides have nothing, make them diagonal inputs. Otherwise large repeated IC structures may fail
         // at the edges when just copypasting the same structure multiple times (see the game of life circuits)
         world[y][x].circuitextra = 2;
@@ -7089,7 +7084,7 @@ function parseExtra() {
         else if(c == '<' || c == '[') { wca = getNeighbor(x, y, 1); }
         ca = ' ';
         if(wca) ca = wca.metasymbol; // idem TODO as above about numbers and chips
-        if(devicemapin[ca] || digitmap[ca] || ca == '.' || ca == '+' || ca == ',') {
+        if(devicemaparea[ca] || digitmap[ca] || ca == '.' || ca == '+' || ca == ',') {
           world[y][x].circuitextra = 1;
         }
         if(ca == '|' && (c == '^' || c == 'v' || c == 'm' || c == 'w')) world[y][x].circuitextra = 1;
@@ -7604,7 +7599,7 @@ function parseSubs() {
         var y = s[1];
         if(x < 0 || x >= w || y < 0 || y >= h) continue;
         var c = world[y][x].circuitsymbol;
-        if(c != '#' && c != '$' && c != 'i' && !digitmap[c]) continue; // we only care about i, # and digits, they form a group, the 'i' component
+        if(c != '#' && c != 'i' && !digitmap[c]) continue; // we only care about i, # and digits, they form a group, the 'i' component
         array.push(s);
 
         if(c == 'i') {
@@ -7660,8 +7655,7 @@ function parseSubs() {
           // Unlike other digits, those for ICs become extenders of the IC component, and
           // extenders should also be marked with a 'i' because we will treat them all
           // specially in the "connected" function, which takes only the circuitsymbol character as input.
-          // '$' is not changed into 'i' here because it indicates a different function (no interaction)
-          if(world[y][x].circuitsymbol != '$') world[y][x].circuitsymbol = 'i';
+          world[y][x].circuitsymbol = 'i';
           callsub.cells.push([x, y]);
         }
         if(drawchip) drawchip.drawchip = true;
@@ -7969,8 +7963,6 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
     if((c2 == '<' || c2 == '[') && (todir == 6 || todir == 7)) todir2 = 3;
   }
 
-  if(c == '$' && !devicemaparea[c2]) return false; // $ is really only for extending devices, nothing else
-
   if(todir > 3) {
     // the corners can only interact with those
     var ok = false;
@@ -7984,7 +7976,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(todir <= 3 && (c == 'x' || c2 == 'x')) return false; // x's do not interact with the sides
 
   if(z > 3 && c != 'i') return false;
-  if(z > 1 && !(c == 'i' || c == 'V' || c2 == 'V' || c == 'W' || c2 == 'W' || c == '*' || c2 == '*')) return false;
+  if(z > 1 && !(c == 'i' || c == 'X' || c2 == 'X' || c == 'Y' || c2 == 'Y' || c == '*' || c2 == '*')) return false;
 
   //if(c == 'i' && c2 != 'i') return false; // connecting sub-calls is implemented later. And full subs are marked with 'i' earlier, so u's connect only with u's.
 
@@ -7996,12 +7988,12 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   // Multi-part devices like flip-flop should not have their individual cells connected,
   // they are initially all their own device (to be able to handle multiple inputs), so
   // don't let device extenders extend those here yet.
-  if(ffmap[c] && (c2 == '#' || c2 == '$')) return false;
-  if(ffmap[c2] && (c == '#' || c == '$')) return false;
-  if(rommap[c] && (c2 == '#' || c2 == '$')) return false;
-  if(rommap[c2] && (c == '#' || c == '$')) return false;
-  if(c == 'i' && (c2 == '#' || c2 == '$')) return false;
-  if(c2 == 'i' && (c == '#' || c == '$')) return false;
+  if(ffmap[c] && (c2 == '#')) return false;
+  if(ffmap[c2] && (c == '#')) return false;
+  if(rommap[c] && (c2 == '#')) return false;
+  if(rommap[c2] && (c == '#')) return false;
+  if(c == 'i' && (c2 == '#')) return false;
+  if(c2 == 'i' && (c == '#')) return false;
 
   if(!knownmap[c2]) return false; // it's an isolator
 
@@ -8015,7 +8007,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(c == '\\' && !(todir == 5 || todir == 7)) return false;
 
   if(c == 'x' && !(z == 0 && (todir == 4 || todir == 6)) && !(z == 1 && (todir == 5 || todir == 7))) return false;
-  if((c == 'V' || c == 'W' || c == '*') &&
+  if((c == 'X' || c == 'Y' || c == '*') &&
       !(z == 0 && (todir == 1 || todir == 3)) &&
       !(z == 1 && (todir == 0 || todir == 2)) &&
       !(z == 2 && (todir == 5 || todir == 7)) &&
@@ -8042,10 +8034,10 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
     if((c == 'v' || c == 'w') && todir == 2) return false;
     if((c == '<' || c == '[') && todir == 3) return false;
 
-    if((c == '^' || c == 'm') && ce == 1 && devicemapin[c2] && (todir == 1 || todir == 3)) return false;
-    if((c == '>' || c == ']') && ce == 1 && devicemapin[c2] && (todir == 0 || todir == 2)) return false;
-    if((c == 'v' || c == 'w') && ce == 1 && devicemapin[c2] && (todir == 1 || todir == 3)) return false;
-    if((c == '<' || c == '[') && ce == 1 && devicemapin[c2] && (todir == 0 || todir == 2)) return false;
+    if((c == '^' || c == 'm') && ce == 1 && devicemaparea[c2] && (todir == 1 || todir == 3)) return false;
+    if((c == '>' || c == ']') && ce == 1 && devicemaparea[c2] && (todir == 0 || todir == 2)) return false;
+    if((c == 'v' || c == 'w') && ce == 1 && devicemaparea[c2] && (todir == 1 || todir == 3)) return false;
+    if((c == '<' || c == '[') && ce == 1 && devicemaparea[c2] && (todir == 0 || todir == 2)) return false;
   }
 
   if(dinputmap[c] && ce == 2) {
@@ -8058,7 +8050,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
 
 
   // those device inputs, too, don't interact with devices here (interaction with devices is resolved later)
-  if((c == 'U' || c == 'G' || c == 'V' || c == 'W') && devicemapin[c2]) return false;
+  if((c == 'V' || c == 'W' || c == 'X' || c == 'Y') && devicemaparea[c2]) return false;
 
   // The different backplane types don't interact, unless numbers of a matching one (ce then encodes allowed direction)
   if(c == 'g' && c2 == 'g') {
@@ -8067,7 +8059,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
     if(ce != cedir && ce2 != cedir) return false;
   }
 
-  if(((dinputmap[c] && inputmap[c2]) || (inputmap[c] && dinputmap[c2]))) return false; // inputs don't interact, including not > with U, but U with U do interact
+  if(((dinputmap[c] && inputmap[c2]) || (inputmap[c] && dinputmap[c2]))) return false; // inputs don't interact, including not > with V, but V with V do interact
   if(devicemap[c] && devicemap[c2]) return false; // device cores don't interact
 
   if(c == 'i' && z != todir) return false;
@@ -8116,7 +8108,7 @@ function getZ2(c, c2, ce, ce2, todir, z) {
   }
 
   if(c2 == '+' && (todir2 == 0 || todir2 == 2)) z2 = 1;
-  if(c2 == '*' || c2 == 'V' || c2 == 'W') {
+  if(c2 == '*' || c2 == 'X' || c2 == 'Y') {
     // *'s meaning for z coordinate: z=0:-, z=1:|, z=2:/, z=3:\ (backspace)
     if(todir == 0 || todir == 2) z2 = 1;
     else if(todir == 4 || todir == 6) z2 = 3;
@@ -8399,14 +8391,14 @@ function parseComponents() {
       var c0 = world[y0][x0].circuitsymbol;
 
       // z0 > 0 is only to handle following weird edge case scenarios:
-      // *) to connect the negated W as loose wire to things, it should cause a negated input signal there...
+      // *) to connect the negated Y as loose wire to things, it should cause a negated input signal there...
       // *) to connect things to call-ic's in some rare case, the rare case being such crossings like that.
       // the thing is, IC output connections use the z value as output direction detector. and crossings like x use the z value for
       // the different legs. Now, if IC's z is higher than 0, and so is the z of this leg of x, it would NEVER find that connection
       // unless we also start from z0 > 0. But using z0 > 0 on EVERYTHING, breaks various things. So only use for those crossings..........
       // It's tricky and hacky and ad hoc (this only added on 20171210) but I HOPE It works
       var maxz0 = 1;
-      if(c0 == 'W') maxz0 = 4;
+      if(c0 == 'Y') maxz0 = 4;
       if(c0 == 'x' || c0 == '+' || c0 == '%' || c0 == '&') maxz0 = 2;
       if(dinputmap[c0] && world[y0][x0].circuitextra == 2) maxz0 = 2;
 
@@ -8459,7 +8451,7 @@ function parseComponents() {
             if(c == 's') type = TYPE_SWITCH_OFF;
             if(c == 'S') type = TYPE_SWITCH_ON;
             if(c == 'l') type = TYPE_LED;
-            if(c == 'Y') type = TYPE_LED_RGB;
+            if(c == 'G') type = TYPE_LED_RGB;
             if(c == 'p') type = TYPE_PUSHBUTTON_OFF;
             if(c == 'P') type = TYPE_PUSHBUTTON_ON;
             if(c == 'r') type = TYPE_TIMER_OFF;
@@ -8482,9 +8474,9 @@ function parseComponents() {
 
           if(c == 'toc') type = TYPE_TOC;
 
-          if(type == TYPE_NULL && (c == '#' || c == '$')) type = TYPE_UNKNOWN_DEVICE;
-          if(world[y][x].number >= 0 && devicemapin[c]) {
-            // TODO: check if the above if really needs devicemapin instead of just devicemap,
+          if(type == TYPE_NULL && (c == '#')) type = TYPE_UNKNOWN_DEVICE;
+          if(world[y][x].number >= 0 && devicemaparea[c]) {
+            // TODO: check if the above if really needs devicemaparea instead of just devicemap,
             // because numbers currently don't interact with # anyway (for e.g. chip, led, ...)
             if(number >= 0 && world[y][x].number != number) {
               errormessage = 'multiple numbers to same component not supported';
@@ -8527,8 +8519,8 @@ function parseComponents() {
           for(var i = 0; i < array.length; i++) {
             var c = world[array[i][1]][array[i][0]].circuitsymbol;
             // when using such wires, then it's clear that it's a desired explicit loose wire, not a stray wire
-            // part of a V,*,%,& or so that only exists as side effect of those having possibly undesired wires
-            // even + and x are considered explicit! Since you can always avoid their extra wire with a different ascii char. Not so for V or % etc....
+            // part of a X,*,%,& or so that only exists as side effect of those having possibly undesired wires
+            // even + and x are considered explicit! Since you can always avoid their extra wire with a different ascii char. Not so for X or % etc....
             if(c == '-' || c == '|' || c == '/' || c == '\\' || c == ',' || c == '.' || c == '+' || c == 'x' ||
                 (dinputmap[c] && world[array[i][1]][array[i][0]].circuitextra == 0)) { // only straight inputs considered explicit, diagonal ones may be misplaced ones
               type = TYPE_LOOSE_WIRE_EXPLICIT;
@@ -8607,7 +8599,7 @@ function parseComponents() {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
       if(used[y0][x0][0]) continue;
       var c0 = world[y0][x0].circuitsymbol;
-      //if(c0 == '#' || c0 == '$') continue; // this is so that we will NOT start parsing with a symbol of which we do not know what component it is. Start with b or B for example so we know it's ROM and correctly handle # extending it (otherwise bug if top row is #)
+      //if(c0 == '#') continue; // this is so that we will NOT start parsing with a symbol of which we do not know what component it is. Start with b or B for example so we know it's ROM and correctly handle # extending it (otherwise bug if top row is #)
 
       var stack = [[x0, y0, 0]];
       used[y0][x0][0] = true;
@@ -8652,9 +8644,9 @@ function parseComponents() {
           if(rommap[c] && c2 == 'T') continue;
           if(rommap[c2] && c == 'T') continue;
 
-          if(rommap[c]/* && (rommap[c2] || c2 == '#' || c2 == '$')*/) rom = true;
-          if(rommap[c] && !(rommap[c2] || c2 == '#' || c2 == '$')) continue;
-          if(rommap[c2] && !(rommap[c] || c == '#' || c == '$')) continue;
+          if(rommap[c]/* && (rommap[c2] || c2 == '#')*/) rom = true;
+          if(rommap[c] && !(rommap[c2] || c2 == '#')) continue;
+          if(rommap[c2] && !(rommap[c] || c == '#')) continue;
           if(rom && i >= 4) continue;
 
           if(c == 'T') vte = true;
@@ -8662,14 +8654,14 @@ function parseComponents() {
           if(c2 == 'T' && c != 'T') continue;
 
           if(c == 'M') mux = true;
-          if(c == 'M' && !(c2 == 'M' || c2 == '#' || c2 == '$')) continue;
-          if(c2 == 'M' && !(c == 'M' || c == '#' || c == '$')) continue;
+          if(c == 'M' && !(c2 == 'M' || c2 == '#')) continue;
+          if(c2 == 'M' && !(c == 'M' || c == '#')) continue;
 
           if(ffmap[c] && world[y][x].components[0].type == TYPE_FLIPFLOP) ff = true;
-          if((c == '#' || c == '$') && (ffmap[c2] && i < 4 && world[y2][x2].components[0].type == TYPE_FLIPFLOP)) ff = true;
+          if((c == '#') && (ffmap[c2] && i < 4 && world[y2][x2].components[0].type == TYPE_FLIPFLOP)) ff = true;
           if(ff && i >= 4) continue;
-          if(ff && !(ffmap[c2] || c2 == '#' || c2 == '$')) continue;
-          if(ff && !(ffmap[c] || c == '#' || c == '$')) continue;
+          if(ff && !(ffmap[c2] || c2 == '#')) continue;
+          if(ff && !(ffmap[c] || c == '#')) continue;
           // don't support c's and d's touching each other.
           // reason: those are also standalone components and then you want them not grouped if they touch
           if((c == 'c' || c == 'C') && (c2 == 'c' || c2 == 'C')) continue;
@@ -8751,9 +8743,9 @@ function parseComponents() {
           if(!ffobject.init1(array)) ffobject.error = true;
         } else {
           // This part is a bit tricky. Due to the way the parsing works, for flip-flops
-          // # and $ is considered separate components. At that stage of parsing it does not yet
+          // # is considered separate components. At that stage of parsing it does not yet
           // know if it'll turn out to be a real flip-flop, or a TYPE_DELAY or TYPE_COUNTER, and
-          // merging the # or $ there will cause trouble when you have e.g. j#k, as the j and k for sure
+          // merging the # there will cause trouble when you have e.g. j#k, as the j and k for sure
           // must not be connected (different outputs requires different components).
           // So if we're a TYPE_DELAY or TYPE_COUNTER, we actually want our #'s to instead
           // be merged with the main core component. And this requires a bit of fixing up.
@@ -8799,27 +8791,27 @@ function parseComponents() {
       if(!inputmap[c]) continue;
       var x2s = [];
       var y2s = [];
-      if(c == 'U' || c == 'G') {
+      if(c == 'V' || c == 'W') {
         for(var k = 0; k < 4; k++) {
           var wc2 = getNeighbor(x, y, k);
           if(!wc2) continue;
           var x2 = wc2.x;
           var y2 = wc2.y;
           var c2 = wc2.circuitsymbol;
-          if(devicemapin[c2]) {
+          if(devicemaparea[c2]) {
             x2s.push(x2);
             y2s.push(y2);
             inputused[y2][x2] = true;
           }
         }
-      //} else if((c == 'V' || c == 'W') && component.type != TYPE_LOOSE_WIRE_IMPLICIT) {
-      } else if((c == 'V' && component.type != TYPE_LOOSE_WIRE_IMPLICIT) || c == 'W') {
-        // why not for loose wire: if a V touches an AND with an unused side, then it would be
+      //} else if((c == 'X' || c == 'Y') && component.type != TYPE_LOOSE_WIRE_IMPLICIT) {
+      } else if((c == 'X' && component.type != TYPE_LOOSE_WIRE_IMPLICIT) || c == 'Y') {
+        // why not for loose wire: if a X touches an AND with an unused side, then it would be
         // counted as an actual input for the AND and the AND would never work. For other inputs
-        // like > it's explicitely pointed at the AND so there it's fine. But for the V, often
-        // the V serves just to cross over some other input with the goal of not interfering with
+        // like > it's explicitely pointed at the AND so there it's fine. But for the X, often
+        // the X serves just to cross over some other input with the goal of not interfering with
         // this AND at all.
-        // It's enabled for W (due to negating this one cannot be ignored), only not for V.
+        // It's enabled for Y (due to negating this one cannot be ignored), only not for X.
         for(var k = 0; k < 8; k++) {
           var wc2 = getNeighbor(x, y, k);
           if(!wc2) continue;
@@ -8831,7 +8823,7 @@ function parseComponents() {
           if(z == 2 && !(k == 5 || k == 7)) continue;
           if(z == 3 && !(k == 4 || k == 6)) continue;
           var c2 = wc2.circuitsymbol;
-          if(devicemapin[c2]) {
+          if(devicemaparea[c2]) {
             x2s.push(x2);
             y2s.push(y2);
             inputused[y2][x2] = true;
@@ -8846,7 +8838,7 @@ function parseComponents() {
         if(c == '<' || c == '[') { wco0 = getNeighbor(x, y, 6); wco1 = getNeighbor(x, y, 7); }
         if(z == 0) {
           if(!wco0) continue;
-          if(devicemapin[wco0.circuitsymbol]) {
+          if(devicemaparea[wco0.circuitsymbol]) {
             x2s.push(wco0.x);
             y2s.push(wco0.y);
             inputused[wco0.y][wco0.x] = true;
@@ -8854,7 +8846,7 @@ function parseComponents() {
         }
         if(z == 1) {
           if(!wco1) continue;
-          if(devicemapin[wco1.circuitsymbol]) {
+          if(devicemaparea[wco1.circuitsymbol]) {
             x2s.push(wco1.x);
             y2s.push(wco1.y);
             inputused[wco1.y][wco1.x] = true;
@@ -8880,13 +8872,13 @@ function parseComponents() {
         inputused[wc2.y][wc2.x] = true;
       }
       var negated = false;
-      if(c == 'm' || c == ']' || c == 'w' || c == '[' || c == 'G' || c == 'W') negated = true;
+      if(c == 'm' || c == ']' || c == 'w' || c == '[' || c == 'W' || c == 'Y') negated = true;
       for(var k = 0; k < x2s.length; k++) {
         var x2 = x2s[k];
         var y2 = y2s[k];
         var cell2 = world[y2][x2];
         var c2 = cell2.circuitsymbol;
-        if(!devicemapin[c2]) {
+        if(!devicemaparea[c2]) {
           continue;
         }
         var component2 = cell2.components[0]; // component outputs to component2 (component is the input, component2 is the output)
@@ -9677,12 +9669,12 @@ function registerChangeDropdownElement(type) {
 }
 
 registerChangeDropdownElement('change');
-registerChangeDropdownElement(TYPE_SWITCH_ON);
 registerChangeDropdownElement(TYPE_SWITCH_OFF);
-registerChangeDropdownElement(TYPE_PUSHBUTTON_ON);
+registerChangeDropdownElement(TYPE_SWITCH_ON);
 registerChangeDropdownElement(TYPE_PUSHBUTTON_OFF);
-registerChangeDropdownElement(TYPE_TIMER_ON);
+registerChangeDropdownElement(TYPE_PUSHBUTTON_ON);
 registerChangeDropdownElement(TYPE_TIMER_OFF);
+registerChangeDropdownElement(TYPE_TIMER_ON);
 registerChangeDropdownElement(TYPE_LED);
 registerChangeDropdownElement(TYPE_LED_RGB);
 registerChangeDropdownElement(TYPE_AND);
@@ -10013,8 +10005,10 @@ function createMenuUI() {
 
   ticksCounterEl = makeElement('div', menuRow2El);
   ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
-  ticksCounterEl.style.width = '95px';
+  ticksCounterEl.style.width = '100px';
   ticksCounterEl.style.display = 'inline-block';
+  ticksCounterEl.style.whiteSpace = 'nowrap';
+  //ticksCounterEl.style.fontSize = '90%';
   ticksCounterEl.title = 'Amount of ticks so far. Click to reset to 0. If in electron mode, is per gate ticks. In immediate mode, one tick per full update.';
   ticksCounterEl.onclick = function() {
     numticks = 0;
@@ -10022,7 +10016,7 @@ function createMenuUI() {
   };
 
   updateTicksDisplay = function() {
-    ticksCounterEl.innerHTML = '&nbspticks: ' + numticks;
+    ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
   };
 
 
@@ -11160,23 +11154,23 @@ var introText = `
 0"Only if both switches are on, the LED will go on. Try enabling both"
 0"switches by clicking them:""
 
-   7"and gate"
+  4"AND gate"   4"OR gate"   4"XOR gate"
 
-  s....>a....>l
-        ^
-  s......
+  s..>a..>l     s..>o..>l    s..>e..>l
+      ^             ^            ^
+  s....         s....        s....
 
 0"There are much more types of gates and devices available: logic gates,"
 0"flip-flops, integrated circuits, ROMs, displays, ... Explore the circuits"
 0"index below or read the help circuits first to learn more!"
 
-     7"adder"          7"JK flipflop"
+     4"adder"          4"JK flipflop"
 
-  s..>a..>o..>l 6"carry"
+  s..>a..>o..>l3"carry"
      >    ^              s-->jq->l
   s..>e..>a              s-->c#
          >               s-->kQ->l
-  s......>e..>l 6"sum"
+  s......>e..>l3"sum"
 
 0"# Circuits Index"
 

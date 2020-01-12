@@ -498,23 +498,23 @@ s.+..>A>A A.. A..>l"XNOR"
 s..>A..>A..>A..
 
 
-"a"s....>A..
-         ^ v
-"s"s....>A A.....>l"MUX"
-       v   ^
-"b"s..>A....
+"a"s....>A..                     s...>A>A..>l"MUX"
+         ^ v                          ^ ^
+"s"s....>A A.....>l"MUX"         s....+>A
+       v   ^                          . ^
+"b"s..>A....                  "s"s.....>A
 
 
   ...>A..
   .   ^ .
 s.+.... .
   .   v v
-s.+..>A>A>A>A...>l  "majority"
+s.+..>A>A>A>A...>l"majority"
   . v       ^
 s..>A........
 
 
-0"Wire crossing"
+0"# Wire crossing"
 
 0"It's possible to make a wire crossing from logic gates without any"
 0"wire crossing inside of this logic"
@@ -523,7 +523,7 @@ s..>A........
 
 s...>A..
    v ^ v
-   A.. A..>l   "XOR"
+   A.. A..>l"XOR"
    ^ v ^
 s...>A..
 
@@ -568,13 +568,59 @@ s...>A..>A>A...>l     .>A..>A          . . v
                                            v
                                            l
 
-0"wire crossing with 8 NANDs, of which a 3-input and 2 1-input"
+0"wire crossing with 8 NANDs, of which 2 are 1-input and one is 3-input"
+0"(that one is expanded in in version on the right)"
 
-s...>A..>A>A..>l
-   v ^ v ^
-   A..>A..
-   ^ v ^ v
-s...>A..>A>A..>l
+s...>A..>A>A..>l       s...>A......>A>A..>l
+   v ^ v ^                v ^     v ^
+   A..>A..                A..>A>A>A..
+   ^ v ^ v                ^ v ^     v
+s...>A..>A>A..>l       s...>A......>A>A..>l
+
+
+0"# More advanced circuits"
+
+0"SR latch (inputs corrected to be not inverted)"
+
+"S"s...>A>A.....>l"Q"
+          ^ .
+"R"s...>A>A<.
+
+0"JK flip-flop (edge triggered, from D flip-flop, stable)"
+
+
+"J" s.....>A>A>A..>A..>A..>A.....>l
+           ^ ^ ^ v ^ . ^ v ^ .
+"K" s.....>A>A A>A>A<. .>A>A .
+           ^ ^ ^       .   ^ .
+"C" s......+.+..........   . .
+           . .             . .
+           ...................
+
+0"half adder"
+
+
+   .....>A..
+   .     ^ v
+s...>A.... A....>l"s"
+     ^ . v ^
+s......+>A..
+       .
+       ...>A....>l"c"
+
+
+0"full adder"
+
+
+   .....>A.. .....>A..
+   .     ^ v .     ^ v
+s...>A.... A..>A.... A.....>l"s"
+     ^ . v ^   ^ . v ^
+s......+>A..   ..+>A..
+       .       . v
+s......+........ A.........>l"c"
+       .         ^
+       ...........
 
 `, 'nand_logic');
 
@@ -670,23 +716,23 @@ s.+..>O>O O.. O..>l"XNOR"
 s..>O..>O..>O..
 
 
-"a"s..>O......
-       ^     v
-"s"s....>O   O...>l"MUX"
-         v   ^
-"b"s....>O....
+"a"s....>O..                     s...>O>O..>l"MUX"
+         ^ v                          ^ ^
+"s"s....>O O.....>l"MUX"         s....+>O
+       v   ^                          . ^
+"b"s..>O....                  "s"s.....>O
 
 
   ...>O..
   .   ^ .
 s.+.... .
   .   v v
-s.+..>O>O>O>O...>l  "majority"
+s.+..>O>O>O>O...>l"majority"
   . v       ^
 s..>O........
 
 
-0"Wire crossing"
+0"# Wire crossing"
 
 0"It's possible to make a wire crossing from logic gates without any"
 0"wire crossing inside of this logic"
@@ -740,14 +786,58 @@ s...>O..>O>O...>l     .>O..>O          . . v
                                            v
                                            l
 
+0"wire crossing with 8 NORs, of which 2 are 1-input and one is 3-input"
+0"(that one is expanded in in version on the right)"
 
-0"wire crossing with 8 NORs, of which a 3-input and 2 1-input"
+s...>O..>O>O..>l       s...>O......>O>O..>l
+   v ^ v ^                v ^     v ^
+   O..>O..                O..>O>O>O..
+   ^ v ^ v                ^ v ^     v
+s...>O..>O>O..>l       s...>O......>O>O..>l
 
-s....>O....>O.>O..>l
-   v  ^  v  ^
-   O....>O...
-   ^  v  ^  v
-s....>O....>O.>O..>l
+
+0"# More advanced circuits"
+
+0"SR latch"
+
+"S"s...>O<....>l"Q"
+        v .
+"R"s...>O..
+
+0"JK flip-flop (edge triggered, from D flip-flop, stable)"
+
+           ...................
+           . .             . .
+"C" s...>O.+.+..........   . .
+           v v v       .   v .
+"J" s...>O>O>O O>O>O<. .>O>O .
+           v v v ^ v . v ^ v .
+"K" s...>O>O>O>O..>O..>O..>O.....>l
+
+
+0"half adder"
+
+s......>O
+      v .
+s....>O.+>O..>l"s"
+    .   v ^
+    .>O>O....>l"c"
+
+
+0"full adder"
+
+   .....>O.. .....>O..
+   .     ^ v .     ^ v
+s...>O.... O..>O.... O.....>l"s"
+     ^ . v ^   ^ . v ^
+s......+>O..   ..+>O..
+       .       . v
+s......+........ O.........>l"c"
+       .         ^
+       ...........
+
+
+
 
 `, 'nor_logic');
 
@@ -1446,8 +1536,6 @@ s..>c#Q..>l
 
 0"Direct link to next tutorial:"
 0"INSERT:link:flip_flops_nand"
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 0"RENDER:graphical"
 
