@@ -327,20 +327,21 @@ s..>c..>l
 s..>c..>c..>c..>c
 
 
-0"Real ideal flip-flops can be made from 'c', 'd', 'j', 'k', 't', 'q' and 'Q',"
-0"and in this case the c stands for 'clock'. Here is how to interpret each"
-0"letter:"
-0"c: the clock input. When the clock input goes from low to high the flip-flop"
-0"   will toggle if needed"
-0"j: the S input for SR flip-flop or the J input for JK flip-flop"
-0"k: the R input for SR flip-flop or the K input for JK flip-flop"
-0"d: the D input for D flip-flop"
-0"t: the T input for T flip-flop"
-0"q: output, or asynchronous S input. Note that c, j, k, d and t can also"
-0"   already be used as outputs"
-0"Q: negated output, or asynchronous R input"
-0"y: enable input: if present, only reacts to inputs if this is on. May also"
-0"   replace c, then the object is a latch instead of a flip-flop."
+0"Real ideal flip-flops can be made from 'c', 'd', 'j', 'k', 't', 'q' 'Q' and 'y',"
+0"they can be combined to make SR, JK, D or T flip-flops."
+0"Here is how to interpret each letter:"
+0"- c: the clock input. When the clock input goes from low to high the flip-flop"
+0"  will toggle if needed"
+0"- j: the S input for SR flip-flop or the J input for JK flip-flop"
+0"- k: the R input for SR flip-flop or the K input for JK flip-flop"
+0"- d: the D input for D flip-flop"
+0"- t: the T input for T flip-flop"
+0"- q: output, or asynchronous S input. Note that c, j, k, d and t can also"
+0"  already be used as outputs"
+0"- Q: negated output, or asynchronous R input"
+0"- y: enable input: if present, only reacts to inputs if this is on. May also"
+0"  replace c, then the object is a latch instead of a flip-flop. Asynch q and Q"
+0"  still override this."
 0"Most other parts will also output signal so using q and Q is not required for"
 0"that. These parts can be combined in any way, with # (visible in text mode)"
 0"as filler"
@@ -379,19 +380,28 @@ s..>Q..>l
 
 
 
-s-->dy-->l 0"D-latch (enable input instead of clock)"
-     ^
-     s
+s-->d-->l 0"D-latch (enable input instead of clock)"
+    #
+s-->y
 
 
 s-->c-->l
 s-->t-->l
-s-->d-->l
-s-->j-->l 0"All parts combined in 1 flip-flop (not realistic but possible)"
-s-->k-->l
+s-->d-->l 0"All parts combined in 1 flip-flop"
+s-->j-->l 0"Not realistic, but possible."
+s-->k-->l 0"j and k do not work because 'd' conflicts with them."
 s-->q-->l
 s-->Q-->l
-S-->y-->l
+s--]y-->l
+
+
+s-->t-->l
+s-->d-->l
+s-->j-->l 0"All parts combined in 1 flip-flop, without clock"
+s-->k-->l 0"Not realistic, but possible."
+s-->q-->l 0"j and k do not work because 'd' conflicts with them."
+s-->Q-->l
+s--]y-->l
 
 0"So to summarize, the 'c' and 'C' can actually mean three different things:"
 0"- counter (1-input T flip-flop): when standalone with an input"
@@ -1893,26 +1903,35 @@ s..>c..>c..>c..>c..>c..>c..>c..>c..>l
 s..>C..>C..>C..>C..>C..>C..>C..>C..>l
 
 3"NEW PARTS: flip flop parts"
-3"c: flip flop part, can be combined together"
-3"C: flip flop part, can be combined together"
-3"j: flip flop part, can be combined together"
-3"k: flip flop part, can be combined together"
-3"d: flip flop part, can be combined together"
-3"t: flip flop part, can be combined together"
-3"q: flip flop part, can be combined together"
-3"Q: flip flop part, can be combined together"
-3"y: flip flop part, can be combined together"
-3"c: flip flop part, can be combined together"
+3"c: flip flop part: clock, state off, can be combined together"
+3"C: flip flop part: clock, state on, can be combined together"
+3"j: flip flop part: s or j input, can be combined together"
+3"k: flip flop part: r or k input, can be combined together"
+3"d: flip flop part: d input, can be combined together"
+3"t: flip flop part: t input, can be combined together"
+3"q: flip flop part: output or asynch set, can be combined together"
+3"Q: flip flop part: inverted output or asynch reset, can be combined together"
+3"y: flip flop part: enable input, can be combined together"
 
-0"j, k, d and t are inputs for JK, T, D, and SR flip-flops."
-0"c is the clock input and what stores the state. use C to have it initially on."
-0"q and Q are output and negated output, and asynch set and reset inputs."
-0"y is an optional enable input, if not on, the flip-flop ignores all inputs."
-0"NOTE: the inputs for SR flip-flop are named J,K like for JK flip-flop, since"
-0"JK flip-flop behaves the same as SR for all allowed SR input combinations,"
-0"and the names S and R are already used for other non flipflop related parts"
-0"These parts can be combined in any way, with # (visible in text mode) as"
-0"filler"
+
+0"Real ideal flip-flops can be made from 'c', 'd', 'j', 'k', 't', 'q' 'Q' and 'y',"
+0"they can be combined to make SR, JK, D or T flip-flops."
+0"Here is how to interpret each letter:"
+0"- c: the clock input. When the clock input goes from low to high the flip-flop"
+0"  will toggle if needed"
+0"- j: the S input for SR flip-flop or the J input for JK flip-flop"
+0"- k: the R input for SR flip-flop or the K input for JK flip-flop"
+0"- d: the D input for D flip-flop"
+0"- t: the T input for T flip-flop"
+0"- q: output, or asynchronous S input. Note that c, j, k, d and t can also"
+0"  already be used as outputs"
+0"- Q: negated output, or asynchronous R input"
+0"- y: enable input: if present, only reacts to inputs if this is on. May also"
+0"  replace c, then the object is a latch instead of a flip-flop. Asynch q and Q"
+0"  still override this."
+0"Most other parts will also output signal so using q and Q is not required for"
+0"that. These parts can be combined in any way, with # (visible in text mode)"
+0"as filler"
 
 s..>c..>l
     #       0"D flip-flop: when triggering c, the output will remember the state of d"
@@ -1959,24 +1978,39 @@ s..>Q..>l
 
 
 
-s-->dy-->l 0"D-latch (enable input instead of clock)"
-     ^
-     s
+s-->d-->l 0"D-latch (enable input instead of clock)"
+    #
+s-->y
 
 
-     s
-     v
-s-->jq..>l
-s-->k#
-s-->dy<..S 0"Combining every single part (not useful but possible)"
-s-->t#
-s-->cQ..>l
-     ^
-     s
+s-->c-->l
+s-->t-->l
+s-->d-->l 0"All parts combined in 1 flip-flop"
+s-->j-->l 0"Not realistic, but possible."
+s-->k-->l 0"j and k do not work because 'd' conflicts with them."
+s-->q-->l
+s-->Q-->l
+s--]y-->l
+
+
+s-->t-->l
+s-->d-->l
+s-->j-->l 0"All parts combined in 1 flip-flop, without clock"
+s-->k-->l 0"Not realistic, but possible."
+s-->q-->l 0"j and k do not work because 'd' conflicts with them."
+s-->Q-->l
+s--]y-->l
+
 
 0"This is only a selection of the combinations you can do with those. Also, you"
 0"can make flip-flops from the ground up with more basic components instead as"
 0"well (e.g. NAND-only). Other built-in circuits demonstrate those."
+
+0"To summarize the meaning of 'c' and 'C': they can mean three different things:"
+0"- counter (1-input T flip-flop): when standalone with an input"
+0"- constant: when standalone without an input"
+0"- clock: when combined with other flip-flop cells like j, k, ..."
+
 
 3"NEW PART: delay"
 3"d (standalone): 1-tick delay (behavior depends on tick algorithm)"
@@ -4546,7 +4580,8 @@ S---------->o
 0"# Toggle"
 
 0"In this section, the LED on the right must be have the same state as the"
-0"input switch (slight delay is allowed)"
+0"input switch (slight delay is allowed, and if clicking twice very fast"
+0"it can happen that some circuits with 'd' become invalid, that's acceptable)"
 
 ###
 s##
@@ -4572,8 +4607,8 @@ s##
 .       ^
 .........
 .
-.         c
-.         v
+.       c
+.       v
 .......>e...>l
 .
 ...>d>e>c...>l
@@ -4684,6 +4719,22 @@ s##
 .g8719 g8719>l
 .g8720 g8720>l
 .g8721 g8721>l
+.
+.-->q------->l
+. c>y
+.--]Q-------]l
+.
+.-->j------->l
+. C>y
+.--]k-------]l
+.
+.-->q------->l
+.--]Q-------]l
+.
+.-->j------->l
+.--]k-------]l
+.
+.
 .
 .
 

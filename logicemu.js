@@ -3021,12 +3021,14 @@ function Component() {
     var numf0 = 0; // num positive inputs set to false
     var numf1 = 0; // num positive inputs set to true
     var numF0 = 0; // num negative inputs set to false
-    var numF1 = 0; // num positive inputs set to true
+    var numF1 = 0; // num negative inputs set to true
     var numq = 0;
     var numQ = 0;
     var numy = 0;
     var numY = 0; // y inputs that are off
     var rom_inputs = []; // only filled in if this is ROM
+    var numtypec = 0; // amount of clock inputs seen, regardless of state
+    var numtypey = 0; // amount of enable inputs seen, regardless of state
 
     if(UPDATE_ALGORITHM == 3 && this.ff_cycle && this.ff_cycle_time > 5 && this.type != TYPE_FLIPFLOP && Math.random() < TWIDDLE_PROBABILITY) {
       // emulate flip flop made from gates metastability
@@ -3040,7 +3042,7 @@ function Component() {
         console.log('undefined input');
         continue;
       }
-      var value2;
+      var value2; // the value on the current input
       if(UPDATE_ALGORITHM == 0) {
         // simple but inconsistent (based on scanline order) algorithm
         value2 = component2.value;
@@ -3081,7 +3083,7 @@ function Component() {
 
 
       value2 = (value2 != negated);
-      if (value2) numon++;
+      if(value2) numon++;
       else numoff++;
 
       // The this.ff check ensures this only happens for the flipflop master component
@@ -3107,10 +3109,12 @@ function Component() {
         } else if(this.input_ff_types[i] == 7) { // y
           if(value2) numy++;
           else numY++;
+          numtypey++;
         } else { // c: this.input_ff_types[i] == 0, but also if undefined for some edge cases
           if(value2) numc++;
           if(value2 && !prevvalue2) numc_pos_edge++;
           if(!value2 && prevvalue2) numc_neg_edge++;
+          numtypec++;
         }
       }
 
@@ -3174,14 +3178,21 @@ function Component() {
         }
         else if(ffdisable) {
           clocked = false; // edge triggered clock disabled
+        } else if(!numtypec && !numtypey) {
+          // This flip-flop has no clock and no enable. It has, for example, only j and k, or only t.
+          // Then it should behave as if it's listening to the inputs every single tick, or as if it has
+          // an enable input but it's always on. So a lone t will blink at fast speed when enabled, and
+          // jk will work like sr latch or blink if both on.
+          clocked = true;
         }
 
+        // Asynchronous set and reset (input on q and Q) override the enable input (ffdisable)
         if(numQ && numq) {
-          if(!ffdisable) this.ff.value = !this.ff.value;
+          this.ff.value = !this.ff.value;
         } else if(numQ) {
-          if(!ffdisable) this.ff.value = false; // asynch reset (takes priority over set)
+          this.ff.value = false; // asynch reset (takes priority over set)
         } else if(numq) {
-          if(!ffdisable) this.ff.value = true; // asynch set
+          this.ff.value = true; // asynch set
         } else if(clocked) {
           if((numf1 && numF1) || (!numf1 && !numf0 && !numF1 && !numF0 && this.ff.numcC)) {
             // "numf1 && numF1" means that JK of a JK flip-flop, or T of a T-flip-flop was set

@@ -1056,8 +1056,8 @@ registerCircuit('flip-flops tutorial', `
 .     .          .              .             .
 ...............................................
 .     . :     :  .   :     :    .  :     :    .
-.1"SR". Ss>q>lQ: .   Ss>q>lQ:   .  Ss>j>lQ:   .
-.     . Rs>Q>lQ' .   Rs>Q>lQ'   .  Rs>k>lQ'   .
+.1"SR". Ss>j>lQ: .   Ss>j>lQ:   .  Ss>j>lQ:   .
+.     . Rs>k>lQ' .   Rs>k>lQ'   .  Rs>k>lQ'   .
 .     . :     :: .   Es>y  ::   .  Cs>c  ::   .
 .     .          .   :          .  :          .
 ...............................................
@@ -1068,15 +1068,15 @@ registerCircuit('flip-flops tutorial', `
 ...............................................
 .     . :     :  .   :     :    .  :     :    .
 .1" T". Ts>t>lQ  .   Ts>t>lQ    .  Ts>t>lQ    .
-.     . :C>y  :  .   Es>y  :    .  Cs>c       .
+.     . :     :  .   Es>y  :    .  Cs>c       .
 .     .          .   :          .             .
 .     .          .              .1"1-input:"  .
 .     .          .              .  Cs>c>lQ    .
 .     .          .              .  :     :    .
 ...............................................
 .     . :     :  .   :     :    .  :     :    .
-.1"JK". Js>q>lQ: .   Js>j>lQ:   .  Js>j>lQ:   .
-.     . Ks>Q>lQ' .   Ks>k>lQ'   .  Ks>k>lQ'   .
+.1"JK". Js>j>lQ: .   Js>j>lQ:   .  Js>j>lQ:   .
+.     . Ks>k>lQ' .   Ks>k>lQ'   .  Ks>k>lQ'   .
 .     . :     :: .   Es>y  ::   .  Cs>c  ::   .
 .     .          .   :          .  :          .
 ...............................................
