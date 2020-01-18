@@ -1,25 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>LogicEmu - Browser-Based Logic Simulator</title>
+<title>LogicEmu - Online Logic Simulator</title>
 <meta charset="utf-8"/>
-<meta name="description" content="LogicEmu - Logic Simulator Running in the Browser">
+<meta name="description" content="LogicEmu - Online Logic Simulator">
 <link rel="icon" href="favicon.ico" type="image/x-icon"/>
 </head>
 <body>
 <noscript>
-Welcome to LogicEmu, a logic circuit simulator running in your browser.<p/>
-This online logic simulator requires JavaScript to run and JavaScript is disabled in your browser. Here are a few options to run it:<p/>
+Welcome to LogicEmu, an online logic circuit simulator.
+<p>
+This requires JavaScript to run. Here are a few options to run it:
+<p>
 
 <ul>
-<li>You can enable JS to view LogicEmu running here</li>
-<li>You can view the source code on <a href="https://github.com/lvandeve/logicemu">github</a></li>
-<li>You can run LogicEmu offline: download the html and js files from github or with 'view source' here, then open index.html from disk with a browser (offline if you wish).</li>
+<li>Use a browser with enabled JS support to view LogicEmu running here, once loaded it runs locally.</li>
+<li>View the source code on <a href="https://github.com/lvandeve/logicemu">github</a></li>
+<li>Run LogicEmu offline: download the html and js files from github or with 'view source' here, then open index.html from disk with a browser (offline if you wish).</li>
 </ul>
-
-LogicEmu is completely independent of any online connection, it executes locally. It happens to be implemented in JavaScript and run in a browser for convenience,
-but this JavaScript does not make any remote connections, all built-in circuits are hardcoded in the source code, and user-edited
-circuits are only locally stored as well (local storage, not cookie).
+<p>
+Even though it's called an 'online' logic simulator since it can be ran
+conveniently in the browser, LogicEmu runs completely offline. Once the HTML
+and JS got fetched, it doesn't make any further connections. All circuits are
+already loaded since they're part of the source code. If you get LogicEmu
+from github you can run it offline from your own disk.
+<p>
+Settings and edited circuit are stored in local storage (not a cookie), which is private
+to you, not shared. Sharing has to be done manually, which you can do either
+using the source code of a circuit or a base64 URL if it's small enough.
 <p>
 Screenshot of it running a circuit:
 <p>
@@ -81,10 +89,10 @@ LogicEmu. Copyright (c) 2018-2020 by Lode Vandevenne
 </body>
 </html>
 <!--the version cgi params are to encourage browsers to update js file cache when new version uploaded, by changing it to new date-->
-<script src="editor.js?v=20200112"></script>
-<script src="logicemu.js?v=20200112"></script>
-<script src="circuits_help.js?v=20200112"></script>
-<script src="circuits_articles.js?v=20200112"></script>
-<script src="circuits_main.js?v=20200112"></script>
-<script src="footer.js?v=20200112"></script>
+<script src="editor.js?v=20200118"></script>
+<script src="logicemu.js?v=20200118"></script>
+<script src="circuits_help.js?v=20200118"></script>
+<script src="circuits_articles.js?v=20200118"></script>
+<script src="circuits_main.js?v=20200118"></script>
+<script src="footer.js?v=20200118"></script>
 

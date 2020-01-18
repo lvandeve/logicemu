@@ -107,6 +107,8 @@ function EditorOp() {
   this.selxe = 0;
   this.selye = 0;
   this.selrect = false;
+
+  this.mergeundo = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -186,7 +188,7 @@ function EditComponent() {
   this.yi = function() { return Math.min(this.yb, this.ye); };
   this.xa = function() { return Math.max(this.xb, this.xe); };
   this.ya = function() { return Math.max(this.yb, this.ye); };
-  // begin and end of rectangle, exclusive (unlike 01 and ia which have some inclusive bounds), and updated for overwrite mode when needed
+  // begin and end of rectangle, exclusive (unlike b/e and i/a which have some inclusive bounds), and updated for overwrite mode when needed
   // see info at top of file for more
   this.xr0 = function() { return Math.min(this.xb, this.xe); };
   this.yr0 = function() { return Math.min(this.yb, this.ye); };
@@ -203,6 +205,7 @@ function EditComponent() {
   // while blockmode tells what form new selections must have, isrectangular tells what form the current selection has
   this.isrectangular = false;
 
+  // returns whether the selection is any region, whether rectangular shaped or classic multiline shaped
   this.isRegion = function() { return this.xb != this.xe || this.yb != this.ye; };
 
   // unlike isrectangular (without capital r), this also includes the trivial rectangle of having single cell reflected, and even the case of multiline which is only a single line, so anything that's mathematically speaking a rectangle
@@ -330,7 +333,7 @@ function EditComponent() {
   };
 
   this.storeUndo_ = function(op) {
-    // TODO: merge undo ops if they're typing single characters
+    // TODO: merge undo ops if they're typing single characters (this doesn't refer to using the "mergeundo" flag, but actually turning it into a single op for performance reasons)
 
     var u = this.invertOp(op);
     u.selxb = this.xb;
@@ -386,15 +389,26 @@ function EditComponent() {
     this.doOpWithoutUndo(op);
 
     this.selectRegion(op.selxb, op.selyb, op.selxe, op.selye, op.selrect);
+
+    if(op.mergeundo) this.undo();
   };
 
   this.redo = function() {
     if(this.undopos < 0) this.undopos = 0;
-    if(this.undopos >= this.undoops.length) return;
+    if(this.undopos >= this.redoops.length) return;
     var op = this.redoops[this.undopos];
     this.undopos++;
     this.doOpWithoutUndo(op);
     this.selectRegion(op.selxb, op.selyb, op.selxe, op.selye, op.selrect);
+
+    if(this.undopos < this.redoops.length && this.redoops[this.undopos].mergeundo) this.redo();
+  };
+
+  // mark the last two operations as merged for undo (doesn't help performance, but makes the user undo button combine them if there was some intermediate operation that shouldn't be user visible)
+  this.markMergeUndo = function() {
+    if((this.undopos - 1 < 0) || (this.undopos - 1 >= this.undoops.length)) return;
+    this.undoops[this.undopos - 1].mergeundo = true;
+    this.redoops[this.undopos - 1].mergeundo = true;
   };
 
   this.invertLineOp = function(op) {
@@ -422,6 +436,7 @@ function EditComponent() {
     result.add1 = op.rem1;
     result.rem0 = op.add0;
     result.rem1 = op.add1;
+    result.mergeundo = op.mergeundo;
     for(var y = op.rem0; y < op.rem1; y++) {
       var l = new LineOp();
       l.y = y;
@@ -436,6 +451,14 @@ function EditComponent() {
       result.ops1.push(this.invertLineOp(op.ops0[i]));
     }
     return result;
+  };
+
+  // clears all text, using the operations so it supports undo
+  this.clear = function() {
+    var op = new EditorOp();
+    op.rem0 = 0;
+    op.rem1 = this.chargrid.length;
+    this.doOp(op);
   };
 
   this.renderCursorDivs = function() {
@@ -1663,6 +1686,7 @@ console.log('selectRegion: ' + xb + ' ' + yb + ' ' + xe + ' ' + ye + ' | ' + rec
         }
         this.doOp(op);
         if(updatecursor) this.selectCell(largestx, starty);
+        else this.reselectRegion(); // otherwise it doesn't update the textarea.value with the changed content
       } else {
         var startx = 0;
         var op = new EditorOp();
@@ -1690,6 +1714,7 @@ console.log('selectRegion: ' + xb + ' ' + yb + ' ' + xe + ' ' + ye + ' | ' + rec
         }
         this.doOp(op);
         if(updatecursor) this.selectCell(x, y);
+        else this.reselectRegion(); // otherwise it doesn't update the textarea.value with the changed content
       }
     } else {
       if(overwrite) {
@@ -1718,6 +1743,7 @@ console.log('selectRegion: ' + xb + ' ' + yb + ' ' + xe + ' ' + ye + ' | ' + rec
         }
         this.doOp(op);
         if(updatecursor) this.selectCell(x, y);
+        else this.reselectRegion(); // otherwise it doesn't update the textarea.value with the changed content
       } else {
         var startx = 0;
         var op = new EditorOp();
@@ -1749,8 +1775,22 @@ console.log('selectRegion: ' + xb + ' ' + yb + ' ' + xe + ' ' + ye + ' | ' + rec
         }
         this.doOp(op);
         if(updatecursor) this.selectCell(x, y);
+        else this.reselectRegion(); // otherwise it doesn't update the textarea.value with the changed content
       }
     }
+  };
+
+  //// returns rectangular block selection as a string where each line is the same length.
+  //this.copyRectangle = function() {
+  //  if(!this.isFullyRectangular()) return "";
+  //  return this.textarea.value;
+  //};
+
+  // returns the selected area as a string
+  this.copy = function() {
+    // the textarea is already kept up to date with the selection contents so we can just return its value
+    // (an alternative is to compute it with this.extractSelectedText())
+    return this.textarea.value;
   };
 
   // makes it be on immediately, good to use after arrow keys too
@@ -1863,7 +1903,7 @@ function Editor() {
     var button;
 
     button = this.makeSideButton();
-    button.innerText = 'mode';
+    button.innerText = 'block';
     button.title = 'toggle block mode. Block mode enables rectangular regions, free cursor placement and overwrite mode and is good for circuit editing or ASCII art. Standard mode works like a standard text editor in insert mode and is good for comments or textual content.';
     button.onclick = function(e) {
       area.toggleOverwriteMode();
@@ -1880,39 +1920,74 @@ function Editor() {
       area.focusTextArea(); // every button must do this because they steal focus from the region
     };
 
+    var dotransform = function(type) {
+      if(area.pasting) {
+        area.pastecontent = transform(area.pastecontent, type);
+        area.fillPastePreview();
+      } else if(area.isFullyRectangular()) {
+        var x0 = area.xr0();
+        var y0 = area.yr0();
+        var x1 = area.xr1();
+        var y1 = area.yr1();
+        var text = area.copy();
+        // non square area, if the transform rotates or transposes there is a part where content should be removed, write spaces in it
+        var reshapes = (y1 - y0 != x1 - x0) && (type == 1 || type == 3 || type == 4 || type == 6);
+        if(reshapes) {
+          var spaces = '';
+          for(var i = 0; i < text.length; i++) {
+            if(text[i] == '\n') spaces += '\n';
+            else spaces += ' ';
+          }
+          area.pasteText(spaces, x0, y0, true, true);
+        }
+        text = transform(text, type);
+        area.pasteText(text, x0, y0, true, true);
+        if(reshapes) {
+          var x1b = x0 + y1 - y0;
+          var y1b = y0 + x1 - x0;
+          x1 = x1b;
+          y1 = y1b;
+          area.markMergeUndo();
+        }
+        area.selectRegion(x0, y0, x1 - 1, y1 - 1, true);
+      } else {
+        var text = area.toText();
+        text = transform(text, type);
+        area.clear();
+        area.pasteText(text, 0, 0, true, false);
+        area.markMergeUndo();
+      }
+    };
+
     var button = this.makeSideButton();
     button.innerText = 'rot R';
-    button.title = 'rotate paste test right';
+    button.title = 'rotate circuit right';
     button.onclick = function(e) {
-      area.pastecontent = transform(area.pastecontent, 1);
-      area.fillPastePreview();
+      dotransform(1);
       area.focusTextArea(); // every button must do this because they steal focus from the region
     };
 
     var button = this.makeSideButton();
     button.innerText = 'rot L';
-    button.title = 'rotate paste test left';
+    button.title = 'rotate circuit left';
     button.onclick = function(e) {
-      area.pastecontent = transform(area.pastecontent, 3);
-      area.fillPastePreview();
+      dotransform(3);
       area.focusTextArea(); // every button must do this because they steal focus from the region
     };
 
     var button = this.makeSideButton();
     button.innerText = 'mirror';
-    button.title = 'horizontal mirror paste text';
+    button.title = 'horizontal mirror circuit';
     button.onclick = function(e) {
-      area.pastecontent = transform(area.pastecontent, 7);
-      area.fillPastePreview();
+      dotransform(7);
       area.focusTextArea(); // every button must do this because they steal focus from the region
     };
 
     var button = this.makeSideButton();
     button.innerText = 'flip';
-    button.title = 'vertical mirror paste text';
+    button.title = 'vertical mirror circuit';
     button.onclick = function(e) {
-      area.pastecontent = transform(area.pastecontent, 5);
-      area.fillPastePreview();
+      dotransform(5);
       area.focusTextArea(); // every button must do this because they steal focus from the region
     };
 
@@ -1994,10 +2069,40 @@ function Editor() {
     };
 
     button = this.makeSideButton();
+    button.innerText = 'XOR';
+    button.title = 'pasting something test';
+    button.onclick = function(e) {
+      area.pastecontent = 's->e->l\n   #   \ns->#';
+      area.pasting = !area.pasting;
+      area.fillPastePreview();
+      area.focusTextArea(); // every button must do this because they steal focus from the region
+    };
+
+    button = this.makeSideButton();
     button.innerText = 'JK';
     button.title = 'pasting something test';
     button.onclick = function(e) {
       area.pastecontent = 's->j->l\ns->k   \ns->c   ';
+      area.pasting = !area.pasting;
+      area.fillPastePreview();
+      area.focusTextArea(); // every button must do this because they steal focus from the region
+    };
+
+    button = this.makeSideButton();
+    button.innerText = 'D';
+    button.title = 'pasting something test';
+    button.onclick = function(e) {
+      area.pastecontent = 's->d->l\n   #   \ns->c   ';
+      area.pasting = !area.pasting;
+      area.fillPastePreview();
+      area.focusTextArea(); // every button must do this because they steal focus from the region
+    };
+
+    button = this.makeSideButton();
+    button.innerText = 'T';
+    button.title = 'pasting something test';
+    button.onclick = function(e) {
+      area.pastecontent = 's->t->l\n   #   \ns->c   ';
       area.pasting = !area.pasting;
       area.fillPastePreview();
       area.focusTextArea(); // every button must do this because they steal focus from the region

@@ -313,10 +313,11 @@ s....>e..>l
 0"description what flip-flops do and how they work."
 
 0"A 'gate' with a 'c' instead of 'a', 'o', 'e' represent a single-input"
-0"T flip-flop or counter (the c stands for counter here). Everytime the"
-0"switch is toggle from off to on, the c toggles to the other state, so"
-0"it halves the frequency of the signal. This is a component that keeps"
-0"a state and is positive edge triggered"
+0"T flip-flop or frequency halver (the c stands for counter here since multiple
+0"together form a binary counter)."
+0"Everytime the switch is toggle from off to on, the c toggles to the other"
+0"state, so it halves the frequency of the signal. This is a component that"
+0"keeps a state and is positive edge triggered"
 
 s..>c..>l
 
@@ -389,19 +390,19 @@ s-->c-->l
 s-->t-->l
 s-->d-->l 0"All parts combined in 1 flip-flop"
 s-->j-->l 0"Not realistic, but possible."
-s-->k-->l 0"j and k do not work because 'd' conflicts with them."
+s-->k-->l 0"J+K combination overridden by D"
 s-->q-->l
 s-->Q-->l
-s--]y-->l
+S-->y-->l
 
 
 s-->t-->l
 s-->d-->l
 s-->j-->l 0"All parts combined in 1 flip-flop, without clock"
 s-->k-->l 0"Not realistic, but possible."
-s-->q-->l 0"j and k do not work because 'd' conflicts with them."
+s-->q-->l 0"J+K combination overridden by D"
 s-->Q-->l
-s--]y-->l
+S-->y-->l
 
 0"So to summarize, the 'c' and 'C' can actually mean three different things:"
 0"- counter (1-input T flip-flop): when standalone with an input"
@@ -456,7 +457,7 @@ s--]y-->l
 
 0"# Special devices"
 
-0"The delay (or buffer), indicated with 'd', introduced a 1-tick delay"
+0"The delay (or buffer), indicated with 'd', introduces a 1-tick delay"
 
 s-->d-->l
 
@@ -471,6 +472,28 @@ s-->d-->l
     2
     0
 s-->d-->l
+
+0"The pulse, indicated with 'q' or 'Q', create a single short pulse on any"
+0"positive input edge. This is only so when standalone or when combined with y,"
+0"in other scenarios they'll behave like q and Q of flip-flop explained earlier."
+
+s-->q-->l
+
+s-->Q-->l
+
+s-->q-->l
+s-->y
+
+s-->Q-->l
+s-->y
+
+0"Note that the pulse can also be made with a delay and an AND gate instead,"
+0"or with a c looping back to itself, the single q is just a shortcut:"
+
+  .....          ...
+  .   v          v .
+s-.>d]a->l   s..>c..>l
+
 
 0"A timer 'r' or 'R' blinks with a certain speed. The speed is given in tenths"
 0"of a second, and the total period is twice that. If no number is given, the
@@ -602,8 +625,7 @@ s..>M..>l
 
 
 0"A ? is a random generator. It starts with a random initial value. If it"
-0"has inputs it will change to a random value on any positive or negative"
-0"edge of the input."
+0"has inputs it will change to a random value on positive edges of the input."
 
 ?-->l  ?-->l  ?-->l  ?-->l
 ?-->l  ?-->l  ?-->l  ?-->l
@@ -614,8 +636,16 @@ s-->?-->l
 
 p-->?-->l
 
-R-->?-->l
-1
+r-->?-->l
+2
+
+0"To react to both positive and negative edge, it can be given a regular and"
+0"inverted input:"
+
+   ....           ....           ....
+   .  w           .  w        2  .  w
+s....>?..>l    p....>?..>l    r....>?..>l
+
 
 0"A ROM, indicated with 'b' for off and 'B' for ON bits, can contain"
 0"binary information. The mouse can toggle b's"
@@ -898,8 +928,9 @@ registerCircuit('Glossary', `
 0"terminal, and so on. A component can occupy multiple cells, and all its"
 0"output wires are also considered part of the component."
 
-0"- Counter Gate: A 'gate' that acts as a single-input T flip-flop, it flips"
-0"its state each time the input goes from low to high. Example:"
+0"- Counter Gate: A 'gate' that acts as a single-input T flip-flop or frequency"
+0"halver: it flips its state each time the input goes from low to high."
+0"Example:"
 s-->c-->l
 
 0"- Electron Mode: emulation mode that works gate per gate, slower but lower"
@@ -1035,6 +1066,15 @@ s-->e<--s
 
 0"Right of that is a color scheme selector, to choose between various light"
 0"or dark schemes to render with."
+
+0"Some color schemes have good contrast while others have a special theme."
+
+0"The monochrome mode is special: it does not show the logic value of"
+0"individual wires since it does not have color to do so, the only visible"
+0"state are the capitalization of switches (s/S), pushbuttons (p/P),"
+0"timers (r/R), LED outputs (l/L) and flip-flop states (c/C). The"
+0"capitalization of logic gates (such as a for AND and A for NAND) does not"
+0"indicate their state but their type."
 
 0"The +/- buttons allow to zoom in or out."
 
@@ -1440,7 +1480,7 @@ l 0": the output LED"
 
 0"From here on all those and much more cell types are introduced one by one."
 
-0"# SECTION I: input/output/wiring"
+0"# SECTION I: Input/Output/Wiring"
 
 3"NEW PART: wires"
 3".: wire, wire split, wire corner."
@@ -1560,155 +1600,13 @@ s----->l  |||     .....>l
 
 3"NEW PART: comments"
 3"double quote: encloses comment"
-3"numbers: alter alignment"
-3"colon: vertical comment"
 
 0"Comments, like this text itself here, are made with double quotes. The comment"
 0"starts at a quote and ends at the next quote on the same line. A number"
 0"before the first double quote (or alternatively after the last) can also"
-0"enable aligned or differently styled text."
+0"enable aligned or differently styled text. That is explained in a later"
+0"chapter."
 
-0"The numeric styles do the following:"
-
-0"formatted text styles: those support a few markdown features, described further below"
-3"0: left aligned formatted text"
-3"1: center aligned formatted text"
-3"2: right aligned formatted text"
-
-0"full width text: this has the same width as a circuit element per character (wide fixed width)"
-3"3: full width text, shifted left a bit"
-3"4: standard full width text, same as not using any number at all"
-3"5: full width text, shifted right a bit"
-
-0"narrow fixed width text: like full width, but narrower (monospace)."
-3"6: left aligned narrow fixed width text"
-3"7: center aligned narrow fixed width text"
-3"8: right aligned narrow fixed width text"
-
-0"The formatted text styles support a small subset of markdown features:"
-3"# : main chapter (heading 1)"
-3"## : sub-chapter (heading 2)"
-3"### : sub-sub-chapter (heading 3)"
-3"- : bullet list item (indentation not supported)"
-3"+ : bullet list item (same as -)"
-3". : bullet list item (same as -)"
-
-0"NOTE: numbers placed left or right of a quote will be used for the text style"
-0"and take priority over other uses of numbers (see further). Do not place a quote"
-0"next to a number intended to affect something else. Numbers above or below a"
-0"quote are fine. Numbers can be shared amongst multiple strings though."
-
-0"For these, the # or - must come directly after the opening quote, and there"
-0"must be a space after the special symbol. Note that this will remove or"
-0"replace this original special symbol character, so you can't use the"
-0"formatted text to represent a - or # at the start with a space after it."
-
-0"The full width and narrow fixed width styles do not interpret any characters as markdown,"
-0"and so will keep the # as-is"
-
-0"NOTE: other markdown features, such as bold and italic, are currently not supported."
-
-0"Below the different types of alignment and style are shown in a table. The"
-0"first column indicates whether any number or # is present. The second column"
-0"shows the actual formatted text. View the source code in the editor to really"
-0"see how it's made. The 'v' symbols indicate where the quotes are located and"
-0"the '0' symbol where possibly a number is located. The text may look much"
-0"narrower than the table (except for full width text), but in the source code"
-0"the full width of the table is taken up by the text, quotes and numbers in"
-0"each case."
-
-
-       0v           v
-+-----+--------------+
-|     | "hello world"| 0"full width text (best for text integrated in a circuit itself)"
-+-----+--------------+
-|0    |0"hello world"| 0"formatted left aligned (best for readability of long texts)"
-+-----+--------------+
-|1    |1"hello world"| 0"formatted center aligned"
-+-----+--------------+
-|2    |2"hello world"| 0"formatted right aligned"
-+-----+--------------+
-|3    |3"hello world"| 0"narrow fixed width left aligned (best for ASCII art or code)"
-+-----+--------------+
-|4    |4"hello world"| 0"narrow fixed width center aligned"
-+-----+--------------+
-|5    |5"hello world"| 0"narrow fixed width right aligned"
-+-----+--------------+
-|6    |6"hello world"| 0"full width shifted left (starts where the quote/number are)"
-+-----+--------------+
-|7    |7"hello world"| 0"standard full width, same as no number"
-+-----+--------------+
-|8    |8"hello world"| 0"full width shifted right (ends where the quote/number are)"
-+-----+--------------+
-|0 #  |0"# head H1  "| 0"chapter (heading 1)"
-+-----+--------------+
-|0 ## |0"## head H2 "| 0"sub-chapter (heading 2)"
-+-----+--------------+
-|0 ###|0"### head H3"| 0"sub-sub-chapter (heading 3)"
-+-----+--------------+
-|0 -  |0"- bullet   "| 0"bullet list item"
-+-----+--------------+
-|0 +  |0"+ bullet   "| 0"bullet list item (same as with -)"
-+-----+--------------+
-|0 .  |0". bullet   "| 0"bullet list item (same as with -)"
-+-----+--------------+
-
-0"Fixed width text will not use markdown, unless a narrow width and a formatted"
-0"number are combined"
-
-       0v          v0
-+-----+--------------+----+
-|3 #  |3"# no head." |    | 0"displays the #"
-+-----+--------------+----+
-|3 #  |3"# heading "0|   0| 0"interprets the #"
-+-----+--------------+----+
-|3 -  |3"- dash    " |    | 0"displays the -"
-+-----+--------------+----+
-|3 -  |3"- bullet  "0|   0| 0"interprets the -"
-+-----+--------------+----+
-
-0"NOTE: The color and background color of the text is determined by the chosen"
-0"rendering color scheme (light, dark, ...). In some schemes, text may have a"
-0"subtle background color. This is applied only for fixed width (narrow or"
-0"full width) text, not for formatted text. This is intended to make the text"
-0"distinguishable from circuits. Formatted text already looks different enough"
-0"on its own. Full width text will not have a background color behind spaces"
-0"while narrow fixed width text will have it also behind spaces. This allows"
-0"full width text to only have that color where actual characters are placed"
-0"to indicate inputs/outputs and such, while for narrow width text this would"
-0"not look good and instead its background color can serve to show a"
-0"rectangular area in which ASCII art or code is drawn."
-
-0"Vertical comments can alternatively be made with a colon above and below. This"
-0"doesn't support formatting, only the full width circuit style:"
-
-  :
-  v
-  e
-  r
-  t
-  i
-  c
-  a
-  l
-  :
-
-0"A number above the first or below the last colon can affect style, but this"
-0"supports less options than horizontal strings and no alignment options."
-
-  0     3     6
-  :     :     :
-  s     s     s
-  t     t     t
-  y     y     y
-  l     l     l
-  e     e     e
-
-  0     3     6
-  :     :     :
-
-0"Note: It's safe to use a colon in a horizontal comment, but you can't use a"
-0"quote in a vertical comment, it'll be used to comment a line horizontally."
 
 3"NEW PART: isolators"
 3"(space): isolator"
@@ -1720,7 +1618,11 @@ s----->l  |||     .....>l
 0"case around something, and also connects IC templates. Comments are"
 0"isolators, no matter what is inside them (even if commented-out circuits)"
 
-0"# SECTION II: logic gates"
+0"The @ looks like the letter '@' in text mode, and as a block in graphical mode"
+
+  @ @@@@
+
+0"# SECTION II: Logic Gates"
 
 
 3"NEW PARTS: logic gates OR, AND, XOR"
@@ -1889,9 +1791,12 @@ sssss    sssss    sssss    ###
 3"c (standalone): initially off counter"
 3"C (standalone): initially on counter"
 
-0"This is a counter or mono-input T flip-flop. Whenever the input toggles on,"
-0"the c changes its state, so its output toggles at half the rate as the input."
-0"capital C starts in on state instead of off state, other than that behaves"
+
+0"This is a single-input T flip-flop or frequency halver (the c stands for"
+0"counter here since multiple together form a binary counter)."
+0"Whenever the input toggles on, the c changes its state, so its output toggles"
+0"at half the rate as the input."
+0"Capital C starts in on state instead of off state, other than that behaves"
 0"the same."
 
 s..>c..>l     s..>C..>l
@@ -1987,19 +1892,31 @@ s-->c-->l
 s-->t-->l
 s-->d-->l 0"All parts combined in 1 flip-flop"
 s-->j-->l 0"Not realistic, but possible."
-s-->k-->l 0"j and k do not work because 'd' conflicts with them."
+s-->k-->l 0"J+K combination overridden by D"
 s-->q-->l
 s-->Q-->l
-s--]y-->l
+S-->y-->l
 
 
 s-->t-->l
 s-->d-->l
 s-->j-->l 0"All parts combined in 1 flip-flop, without clock"
 s-->k-->l 0"Not realistic, but possible."
-s-->q-->l 0"j and k do not work because 'd' conflicts with them."
+s-->q-->l 0"J+K combination overridden by D"
 s-->Q-->l
-s--]y-->l
+S-->y-->l
+
+0"Letters of the same type touching will be considered a different flip-flop"
+0"rather tha combine together, and will allow input to pass through. This"
+0"allows to create packed flip-flops, such as multiple D-flip-flops with each"
+0"their own data input, but shared clock, enable, asynch reset and asynch set:"
+
+     sSss
+     vvvv
+s-->dcyQq-->l
+s-->dcyQq-->l
+s-->dcyQq-->l
+s-->dcyQq-->l
 
 
 0"This is only a selection of the combinations you can do with those. Also, you"
@@ -2010,6 +1927,12 @@ s--]y-->l
 0"- counter (1-input T flip-flop): when standalone with an input"
 0"- constant: when standalone without an input"
 0"- clock: when combined with other flip-flop cells like j, k, ..."
+
+0"A few combinations of the above with missing parts, or standalone parts (such"
+0"as a lone d, or a lone q) would not perform useful behavior with the rules"
+0"above. Some of those combinations have been overridden with completely"
+0"different behavior. These are described below."
+
 
 
 3"NEW PART: delay"
@@ -2055,6 +1978,39 @@ s..>d..>l
 s......>d..>l
   .     #
   .>d..>c
+
+3"NEW PART: pulse"
+3"q (standalone): gives single tick pulse on positive input edge"
+3"Q (standalone): gives single tick inverted pulse on positive input edge"
+
+s-->q-->l
+
+s-->Q-->l
+
+0"Can be combined with enable input, but if adding any other flip-flop parts"
+0"it'll behave as the flip-flops explained above instead."
+
+s-->q-->l
+s-->y
+
+s-->Q-->l
+s-->y
+
+0"Note that the pulse can also be made with a delay and an AND gate instead,"
+0"or with a c looping back to itself, the single q is just a shortcut:"
+
+  .....          ...
+  .   v          v .
+s-.>d]a->l   s..>c..>l
+
+3"NEW PART: permanent enable"
+3"j (standalone): initially off, once enabled can never be disabled"
+3"k (standalone): initially on, once disabled can never be enabled"
+
+s-->j-->l
+
+s-->k-->l
+
 
 3"NEW PART: memory"
 3"b: ROM and RAM bit, value 0"
@@ -2204,7 +2160,7 @@ ii5 .
 ^ ^ .
 s s s
 
-0"Multiple definitions for the same number results in an error:".
+0"Multiple definitions for the same number results in an error:"
 
  I6      I6
 s-->l   s-->l    s-->i6-->l
@@ -2495,8 +2451,8 @@ SsssssS3"ASCII code in to screen"
 3"NEW PART: Random generator"
 3"?: random generator"
 
-0"The random generator will change to a random value on any positive or"
-0"negative edge of the input and have a random initial value."
+0"The random generator will change to a random value on any positive edge of"
+0"the input and have a random initial value."
 
 ?-->l  ?-->l  ?-->l  ?-->l
 ?-->l  ?-->l  ?-->l  ?-->l
@@ -2506,7 +2462,16 @@ SsssssS3"ASCII code in to screen"
 s..>?..>l
 
 R..>?..>l
-1
+2
+
+
+0"To react to both positive and negative edge, it can be given a regular and"
+0"inverted input:"
+
+   ....           ....           ....
+   .  w           .  w        2  .  w
+s....>?..>l    p....>?..>l    r....>?..>l
+
 
 3"NEW PART: tri-state buffer (or open collector output)"
 3"z: fake tri-state buffer (and-or)"
@@ -2940,7 +2905,164 @@ s   s   s
     / | ;                  s s s
    s  s  s
 
-0"# SECTION VII: Command Words"
+0"# SECTION VII: Comment Styles"
+
+0"Comments can have a number outside the quotes to affect styles."
+0"View the source of this circuit to see how this works in code."
+0"It is typed in the code for example as follows for number 0, but with a"
+0"double quote instead of two single quotes on each side:"
+
+3"0''formatted comment''"
+
+0"The numeric styles do the following:"
+
+0"formatted text styles: those support a few markdown features, described further below"
+3"0: left aligned formatted text"
+3"1: center aligned formatted text"
+3"2: right aligned formatted text"
+
+0"full width text: this has the same width as a circuit element per character (wide fixed width)"
+3"3: full width text, shifted left a bit"
+3"4: standard full width text, same as not using any number at all"
+3"5: full width text, shifted right a bit"
+
+0"narrow fixed width text: like full width, but narrower (monospace)."
+3"6: left aligned narrow fixed width text"
+3"7: center aligned narrow fixed width text"
+3"8: right aligned narrow fixed width text"
+
+0"The formatted text styles support a small subset of markdown features:"
+3"# : main chapter (heading 1)"
+3"## : sub-chapter (heading 2)"
+3"### : sub-sub-chapter (heading 3)"
+3"- : bullet list item (indentation not supported)"
+3"* : bullet list item (same as -)"
+3"___: horizontal rule"
+
+0"NOTE: numbers placed left or right of a quote will be used for the text style"
+0"and take priority over other uses of numbers (see further). Do not place a quote"
+0"next to a number intended to affect something else. Numbers above or below a"
+0"quote are fine. Numbers can be shared amongst multiple strings though."
+
+0"For these, the # or - must come directly after the opening quote, and there"
+0"must be a space after the special symbol. Note that this will remove or"
+0"replace this original special symbol character, so you can't use the"
+0"formatted text to represent a - or # at the start with a space after it."
+
+0"The full width and narrow fixed width styles do not interpret any characters as markdown,"
+0"and so will keep the # as-is"
+
+0"NOTE: other markdown features, such as bold and italic, are currently not supported."
+
+0"Below the different types of alignment and style are shown in a table. The"
+0"first column indicates whether any number or # is present. The second column"
+0"shows the actual formatted text. View the source code in the editor to really"
+0"see how it's made. The 'v' symbols indicate where the quotes are located and"
+0"the '0' symbol where possibly a number is located. The text may look much"
+0"narrower than the table (except for full width text), but in the source code"
+0"the full width of the table is taken up by the text, quotes and numbers in"
+0"each case."
+
+
+       0v           v
++-----+--------------+
+|     | "hello world"| 0"full width text (best for text integrated in a circuit itself)"
++-----+--------------+
+|0    |0"hello world"| 0"formatted left aligned (best for readability of long texts)"
++-----+--------------+
+|1    |1"hello world"| 0"formatted center aligned"
++-----+--------------+
+|2    |2"hello world"| 0"formatted right aligned"
++-----+--------------+
+|3    |3"hello world"| 0"narrow fixed width left aligned (best for ASCII art or code)"
++-----+--------------+
+|4    |4"hello world"| 0"narrow fixed width center aligned"
++-----+--------------+
+|5    |5"hello world"| 0"narrow fixed width right aligned"
++-----+--------------+
+|6    |6"hello world"| 0"full width shifted left (starts where the quote/number are)"
++-----+--------------+
+|7    |7"hello world"| 0"standard full width, same as no number"
++-----+--------------+
+|8    |8"hello world"| 0"full width shifted right (ends where the quote/number are)"
++-----+--------------+
+|0 #  |0"# head H1  "| 0"chapter (heading 1)"
++-----+--------------+
+|0 ## |0"## head H2 "| 0"sub-chapter (heading 2)"
++-----+--------------+
+|0 ###|0"### head H3"| 0"sub-sub-chapter (heading 3)"
++-----+--------------+
+|0 -  |0"- bullet   "| 0"bullet list item"
++-----+--------------+
+|0 *  |0"* bullet   "| 0"bullet list item (same as with -)"
++-----+--------------+
+
+0"Horizontal rule:"
+0"___"
+
+0"Fixed width text will not use markdown, unless a narrow width and a formatted"
+0"number are combined"
+
+       0v          v0
++-----+--------------+----+
+|3 #  |3"# no head." |    | 0"displays the #"
++-----+--------------+----+
+|3 #  |3"# heading "0|   0| 0"interprets the #"
++-----+--------------+----+
+|3 -  |3"- dash    " |    | 0"displays the -"
++-----+--------------+----+
+|3 -  |3"- bullet  "0|   0| 0"interprets the -"
++-----+--------------+----+
+
+0"NOTE: The color and background color of the text is determined by the chosen"
+0"rendering color scheme (light, dark, ...). In some schemes, text may have a"
+0"subtle background color. This is applied only for fixed width (narrow or"
+0"full width) text, not for formatted text. This is intended to make the text"
+0"distinguishable from circuits. Formatted text already looks different enough"
+0"on its own. Full width text will not have a background color behind spaces"
+0"while narrow fixed width text will have it also behind spaces. This allows"
+0"full width text to only have that color where actual characters are placed"
+0"to indicate inputs/outputs and such, while for narrow width text this would"
+0"not look good and instead its background color can serve to show a"
+0"rectangular area in which ASCII art or code is drawn."
+
+
+3"NEW PART: vertical comments"
+3"colon: vertical comment"
+
+0"Vertical comments can alternatively be made with a colon above and below. This"
+0"doesn't support formatting, only the full width circuit style:"
+
+  :
+  v
+  e
+  r
+  t
+  i
+  c
+  a
+  l
+  :
+
+0"A number above the first or below the last colon can affect style, but this"
+0"supports less options than horizontal strings and no alignment options."
+
+  0     3     6
+  :     :     :
+  s     s     s
+  t     t     t
+  y     y     y
+  l     l     l
+  e     e     e
+
+  0     3     6
+  :     :     :
+
+0"Note: It's safe to use a colon in a horizontal comment, but you can't use a"
+0"quote in a vertical comment, it'll be used to comment a line horizontally."
+
+
+0"# SECTION VIII: Command Words"
 
 
 3"NEW BEHAVIOR: force modes and settings"
@@ -4127,7 +4249,8 @@ registerCircuit('Unit Test', `
 0"# On"
 
 0"In this section, the LED on the right of each contraption must be ON. If it's"
-0"OFF, something is broken. There should also be no errors indicated."
+0"OFF, something is broken. A short delay just after loading is allowed."
+0"There should also be no errors indicated."
 
 C...........>l
 
@@ -4170,6 +4293,64 @@ s---->j--->O>l
 s---->k----->l
 s---->q--->O>l
 s---->Q----->l
+
+C>j--------->l
+
+c>k--------->l
+
+C>q---------]l
+
+C>q>c------->l
+
+C-->d
+    #
+C>q>c------->l
+
+c-->d
+    #
+C>q>c-------]l
+
+C-->t
+    #
+C>q>c------->l
+
+c-->t
+    #
+C>q>c-------]l
+
+c-->j
+c-->k
+C>q>c-------]l
+
+C-->j
+c-->k
+C>q>c------->l
+
+c-->j
+C-->k
+C>q>c-------]l
+
+C-->j
+C-->k
+C>q>c------->l
+
+C-->d
+C-->Q
+C>q>c-------]l
+
+c-->d
+C-->q
+c-->c------->l
+
+     C
+     v
+     qS
+     vv
+C-->dcyQq--->l
+C-->dcyQq--->l
+c-->dcyQq---]l
+C-->dcyQq--->l
+
 
        .-->O>l
 C------+---->l
@@ -4343,11 +4524,17 @@ S------>2--->l
 
 #------->O-->l
 
-C..>C.......>l
+C..>c.......>l
 
-O..>C.......>l
+O..>c.......>l
 
-S..>C.......>l
+S..>c.......>l
+
+C..]C.......>l
+
+c..]C.......>l
+
+c..>C.......>l
 
 O.....>d....>l
 
@@ -4437,6 +4624,46 @@ s-----------]l
 
 S---------->o
             >l
+
+    TT------]l
+    TT------]l
+    TT------]l
+    |^
+    &+------>l
+     s
+
+
+    ........]l
+    .
+s-->M-------]l
+    M
+S-->M
+    ^
+    s
+
+    ........>l
+    .
+s-->M------->l
+    M
+S-->M
+    ^
+    S
+
+    ........>l
+    .
+S-->M-------]l
+    M
+s-->M
+    ^
+    S
+
+    ........>l
+    .
+S-->M-------]l
+    M
+s-->M------->l
+    ^
+    S
 
 0"# Off"
 
@@ -4549,11 +4776,11 @@ s....>S.....>l
 S...(")"
       ......>l
 
-C..>c.......>l
+C..>C.......>l
 
-O..>c.......>l
+O..>C.......>l
 
-S..>c.......>l
+S..>C.......>l
 
 
        e---->l
@@ -4671,7 +4898,7 @@ s##
 . .--( )%
 .
 .
-......>o>c..>l
+......>o>C..>l
 .    .   ^
 .    .>O..
 .
@@ -4741,21 +4968,130 @@ s##
 
 0"# Flip Flops"
 
-0"Expected:"
-0"- main output read from t,c,k,d,q"
-0"- inverted output read from j,Q; inverted to LED so all LEDs should read the"
-0"  same"
-0"- q enables immediately on no matter what"
-0"- Q disables immediately on no matter what"
-0"- Q and q together makes it flicker"
-0"- c may change state on positive edge only according to the rules of T,D,J,K"
-0"  flip-flop inputs"
-0"- when mixing D/T/JK flip-flop inputs:"
-0"  - on inputs trump off inputs"
-0"  - off D trumps off JK & T"
-0"  - toggle trumps everything"
-0"  - following combinations make it toggle: T, JK, DK"
+0"Expected behavior written before each circuit"
 
+0"Behaves like D flip-flop, C positive edge triggered, both outputs same:"
+
+s-->c-->l
+s-->d-->l
+
+0"Behaves like T flip-flop, C positive edge triggered, both outputs same:"
+
+s-->c-->l
+s-->t-->l
+
+0"Behaves like JK flip-flop, toggle when clocked and J+K, all LEDs same:"
+
+s-->c-->l
+s-->j-->l
+s-->k--]l
+
+
+0"Behaves like D flip-flop, C negative edge triggered, both outputs same:"
+
+s--]c-->l
+s-->d-->l
+
+0"Behaves like D latch, both outputs same:"
+
+s-->y-->l
+s-->d-->l
+
+0"Toggles output state whenever input has positive edge, initially off"
+
+s-->c-->l
+
+0"Toggles output state whenever input has positive edge, initially on"
+
+s-->C-->l
+
+0"Outputs the input signal with slight delay:"
+
+s-->d-->l
+
+0"Rapidly oscillates when input on, else keeps whatever state it last had:"
+
+s-->t-->l
+
+0"Behaves like JK latch, rapidly oscillates if both j+k (or q+Q) on:"
+
+s-->j-->l       s-->q-->l
+s-->k--]l       s-->Q--]l
+
+0"Behaves like JK latch with enable on left, ignores enable (always enabled) on right:""
+
+s-->j-->l       s-->q-->l
+s-->y-->l       s-->y-->l
+s-->k--]l       s-->Q--]l
+
+0"Rapidly oscillates if t is on, outputs value of d if t is off:"
+
+s-->t-->l
+s-->d-->l
+
+0"Outputs 1 if j is 1 and k is 0, outputs 0 if j is 0 and k is 1, outputs value of d if both are 1, keeps state if both are 0."
+0"Ignores d in all cases except if j+k both 1."
+
+s-->j-->l
+s-->k--]l
+s-->d-->l
+
+
+0"Works like SR flipflop for j=k=0, j=1 and k=0 or j=0 and k=1. With both j and k on, keeps last state (same as j=k=0)"
+
+s-->j-->l
+s-->k--]l
+  .>d
+  .-.
+
+0"works like D flip-flop with dual edge triggered clock"
+
+s---->d-->l
+s---.>c-->l
+    ..m
+
+0"works like T flip-flop with dual edge triggered clock"
+
+s---->t-->l
+s---.>c-->l
+    ..m
+
+0"Gives brief positive pulse on positive clock edge (with y, only when enabled):"
+
+s-->q-->l       s-->q-->l
+                s-->y-->l
+
+0"Gives brief negative pulse on positive clock edge (with y, only when enabled):"
+
+s-->Q-->l       s-->Q-->l
+                s-->y--]l
+
+0"Gives brief pulse on positive and negative clock edge:"
+
+  ...
+  . w
+s-.>q-->l
+
+0"initially off, once on, never goes off again:"
+
+s-->j-->l
+
+0"initially on, once off, never goes on again:"
+
+s-->k-->l
+
+0"Combination of all inputs:"
+0"positive edge at clock input causes update of state according to inputs."
+0"all LEDs should read same value (some have inverted input)"
+0"q enables immediately on no matter what"
+0"Q disables immediately on no matter what"
+0"Q and q together makes it rapidly oscillate"
+0"T on trumps D/J/K"
+0"D trumps J+K combination"
+0"single J, single K or no J/K trump D"
+0"so it's expected that J+K does not toggle in this case but outputs value of D."
+
+S-->y-->l
 s-->c-->l
     #
 s-->t-->l
@@ -4765,13 +5101,18 @@ s-->k--]l
     #
 s-->q-->l
 s-->Q--]l
+
+0"Same but without clock, if enabled updates every tick instead of at positive clock edge"
+
 S-->y-->l
-
-0"Expected: behaves like JK flipflop, all LEDs same value"
-
-s-->c-->l
+    #
+s-->t-->l
+s-->d-->l
 s-->j-->l
 s-->k--]l
+    #
+s-->q-->l
+s-->Q--]l
 
 0"# Errors"
 
@@ -4877,13 +5218,26 @@ s...+..>l   .>a       vvv       .    a<.     vvv      .     l<..+...s
             v                   .      v              .
             l                   s      l              s
 
+  l O
+   <^
+s....
 
-"---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx ****"
+s-1========1->l   s-1========1->l
 
- ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx ****
- ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx ****
- ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx ****
- ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx ****
+s-1========1->l   s-1========1->l
+
+s-1========1->l   s-1========1->l
+
+s-1========1->l   s-1========1->l
+
+
+
+"---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx **** @@@@"
+
+ ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx **** @@@@
+ ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx **** @@@@
+ ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx **** @@@@
+ ---- |||| //// ;;;; %%%% &&&& .... ,,,, ++++ xxxx **** @@@@
 
 
 s-->r-->l     s-->s-->l

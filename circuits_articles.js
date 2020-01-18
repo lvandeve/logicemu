@@ -429,10 +429,11 @@ s..>A..
   ^ v ^
 s..>A..
 
+0"If negated inputs are permitted (negating in theory requires an extra NAND):"
 
-s..>A......>l"NAND"
-    ^
-s....
+s..]A>A....>l"XOR"
+   >  ^
+s..]A..
 
 
 s..>A>A>A..>l"NOR"
@@ -648,6 +649,7 @@ s.+..>O>O
 s..>O..>O..>l"XOR"
 
 
+
 s..>O......>l"NOR"
     ^
 s....
@@ -663,6 +665,12 @@ s..>O..
   O.. O....>l"XNOR"
   ^ v ^
 s..>O..
+
+0"If negated inputs are permitted (negating in theory requires an extra NOR):"
+
+s..]O>O....>l"XNOR"
+   >  ^
+s..]O..
 
 
 
@@ -919,9 +927,9 @@ registerCircuit('flip-flops tutorial', `
 3"+---+-------+"
 
 0"It looks as if the truth table shows that the state is just equal to the"
-0"input D, so it would seem as if it doesn't do much interesting? Well, it"
-0"remembers the state while the clock is off. A D flip-flop actually delays the"
-0"input by 1 clock cycle. By looping its output back to the input with a"
+0"input D, so it would seem as if it doesn't do much interesting? But, it"
+0"remembers the state while the clock is off. A D flip-flop delays the input"
+0"by 1 clock cycle. By looping its output back to the input with a"
 0"multiplexer, this is a very useful component for registers in CPU's"
 
 0"## T Flip-Flop"
@@ -1681,7 +1689,6 @@ registerCircuit('flip-flops tutorial III: from NAND', `
        ^   ^ .
        .......
 
-
 0"However, strictly speaking, NAND-logic only supports 2-input NAND gates. A"
 0"3-input NAND gate requires 3 2-input NANDs to create. So unfortunately with"
 0"only 2-input NAND gates (and 1-input which is a 2-input with the two inputs"
@@ -1695,6 +1702,20 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 "K"s..>A>A..>A>A .
              ^ ^ .
              .....
+
+
+0"A more classical JK latch from 4 NANDs (with 2 3-input ones again. This one"
+0"only works in electron mode, not in immediate mode):"
+
+        .......
+        v v   .
+"J" s..>A>A...+..>l"Q  on"
+        ^   . .
+"E" s....   . .
+        v   . .
+"K" s..>A>A.+....>l"Q' off"
+        ^ ^ .
+        .....
 
 0"Of interest, also, is an alternative form of D latch, the Earle latch. It has"
 0"a low and high enable input, and the latch only works correctly when making."

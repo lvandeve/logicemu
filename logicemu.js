@@ -357,8 +357,7 @@ var BACKSLASH_ALTERNATIVE = ';'; // because backslash in `` type strings does no
 var DQUOT_ALTERNATIVE = '`'; // JS strings can use `, in other languages " is already the string quotes
 
 var graphics_mode = 1; // 0=text, 1=canvas
-var graphics_mode_browser = graphics_mode; //is_chrome ? graphics_mode : 0;
-var graphics_mode_actual = graphics_mode_browser;
+var graphics_mode_actual = graphics_mode;
 
 var worldstartheight = 160; // under menu
 
@@ -395,7 +394,7 @@ var TYPE_NAND = TYPE_index++;
 var TYPE_NOR = TYPE_index++;
 var TYPE_XNOR = TYPE_index++;
 var TYPE_FLIPFLOP = TYPE_index++; // "c", "C" when combined with other FF parts
-var TYPE_COUNTER = TYPE_index++; // standalone "c", "C"
+var TYPE_COUNTER = TYPE_index++; // standalone "c", "C". TODO: this does not need a separate type, since the TYPE_FLIPFLOP's programming can also handle its behaviour (it handles the c+y combination, which does the same if y is on, for example)
 var TYPE_CONSTANT = TYPE_index++; // also "c", "C", but when they have no inputs. Why it exists: if you use C as constant, you do not want mode to become sequential due to this C, and we auto-set mode to sequential if any TYPE_FLIPFLOP is present
 var TYPE_DELAY = TYPE_index++;
 var TYPE_ROM = TYPE_index++;
@@ -754,7 +753,15 @@ function CallSub(id) {
       if(v.ff) {
         var ff = new FF();
         ff.value = v.ff.value;
-        ff.numcC = v.ff.numcC;
+        ff.numc = v.ff.numc;
+        ff.numq = v.ff.numq;
+        ff.numQ = v.ff.numQ;
+        ff.numy = v.ff.numy;
+        ff.numt = v.ff.numt;
+        ff.numd = v.ff.numd;
+        ff.numj = v.ff.numj;
+        ff.numk = v.ff.numk;
+        ff.numff = v.ff.numff;
         component.ff = ff;
       }
       if(v.tristate) {
@@ -2298,6 +2305,7 @@ function VTE() {
           break;
         }
       }
+      if(this.master) break;
     }
     if(!this.master) return false;
     for(var y = y0; y < y1; y++) {
@@ -2306,7 +2314,9 @@ function VTE() {
         if(!c.components[0]) {
           c.components[0] = this.master;
         } else {
+          if(c.components[0] == this.master) continue;
           c.components[0].master = this.master;
+          //c.components[0].type = TYPE_VTE;
         }
       }
     }
@@ -2591,6 +2601,9 @@ function countFFComponents(array) {
   o.numQ = 0;
   o.numff = 0;
   o.numd = 0;
+  o.numt = 0;
+  o.numj = 0;
+  o.numk = 0;
   o.numy = 0;
   for(var i = 0; i < array.length; i++) {
     var cell = world[array[i][1]][array[i][0]];
@@ -2600,6 +2613,9 @@ function countFFComponents(array) {
     if(cell.circuitsymbol == 'q') o.numq++;
     if(cell.circuitsymbol == 'Q') o.numQ++;
     if(cell.circuitsymbol == 'd') o.numd++;
+    if(cell.circuitsymbol == 't') o.numt++;
+    if(cell.circuitsymbol == 'j') o.numj++;
+    if(cell.circuitsymbol == 'k') o.numk++;
     if(cell.circuitsymbol == 'y') o.numy++;
     if(ffmap[cell.circuitsymbol]) o.numff++;
   }
@@ -2614,7 +2630,7 @@ function getFFType(array) {
   var type = TYPE_FLIPFLOP;
 
   if(num.numff == 1) {
-    // could also return TYPE_CONSTANT, but it depends on whetehr there are inputs
+    // could also return TYPE_CONSTANT, but it depends on whether there are inputs
     // or not and that's not known yet here...
     if(num.numc || num.numC) type = TYPE_COUNTER;
     if(num.numd) type = TYPE_DELAY;
@@ -2626,7 +2642,15 @@ function getFFType(array) {
 // flip flop
 function FF() {
   this.cells = [];
-  this.numcC = 0;
+  this.numc = 0; // num on or off c's
+  this.numq = 0;
+  this.numQ = 0;
+  this.numy = 0;
+  this.numt = 0;
+  this.numd = 0;
+  this.numj = 0;
+  this.numk = 0;
+  this.numff = 0; // num of any kind of above parts
 
   this.value = false;
 
@@ -2638,7 +2662,15 @@ function FF() {
   this.init1 = function(array) {
     var array2 = [];
     var num = countFFComponents(array);
-    this.numcC = num.numc + num.numC;
+    this.numc = num.numc + num.numC;
+    this.numq = num.numq;
+    this.numQ = num.numQ;
+    this.numy = num.numy;
+    this.numt = num.numt;
+    this.numd = num.numd;
+    this.numj = num.numj;
+    this.numk = num.numk;
+    this.numff = num.numff;
 
     for(var i = 0; i < array.length; i++) {
       var cell = world[array[i][1]][array[i][0]];
@@ -2804,10 +2836,10 @@ function Component() {
   this.index = -1; // index in the global components array
   this.error = false;
   this.errormessage = null;
-  this.previnputs = []; // previous values of these inputs (already negated for negated inputs), only used for counters. For some algorithms this is same as this.inputs[i].prevvalue, but for algorithm 1 in case of loops it is not.
+  this.previnputs = []; // previous values of these inputs (already negated for negated inputs), used for flip-flops. For some algorithms this is same as this.inputs[i].prevvalue, but for algorithm 1 in case of loops it is not.
   this.ff_cycle = false;
   this.ff_cycle_time = 0;
-  this.input_ff_types = []; // only used by flipflops. 0=c, 1=j, 2=k, 3=d, 4=t, 5=q, 6=Q
+  this.input_ff_types = []; // only used by flipflops. 0=c, 1=j, 2=k, 3=d, 4=t, 5=q, 6=Q, 7=y
   this.master = null; // master component for rom, vte, ...
   this.rom = null; // used if this is a master of rom
   this.mux = null; // used if this is a master of mux
@@ -2992,13 +3024,17 @@ function Component() {
       if(this.ff) value = this.ff.value;
       if(this.master && this.master.ff) value = this.master.ff.value;
       for(var i = 0; i < this.inputs.length; i++) {
-        this.previnputs[i] = true; // this ensures we will NOT have inputs counted as going from low to high initially
+        //this.previnputs[i] = true; // this ensures we will NOT have inputs counted as going from low to high initially
+        this.previnputs[i] = this.inputs_negated[i]; // treat as if input was 0 before loading, but 1 in case of negated input. For non-negated input, this means a positive value will create a positive edge on loading the circuit.
+        //this.previnputs[i] = false;
       }
     }
 
     if(this.type == TYPE_COUNTER || this.type == TYPE_RANDOM) {
       for(var i = 0; i < this.inputs.length; i++) {
-        this.previnputs[i] = true; // this ensures we will NOT have inputs counted as going from low to high initially
+        //this.previnputs[i] = true; // this ensures we will NOT have inputs counted as going from low to high initially
+        this.previnputs[i] = this.inputs_negated[i]; // treat as if input was 0 before loading, but 1 in case of negated input. For non-negated input, this means a positive value will create a positive edge on loading the circuit.
+        //this.previnputs[i] = false;
       }
     }
 
@@ -3015,20 +3051,21 @@ function Component() {
     var numoff = 0;
 
     // for counter, flipflops, ..., not updated for other types
-    var numc = 0;
+    var numc1 = 0;
     var numc_pos_edge = 0;
     var numc_neg_edge = 0;
-    var numf0 = 0; // num positive inputs set to false
-    var numf1 = 0; // num positive inputs set to true
-    var numF0 = 0; // num negative inputs set to false
-    var numF1 = 0; // num negative inputs set to true
-    var numq = 0;
-    var numQ = 0;
-    var numy = 0;
-    var numY = 0; // y inputs that are off
-    var rom_inputs = []; // only filled in if this is ROM
-    var numtypec = 0; // amount of clock inputs seen, regardless of state
-    var numtypey = 0; // amount of enable inputs seen, regardless of state
+    var numd1 = 0;
+    var numd0 = 0;
+    var numt1 = 0;
+    var numj1 = 0;
+    var numj0 = 0;
+    var numk1 = 0;
+    var numk0 = 0;
+    var numq1 = 0;
+    var numQ1 = 0;
+    var numy1 = 0;
+    var rom_inputs = []; // only filled in if this is ROMe
+    var num_misc_pos_edge = 0;
 
     if(UPDATE_ALGORITHM == 3 && this.ff_cycle && this.ff_cycle_time > 5 && this.type != TYPE_FLIPFLOP && Math.random() < TWIDDLE_PROBABILITY) {
       // emulate flip flop made from gates metastability
@@ -3063,7 +3100,7 @@ function Component() {
       }
 
       if(this.ff && this.type == TYPE_FLIPFLOP && (UPDATE_ALGORITHM == 0 || UPDATE_ALGORITHM == 1)) {
-        if(this.input_ff_types[i] >= 1 && this.input_ff_types[i] <= 4 && this.ff.numcC) {
+        if(this.input_ff_types[i] >= 1 && this.input_ff_types[i] <= 4 && this.ff.numc) {
           // add a 1-tick delay to the non-clock inputs of built-in flip flops,
           // otherwise serial-in shift registers from D flipflops don't work as intended
           // the flipflops would be too fast and all update at once instead of one by one
@@ -3091,37 +3128,37 @@ function Component() {
         var prevvalue2 = (this.previnputs[i] == undefined) ? value2 : this.previnputs[i];
         this.previnputs[i] = value2;
         if(this.input_ff_types[i] == 1) { // j
-          if(value2) numf1++;
-          else numf0++;
+          if(value2) numj1++;
+          else numj0++;
+          if(value2 && !prevvalue2) num_misc_pos_edge++;
         } else if(this.input_ff_types[i] == 2) { // k
-          if(value2) numF1++;
-          else numF0++;
+          if(value2) numk1++;
+          else numk0++;
+          if(value2 && !prevvalue2) num_misc_pos_edge++;
         } else if(this.input_ff_types[i] == 3) { // d
-          if(value2) { numf1++; numF0++; }
-          else  { numf0++; numF1++; }
+          if(value2) numd1++;
+          else numd0++;
         } else if(this.input_ff_types[i] == 4) { // t
-          if(value2) { numf1++; numF1++; }
-          else  { numf0++; numF0++; }
+          if(value2) numt1++;
         } else if(this.input_ff_types[i] == 5) { // q
-          if(value2) numq++;
+          if(value2) numq1++;
+          if(value2 && !prevvalue2) num_misc_pos_edge++;
         } else if(this.input_ff_types[i] == 6) { // Q
-          if(value2) numQ++;
+          if(value2) numQ1++;
+          if(value2 && !prevvalue2) num_misc_pos_edge++;
         } else if(this.input_ff_types[i] == 7) { // y
-          if(value2) numy++;
-          else numY++;
-          numtypey++;
+          if(value2) numy1++;
         } else { // c: this.input_ff_types[i] == 0, but also if undefined for some edge cases
-          if(value2) numc++;
+          if(value2) numc1++;
           if(value2 && !prevvalue2) numc_pos_edge++;
           if(!value2 && prevvalue2) numc_neg_edge++;
-          numtypec++;
         }
       }
 
       if(this.type == TYPE_COUNTER || this.type == TYPE_RANDOM) {
         var prevvalue2 = (this.previnputs[i] == undefined) ? value2 : this.previnputs[i];
         this.previnputs[i] = value2;
-        if(value2) numc++;
+        if(value2) numc1++;
         if(value2 && !prevvalue2) numc_pos_edge++;
         if(!value2 && prevvalue2) numc_neg_edge++;
       }
@@ -3144,8 +3181,8 @@ function Component() {
         this.value = mux.output[this.rom_out_pos];
       }
     } else if(this.type == TYPE_VTE) {
-      if(this.master) {
-        if(this.vte) this.vte.update(rom_inputs);
+      if(this.master || this.vte) {
+        if(this.vte) this.vte.update(rom_inputs); // only if this.vte, don't do this on this.vte || this.master.vte to avoid multiple updates to it
         var vte = this.vte || this.master.vte;
         this.value = vte.output[this.rom_out_pos];
       }
@@ -3158,7 +3195,7 @@ function Component() {
       for(var i = 0; i < rom_inputs.length && i < 3; i++) color += (rom_inputs[i] << i);
       this.rgbcolor = color;
     } else if(this.type == TYPE_FLIPFLOP) {
-      // beware that the numf0, numf1, numF0, numF1 inputs, which are the data inputs,
+      // beware that the flip flop inputs such as numd1, numj0, ..., which are the data inputs,
       // have been delayed by 1 above, for the fast algorithms! This to make the built-in
       // flipflops not TOO fast, otherwise serial shift registers from D's don't work like in real life.
 
@@ -3166,19 +3203,21 @@ function Component() {
       //we do not take the positive edge of the xor "e", but instead the xor of the positive edges. Otherwise while one input is high, a second input would be negative edge triggered. So we use num instead of e here.
       var clocked = (numc_pos_edge & 1);
 
+      var ff = (this.ff || (this.master && this.master.ff));
+
       // flip flops are made from multiple components (d, c, ...), but only one of them
       // is designated as master component.
       // Only the master component has its own ff. So it's updated only once, as intended.
-      if(this.ff) {
+      if(this.ff) { // this.ff on purpose, not ff from above
         // change whether clocked if there are 'enable' inputs
-        var ffenable = numy;
-        var ffdisable = numY && !numy;
+        var ffenable = numy1; // explicitely enabled
+        var ffdisable = ff.numy && !numy1; // explicitely disabled
         if(ffenable) {
-          if(!this.ff.numcC) clocked = true; // this is when there is no real clock (c) present, only an enable input
+          if(!ff.numc) clocked = true; // this is when there is no real clock (c) present, only an enable input
         }
         else if(ffdisable) {
           clocked = false; // edge triggered clock disabled
-        } else if(!numtypec && !numtypey) {
+        } else if(!ff.numc && !ff.numy) {
           // This flip-flop has no clock and no enable. It has, for example, only j and k, or only t.
           // Then it should behave as if it's listening to the inputs every single tick, or as if it has
           // an enable input but it's always on. So a lone t will blink at fast speed when enabled, and
@@ -3186,27 +3225,50 @@ function Component() {
           clocked = true;
         }
 
-        // Asynchronous set and reset (input on q and Q) override the enable input (ffdisable)
-        if(numQ && numq) {
-          this.ff.value = !this.ff.value;
-        } else if(numQ) {
-          this.ff.value = false; // asynch reset (takes priority over set)
-        } else if(numq) {
-          this.ff.value = true; // asynch set
+
+        if((ff.numq == 1 || ff.numQ == 1) && (ff.numff == ff.numq + ff.numy || ff.numff == ff.numQ + ff.numy)) {
+          // lone q, or lone Q, behaves as "pulse" instead
+          // since Q inverts output, it behaves the opposite way to this rule.
+          ff.value = !ffdisable && (num_misc_pos_edge & 1);
+        } else if((ff.numj == 1 || ff.numk == 1) && ff.numff == 1) {
+          // lone j, or lone k, behave as "once state changed, stay that way"
+          // lone k will output 1 initially and then become 0 forever once activated, and the opposite for j.
+          // the code is the same for both since k's output is already inversed elsewhere.
+          if(numj1 || numk1) ff.value = 1;
+        } else if(numQ1 && numq1) {
+          // Asynchronous set and reset (input on q and Q) override the enable input (ffdisable)
+          ff.value = !ff.value;
+        } else if(numQ1) {
+          ff.value = false; // asynch reset (takes priority over set)
+        } else if(numq1) {
+          ff.value = true; // asynch set
         } else if(clocked) {
-          if((numf1 && numF1) || (!numf1 && !numf0 && !numF1 && !numF0 && this.ff.numcC)) {
-            // "numf1 && numF1" means that JK of a JK flip-flop, or T of a T-flip-flop was set
-            // "!numf1 && !numf0 && !numF1 && !numF0 && this.ff.numcC" means: flip-flop without actual inputs, e.g. a counter (single c, even if combined with q and/or Q), but don't do for 'y'-only FF.
-            this.ff.value = !this.ff.value; // toggle
-          } else if(numf1) {
-            this.ff.value = true; // set
-          } else if(numF1) {
-            this.ff.value = false; // reset
+          // For flip-flop with combination of t, j/k and d, which is normally nonsensical, the order of importance is:
+          // -T if on always toggles
+          // -else, if a J or K are on (but not J+K at same time) set or reset
+          // -else, if a D is present either without any existing J or K inputs at all, or with both J+K enabled, use its value, on or off (overrides J+K toggle)
+          // -else if J + K, toggle
+          // -if multiple inputs of same type, on inputs trump off inputs within that type
+          // What this means for JK is: if a D input is present as well, the J+K will not do toggling but use D's value. This allows making an SR flip-flop that outputs either on or off if both S+R (still labeled J+K here then) are enabled.
+          if(numt1) {
+            ff.value = !ff.value; // toggle
+          } else if(numj1 && !numk1) {
+            ff.value = true; // set
+          } else if(numk1 && !numj1) {
+            ff.value = false; // reset
+          } else if(numd1 && ((numj1 && numk1) || !(numj0 || numk0))) {
+            ff.value = true; // set
+          } else if(numd0 && ((numj1 && numk1) || !(numj0 || numk0))) {
+            ff.value = false; // reset
+          } else if(numj1 && numk1) {
+            ff.value = !ff.value; // toggle
+          } else if(!ff.numd && !ff.numt && !ff.numj && !ff.numk && ff.numc) {
+            // no data inputs, use as counter if has c
+            ff.value = !ff.value;
           }
         }
       }
 
-      var ff = (this.ff || (this.master && this.master.ff));
       if(ff) {
         var value = ff.value;
         // The output value of these particular cells of a flip flop, are inverted. Reading from Q gives inverted of what flip flops' full state is.
@@ -3222,7 +3284,8 @@ function Component() {
         this.value = !this.value;
       }
     } else if(this.type == TYPE_RANDOM) {
-      var clocked = ((numc_pos_edge + numc_neg_edge) & 1);
+      //var clocked = ((numc_pos_edge + numc_neg_edge) & 1);
+      var clocked = (numc_pos_edge & 1);
       if(clocked) {
         this.value = (Math.random() < 0.5);
       }
@@ -3326,18 +3389,27 @@ function Component() {
         this.type = TYPE_TRISTATE;
       } else if(this.type == TYPE_CONSTANT || this.type == TYPE_COUNTER || this.type == TYPE_RANDOM) {
         this.value = !this.value;
+      } else if(this.type == TYPE_FLIPFLOP) {
+        //this.value = !this.value;
+        var ff = this.ff ? this.ff : (this.master ? this.master.ff : null);
+        if(ff) ff.value = !ff.value;
       } else {
         didsomething = false;
       }
       if(didsomething) {
-        //world[y][x].initDiv2();
-        var symbol = typesymbols[this.type];
-        if(this.type == TYPE_CONSTANT || this.type == TYPE_COUNTER) symbol = this.value ? 'C' : 'c';
-        if(symbol) {
-          this.corecell.symbol = symbol;
-          this.corecell.displaysymbol = symbol;
-          this.corecell.circuitsymbol = symbol;
-          this.corecell.initDiv2();
+        if(this.type == TYPE_FLIPFLOP) {
+         // nothing
+        } else {
+          //world[y][x].initDiv2();
+          var symbol = typesymbols[this.type];
+          if(this.type == TYPE_CONSTANT || this.type == TYPE_COUNTER) symbol = this.value ? 'C' : 'c';
+          if(symbol) {
+            this.corecell.symbol = symbol;
+            this.corecell.displaysymbol = symbol;
+            this.corecell.circuitsymbol = symbol;
+            this.corecell.initDiv2();
+          }
+          this.corecell.renderer.setLook(this.corecell, this.type);
         }
       }
       render();
@@ -3362,6 +3434,12 @@ function Component() {
         type = this.inputs.length ? TYPE_COUNTER : TYPE_CONSTANT;
         value = true;
         symbol = 'C';
+      }
+      if(type == TYPE_TIMER_OFF) {
+        this.clocked = false;
+      }
+      if(type == TYPE_TIMER_ON) {
+        this.clocked = true;
       }
       if(type == TYPE_RANDOM) {
         value = Math.random() < 0.5;
@@ -3583,7 +3661,7 @@ function setColorScheme(index) {
     rgb_led_fg_colors = ['#888', '#f77', '#dfd', '#dd0', '#ccf', '#f8f', '#0dd', '#888'];
     rgb_led_bg_colors = ['#222', '#f00', '#0f0', '#ff0', '#00f', '#f0f', '#0ff', '#fff'];
 
-    BUSCOLORS = ['#aaa', '#aab', '#aba', '#baa', '#bba', '#bab', '#abb', '#bbb'];
+    BUSCOLORS = ['#080', '#480', '#0c0', '#4c0', '#084', '#484', '#0c4', '#4c4'];
 
     SWITCHON_FGCOLOR = ONCOLOR;
     SWITCHON_BGCOLOR = led_on_bg_colors[3];
@@ -3655,23 +3733,52 @@ function setColorScheme(index) {
     SWITCHON_BORDERCOLOR = 'white';
     SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
-    BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
+    BUSCOLORS = ['#aaf', '#caf', '#acf', '#ccf', '#aaa', '#caa', '#aca', '#cca'];
 
     TEXTBGCOLOR = 'none';
     GATEBGCOLOR = '#228';
 
     LINKCOLOR = '#880';
     TITLECOLOR = TEXTFGCOLOR;
-  } else if(index == 4) { // inverted
-    setColorScheme(index - 4);
-    negateColorScheme(); // this only looks decent for inverting the 'light' color scheme.
+  } else if(index == 4) { // green
+    setColorScheme(0);
+
+    BGCOLOR = '#050';
+
+    ONCOLOR = '#fa0';
+    OFFCOLOR = '#af0';
+    TEXTFGCOLOR = OFFCOLOR;
+
+    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#00d', '#a0d', '#f99', '#eee'];
+    led_off_bg_colors = [BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
+    led_off_border_colors = led_off_fg_colors;
+    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
+    led_on_bg_colors = led_off_fg_colors;
+    led_on_border_colors = led_off_border_colors;//led_on_fg_colors;
+
+    SWITCHON_FGCOLOR = 'white';
+    SWITCHON_BGCOLOR = '#0e0';
+    SWITCHOFF_FGCOLOR = '#0e0';
+    SWITCHOFF_BGCOLOR = BGCOLOR;
+    //TODO: use switch border colors, and use them to not have invisible border around swithc in gray color scheme switch on
+    SWITCHON_BORDERCOLOR = 'white';
+    SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
+
+    BUSCOLORS = ['#af0', '#ac0', '#af4', '#ac4', '#6f0', '#6c0', '#6f4', '#6c4'];
+
+
+    TEXTBGCOLOR = '#060';
+    GATEBGCOLOR = '#060';
+
+    LINKCOLOR = '#ff0';
+    TITLECOLOR = TEXTFGCOLOR;
   } else if(index == 5) { // candy
     setColorScheme(0);
 
     BGCOLOR = '#fbf';
 
     ONCOLOR = '#f08';
-    OFFCOLOR = '#888';
+    OFFCOLOR = '#80f';
     TEXTFGCOLOR = '#804';
     TEXTBGCOLOR = '#eae';
     LINKCOLOR = '#f08';
@@ -3683,12 +3790,20 @@ function setColorScheme(index) {
     SWITCHON_BGCOLOR = '#afa';
     SWITCHOFF_BGCOLOR = TEXTBGCOLOR;
 
-    led_on_fg_colors[0] = '#f08';
-    led_on_bg_colors[0] = '#f8a';
 
-    var ledoffbg = '#888';
-    led_off_bg_colors = [ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg];
-    led_off_border_colors = led_on_fg_colors;
+    /*led_off_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
+    led_off_bg_colors = ['#800', '#840', '#880', '#080', '#008', '#408', '#844', '#888'];
+    led_off_border_colors = led_off_fg_colors;
+    led_on_fg_colors = ['white', 'white', 'black', 'white', 'white', 'white', 'white', 'black'];
+    led_on_bg_colors = ['#f00', '#f80', '#ff0', '#0f0', '#00f', '#a0f', '#f99', '#fff'];
+    led_on_border_colors = led_on_fg_colors;*/
+
+    led_off_fg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
+    led_off_bg_colors = ['#fae', '#fbe', '#fde', '#ded', '#c9f', '#e9f', '#fbf', '#fcf'];
+    led_off_border_colors = led_off_fg_colors;
+    led_on_fg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
+    led_on_bg_colors = ['#f00', '#f80', '#ff0', '#0f0', '#48f', '#a0f', '#f99', '#fff'];
+    led_on_border_colors = led_on_fg_colors;
 
     SWITCHON_FGCOLOR = led_on_fg_colors[3];
     SWITCHON_BGCOLOR = led_on_bg_colors[3];
@@ -3697,8 +3812,47 @@ function setColorScheme(index) {
     SWITCHON_BORDERCOLOR = SWITCHON_FGCOLOR;
     SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
+    BUSCOLORS = ['#80f', '#c0f', '#80c', '#c0c', '#84f', '#c4f', '#84c', '#c4c'];
+
     TERMINALBGCOLOR = '#88f';
     TERMINALFGCOLOR = '#fff';
+  } else if(index == 6) { // inverted
+    setColorScheme(0);
+    negateColorScheme(); // this only looks decent for inverting the 'light' color scheme.
+  } else if(index == 7) { // monochrome
+    ONCOLOR = 'black';
+    OFFCOLOR = ONCOLOR;
+    BGCOLOR = 'white';
+    TEXTFGCOLOR = ONCOLOR; // '#940';
+    TEXTBGCOLOR = BGCOLOR;
+
+    led_off_fg_colors = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
+    led_off_bg_colors = [BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
+    led_off_border_colors = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
+    led_on_fg_colors = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
+    led_on_bg_colors = [BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
+    led_on_border_colors = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
+
+    // for monochrome RGB led: hidden in main background if off, same color as wire if on (for its bg color; its letter G has opposite color)
+    rgb_led_fg_colors = [ONCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
+    rgb_led_bg_colors = [BGCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
+
+    BUSCOLORS = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
+
+    SWITCHON_FGCOLOR = led_on_fg_colors[3];
+    SWITCHON_BGCOLOR = led_on_bg_colors[3];
+    SWITCHOFF_FGCOLOR = led_off_fg_colors[3];
+    SWITCHOFF_BGCOLOR = led_off_bg_colors[3];
+    SWITCHON_BORDERCOLOR = SWITCHON_FGCOLOR;
+    SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
+
+    GATEBGCOLOR = BGCOLOR;
+
+    LINKCOLOR = 'blue';
+    TITLECOLOR = ONCOLOR;
+
+    TERMINALBGCOLOR = ONCOLOR;
+    TERMINALFGCOLOR = BGCOLOR;
   }
 }
 
@@ -3862,7 +4016,7 @@ function Cell() {
   this.callsubindex = -2; // use sub (small i)
   this.callsub = null; // the CallSub
   this.commentalign = -1; // -1=none (fullwidth only), 0=left, 1=center, 2=right
-  this.commentstyle = 0; // 0=full width, 1=narrow width monospace, 2=formatted
+  this.commentstyle = 0; // 0=full width, 1=narrow width monospace, 2=formatted, 3=horizontal rule
   this.commentchapter = -1;
   this.commentanchor = ''; // only used if this is chapter title
   this.commentlength = 0; // the text itself
@@ -3902,6 +4056,7 @@ function Cell() {
       if(!vte || !vte.text) return;
       var x = this.x - vte.x0;
       var y = this.y - vte.y0;
+      if(x < 0 || y < 0) return;
       var char = vte.text[y][x];
       var blink = (vte == activeVTE && x == vte.cursorx && y == vte.cursory);
       this.renderer.setTerminal(char, blink);
@@ -3943,6 +4098,11 @@ function Cell() {
       if(this.components[0].type == TYPE_PUSHBUTTON_OFF) virtualsymbol = 'p';
       if(this.components[0].type == TYPE_TIMER_ON) virtualsymbol = 'R';
       if(this.components[0].type == TYPE_TIMER_OFF) virtualsymbol = 'r';
+      if(this.components[0].type == TYPE_VTE) virtualsymbol = 'T';
+      if(this.components[0].type == TYPE_MUX) virtualsymbol = 'M';
+    }
+    if((symbol == '#') && this.components[1]) {
+      if(this.components[1].type == TYPE_MUX) virtualsymbol = 'M';
     }
 
 
@@ -3974,7 +4134,7 @@ function Cell() {
           if(tc == 'c') title = 'counter off';
           if(tc == 'C') title = 'counter on';
         } else {
-          title = 'flipflop clock input';
+          title = 'flipflop clock input (or counter if combined only with y, q or Q)';
         }
       }
       if(tc == 'd') {
@@ -3986,10 +4146,10 @@ function Cell() {
       }
       if(tc == 'y') title = 'flipflop enable input';
       if(tc == 't') title = 'flipflop T input';
-      if(tc == 'j') title = 'flipflop J input';
-      if(tc == 'k') title = 'flipflop K input';
-      if(tc == 'q') title = 'flipflop output and async set';
-      if(tc == 'Q') title = 'flipflop inverted output and async reset';
+      if(tc == 'j') title = 'flipflop J input (or edge enable if combined only with y)';
+      if(tc == 'k') title = 'flipflop K input (or inverted edge enable if combined only with y)';
+      if(tc == 'q') title = 'flipflop output and async set (or pulse if standalone)';
+      if(tc == 'Q') title = 'flipflop inverted output and async reset (or inverted pulse if standalone)';
       if(tc == 'z') title = 'tristate buffer, inputs to same z ANDed, multiple z to wire high when any z high (like OR but read on). Allowed to have multiple output to the same wire, but should be used as one-hot (max 1 high to wire, rest must be low) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
       if(tc == 'Z') title = 'tristate buffer, inputs to same Z ORed, multiple Z to wire low when any Z low (like AND but read on). Allowed to have multiple output to the same wire, but should be used as one-cold (max 1 low to wire, rest must be high) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
       if(tc == 'g') title = 'global (backplane) wire, connects to all other g with matching (or matching absense of) number';
@@ -4144,7 +4304,8 @@ function Cell() {
         for(var i = 0; i < w.components.length; i++) {
           var compo = w.components[i];
           if(!compo) continue;
-          console.log('component: index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y);
+          console.log('component: index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y + ' | rom_out_pos: ' + compo.rom_out_pos);
+          if(compo.master) console.log('master: index: ' + compo.master.index + ',  type: ' + compo.master.type + ', corecell: ' + compo.master.corecell.circuitsymbol + ', corecell.x: ' + compo.master.corecell.x + ', corecell.y: ' + compo.master.corecell.y);
           for(var j = 0; j < compo.inputs.length; j++) {
             var corecellinfo = (compo.inputs[j].corecell) ? (compo.inputs[j].corecell.circuitsymbol + ', corecell.x: ' + compo.inputs[j].corecell.x + ', corecell.y: ' + compo.inputs[j].corecell.y) : ('' + compo.inputs[j].corecell);
             console.log('input ' + j + ': index: ' +  compo.inputs[j].index + ', type: ' + compo.inputs[j].type + ', corecell: ' +  corecellinfo);
@@ -4395,7 +4556,7 @@ function RendererText() {
         this.div1.style.textAlign = 'center';
         this.div1.style.fontSize = tw + 'px';
         this.div1.style.fontFamily = 'monospace';
-        this.div1.style.fontWeight = 'bold';
+        //this.div1.style.fontWeight = 'bold';
         this.div1.style.backgroundColor = '';
         this.div1.style.zIndex = MAINZINDEX;
       }
@@ -4427,30 +4588,35 @@ function RendererText() {
         }
         this.div0.innerText = '';
         this.div0.style.backgroundColor = 'unset';
-        // this span is there so that we can have the background color only over the text, not whitespace parts left or right
-        var span0 = makeElement('span', this.div0);
-        span0.innerText = symbol;
-        span0.style.color = fgcolor;
-        // don't do the bgcolor for standard non-monospace text, that one is distinguishable enough from circuit elements
-        if(cell.commentstyle != 2) span0.style.backgroundColor = bgcolor;
-        span0.style.whiteSpace = 'pre';
-        //span0.style.fontSize = th + 'px';
-        if(cell.commentstyle == 1) {
-          span0.style.fontSize = Math.floor(tw * 0.9) + 'px'; // avoids background overlapping parts of font issues
+        if(cell.commentstyle == 3) {
+          this.div0.innerHTML = "<hr>";
+          this.div0.style.width = '' + (tw * (w - cell.x)) + 'px';
         } else {
-          span0.style.fontSize = Math.floor(tw * 1.0) + 'px';
-          if(tw < 16) span0.style.letterSpacing = '0.5px'; // this might make it slightly more readable if zoomed out a lot
-        }
-        span0.style.height = th + 'px';
-        span0.style.lineHeight = th + 'px';
-        span0.style.verticalAlign = 'top'; // make the span really go where I want it, not shifted slightly down
-        this.div0.style.width = '' + (tw * cell.commentlength2) + 'px';
-        //this.div0.style.border = '1px solid red'; // debug comment divs
-        if(align == 0) this.div0.style.textAlign = 'left';
-        else if(align == 1) this.div0.style.textAlign = 'center';
-        else if(align == 2) this.div0.style.textAlign = 'right';
+          // this span is there so that we can have the background color only over the text, not whitespace parts left or right
+          var span0 = makeElement('span', this.div0);
+          span0.innerText = symbol;
+          span0.style.color = fgcolor;
+          // don't do the bgcolor for standard non-monospace text, that one is distinguishable enough from circuit elements
+          if(cell.commentstyle != 2) span0.style.backgroundColor = bgcolor;
+          span0.style.whiteSpace = 'pre';
+          //span0.style.fontSize = th + 'px';
+          if(cell.commentstyle == 1) {
+            span0.style.fontSize = Math.floor(tw * 0.9) + 'px'; // avoids background overlapping parts of font issues
+          } else {
+            span0.style.fontSize = Math.floor(tw * 1.0) + 'px';
+            if(tw < 16) span0.style.letterSpacing = '0.5px'; // this might make it slightly more readable if zoomed out a lot
+          }
+          span0.style.height = th + 'px';
+          span0.style.lineHeight = th + 'px';
+          span0.style.verticalAlign = 'top'; // make the span really go where I want it, not shifted slightly down
+          this.div0.style.width = '' + (tw * cell.commentlength2) + 'px';
+          //this.div0.style.border = '1px solid red'; // debug comment divs
+          if(align == 0) this.div0.style.textAlign = 'left';
+          else if(align == 1) this.div0.style.textAlign = 'center';
+          else if(align == 2) this.div0.style.textAlign = 'right';
 
-        textel = span0;
+          textel = span0;
+        }
       } else {
         this.div0.innerText = symbol;
       }
@@ -4525,7 +4691,11 @@ function RendererText() {
       if(symbol == 'b' || symbol == 'B') {
         //this.div1.style.color = this.div0.style.color;
       }
-      if(symbol == 'T') {
+      if(symbol == 'c' || symbol == 'C') {
+        this.div0.innerText = 'c';
+        this.div1.innerText = 'C';
+      }
+      if(virtualsymbol == 'T') {
         this.div0.style.visibility = 'hidden';
         this.div1.style.visibility = 'visible';
         this.div1.style.backgroundColor = TERMINALBGCOLOR;
@@ -5038,42 +5208,41 @@ function RendererDrawer() {
     if(connected2g(cell.x, cell.y, 4) || connected2g(cell.x, cell.y, 6)) { code |= 4; num++; }
     if(connected2g(cell.x, cell.y, 5) || connected2g(cell.x, cell.y, 7)) { code |= 8; num++; }
 
-    var full = 0; // which one gets the full length
-    if(code & 2) full = 2; // horizontal full looks best
-    else if(code & 1) full = 1;
-    else if(code & 4) full = 4;
-    else full = 8;
-
     ctx.beginPath();
-    if(code & 1) {
-      if(full == 1) {
-        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
-      } else {
-        var shift = 0.2;
-        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-        this.drawLineCore_(ctx, 0.5, 0.5 + shift, 0.5, 1);
-      }
-    }
+    var full = 1; // which one gets the full length
     if(code & 2) {
-      if(full == 2) {
+      if(full) {
         this.drawLineCore_(ctx, 0, 0.5, 1, 0.5);
+        full = 0;
       } else {
         var shift = 0.2;
         this.drawLineCore_(ctx, 0, 0.5, 0.5 - shift + 0.1, 0.5);
         this.drawLineCore_(ctx, 0.5 + shift, 0.5, 1, 0.5);
       }
     }
+    if(code & 1) {
+      if(full) {
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
+        full = 0;
+      } else {
+        var shift = 0.2;
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+        this.drawLineCore_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      }
+    }
     if(code & 4) {
-      if(full == 4) {
+      if(full) {
         this.drawLineCore_(ctx, 0, 1, 1, 0);
+        full = 0;
       } else {
         this.drawLineCore_(ctx, 0, 1, 0.4, 0.6);
         this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
       }
     }
     if(code & 8) {
-      if(full == 8) {
+      if(full) {
         this.drawLineCore_(ctx, 0, 0, 1, 1);
+        full = 0;
       } else {
         this.drawLineCore_(ctx, 0, 0, 0.4, 0.4);
         this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
@@ -5089,42 +5258,73 @@ function RendererDrawer() {
     var num = 0;
     var code = 0;
     ctx.beginPath();
-    if(connected2g(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { num++; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5); code |= 1; }
-    if(connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5); code |= 2; }
-    if(connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1); code |= 4; }
-    if(connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { num++; this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5); code |= 8; }
-    if(connected2g(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0); code |= 16; }
-    if(connected2g(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 1); code |= 32; }
-    if(connected2g(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 1); code |= 64; }
-    if(connected2g(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 0); code |= 128; }
+    var gap = 0.1;
+    if(connected2g(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { num++; /*this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5);*/ code |= 1; }
+    if(connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5);*/ code |= 2; }
+    if(connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1);*/ code |= 4; }
+    if(connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { num++; /*this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5);*/ code |= 8; }
+    if(connected2g(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 1, 0);*/ code |= 16; }
+    if(connected2g(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 1, 1);*/ code |= 32; }
+    if(connected2g(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 0, 1);*/ code |= 64; }
+    if(connected2g(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 0, 0);*/ code |= 128; }
     ctx.stroke();
+
+
+
+    ctx.beginPath();
+    var gap = 0.1;
+    var full = 1; // which one gets the full length
+    if((code & 2) || (code & 8)) {
+      if(full) {
+        if(code & 2) this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5);
+        if(code & 8) this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5);
+        full = 0;
+      } else {
+        if(code & 2) this.drawLineCore_(ctx, 0.5 + gap, 0.5, 1, 0.5);
+        if(code & 8) this.drawLineCore_(ctx, 0, 0.5, 0.5 - gap, 0.5);
+      }
+    }
+    if((code & 1) || (code & 4)) {
+      if(full) {
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
+        if(code & 1) this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5);
+        if(code & 4) this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1);
+        full = 0;
+      } else {
+        if(code & 1) this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+        if(code & 4) this.drawLineCore_(ctx, 0.5, 0.5 + gap, 0.5, 1);
+      }
+    }
+    if((code & 16) || (code & 64)) {
+      if(full) {
+        if(code & 16) this.drawLineCore_(ctx, 0.5, 0.5, 1, 0);
+        if(code & 64) this.drawLineCore_(ctx, 0.5, 0.5, 0, 1);
+        full = 0;
+      } else {
+        if(code & 16) this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
+        if(code & 64) this.drawLineCore_(ctx, 0.4, 0.6, 0, 1);
+      }
+    }
+    if((code & 32) || (code & 128)) {
+      if(full) {
+        if(code & 32) this.drawLineCore_(ctx, 0.5, 0.5, 1, 1);
+        if(code & 128) this.drawLineCore_(ctx, 0.5, 0.5, 0, 0);
+        full = 0;
+      } else {
+        if(code & 32) this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
+        if(code & 128) this.drawLineCore_(ctx, 0.4, 0.4, 0, 0);
+      }
+    }
+    ctx.stroke();
+
     return [num, code];
   };
 
   // specifically made for dynamic rendering of the 8-way '*' crossing. Value and code use different bits.
   this.drawCrossing2_ = function(ctx, code, value, color0, color1) {
-    var full = 0; // which one gets the full length
-    if(code & 2) full = 2; // horizontal full looks best
-    else if(code & 1) full = 1;
-    else if(code & 4) full = 4;
-    else full = 8;
-
     var color;
+    var full = 1; // which one gets the full length
 
-    color = (value & 2) ? color1 : color0;
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    if(code & 1) {
-      if(full == 1) {
-        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
-      } else {
-        var shift = 0.2;
-        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-        this.drawLineCore_(ctx, 0.5, 0.5 + shift, 0.5, 1);
-      }
-    }
-    ctx.stroke();
     color = (value & 1) ? color1 : color0;
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
@@ -5132,6 +5332,7 @@ function RendererDrawer() {
     if(code & 2) {
       if(full == 2) {
         this.drawLineCore_(ctx, 0, 0.5, 1, 0.5);
+        full = 0;
       } else {
         var shift = 0.2;
         this.drawLineCore_(ctx, 0, 0.5, 0.5 - shift + 0.1, 0.5);
@@ -5139,6 +5340,23 @@ function RendererDrawer() {
       }
     }
     ctx.stroke();
+
+    color = (value & 2) ? color1 : color0;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    if(code & 1) {
+      if(full) {
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
+        full = 0;
+      } else {
+        var shift = 0.2;
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+        this.drawLineCore_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      }
+    }
+    ctx.stroke();
+
     color = (value & 8) ? color1 : color0;
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
@@ -5146,12 +5364,14 @@ function RendererDrawer() {
     if(code & 4) {
       if(full == 4) {
         this.drawLineCore_(ctx, 0, 1, 1, 0);
+        full = 0;
       } else {
         this.drawLineCore_(ctx, 0, 1, 0.4, 0.6);
         this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
       }
     }
     ctx.stroke();
+
     color = (value & 4) ? color1 : color0;
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
@@ -5159,6 +5379,7 @@ function RendererDrawer() {
     if(code & 8) {
       if(full == 8) {
         this.drawLineCore_(ctx, 0, 0, 1, 1);
+        full = 0;
       } else {
         this.drawLineCore_(ctx, 0, 0, 0.4, 0.4);
         this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
@@ -5801,7 +6022,6 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0); code |= 128; }
         var code3 = code + code2;
 
-
         // temporary debug help
         /*var div = makeDiv(cell.x * tw, cell.y * th, tw, th, worldDiv);
         div.title = 'code: ' + code + ' ' + code2;
@@ -5809,6 +6029,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
         if(code == 0 && r[0] > 1) {
           // no actual inputs, it acts as a '*'
+          // TODO: support full dynamicdraw for wire crossing inputs too. This will need to draw more types of combinations due to with/without arrow
           this.dynamicdraw = true;
           this.dynamicdrawcode = drawer.drawCrossing_(cell, ctx)[1];
         }
@@ -5903,6 +6124,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
         if(code == 0 && r[0] > 1) {
           // no actual inputs, it acts as a '*'
+          // TODO: support full dynamicdraw for wire crossing inputs too. This will need to draw more types of combinations due to with/without negated arrow
           this.dynamicdraw = true;
           this.dynamicdrawcode = drawer.drawCrossing_(cell, ctx)[1];
         }
@@ -6098,7 +6320,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           this.ctx0.strokeStyle = this.ctx0.fillStyle = BGCOLOR;
           ctx.fillText(symbol, drawer.tx + (tw >> 1), drawer.ty + (th >> 1));
         }
-      } else if(c == 'T') {
+      } else if(c == '@') {
+        drawer.fillBg_(ctx, TEXTFGCOLOR);
+      } else if(virtualsymbol == 'T') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'G') {
         // don't render #, only G
@@ -6131,6 +6355,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           }
           if(virtualsymbol == 'r' || virtualsymbol == 'R') {
             symbol = (i == 0) ? 'r' : 'R';
+          }
+          if(symbol == 'c' || symbol == 'C') {
+            symbol = (i == 0) ? 'c' : 'C';
           }
           if(virtualsymbol == 'l') {
             alreadybg = true;
@@ -7400,19 +7627,24 @@ function parseCells(text) {
               commentchapter = 1;
               commentstart += 2;
             }
-            if(lines[y][x + 1] == '#' && lines[y][x + 2] == '#' && lines[y][x + 3] == ' ') {
+            else if(lines[y][x + 1] == '#' && lines[y][x + 2] == '#' && lines[y][x + 3] == ' ') {
               commentchapter = 2;
               commentstart += 3;
             }
-            if(lines[y][x + 1] == '#' && lines[y][x + 2] == '#' && lines[y][x + 3] == '#' && lines[y][x + 4] == ' ') {
+            else if(lines[y][x + 1] == '#' && lines[y][x + 2] == '#' && lines[y][x + 3] == '#' && lines[y][x + 4] == ' ') {
               commentchapter = 3;
               commentstart += 3;
             }
-            // support -, + or * as bullet list item. Markdown supports all those 3 characters, so be consistent
-            if((lines[y][x + 1] == '-' || lines[y][x + 1] == '+' || lines[y][x + 1] == '.') && lines[y][x + 2] == ' ') {
+            // support - or * as bullet list item. (Markdown also supports +, but no need to support 3 variants here, less risk of clashing with
+            // circuits symbols in comments).
+            else if((lines[y][x + 1] == '-' || lines[y][x + 1] == '*') && lines[y][x + 2] == ' ') {
               //lines[y][x + 1] = '•'
               //lines[y].replaceAt(x + 1, '•');
               lines[y] = lines[y].substr(0, x + 1) + '•' + lines[y].substr(x + 2);
+            }
+            // Markdown also supports --- or *** for horizontal rule, but one is enough, avoid risk of clashing with e.g. intended "---" wire in comment.
+            else if(lines[y][x + 1] == '_' && lines[y][x + 2] == '_' && lines[y][x + 3] == '_') {
+              commentstyle = 3;
             }
           }
 
@@ -7999,6 +8231,10 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   // Multi-part devices like flip-flop should not have their individual cells connected,
   // they are initially all their own device (to be able to handle multiple inputs), so
   // don't let device extenders extend those here yet.
+  if(c == 'T' && (c2 == '#')) return false;
+  if(c2 == 'T' && (c == '#')) return false;
+  if(c == 'M' && (c2 == '#')) return false;
+  if(c2 == 'M' && (c == '#')) return false;
   if(ffmap[c] && (c2 == '#')) return false;
   if(ffmap[c2] && (c == '#')) return false;
   if(rommap[c] && (c2 == '#')) return false;
@@ -8621,6 +8857,13 @@ function parseComponents() {
       var error = false;
       var array = [];
 
+      if(ffmap[c0] && world[y0][x0].components[0] && world[y0][x0].components[0].type == TYPE_FLIPFLOP) ff = true;
+      else if(rommap[c0]) rom = true; // type not checked, since some are set to TYPE_NULL
+      else if(c0 == 'T' && world[y0][x0].components[0] && world[y0][x0].components[0].type == TYPE_VTE) vte = true;
+      else if(c0 == 'M' && world[y0][x0].components[0] && world[y0][x0].components[0].type == TYPE_MUX) mux = true;
+      else if(c0 == 'M' && world[y0][x0].components[1] && world[y0][x0].components[1].type == TYPE_MUX) mux = true;
+      else continue;
+
       while (stack.length) {
         var s = stack.pop();
         var x = s[0];
@@ -8631,12 +8874,12 @@ function parseComponents() {
         var ce = world[y][x].circuitextra;
         if(!knownmap[c] || world[y][x].comment) continue; // it's an isolator
 
-        array.push(s);
+        /*if(ff && !ffmap[c] && c != '#') continue;
+        if(vte && c != 'T' && c != '#') continue;
+        if(mux && c != 'M' && c != '#') continue;
+        if(rom && !rommap[c] && c != '#') continue;*/
 
-        if(ffmap[c] && world[y][x].components[0].type == TYPE_FLIPFLOP) ff = true;
-        if(c == 'T' && world[y][x].components[0].type == TYPE_VTE) vte = true;
-        if(c == 'M' && world[y][x].components[0] && world[y][x].components[0].type == TYPE_MUX) mux = true;
-        if(c == 'M' && world[y][x].components[1] && world[y][x].components[1].type == TYPE_MUX) mux = true;
+        array.push(s);
 
         // neighbors
         for(var i = 0; i < 8; i++) { // N, E, S, W ; NE, SE, SW, NW
@@ -8646,46 +8889,33 @@ function parseComponents() {
           var c2 = world[y2][x2].circuitsymbol;
           var ce2 = world[y2][x2].circuitextra;
 
+          if(ff && i >= 4) continue;
+          if(rom && i >= 4) continue;
+          if(vte && i >= 4) continue;
+          if(mux && i >= 4) continue;
+
           var z2 = getZ2(c, c2, ce, ce2, i, z); // z coordinate for the neighbor
           if(used[y2][x2][z2]) continue;
 
-          if(rommap[c] && c2 == 'M') continue;
-          if(rommap[c2] && c == 'M') continue;
+          // don't allow any flip-flop parts of the same type to touch, only different types will mix together to form one bigger component
+          // this also ensures standalone d's (delay) or c's (clock) don't interact with each other
+          if(ffmap[c] && c == c2) continue;
 
-          if(rommap[c] && c2 == 'T') continue;
-          if(rommap[c2] && c == 'T') continue;
+          //if(c2 != '#') {
+            if(ff && !ffmap[c2] && c2 != '#') continue;
+            if(ff && (c == 'c' || c == 'C') && (c2 == 'c' || c2 == 'C')) continue; //c and C also don't connect in flip-flops, only different types
+            if(rom && !rommap[c2] && c2 != '#') continue;
+            if(vte && c2 != 'T') continue;
+            if(mux && c2 != 'M') continue;
+          //}
 
-          if(rommap[c]/* && (rommap[c2] || c2 == '#')*/) rom = true;
-          if(rommap[c] && !(rommap[c2] || c2 == '#')) continue;
-          if(rommap[c2] && !(rommap[c] || c == '#')) continue;
-          if(rom && i >= 4) continue;
-
-          if(c == 'T') vte = true;
-          if(c == 'T' && c2 != 'T') continue;
-          if(c2 == 'T' && c != 'T') continue;
-
-          if(c == 'M') mux = true;
-          if(c == 'M' && !(c2 == 'M' || c2 == '#')) continue;
-          if(c2 == 'M' && !(c == 'M' || c == '#')) continue;
-
-          if(ffmap[c] && world[y][x].components[0].type == TYPE_FLIPFLOP) ff = true;
-          if((c == '#') && (ffmap[c2] && i < 4 && world[y2][x2].components[0].type == TYPE_FLIPFLOP)) ff = true;
-          if(ff && i >= 4) continue;
-          if(ff && !(ffmap[c2] || c2 == '#')) continue;
-          if(ff && !(ffmap[c] || c == '#')) continue;
-          // don't support c's and d's touching each other.
-          // reason: those are also standalone components and then you want them not grouped if they touch
-          if((c == 'c' || c == 'C') && (c2 == 'c' || c2 == 'C')) continue;
-          if(c == 'd' && c2 == 'd') continue;
-          // Note: for other flipflop parts, such as qq, it is allowed to touch and they are part of same flipflop then.
-
-          if(!rom && !vte && !ff && !mux) {
+          /*if(!rom && !vte && !ff && !mux) {
             if(!connected(c, c2, ce, ce2, i, z, z2)) continue;
             var fromdir = (i <= 3) ? ((i + 2) & 3) : (4 + ((i - 2) & 3));
             if(!connected(c2, c, ce2, ce, fromdir, z2, z)) continue;
             // in addition, for this search we don't go through devices, or other ff elements or extensions
             if(devicemaparea[c] || devicemaparea[c2]) continue;
-          }
+          }*/
 
           stack.push([x2, y2, z2]);
           used[y2][x2][z2] = true;
@@ -8853,6 +9083,13 @@ function parseComponents() {
             x2s.push(wco0.x);
             y2s.push(wco0.y);
             inputused[wco0.y][wco0.x] = true;
+          } else {
+            if(world[y][x].components[0]) {
+              // This diagonal input does not have an output on this side. But it still connected to something on the other side.
+              // break that connection here now (it was unfortunately not easy to avoid it during earlier parsing since "connected" doesn't look at 3 things at once)
+              // Remove that connection here, with as main reason the rendering: otherwise, it may render this input as "on" when this stray connection is on, but that would look incorrect.
+              world[y][x].components[0] = null;
+            }
           }
         }
         if(z == 1) {
@@ -8861,6 +9098,11 @@ function parseComponents() {
             x2s.push(wco1.x);
             y2s.push(wco1.y);
             inputused[wco1.y][wco1.x] = true;
+          } else {
+            if(world[y][x].components[1]) {
+              // Same comment as the equivalent for component[0] above.
+              world[y][x].components[1] = null;
+            }
           }
         }
       } else {
@@ -8918,7 +9160,7 @@ function parseComponents() {
     }
   }
 
-  // parse lonely c's, for packing of flip-flops
+  // parse input-less flip-flop c,y,q,Q, for packing of flip-flops (clock passthrough and other signal passthrough)
   // TODO: also support c's separated with e.g. #'s in between?
   used = initUsed2();
   for(var y0 = 0; y0 < h; y0++) {
@@ -8926,18 +9168,19 @@ function parseComponents() {
       if(used[y0][x0]) continue;
       if(inputused[y0][x0]) continue;
       var c0 = world[y0][x0].circuitsymbol;
-      if(c0 != 'c' && c0 != 'C') continue;
+      if(c0 != 'c' && c0 != 'C' && c0 != 'y' && c0 != 'q' && c0 != 'Q') continue;
 
       var stack = [[x0, y0]];
       used[y0][x0] = true;
       var array = [];
-      while (stack.length) {
+      while(stack.length) {
         var s = stack.pop();
         var x = s[0];
         var y = s[1];
         if(x < 0 || x >= w || y < 0 || y >= h) continue;
         var c = world[y][x].circuitsymbol;
-        if(c != 'c' && c != 'C') continue;
+        if(c0 == 'c' || c0 == 'C') { if (c != 'c' && c != 'C') continue; }
+        else if(c != c0) continue;
 
         array.push(s);
 
@@ -8947,14 +9190,17 @@ function parseComponents() {
           var y2 = y + ((i == 0) ? -1 : ((i == 2) ? 1 : 0));
           if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
           var c2 = world[y2][x2].circuitsymbol;
-          if(c2 != 'c' && c2 != 'C') continue;
+          if(c0 == 'c' || c0 == 'C') { if (c2 != 'c' && c2 != 'C') continue; }
+          else if(c2 != c0) continue;
           if(used[y2][x2]) continue;
           stack.push([x2, y2]);
           used[y2][x2] = true;
         }
       }
 
-      var clockinputs = [];
+      var ffinputtype = (c0 == 'c' || c0 == 'C') ? 0 : (c0 == 'q' ? 5 : (c0 == 'Q') ? 6 : 7 /*'y'*/);
+
+      var newinputs = [];
       for(var i = 0; i < array.length; i++) {
         var x = array[i][0];
         var y = array[i][1];
@@ -8962,8 +9208,8 @@ function parseComponents() {
         var component = world[y][x].components[0];
         if(component.master) component = component.master;
         for(var j = 0; j < component.inputs.length; j++) {
-          if(component.input_ff_types[j] == 0) {
-            clockinputs.push([component.inputs[j], component.inputs_negated[j], component.inputs_x[j], component.inputs_y[j]]);
+          if(component.input_ff_types[j] == ffinputtype) {
+            newinputs.push([component.inputs[j], component.inputs_negated[j], component.inputs_x[j], component.inputs_y[j], component.input_ff_types[j]]);
           }
         }
       }
@@ -8974,14 +9220,14 @@ function parseComponents() {
         if(inputused[y][x]) continue;
         var component = world[y][x].components[0];
         if(component.master) component = component.master;
-        for(var j = 0; j < clockinputs.length; j++) {
-          component.inputs.push(clockinputs[j][0]);
-          component.inputs_negated.push(clockinputs[j][1]);
-          component.inputs_x.push(clockinputs[j][2]);
-          component.inputs_y.push(clockinputs[j][3]);
+        for(var j = 0; j < newinputs.length; j++) {
+          component.inputs.push(newinputs[j][0]);
+          component.inputs_negated.push(newinputs[j][1]);
+          component.inputs_x.push(newinputs[j][2]);
+          component.inputs_y.push(newinputs[j][3]);
           component.inputs_x2.push(-1);
           component.inputs_y2.push(-1);
-          component.input_ff_types.push(0);
+          component.input_ff_types.push(newinputs[j][4]);
         }
       }
     }
@@ -9489,9 +9735,9 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   if(!parseComponents()) return false;
 
   graphics_mode_actual = graphics_mode;
-  if(graphics_mode_browser != graphics_mode_actual && countSlowGraphicalDivs() > 2000) {
-    graphics_mode_actual = graphics_mode_browser;
-  }
+  /*if(graphics_mode && countSlowGraphicalDivs() > 2000) {
+    graphics_mode_actual = 0;
+  }*/
   var graphicsindex = origtext.indexOf('RENDER:');
   if(graphicsindex >= 0) {
     if(textHasAt(origtext, graphicsindex + 7, 'text')) {
@@ -10056,8 +10302,10 @@ function createMenuUI() {
   makeElement('option', colorDropdown).innerText = 'dark';
   makeElement('option', colorDropdown).innerText = 'gray';
   makeElement('option', colorDropdown).innerText = 'blue';
-  makeElement('option', colorDropdown).innerText = 'inverted';
+  makeElement('option', colorDropdown).innerText = 'green';
   makeElement('option', colorDropdown).innerText = 'candy';
+  makeElement('option', colorDropdown).innerText = 'inverted';
+  makeElement('option', colorDropdown).innerText = 'monochrome';
   colorDropdown.selectedIndex = colorscheme;
 
   var zoomoutButton = makeUIElement('button', menuRow2El, 1);
@@ -10142,9 +10390,6 @@ function createMenuUI() {
       editModeFinishFun();
     }
   };
-
-  //go to editor on load, for easy development on it
-  //window.setTimeout(function(){tw = Math.ceil(tw * 0.75); th = Math.ceil(th * 0.75); editButton.click();}, 300);
 
   if(getLocalStorage('circuit_text')) {
     var restoreButton = makeUIElement('button', menuRow2El, 3);
@@ -10386,6 +10631,8 @@ function createMenuUI() {
   fillRegisteredCircuits();
 }
 
+//go to editor on load, for easy development on it
+//NEWEDIT=true;window.setTimeout(function(){tw = Math.ceil(tw * 0.75); th = Math.ceil(th * 0.75); editButton.click();}, 300);
 
 
 // utility functions to mirror/rotate a whole circuit
@@ -11158,7 +11405,7 @@ function fillRegisteredCircuits() {
 
 
 var introText = `
-0"# Welcome to LogicEmu, a digital logic simulator!"
+0"# Welcome to LogicEmu, an online digital logic simulator!"
 
 0"In circuits, press the green 's' inputs with the mouse to change values."
 0"Read results from the red 'l' outputs. For example, below is an AND gate 'a'."
@@ -11198,26 +11445,21 @@ var introText = `
 
 0"## A note about running in the browser"
 
-0"LogicEmu runs completely offline, even though it uses JavaScript in a"
-0"web browser. Once the HTML and JS got fetched, it does not make any"
-0"further connections to any server, cloud or remote storage."
+0"Even though it's called an 'online' logic simulator since it can be ran"
+0"conveniently in the browser, LogicEmu runs completely offline. Once the HTML"
+0"and JS got fetched, it doesn't make any further connections. All circuits are"
+0"already loaded since they're part of the source code. If you get LogicEmu"
+0"from github you can run it offline from your own disk."
 
-0"If you download the HTML file and the few JS files (with view source"
-0"or from github) and save them to disk, you can run LogicEmu locally"
-0"without internet."
-
-0"All circuits listed above are already loaded since they are hardcoded"
-0"in LogicEmu's source code (all of them, no dynamic requests are done)."
-
-0"If you edit your own circuit, it's only stored in your browsers local"
-0"storage (not a cookie), it's not sent anywhere. To share a circuit with"
-0"others, you must post its source or base64 URL code somewhere yourself."
+0"Settings and edited circuit are stored in local storage (not a cookie), which is private"
+0"to you, not shared. Sharing has to be done manually, which you can do either"
+0"using the source code of a circuit or a base64 URL if it's small enough."
 
 0"FIT:w"
 
 0"LogicEmu. Copyright (C) 2018-2020 by Lode Vandevenne"`;
 
-var introTitle = 'Browser-Based Logic Simulator';
+var introTitle = 'Online Logic Simulator';
 
 var introId = 'welcome';
 
