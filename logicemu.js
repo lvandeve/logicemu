@@ -2129,6 +2129,7 @@ function VTE() {
   this.prevread = false;
   this.output = [0,0,0,0,0,0,0,0];
   this.decimaldisplay = false;
+  this.passthrough = false; // whether it passes through the input (in case of decimal display)
   this.decimalinput = false;
   this.counter = false;
   this.countervalue = 0;
@@ -2196,6 +2197,11 @@ function VTE() {
         //if(x >= this.x1 - this.x0) { x = 0; y++; }
         if(x < 0) { x = this.x1 - this.x0 - 1; y--; }
       }
+      if(this.passthrough) {
+        for(var i = 0; i < this.numoutputs; i++) {
+          this.output[i] = i < this.numinputs ? inputs[i] : false;
+        }
+      }
       return;
     }
     if(this.decimalinput) {
@@ -2210,8 +2216,9 @@ function VTE() {
       }
 
       var index = 0;
-      if(s[0] == '0' && s[1] == 'x') index = parseInt(s); // NOTE: this also supports decimal with prefix '0x' and oct with prefix '0'
-      else index = parseInt(s, 10); // do NOT support the horrible octal notation
+      // parse hex or decimal, not octal (note that whether or not it parses octal if radix not given is browser dependent)
+      if(s[0] == '0' && s[1] == 'x') index = parseInt(s);
+      else index = parseInt(s, 10);
       var maxval = (1 << this.numoutputs) - 1;
       if(index > maxval) {
         for(var i = 0; i < s.length; i++) this.doBackspace();
@@ -2417,6 +2424,9 @@ function VTE() {
 
     if(readheading == -1 && writeheading == -1 && outheading == -1 && inheading != -1 && writeheading2 == -1) {
       this.decimaldisplay = true;
+    } else if(readheading == -1 && writeheading == -1 && outheading != -1 && inheading != -1 && writeheading2 == -1) {
+      this.decimaldisplay = true;
+      this.passthrough = true;
     } else if(readheading == -1 && writeheading != -1 && outheading == -1 && inheading == -1 && writeheading2 == -1) {
       inheading = writeheading;
       indir = writedir;
@@ -2568,7 +2578,8 @@ function VTE() {
       }
     }
 
-    if(this.numoutputs > 0) {
+    // TODO: make better API to decide if it has keyboard input or not
+    if(this.numoutputs > 0 && !this.passthrough) {
       activeVTE = this;
       document.activeElement.blur(); // this prevents that you accidently start typing but it instead selects a different dropdown option!
     }
@@ -3623,13 +3634,26 @@ var TERMINALFGCOLOR;
 
 var BUSCOLORS;
 
+var CHIPLABELBGCOLOR;
+var CHIPLABELFGCOLOR;
+
+var ERRORBGCOLOR;
+var ERRORFGCOLOROFF;
+var ERRORFGCOLORON;
+
 function setColorScheme(index) {
+  CHIPLABELBGCOLOR = '#feb';
+  CHIPLABELFGCOLOR = '#000';
+  ERRORBGCOLOR = '#ff0';
+  ERRORFGCOLOROFF = '#f00';
+  ERRORFGCOLORON = '#f88';
+
   if(index == 0) { // light
     ONCOLOR = 'black';
     OFFCOLOR = '#888';
     BGCOLOR = 'white';
     TEXTFGCOLOR = '#000'; // '#940';
-    TEXTBGCOLOR = '#fff6ea';
+    TEXTBGCOLOR = '#eef';
 
     led_off_fg_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
     led_off_bg_colors = ['#fffafa', '#fffcfa', '#fffff4', '#fafffa', '#fbfdff', '#faf8ff', '#fffdfd', '#fcfcfc'];
@@ -3866,6 +3890,12 @@ function setColorScheme(index) {
 
     TERMINALBGCOLOR = ONCOLOR;
     TERMINALFGCOLOR = BGCOLOR;
+    CHIPLABELBGCOLOR = BGCOLOR;
+    CHIPLABELFGCOLOR = ONCOLOR;
+
+    // error BG color remains yellow to keep clearly indicating those
+    ERRORFGCOLOROFF = 'black';
+    ERRORFGCOLORON = 'black';
   }
 }
 
@@ -3957,6 +3987,9 @@ function negateColorScheme() {
   TITLECOLOR = negateColor(TITLECOLOR);
   TERMINALBGCOLOR = negateColor(TERMINALBGCOLOR);
   TERMINALFGCOLOR = negateColor(TERMINALFGCOLOR);
+  CHIPLABELBGCOLOR = negateColor(CHIPLABELBGCOLOR);
+  CHIPLABELFGCOLOR = negateColor(CHIPLABELFGCOLOR);
+  // error-colors not negated, should remain yellow+red
 }
 
 var colorscheme = getLocalStorage('color_scheme') || 0;
@@ -4126,8 +4159,19 @@ function Cell() {
     if(!this.comment) {
       var tc = c;
       if(tc == '#') tc = this.components[0].corecell.circuitsymbol;
-      if(tc == '-' || tc == '|' || tc == '.') {
+      if(tc == '-' || tc == '|' || tc == '.' || tc == '/' || tc == '\\' || tc == '%' || tc == '&') {
         title = 'wire. Shift+click to highlight.';
+      }
+      if(tc == '+' || tc == 'x' || tc == '*') {
+        title = 'wire crossing';
+      }
+      if(tc == '^' || tc == '>' || tc == 'v' || tc == '<' || tc == 'V' || tc == 'X') {
+        title = 'device input';
+        if(tc == 'X') title += ' (or wire crossing if not near any device)';
+      }
+      if(tc == 'm' || tc == ']' || tc == 'w' || tc == '[' || tc == 'W' || tc == 'Y') {
+        title = 'negated device input';
+        if(tc == 'Y') title += ' (or wire crossing if not near any device)';
       }
       if(tc == 's' || tc == 'S') title = 'switch (click to toggle on/off)';
       if(tc == 'p') title = 'pushbutton (hold mouse down to enable)';
@@ -4173,8 +4217,8 @@ function Cell() {
       if(tc == ')') title = 'backplane wire that connects to one matching connector to the left';
       if(tc == 'n') title = 'backplane wire that connects to one matching connector to below';
       if(tc == 'u') title = 'backplane wire that connects to one matching connector to the top';
-      if(tc == 'I') title = 'IC definition';
-      if(tc == 'i') title = 'IC instance ' + this.components[0].callsubindex;
+      if(tc == 'I' || this.numbertype == NUMBER_ICDEF) title = 'IC definition';
+      if(tc == 'i' || tc == '#i') title = 'IC instance ' + this.components[0].callsubindex;
       if(tc == 'b' || tc == 'B') {
         title = 'ROM/RAM bit (b=0, B=1)';
         if(this.components[0]) {
@@ -4198,7 +4242,7 @@ function Cell() {
         }
       }
       if(tc == '=') title = 'bus (wire bundle)';
-      if(tc == 'M') {
+      if(tc == 'M' || tc == '#M') {
         title = 'mux';
         var master = this.components[0].master;
         var mux = master ? master.mux : this.components[0].mux;
@@ -4251,18 +4295,23 @@ function Cell() {
           title += ' numselout: ' + mux.numselout + '. ';*/
         }
       }
-      if(tc == 'T') {
+      if(tc == 'T' || tc == '#T') {
         title = 'terminal';
         if(this.components[0]) {
           var master = this.components[0].master;
           var vte = master ? master.vte : this.components[0].vte;
           if(vte) {
-            if(vte.numinputs > 0 && !vte.counter) title += ' (with keyboard input, click to put cursor here)';
-            if(vte.numoutputs > 0 && !vte.counter) title += ' (with ascii output)';
-            if(vte.numoutputs > 0 && vte.numinputs > 0 && !vte.counter) title += ' (only outputs what was typed with keyboard using active cursor, not from the component inputs. The inputs are displayed as ascii on screen only.)';
+            if(!vte.counter && !vte.decimaldisplay && !vte.decimalinput) {
+              if(vte.numoutputs > 0) title += ' (with ascii output and keyboard input, click to put cursor here)';
+              if(vte.numinputs > 0) title += ' (with ascii input, shown on the screen if read)';
+              if(vte.numoutputs > 0 && vte.numinputs > 0) title += ' (only outputs what was typed with keyboard using active cursor, not from the component inputs. The inputs are displayed as ascii on screen only.)';
+            }
             if(vte.counter) title += ' (as counter)';
-            if(vte.decimaldisplay && !vte.counter) title += ' (as decimal display)';
-            if(vte.decimalinput && !vte.counter) title += ' (as decimal input, click to put cursor here)';
+            if(vte.decimaldisplay && !vte.counter) {
+              title += ' (as decimal display)';
+              if(vte.passthrough) title += ' (passes through the input to the output)';
+            }
+            if(vte.decimalinput && !vte.counter) title += ' (as decimal input, click to put cursor here, and type decimal digits, or hex digits preceded with 0x)';
           }
         }
       }
@@ -4619,7 +4668,8 @@ function RendererText() {
           if(cell.commentstyle == 1) {
             span0.style.fontSize = Math.floor(tw * 0.9) + 'px'; // avoids background overlapping parts of font issues
           } else {
-            span0.style.fontSize = Math.floor(tw * 1.0) + 'px';
+            // a bit bigger, because otherwise formatted text tends to be too much smaller compared to circuits, give it a bit more readability
+            span0.style.fontSize = Math.floor(tw * 1.2) + 'px';
             if(tw < 16) span0.style.letterSpacing = '0.5px'; // this might make it slightly more readable if zoomed out a lot
           }
           span0.style.height = th + 'px';
@@ -4720,6 +4770,10 @@ function RendererText() {
         // The font characters are normally slightly bigger than a cell, but don't do that for the terminal, or bottom of letters gets obscured by the black cell below them, hiding bottom of j, underscores, etc
         this.div1.style.fontSize = Math.floor(tw * 0.9) + 'px';
       }
+      if(symbol == 'I' || (cell.numbertype == NUMBER_ICDEF && digitmap[symbol])) {
+        this.div0.style.color = CHIPLABELFGCOLOR;
+        this.div0.style.backgroundColor = CHIPLABELBGCOLOR;
+      }
       if(symbol == '|') {
         // The | ascii character renders a bit low compared to others. Tweak that here. TODO: find better way to keep characters properly centered in their cell
         this.div0.style.marginTop = '-' + (th >> 2) + 'px';
@@ -4741,10 +4795,10 @@ function RendererText() {
     if (!errortext) {
       errortext = 'parse error @ ' + cell.x + ' ' + cell.y + '(' + cell.symbol + ')';
     }
-    this.div0.style.backgroundColor = 'yellow';
-    this.div1.style.backgroundColor = 'yellow';
-    this.div0.style.color = 'red';
-    this.div1.style.color = '#f88';
+    this.div0.style.backgroundColor = ERRORBGCOLOR;
+    this.div1.style.backgroundColor = ERRORBGCOLOR;
+    this.div0.style.color = ERRORFGCOLOROFF;
+    this.div1.style.color = ERRORFGCOLORON;
     this.div0.title = errortext;
     this.div1.title = errortext;
   };
@@ -5816,8 +5870,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     if(cell.components[0] && cell.components[0].error) {
       error = true;
       this.markError(cell, cell.getErrorText());
-      drawer.fillBg_(this.ctx0, 'yellow');
-      drawer.fillBg_(this.ctx1, 'yellow');
+      drawer.fillBg_(this.ctx0, ERRORBGCOLOR);
+      drawer.fillBg_(this.ctx1, ERRORBGCOLOR);
     } else if(opt_title) {
       this.text0.title = opt_title;
       if(this.text1) this.text1.title = opt_title;
@@ -6336,6 +6390,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         }
       } else if(c == '@') {
         drawer.fillBg_(ctx, TEXTFGCOLOR);
+      } else if(c == 'I' || (cell.numbertype == NUMBER_ICDEF && digitmap[c])) {
+        this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'T') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'G') {
@@ -6876,16 +6932,16 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     if(this.usefallbackonly) {
       this.fallback.markError(cell, errortext);
     } else {
-      //this.canvas0.style.backgroundColor = 'yellow';
-      //this.canvas1.style.backgroundColor = 'yellow';
-      this.ctx0.strokeStyle = 'red';
-      this.ctx1.strokeStyle = '#f88';
-      this.ctx0.fillStyle = 'red';
-      this.ctx1.fillStyle = '#f88';
-      this.text0.style.color = 'red';
+      //this.canvas0.style.backgroundColor = ERRORBGCOLOR;
+      //this.canvas1.style.backgroundColor = ERRORBGCOLOR;
+      this.ctx0.strokeStyle = ERRORFGCOLOROFF;
+      this.ctx1.strokeStyle = ERRORFGCOLORON;
+      this.ctx0.fillStyle = ERRORFGCOLOROFF;
+      this.ctx1.fillStyle = ERRORFGCOLORON;
+      this.text0.style.color = ERRORFGCOLOROFF;
       this.text0.title = errortext;
       if(this.usetext) {
-        this.text1.style.color = '#f88';
+        this.text1.style.color = ERRORFGCOLORON;
         this.text1.title = errortext;
       }
     }
@@ -9847,86 +9903,66 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   }
   rendererDropdown.selectedIndex = graphics_mode_actual;
 
+  // for rendering: this is circuit's width, but reduced to a smaller width in
+  // case the only parts extending to the right are left aligned thin comments,
+  // which take up less space than the full width so would produce unnecessary
+  // whitespace on the right side if zoom to fit is chosen.
   var nonthinw = 0;
   for(var y = 0; y < h; y++) {
     for(var x = 0; x < w; x++) {
       if(world[y][x].circuitsymbol != ' ' && world[y][x].circuitsymbol != '"') nonthinw = Math.max(nonthinw, x);
       if(world[y][x].symbol == '"' && world[y][x].commentalign == -1) nonthinw = Math.max(nonthinw, x);
       if(world[y][x].commentlength > 0 && world[y][x].commentalign != -1) {
-        var l = 0;
-        var mul = world[y][x].commentchapter > 0 ? 1.5 : 1.0; // chapter title is a bit bigger
-        if(world[y][x].commentalign == 0) l = Math.ceil(world[y][x].commentlength * 0.66 * mul);
-        if(world[y][x].commentalign == 1) l = Math.ceil(world[y][x].commentlength * 0.825 * mul); // centered, so bit more space used to the right
-        if(world[y][x].commentalign == 2) l = world[y][x].commentlength;
-        nonthinw = Math.max(nonthinw, x + l);
+        var a = world[y][x].commentalign;
+        var fontwidth = (world[y][x].commentchapter > 0) ? 0.66 : 0.5;
+        var l = world[y][x].commentlength;
+        if(a == 0) {
+          nonthinw = Math.max(nonthinw, x + l * fontwidth);
+        } else if(a == 1) {
+          // centered
+          nonthinw = Math.max(nonthinw, x + l * (fontwidth + 1) * 0.5);
+        } else {
+          // right aligned
+          nonthinw = Math.max(nonthinw, x + l);
+        }
+        x += l;
       }
     }
   }
 
-  var fityindex = origtext.indexOf('FIT:y');
-  var fity = 0;
-  if(fityindex >= 0) {
-    for(var i = 0; i < fityindex; i++) {
-      if(origtext[i] == '\n') fity++;
-    }
-  }
-
-  var fityindex2 = origtext.indexOf('FIT:y', fityindex + 1);
-  var fity2 = 0;
-  if(fityindex2 >= 0) {
-    for(var i = 0; i < fityindex2; i++) {
-      if(origtext[i] == '\n') fity2++;
-    }
-    fity = fity2 - fity;
-  }
-
-  var fitrindex = origtext.indexOf('FIT:r');
-  var fitr = 0;
-  if(fitrindex >= 0) {
-    for(var i = 0; i < fitrindex; i++) {
-      if(origtext[i] == '\n') fitr = 0;
-      fitr++;
-    }
-  }
-
-  var fitw = (origtext.indexOf('FIT:w') >= 0);
-
-  var fitwidth = true;
-  var fitheight = true;
   var docwidth = /*document.body.clientWidth*/window.innerWidth - 24;
   var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8;
   if(!docwidth) docwidth = 1000;
   if(!docheight) docheight = 800;
-  var h2 = h;
-  if(h * 20 > docheight || h > w) { // only very rarely DON't disable fitheight
-    if(fity > 0) {
-      h2 = fity;
-    } else {
-      fitheight = false; // if it's very high, then do not try to fit h, use width only, and scroll for h
-    }
-  }
-  if(fitw) {
-    if(fity > 0 && fity < h) {
-      //if you have both a FIT:w and a FIT:y, then it means:
-      //be as wide as possible as you can, while still fitting that what
-      //FIT:y asked for. Without FIT:w, the FIT:y might be having no
-      //effect when it tries to fit an even higher h. But FIT:w then
-      //lets it try to be as wide as possible.
-      h2 = fity;
-    } else {
-      fitheight = false;
-    }
-  }
-  if(fitr) nonthinw = fitr;
-  tw = Math.floor(docwidth / (nonthinw + 2));
-  th = Math.floor(docheight / (h2 + 2));
-  var t = tw;
-  if(fitwidth && fitheight) t = Math.min(tw, th);
-  else if(fitwidth) t = tw;
-  else if(fitheight) t = th;
-  if(t < 9) t = 9;
-  if(t > 40) t = 40;
-  if(h > 80 && t > 28) t = 28;
+
+  // heuristically choose t: find balance between being too zoomed out and
+  // having to scroll too much
+  var fitx = nonthinw;
+  var fity = h;
+  var docwidth2 = docwidth;
+  var docheight2 = docheight;
+  // for wide monitors, treat them as if they are less wide, since most
+  // circuits tend to be higher than wider ("articles"), and for reading it's
+  // easier to not span the width of the entire screen, but have some more
+  // vertical text available instead.
+  if(docwidth2 > docheight2 && fity > fitx * 0.75) docwidth2 = docheight2;
+  tw = Math.floor(docwidth2 / (fitx + 2));
+  th = Math.floor(docheight2 / (fity + 2));
+  //t = Math.max(tw, th);
+  //t = Math.min(tw, th);
+  t = tw;
+
+  var mint = 12;
+  var maxt = 40;
+  if(t < mint) t = mint;
+  if(t > maxt) t = maxt;
+
+
+  // when something would just fit in the y direction but require a little bit
+  // of scrolling, zoom out a bit anyway to make it visible.
+  if(th > mint && th < t && th * 2 >= t) t = th;
+  if(tw > mint && tw < t && tw * 2 >= t) t = tw;
+
   th = tw = t;
 
 
@@ -11552,8 +11588,6 @@ var introText = `
 0"Settings and edited circuit are stored in local storage (not a cookie), which is private"
 0"to you, not shared. Sharing has to be done manually, which you can do either"
 0"using the source code of a circuit or a base64 URL if it's small enough."
-
-0"FIT:w"
 
 0"LogicEmu. Copyright (C) 2018-2020 by Lode Vandevenne"`;
 

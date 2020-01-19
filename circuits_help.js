@@ -71,7 +71,7 @@ s....
 0"some state, and finally output LEDs. So the simplest circuit has a switch"
 0"and a LED with a wire in between."
 
-0"Toggle the switch (s) with the mouse to toggle the LED (l)".
+0"Toggle the switch (s) with the mouse to toggle the LED (l)."
 
 s....>l
 
@@ -743,12 +743,12 @@ s....>?..>l    p....>?..>l    r....>?..>l
 0"yellow), and one solution is to OR them. An alternative solution here is to"
 0"use tri-state buffers (or open collector outputs if you will)."
 
-0"error expected" 0"ok"           0"ok"
-s.....            s.....          s..>z...
-     .                 v                 .
-s.....            s...>o          s..>z...
-     .                 v                 .
-s.........>l      s...>o....>l    s..>z.......>l
+0"error expected" 0"ok"         0"ok"
+s.....          s.....        s..>z...
+     .               v               .
+s.....          s...>o        s..>z...
+     .               v               .
+s.........>l    s...>o....>l  s..>z.......>l
 
 0"Note that in real life enabling multiple z's at the same time could cause a"
 0"short but that is not simulated here."
@@ -821,15 +821,23 @@ s....                   s....
 0"Buses are a bundle of wires. Matching numbers of the bus connect to"
 0"corresponding inputs and outputs. This allows to save a lot of space."
 
+s---0=                   =0--->l
+s---1=                   =1--->l
+s---2=====================2--->l
+s---3=                   =3--->l
+s---4=                   =4--->l
 
-                                     llllllll
-                                     ^^^^^^^^
-s---0=                   =0--->l     ||||||||
-s---1=                   =1--->l     76543210
-s---2=====================2--->l     ========
-s---3=                   =3--->l     01234567
-s---4=                   =4--->l     ||||||||
-                                     ssssssss
+
+  llllllll
+  ^^^^^^^^
+  ||||||||
+  76543210
+  ========
+  01234567
+  ||||||||
+  ssssssss
+
+
 
 0"Wire connections without number to buses are still part of the bus,"
 0"e.g. this wire crossing lets two entire buses cross:"
@@ -904,8 +912,6 @@ l<----.
 0"the different tick algorithms, rendering modes, editing, ..."
 
 0"INSERT:links_help"
-
-0"RENDER:graphical"
 
 0"LogicEmu. Copyright (C) 2018-2020 by Lode Vandevenne"
 `, 'mainhelp');
@@ -1000,6 +1006,7 @@ s>BBBb
 0"Shift+Click on something to highlight only that component or wire, e.g. to"
 0"easily see where each of the following wires go."
 0"This pauses the running circuit until you activate it again."
+0"How visible the hightlight is depends on the chosen color scheme."
 
 
 c>a------------------. .->l
@@ -1138,7 +1145,6 @@ s---->a-....-->a>l.. .|.>l1
 0"You can also zoom in and out with the - and + buttons, and change the color"
 0"scheme. These controls, too, are in the top bar."
 
-0"FIT:y"
 `, 'renderhelp');
 
 registerCircuit('Ticks and Emulation Algorithms', `
@@ -1321,8 +1327,6 @@ s..>e>e>e>e>e>e>e>e
 0"circuit. This divider has a very long longest path, but in immediate mode you"
 0"see updates immediately. In electron mode, you can see the circuit flow for a"
 0"long time, when changing the right buttons of the divider."
-
-0"FIT:w"
 
 `, 'algohelp');
 
@@ -1663,9 +1667,15 @@ s..>O..>l  s..>A..>l  s..>E..>l
 
 s....]l   S....]l
 
-s....      s....      s....      s....      s....      s....
-    w          w          w          w          w          w
-s..]o..>l  s..]a..>l  s..]e..>l  s..]O..>l  s..]A..>l  s..]E..>l
+
+s....      s....      s....
+    w          w          w
+s..]o..>l  s..]a..>l  s..]e..>l
+
+
+s....      s....      s....
+    w          w          w
+s..]O..>l  s..]A..>l  s..]E..>l
 
 3"NEW BEHAVIOR: multi-input gates"
 
@@ -2507,12 +2517,14 @@ s....>?..>l    p....>?..>l    r....>?..>l
 0"error, and one solution is to OR them. An alternative solution here is to"
 0"use tri-state buffers (or open collector outputs if you will)."
 
-0"error expected"
-s.....          s.....          s..>z...
-     .               v                 .
-s.....          s...>o          s..>z...
-     .               v                 .
-s.........>l    s...>o....>l    s..>z.......>l
+0"error expected" 0"ok"         0"ok"
+s.....          s.....        s..>z...
+     .               v               .
+s.....          s...>o        s..>z...
+     .               v               .
+s.........>l    s...>o....>l  s..>z.......>l
+
+
 
 0"Note that in real life enabling multiple z's at the same time could cause a"
 0"short but that is not simulated here."
@@ -2645,7 +2657,9 @@ l<---g    g--->l
 
 0"Global wire can be used in an integrated circuit"
 
-  s---g17      71g-->lI17    i17-->l    i17-->l    i17-->l
+  s---g17      71g-->lI17
+
+  i17-->l    i17-->l    i17-->l
 
 3"NEW PART: straight backplane connections ('antennas')"
 3"(: 'antenna' east"
@@ -2835,11 +2849,11 @@ l<---,,--->l         ||
 0"Device inputs > < ^ v ] [ m w output on exactly one side, but can receive"
 0"their input from any of the other sides (3 direct neighbors, and 4 more from x)"
 
-                                          s
-s---v              >l       s--. >l        ;l<
-    l        s-----.            x           x
-                   >l       s--. >l        /l<
-                                          s
+                                     s
+s---v            >l     s--. >l       ;l<
+    l      s-----.          x          x
+                 >l     s--. >l       /l<
+                                     s
 
 0"Normally you connect 1 wire to 1 input side of a device input. It is possible"
 0"to connect multiple, everything attached to the multiple input sides is"
@@ -2986,25 +3000,25 @@ s   s   s
 
        0v           v
 +-----+--------------+
-|     | "hello world"| 0"full width text (best for text integrated in a circuit itself)"
+|     | "hello world"| 0"full width text (best for circuit labels)"
 +-----+--------------+
-|0    |0"hello world"| 0"formatted left aligned (best for readability of long texts)"
+|0    |0"hello world"| 0"formatted left aligned (best for long text)"
 +-----+--------------+
 |1    |1"hello world"| 0"formatted center aligned"
 +-----+--------------+
 |2    |2"hello world"| 0"formatted right aligned"
 +-----+--------------+
-|3    |3"hello world"| 0"narrow fixed width left aligned (best for ASCII art or code)"
+|3    |3"hello world"| 0"narrow fixed width left aligned (best for ASCII art)"
 +-----+--------------+
 |4    |4"hello world"| 0"narrow fixed width center aligned"
 +-----+--------------+
 |5    |5"hello world"| 0"narrow fixed width right aligned"
 +-----+--------------+
-|6    |6"hello world"| 0"full width shifted left (starts where the quote/number are)"
+|6    |6"hello world"| 0"full width shifted left (starts at quote/number)"
 +-----+--------------+
 |7    |7"hello world"| 0"standard full width, same as no number"
 +-----+--------------+
-|8    |8"hello world"| 0"full width shifted right (ends where the quote/number are)"
+|8    |8"hello world"| 0"full width shifted right (ends at quote/number)"
 +-----+--------------+
 |0 #  |0"# head H1  "| 0"chapter (heading 1)"
 +-----+--------------+
@@ -3097,13 +3111,6 @@ s   s   s
 3"MODE;electron     : force electron mode                                             "
 3"RENDER;text       : force text mode rendering (ascii)                               "
 3"RENDER;graphical  : force graphics mode rendering (canvas)                          "
-3"FIT;w             : zoom horizontally to full width, even if it means scrolling y   "
-3"                    (the w means 'full width')                                      "
-3"FIT;r             : don't take anything to the right of this marker into account for"
-3"                    zooming, so it causes less zoom out (the r means 'right side')  "
-3"FIT;y             : if possible zoom vertically such that top up to this marker is  "
-3"                    visible. If two such markers present, zoom such that height     "
-3"                    matches their vertical distance.                                "
 3"INSERT;toc        : inserts a table of contents to chapters in this circuit.        "
 3"                    Clicking a link will scroll towards that chapter title. Chapter "
 3"                    titles are made with markdown as explained earlier.             "
@@ -3210,8 +3217,6 @@ registerCircuit('ASCII symbol summary', `
 3"M: MUX"
 
 3"0123456789: modifiers: LED color, timer speed, bus/ic/backplane id"
-
-0"FIT:y"
 
 `, 'symbols');
 
@@ -3443,8 +3448,6 @@ s     s     s     s
 
 0"RENDER:text"
 
-0"FIT:w"
-
 `, 'editingextra');
 
 registerCircuit('Electronic Diagram', `
@@ -3667,9 +3670,6 @@ registerCircuit('Electronic Diagram', `
 4"           |                "
 4"                            "
 
-
-0"FIT:w"
-
 `, 'diagram');
 
 
@@ -3883,6 +3883,14 @@ registerCircuit('Terminal With Both (T)', `
 `, 'component' + componentid++);
 
 registerCircuit('Decimal Display Terminal (T)', `
+     T######
+     ^^^^^^^
+     sssssss
+`, 'component' + componentid++);
+
+registerCircuit('Decimal Display Terminal With Passthrough (T)', `
+     lllllll
+     ^^^^^^^
      T######
      ^^^^^^^
      sssssss
@@ -4678,6 +4686,14 @@ S---------->o
     &+------>l
      s
 
+s>T---------]l
+S>#--------->l
+s>#---------]l
+S>#--------->l
+S>#--------->l
+S>#--------->l
+s>#---------]l
+
 
     ........]l
     .
@@ -5224,7 +5240,30 @@ l l l l l l l l   l l l l l l l l     G##     T###
 s s s s s s s s   S S S S S S S S     sss     ssss
                                      "BGR"   "8421"
 
-0"# Shapes"
+
+0"# Devices"
+
+s-->a-->l    s-->o-->l    s-->e-->l    s-->e-->l    s-->a-->l
+    #            #            #           >         s-->a-->l
+s-->#        s-->#        s-->#        s-->a-->l    s-->a-->l
+
+
+s-->e-->lI20      s-->i20-->l         s-->jq-->l    s-->M-->l
+    #                 ###             s-->c#            #
+s-->e             s-->#i#             s-->kQ-->l    s-->#-->l
+                                                        ^
+                                                        s
+
+  s->a>l
+  p->e>l
+  r->o>l
+  S->A>l
+  P->E>l
+  R->O>l
+  s->?>l
+
+
+0"# Wire Shapes"
 
 s-->l    l
          ^            l       l l   l   l  l       l  l   l   l
@@ -5246,13 +5285,13 @@ s-*-+-------+-*----->l   /   ;     / |           | ;      v       v
  /  |       |  ;        s     s   s  s           s  s     l       l
 S   s       s   s
                                             s-g->l
-       s    s s    s       s    s s    s                  s->a>l
-  l l  . l  . .  l .  l l  . l  . .  l .      l     l     p->e>l
-   X    X    X    X    Y    Y    Y    Y     s.Vl  s.Wl    r->o>l
-  . .  . l  l l  l .  . .  . l  l l  l .      l     l     S->A>l
-  s s  s           s  s s  s           s                  P->E>l
-                                              s     s     R->O>l
-       s   s                 s   s            |     |     s->?>l
+       s    s s    s       s    s s    s
+  l l  . l  . .  l .  l l  . l  . .  l .      l     l
+   X    X    X    X    Y    Y    Y    Y     s.Vl  s.Wl
+  . .  . l  l l  l .  . .  . l  l l  l .      l     l
+  s s  s           s  s s  s           s
+                                              s     s
+       s   s                 s   s            |     |
   l    .   .    l       l    .   .    l     s.Xl  s.Yl
 s.Xl s.Xl lX.s lX.s   s.Yl s.Yl lY.s lY.s     |     |
   .    l   l    .       .    l   l    .       v     v
@@ -5345,9 +5384,11 @@ S--X-   S--X-     S--Xl    X   S--Xl  S--X-  S--Xl   S--X-  S--X-  S--Xl  S--Xl 
 
 
 
+0"# Error color"
 
-
-
+s-->a-->l
+    #
+s-->o
 
 
 0"# Comment Alignment"
@@ -5447,8 +5488,10 @@ l<--s0"There should be no space between this comment and the switch"
 0"# monospace chapter"3
 
 0"- bullet"
-0"+ bullet"
-0". bullet"
+0"* bullet"
+
+0"horizontal rule:"
+0"___"
 
 0"vertical styling:"
      0  1  2  3  4  5  6  7  8
@@ -5477,8 +5520,6 @@ l<--s0"There should be no space between this comment and the switch"
 0"unexisting link:"
 0"INSERT:link:unexisting"
 
-"FIT:w"
-
 `, 'drawtest');
 
 registerTitle('Front Page');
@@ -5492,6 +5533,6 @@ registerCircuit('Help Index', `
 0"If this is your first time, the first one ('Main Help') is recommended."
 
 
-INSERT:links_help
+"INSERT:links_help"
 
-0"FIT:y"`, 'helpindex');
+`, 'helpindex');

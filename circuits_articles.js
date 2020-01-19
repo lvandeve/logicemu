@@ -1545,8 +1545,6 @@ s..>c#Q..>l
 0"Direct link to next tutorial:"
 0"INSERT:link:flip_flops_nand"
 
-0"RENDER:graphical"
-
 `, 'flip_flops2');
 
 
@@ -1825,8 +1823,6 @@ registerCircuit('flip-flops tutorial III: from NAND', `
 "K"s.....>A>A.. A>A>A.. .>A>A<. .
                 ^       .   .   .
 "C"s.....................   .....
-
-0"RENDER:graphical"
 
 `, 'flip_flops_nand');
 
@@ -2245,7 +2241,6 @@ s....>e..>l
 "1"C..>#....>#....>#....>#....>#....>l2
 
 
-0"FIT:w"
 
 `, 'fredkin');
 
@@ -2387,7 +2382,6 @@ s..>#..>l
 "b"s..>#..>O..>l 0"a XNOR b"
 
 
-0"FIT:w"
 
 `, 'toffoli');
 
@@ -3134,8 +3128,6 @@ s..>i
 s..>4
 
 
-
-0"RENDER:graphical"
 0"MODE:immediate"
 `, 'relay_logic');
 

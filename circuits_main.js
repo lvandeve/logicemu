@@ -112,8 +112,6 @@ registerCircuit('16 gates', `
 
 "b a"
 
-0"FIT:y FIT:w"
-
 0"Configurable gate"
 
 0"You can set this to any of the 16 logic gates with the 4 control switches."
@@ -800,9 +798,6 @@ registerCircuit('8-bit multiplier', `
        "a128      a64       a32       a16       a8        a4        a2        a1"
 
 
-
-0"FIT:y"
-
 `, 'mul8');
 
 
@@ -1059,9 +1054,6 @@ registerCircuit('8-bit divider', `
            "b128         b64          b32          b16          b8           b4           b2           b1"
 
 
-
-0"FIT:y"
-
 `, 'div8');
 
 
@@ -1132,8 +1124,6 @@ registerCircuit('8-bit right barrel shifter', `
       .     .     .     .     .     .     .     .
       s     s     s     s     s     s     s     s
 
-0"FIT:y"
-
 `, 'rshift');
 
 registerCircuit('8-bit left barrel shifter', `
@@ -1197,8 +1187,6 @@ registerCircuit('8-bit left barrel shifter', `
       .     .     .     .     .     .     .     .
       .     .     .     .     .     .     .     .
       s     s     s     s     s     s     s     s
-
-0"FIT:y"
 
 `, 'lshift');
 
@@ -2093,8 +2081,6 @@ registerCircuit('simple encoders', `
 
    "FEDCBA9876543210"
 
-0"FIT:w"
-
 `, 'encoder');
 
 
@@ -2243,8 +2229,6 @@ registerCircuit('8-bit binary to BCD decoder', `
 0"The ROM with B's is to turn the 4-bit decimal digits into the segments for"
 0"the 7-segment display."
 
-0"FIT:y"
-
        ##l<-.          ##l<-.          ##l<-.
       #   # |         #   # |         #   # |
      >l   l<|        >l   l<|        >l   l<|
@@ -2343,8 +2327,6 @@ registerCircuit('8-bit binary to BCD decoder', `
                   ### ### ### ### ### ### ### ###
                  "128  64  32  16   8   4   2   1"
 
-0"FIT:y"
-
 `, 'double_dabble');
 
 
@@ -2378,8 +2360,6 @@ registerCircuit('BCD to binary, 0-255', `
 
 0"The output here only goes to 255, so if you try to give larger input it'll"
 0"overflow"
-
-0"FIT:y"
 
                 "128    64    32    16    8     4     2     1"
                   l     l     l     l     l     l     l     l
@@ -2449,8 +2429,6 @@ registerCircuit('BCD to binary, 0-255', `
 "|"            "|"                    "|"                     "|"
 "|" 1"hundreds""|"      1"tens"       "|"       1"units"      "|"
 "|"            "|"                    "|"                     "|"
-
-0"FIT:y"
 
 
 `, 'bcd_to_bin');
@@ -2547,8 +2525,6 @@ registerCircuit('BCD to binary, 0-999', `
 "|"                        "|"                    "|"                     "|"
 "|"        1"hundreds"     "|"      1"tens"       "|"       1"units"      "|"
 "|"                        "|"                    "|"                     "|"
-
-0"FIT:y"
 
 `, 'bcd_to_bin_999');
 
@@ -2672,8 +2648,6 @@ registerCircuit('keypad', `
                  |
          0#p-----.
           ##
-
-0"FIT:y"
 
 `, 'keypad');
 
@@ -3143,9 +3117,6 @@ a< >o   a< >o   a< >o   a< >o
 .   .   .   .   .   .   .   .
 s   s   s   s   s   s   s   s
 
-
-0"FIT:y"
-
 0"Batcher odd-even mergesort"
 0"Same speed as above, different shape."
 
@@ -3557,8 +3528,6 @@ registerCircuit('Conway\'s game of life', `
     ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
 
-0"FIT:y"
-
           l           ls          l
            X          ^|         X
        s    .         ||        .    s          l
@@ -3674,8 +3643,6 @@ registerCircuit('Conway\'s game of life galaxy', `
     <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
     ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-
-0"FIT:y"
 
           l           ls          l
            X          ^|         X
@@ -3798,9 +3765,6 @@ registerCircuit('Conway\'s game of life wrap', `
     (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
     (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
      uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
-
-0"FIT:y"
-
 
 
           l           ls          l
@@ -3925,7 +3889,6 @@ registerCircuit('Conway\'s game of life ship', `
     (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
      uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
 
-0"FIT:y"
 
 
           l           ls          l
@@ -4031,7 +3994,6 @@ registerCircuit('Langtons Ant', `
       uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
 
 
-0"FIT:y"
 
 
                s       l
@@ -4140,7 +4102,6 @@ registerCircuit('16-bit carry lookahead adder', `
                                   . .               . .          . .      . .
                                   s s               s s          s s      s s
 
-0"FIT:y"
 
 `, 'cla_adder_16');
 
@@ -4199,7 +4160,6 @@ l<o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e 
                              SsSsSsSsS            SsSsSsSs        SsSsSsSs    SsSsSsSs##3"B1"
                                                                                      ###
                                                                                      ###
-0"FIT:y"
 
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -4319,7 +4279,6 @@ registerCircuit('16-bit divider', `
 
                                        "B"
 
-0"FIT:y"
 
 `, 'div16');
 
@@ -4523,7 +4482,6 @@ registerCircuit('74181 ALU', `
   ###             ###        ###          ###                       ###                     ###     ###       ###
  "F'0             F'1        A=B          F'2                       F'3                      G'    Cn+4        P'"
 
-0"FIT:y"
 
 0"The once popular 74181 4-bit ALU. Check out its spec sheet for more"
 0"information."
@@ -4749,7 +4707,6 @@ i87#############################################################################
                                                                                 ^^^^^^^^^^^^^^^^
                                                                                 ssssssssssssssss
 
-0"FIT:y"
 
 `, 'compact_65535_display');
 
@@ -5066,7 +5023,6 @@ registerCircuit('4-bit CPU', `
          ##r   m                  ###             ^     ###
            3   g3                                 g1
 
-0"FIT:y"
 
 
            4   5   6   7                                                                       g9
@@ -5426,7 +5382,6 @@ registerCircuit('8-bit divider effect', `
             s            s            s            s            s            s            r80          S
            "b128         b64          b32          b16          b8           b4           b2           b1"
 
-0"FIT:y"
 
 
 `, 'div_effect');
