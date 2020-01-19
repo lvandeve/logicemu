@@ -279,7 +279,7 @@ registerCircuit('Binary Numbers Tutorial', `
 0"each number."
 
 
-     TTTTTTTTTTTTTTTTTTTTTT"decimal"
+     T#####################"decimal"
      ^  ^  ^  ^  ^  ^  ^  ^
      .  .  .  .  .  .  .  .
      s  s  s  s  s  s  s  s"binary"
@@ -294,7 +294,7 @@ registerCircuit('Binary Numbers Tutorial', `
      l  l  l  l  l  l  l  l"binary"
      ^  ^  ^  ^  ^  ^  ^  ^
      .  .  .  .  .  .  .  .
-     TTTTTTTTTTTTTTTTTTTTTT"decimal"
+     T#####################"decimal"
 
 `, 'binary_numbers');
 
@@ -2127,10 +2127,10 @@ s....>e..>l
 0"the control input always at the top):"
 
 "c"s..>i..>l
-       i
-"a"s..>i..>l
-       i
-"b"s..>i..>l
+       #
+"a"s..>#..>l
+       #
+"b"s..>#..>l
 
 0"LogicEmu also supports controlled swap with its mux notation (M), but it has"
 0"the wrong shape for what we want here so not used:"
@@ -2139,8 +2139,8 @@ s....>e..>l
        s
        v
 "a"s..>M..>l
-       M
-"b"s..>M..>l
+       #
+"b"s..>#..>l
        v
        l
 
@@ -2151,18 +2151,18 @@ s....>e..>l
 0"## NOT"
 
 "a"s..>i..>l2
-       i
-"0"c..>i..>l2
-       i
-"1"C..>i..>l 0"not a"
+       #
+"0"c..>#..>l2
+       #
+"1"C..>#..>l 0"not a"
 
 0"## AND"
 
 "a"s..>i..>l2
-       i
-"b"s..>i..>l2
-       i
-"0"c..>i..>l 0"a and b"
+       #
+"b"s..>#..>l2
+       #
+"0"c..>#..>l 0"a and b"
 
 0"## NAND"
 
@@ -2171,49 +2171,49 @@ s....>e..>l
 0"from fredkin only so need two."
 
 "a"s..>i..........>l2
-       i
-"b"s..>i. .>i.....>l2
-       i x  i
-"0"c..>i. .>i.....>l2
-            i
-"1"C.......>i.....>l 0"a nand b"
+       #
+"b"s..>#. .>i.....>l2
+       # x  #
+"0"c..>#. .>#.....>l2
+            #
+"1"C.......>#.....>l 0"a nand b"
 
 0"Nicer version if NOT can be used:"
 
 "a"s..>i......>l2
-       i
-"b"s..>i......>l2
-       i
-"0"c..>i..>O..>l 0"a nand b"
+       #
+"b"s..>#......>l2
+       #
+"0"c..>#..>O..>l 0"a nand b"
 
 
 0"## OR"
 
 "a"s..>i..>l2
-       i
-"b"s..>i..>l 0"a or b"
-       i
-"1"C..>i..>l2
+       #
+"b"s..>#..>l 0"a or b"
+       #
+"1"C..>#..>l2
 
 
 
 0"## NOR"
 
 "a"s..>i..........>l2
-       i
-"1"C..>i. .>i.....>l2
-       i x  i
-"b"s..>i. .>i.....>l 0"a nor b"
-            i
-"0"c.......>i.....>l2
+       #
+"1"C..>#. .>i.....>l2
+       # x  #
+"b"s..>#. .>#.....>l 0"a nor b"
+            #
+"0"c.......>#.....>l2
 
 0"Nicer version if NOT can be used:"
 
 "a"s..>i......>l2
-       i
-"b"s..>i..>O..>l 0"a nor b"
-       i
-"1"C..>i......>l2
+       #
+"b"s..>#..>O..>l 0"a nor b"
+       #
+"1"C..>#......>l2
 
 
 0"## XOR, XNOR"
@@ -2223,26 +2223,26 @@ s....>e..>l
 0"the --(i)-- wire passes through it."
 
 "a"s........>i.......>l2
-             i
-"b"s..>i...( i ).....>l2
-       i     i
-"0"c..>i....>i.......>l 0"a xor b"
-       i     i
-"1"C..>i....>i.......>l 0"a xnor b"
+             #
+"b"s..>i...( # ).....>l2
+       #     #
+"0"c..>#....>#.......>l 0"a xor b"
+       #     #
+"1"C..>#....>#.......>l 0"a xnor b"
 
 
 
 0"## Full Adder"
 
 "a"s..>i............................>l2
-       i
-"b"s.( i )..>i................>i....>l2
-       i     i                 i
-"c"s.( i ).( i )..>i... >i. ..>i....>l 0"carry"
-       i     i     i   x i x   i
-"0"c..>i....>i....>i... >i. .( i )..>l 0"sum"
-       i     i     i     i     i
-"1"C..>i....>i....>i....>i....>i....>l2
+       #
+"b"s.( # )..>i................>i....>l2
+       #     #                 #
+"c"s.( # ).( # )..>i... >i. ..>#....>l 0"carry"
+       #     #     #   x # x   #
+"0"c..>#....>#....>#... >#. .( # )..>l 0"sum"
+       #     #     #     #     #
+"1"C..>#....>#....>#....>#....>#....>l2
 
 
 0"FIT:w"
@@ -2281,10 +2281,10 @@ registerCircuit('Toffoli gate', `
 0"controlled input/output always at bottom):"
 
 s..>i..>l
-    i
-s..>i..>l
-    i
-s..>i..>l
+    #
+s..>#..>l
+    #
+s..>#..>l
 
 
 0"It can make all regular gates, but there are 'garbage' input and output"
@@ -2293,45 +2293,45 @@ s..>i..>l
 0"## NOT"
 
 "1"C..>i..>l2
-       i
-"1"C..>i..>l2
-       i
-"a"s..>i..>l 0"NOT a"
+       #
+"1"C..>#..>l2
+       #
+"a"s..>#..>l 0"NOT a"
 
 
 0"## AND"
 
 "a"s..>i..>l2
-       i
-"b"s..>i..>l2
-       i
-"0"c..>i..>l 0"a AND b"
+       #
+"b"s..>#..>l2
+       #
+"0"c..>#..>l 0"a AND b"
 
 
 0"## NAND"
 
 "a"s..>i..>l2
-       i
-"b"s..>i..>l2
-       i
-"1"C..>i..>l 0"a NAND b"
+       #
+"b"s..>#..>l2
+       #
+"1"C..>#..>l 0"a NAND b"
 
 
 0"## OR"
 
 "a"s..>i...>i...>l2
-       i    i
-"b"s..>i. .>i...>l2
-       i x  i
-"1"C..>i. .>i...>l 0"a OR b"
+       #    #
+"b"s..>#. .>#...>l2
+       # x  #
+"1"C..>#. .>#...>l 0"a OR b"
 
 0"Nicer version if NOT can be used (with Morgan's law):"
 
 "a"s..>O..>i..>l2
-           i
-"b"s..>O..>i..>l2
-           i
-"1"C......>i..>l 0"a OR b"
+           #
+"b"s..>O..>#..>l2
+           #
+"1"C......>#..>l 0"a OR b"
 
 
 0"## NOR"
@@ -2341,28 +2341,28 @@ s..>i..>l
 "a"s..... ..... .......>l2
          x    . .
 "b"s..>i. .>i.-*-.>i...>l2
-       i    i . .  i
-"1"C..>i...>i.. ..>i...>l2
-       i    i      i
-"1"C..>i...>i.....>i...>l 0"a NOR b"
+       #    # . .  #
+"1"C..>#...>#.. ..>#...>l2
+       #    #      #
+"1"C..>#...>#.....>#...>l 0"a NOR b"
 
 0"Nicer version if NOT can be used (with Morgan's law):"
 
 0"Nicer if we allow NOT gates:"
 
 "a"s..>O..>i......>l2
-           i
-"b"s..>O..>i......>l2
-           i
-"1"C......>i..>O..>l 0"a NOR b"
+           #
+"b"s..>O..>#......>l2
+           #
+"1"C......>#..>O..>l 0"a NOR b"
 
 0"## XOR"
 
 "a"s..>i..>l2
-       i
-"1"C..>i..>l2
-       i
-"b"s..>i..>l 0"a XOR b"
+       #
+"1"C..>#..>l2
+       #
+"b"s..>#..>l 0"a XOR b"
 
 
 0"## XNOR"
@@ -2371,20 +2371,20 @@ s..>i..>l
 0"the --(i)-- wire passes through it."
 
 "1"C......>i...>l2
-           i
-"a"s..>i..(i)..>l2
-       i   i
-"1"C..>i..>i...>l2
-       i   i
-"b"s..>i..>i...>l 0"a XNOR b"
+           #
+"a"s..>i..(#)..>l2
+       #   #
+"1"C..>#..>#...>l2
+       #   #
+"b"s..>#..>#...>l 0"a XNOR b"
 
 0"Nicer version if NOT can be used:"
 
 "a"s..>i......>l2
-       i
-"1"C..>i......>l2
-       i
-"b"s..>i..>O..>l 0"a XNOR b"
+       #
+"1"C..>#......>l2
+       #
+"b"s..>#..>O..>l 0"a XNOR b"
 
 
 0"FIT:w"
@@ -2646,18 +2646,18 @@ s.    w                    w .>l
 
    s         s         s         s
    v         v         v         v
-   i>l     s>i         i>l     s>i
- s>1         2>l     s>i         i>l
-   2>l     s>1         i>l     s>i
-                       i         i
-                       i>l     s>i
-   s         s       s>i         i>l
-   v         v         i>l     s>i
-   i>l     s>i         i         i
- s>i         i>l       i>l     s>i
-   i>l     s>i       s>i         i>l
-   i         i         i>l     s>i
-   i>l     s>i         i         i
+   i>l     s>i         #>l     s>#
+ s>1         2>l     s>#         #>l
+   2>l     s>1         #>l     s>#
+                       #         #
+                       #>l     s>#
+   s         s       s>#         #>l
+   v         v         #>l     s>#
+   #>l     s>#         #         #
+ s>#         #>l       #>l     s>#
+   #>l     s>#       s>#         #>l
+   #         #         #>l     s>#
+   i>l     s>i         #         #
  s>2         4>l       i>l     s>i
    4>l     s>2       s>4         8>l
                        8>l     s>4
@@ -2671,8 +2671,8 @@ s.    w                    w .>l
 
    s
    v
- s>i>l
-   i
+ s>#>l
+   #
  s>i>l
    3
  s>3>l
@@ -2792,20 +2792,20 @@ C..>1 x 2..>l
 
     s     s     s
     v     v     v
-    i....>i....>i
-C..>1 .   i     2..>l
-    2.+..>i....>1
-      . . i
+    i....>#....>i
+C..>1 .   #     2..>l
+    2.+..>#....>1
+      . . #
       . .>i
       .   4
       ...>2
 
     s     s     s     s
     v     v     v     v
-    i....>i....>i.. .>i
-C..>1 .   i .   i  x  2..>l
-    2.+..>i.+..>i.. .>1
-      . . i . . i
+    i....>#....>#.. .>i
+C..>1 .   # .   #  x  2..>l
+    2.+..>#.+..>#.. .>1
+      . . # . . #
       . .>i . .>i
       .   4 .   4
       ...>2 ...>2
@@ -2926,20 +2926,20 @@ C..>1   2..>l
 
     s     s     s
     v     v     v
-    i....>i.. .>i
-C..>1 .   i  x  2..>l
-    2.+..>i.. .>1
-      . . i
+    i....>#.. .>i
+C..>1 .   #  x  2..>l
+    2.+..>#.. .>1
+      . . #
       . .>i
       .   4
       ...>2
 
     s     s     s     s
     v     v     v     v
-    i....>i....>i....>i
-C..>1 .   i .   i     2..>l
-    2.+..>i.+..>i....>1
-      . . i . . i
+    i....>#....>#....>i
+C..>1 .   # .   #     2..>l
+    2.+..>#.+..>#....>1
+      . . # . . #
       . .>i . .>i
       .   4 .   4
       ...>2 ...>2
@@ -2959,10 +2959,10 @@ C..>1 .   i .   i     2..>l
      s        s
      .        .
      v        v
-     i.....   i.......>l"AND"
-C...>i    ...>i
-   . i..      i..
-   . i        i
+     #.....   #.......>l"AND"
+C...>#    ...>#
+   . #..      #..
+   . #        #
    . i....    i<....
    .>2   .  ..3    .
      4.. .  . 3<.. .
@@ -2990,10 +2990,10 @@ C...>i    ...>i
         .   z
         .   .z<.
         v   v  .
-        i   i...
-    C..>1..>i
-      . 9   i..
-      .     i
+        i   #...
+    C..>1..>#
+      . 9   #..
+      .     #
       .     i.........>l"Q"
       .....>2
             4.........>l"Q'"
@@ -3026,10 +3026,10 @@ C...>i    ...>i
 
    s..............>l
           v
-     ....>i
-     .    i
-   s.+...>i.......>l
-     . .  i
+     ....>#
+     .    #
+   s.+...>#.......>l
+     . .  #
      . ..>i
      .    4
    s.....>2.......>l
@@ -3051,10 +3051,10 @@ s..>1
     s s
     . .
     . v
-    . i..>l
-    v i
-    i>i..>l
-s..>1 i
+    . #..>l
+    v #
+    i>#..>l
+s..>1 #
     2>i..>l
       2
       4..>l
@@ -3065,18 +3065,18 @@ s..>1 i
     s s s
     . . .
     . . v
-    . . i..>l
-    . . i
-    . . i..>l
-    . v i
-    . i>i..>l
-    v i i
-    i>i>i..>l
-s..>1 i i
-    2>i>i..>l
-      2 i
-      4>i..>l
-        i
+    . . #..>l
+    . . #
+    . . #..>l
+    . v #
+    . #>#..>l
+    v # #
+    i>#>#..>l
+s..>1 # #
+    2>i>#..>l
+      2 #
+      4>#..>l
+        #
         i..>l
         4
         8..>l
@@ -3097,10 +3097,10 @@ s..>1
 
     s s
     v .
-s..>i .
-    i v
-s..>i>i
-    i 2..>l
+s..># .
+    # v
+s..>#>i
+    # 2..>l
 s..>i>1
     4
 s..>2
@@ -3117,18 +3117,18 @@ s..>2
     s s s
     . . .
     v . .
-s..>i . .
-    i . .
-s..>i . .
-    i v .
-s..>i>i .
-    i i v
-s..>i>i>i
-    i i 2..>l
-s..>i>i>1
-    i 4
-s..>i>2
-    i
+s..># . .
+    # . .
+s..># . .
+    # v .
+s..>#># .
+    # # v
+s..>#>#>i
+    # # 2..>l
+s..>#>i>1
+    # 4
+s..>#>2
+    #
 s..>i
     8
 s..>4

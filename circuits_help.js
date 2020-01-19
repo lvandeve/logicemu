@@ -535,13 +535,13 @@ s-.>d]a->l   s..>c..>l
          ^                  ^ ^
     :    .                  . .
     i    .             :    . .
-    ns..>M..>l0"out"   is..>MMM..>l3"out"
-    p    M             n    MMM
-    us..>M             ps..>MMM
-    t    ^             u    MMM
-    s    .             ts..>MMM
-    :    .             s    MMM
-         s             :s..>MMM
+    ns..>M..>l0"out"   is..>M##..>l3"out"
+    p    #             n    ###
+    us..>#             ps..>###
+    t    ^             u    ###
+    s    .             ts..>###
+    :    .             s    ###
+         s             :s..>###
     4"control"4             ^ ^
                             . .
                             . .
@@ -555,13 +555,13 @@ s-.>d]a->l   s..>c..>l
          ^                  ^ ^
          .                  . .
          .    :             . .    :
-5"in"s..>M..>lo    5"in"s..>MMM..>lo
-         M    u             MMM    u
-         M..>lt             MMM..>lt
-         ^    :             MMM    p
-         .                  MMM..>lu
-         .                  MMM    t
-         s                  MMM..>ls
+5"in"s..>M..>lo    5"in"s..>M##..>lo
+         #    u             ###    u
+         #..>lt             ###..>lt
+         ^    :             ###    p
+         .                  ###..>lu
+         .                  ###    t
+         s                  ###..>ls
     4"control"4             ^ ^    :
                             . .
                             . .
@@ -575,8 +575,8 @@ s-.>d]a->l   s..>c..>l
     .
     .
 s..>M..>l
-    M
-s..>M..>l
+    #
+s..>#..>l
     ^
     .
     .
@@ -593,10 +593,10 @@ s..>M..>l
                 lllllll0"ASCII output, from keyboard"
    2"output"    ^^^^^^^
  2"keyboard"    |||||||
-    2"ASCII"p-->TTTTTTT<--p0"read ASCII from"
-                TTTTTTT    0"input switches to"
-       "EOF"l<--TTTTTTT    0"screen"
-                TTTTTTT
+    2"ASCII"p-->T######<--p0"read ASCII from"
+                #######    0"input switches to"
+       "EOF"l<--#######    0"screen"
+                #######
                 ^^^^^^^
                 |||||||
                 SsssssS0"ASCII input, to screen"
@@ -604,7 +604,7 @@ s..>M..>l
 
 0"Without read/write flags, it can instead display or read decimal numbers"
 
-         TTTTTTTT"decimal"
+         T#######"decimal"
          ^^^^^^^^
          ||||||||
          sSsssssS"binary"
@@ -613,13 +613,13 @@ s..>M..>l
 
          llllllll
          ^^^^^^^^
-         TTTTTTTT
+         T######
 
 0"With a single input, it acts as an up-counter. An optional reset an be added"
 
          lllllll
          ^^^^^^^
-         TTTTTTT<p"reset"0
+         T######<p"reset"0
                ^
                p
 
@@ -743,11 +743,12 @@ s....>?..>l    p....>?..>l    r....>?..>l
 0"yellow), and one solution is to OR them. An alternative solution here is to"
 0"use tri-state buffers (or open collector outputs if you will)."
 
-s.....          s.....          s..>z...
-     .               v                 .
-s.....          s...>o          s..>z...
-     .               v                 .
-s.........>l    s...>o....>l    s..>z.......>l
+0"error expected" 0"ok"           0"ok"
+s.....            s.....          s..>z...
+     .                 v                 .
+s.....            s...>o          s..>z...
+     .                 v                 .
+s.........>l      s...>o....>l    s..>z.......>l
 
 0"Note that in real life enabling multiple z's at the same time could cause a"
 0"short but that is not simulated here."
@@ -783,6 +784,9 @@ s..>z..>l
      p  .
      v  .
  s..>z......>l
+
+
+0"Capital Z does the opposite: it ORs its inputs and multiple get ANDed"
 
 0"To summarize it:"
 
@@ -980,7 +984,7 @@ r--->l
 
 llllllll    llllllll
 ^^^^^^^^    ^^^^^^^^
-bbbbbbbb    TTTTTTTT
+bbbbbbbb    T#######
      ^^^           ^
      sss           s
 
@@ -1735,7 +1739,7 @@ s.........>l
 
 s.....
      .
-s.....
+s..... 0"error expected"
      .
 s.........>l
 
@@ -1753,8 +1757,8 @@ s...>o....>l
 
 0"An extender extends the size of a device, for many-input logic gates, or"
 0"large or specially shaped switches and LEDs. Remember, devices like s, l, o,"
-0"a, e that touch don't interact with each other when touching but work"
-0"independently, so # is needed to extend its area instead"
+0"a, e whose letters touch don't interact with each other when touching but"
+0"work independently, so # is needed to extend its area instead"
 
 lllll    lllll    lllll    ###
 ^^^^^    ^^^^^    ^^^^^    #l#
@@ -1784,6 +1788,22 @@ sssss    sssss    sssss    ###
 0"cell devices. However, for large devices which are introduced below, like T,"
 0"i, M, B, b, the extenders are not (always) needed, for those the letters"
 0"themselves usually connect with each other, unlike a, o, e, etc... do."
+
+0"It's not allowed to mix different letters in the same extended area, except"
+0"for a few types of devides that use multiple letters like flip-flops. For"
+0"example the following is an error due to mixing a and o with a #:"
+
+s-->a-->l 0"error expected"
+    #
+s-->o
+
+0"To summarize:"
+
+0"With some exceptions, device letters that touch don't interact (whether or"
+0"not they are the same letter), devices can be made bigger by adding #, and"
+0"it's not allowed to mix different device types in a single group of # (but"
+0"adding more of the same letter in the same group of # will simply keep it the"
+0"same single device)"
 
 0"# SECTION III: Flip-Flops And Memory"
 
@@ -2132,18 +2152,17 @@ s-->k-->l
  ll
  ^^
  ||
- i5
+ i5 0"error expected"
  ^
  |
  s
 
-0"Use more i's (or #) to make the copy bigger if space to attach more inputs is"
-0"required."
+0"Use # to make the copy bigger if space to attach more inputs is required."
 
  l  l
  ^  ^
  .  .
- iii5
+ ##i5
  ^  ^
  .  .
  s  s
@@ -2154,16 +2173,16 @@ s-->k-->l
 
 l   l
 ^   ^
-o<ii5
+o<#i5
 ^ ^ ^
-ii5 .
+#i5 .
 ^ ^ .
 s s s
 
 0"Multiple definitions for the same number results in an error:"
 
  I6      I6
-s-->l   s-->l    s-->i6-->l
+s-->l   s-->l    s-->i6-->l   0"error expected"
 
 0"Inputs are matched to the template by their direction (north, east, south,"
 0"west), and their order in this direction. Other than that, the shape and"
@@ -2173,12 +2192,12 @@ s-->l   s-->l    s-->i6-->l
 
                  llllll
     llllll       ^^^^^^
-    ^^^^^^     s>iiiiii
-   s.||||.sI7    i ^^ i
-     ssss        i ss i
-                 i<p  i
-                 i    i
-                 iii7ii
+    ^^^^^^     s>######
+   s.||||.sI7    # ^^ #
+     ssss        # ss #
+                 #<p  #
+                 #    #
+                 ##i7##
                  ^    ^
                  s    s
 
@@ -2190,9 +2209,9 @@ s-->l   s-->l    s-->i6-->l
 
 l   lI8    l   l     l   l
 ^   ^      ^   ^     ^   ^
-o<ii5      .   .     .   .
-^ ^ ^      iiii8     iiii8
-ii5 .      ^ ^ ^     ^ ^ ^
+o<#i5      .   .     .   .
+^ ^ ^      ###i8     ###i8
+#i5 .      ^ ^ ^     ^ ^ ^
 ^ ^ .      . . .     . . .
 s s s      s s s     s s s
 
@@ -2209,7 +2228,7 @@ s s s      s s s     s s s
 
 l<5<s
   i
-l<i<s
+l<#<s
 
 0"# SECTION V: Extra Parts"
 
@@ -2300,7 +2319,7 @@ s.>G<.s
 3"NEW PART: Mux"
 3"M: Multiplexer (various functions)"
 
-0"Multiple M's that touch together form a multiplexer, or, in other"
+0"M together with # to make it large enough forms a multiplexer, or, in other"
 0"configurations, a demux, controlled swap, and possibly with more than two"
 0"inputs/outputs and passthrough of the select signal."
 
@@ -2311,13 +2330,13 @@ s.>G<.s
          ^                  ^ ^
     :    .                  . .
     i    .             :    . .
-    ns..>M..>l0"out"   is..>MMM..>l3"out"
-    p    M             n    MMM
-    us..>M             ps..>MMM
-    t    ^             u    MMM
-    s    .             ts..>MMM
-    :    .             s    MMM
-         s             :s..>MMM
+    ns..>M..>l0"out"   is..>M##..>l3"out"
+    p    #             n    ###
+    us..>#             ps..>###
+    t    ^             u    ###
+    s    .             ts..>###
+    :    .             s    ###
+         s             :s..>###
     4"control"4             ^ ^
                             . .
                             . .
@@ -2331,13 +2350,13 @@ s.>G<.s
          ^                  ^ ^
          .                  . .
          .    :             . .    :
-5"in"s..>M..>lo    5"in"s..>MMM..>lo
-         M    u             MMM    u
-         M..>lt             MMM..>lt
-         ^    :             MMM    p
-         .                  MMM..>lu
-         .                  MMM    t
-         s                  MMM..>ls
+5"in"s..>M..>lo    5"in"s..>M##..>lo
+         #    u             ###    u
+         #..>lt             ###..>lt
+         ^    :             ###    p
+         .                  ###..>lu
+         .                  ###    t
+         s                  ###..>ls
     4"control"4             ^ ^    :
                             . .
                             . .
@@ -2351,8 +2370,8 @@ s.>G<.s
     .
     .
 s..>M..>l
-    M
-s..>M..>l
+    #
+s..>#..>l
     ^
     .
     .
@@ -2364,7 +2383,7 @@ s..>M..>l
 3"NEW PART: Interactive terminal"
 3"T: Interactive multiline terminal (7-bit ASCII)"
 
-0"This is made from a rectangular grid of T's, but you cannot see the T's when"
+0"A rectangular grid of T with extenders # forms an interactive terminal. When"
 0"rendered, it shows it as a black screen on which arbitrary characters can"
 0"appear, even in text mode. So you have to view the source code with the"
 0"'edit' button to see how this one is made."
@@ -2375,10 +2394,10 @@ s..>M..>l
 0"With only inputs, it acts as a screen that can read 7-bit ASCII codes from"
 0"any circuit inputs:"
 
-TTTTTTT<...p3"read"
-TTTTTTT
-TTTTTTT
-TTTTTTT
+T######<...p3"read"
+#######
+#######
+#######
 ^^^^^^^
 |||||||
 SsssssS3"ASCII code in to screen"
@@ -2397,9 +2416,9 @@ SsssssS3"ASCII code in to screen"
          lllllll3"keyboard ASCII code out"
          ^^^^^^^
          |||||||
-"out"p..>TTTTTTT
-         TTTTTTT
-"eof"l<..TTTTTTT
+"out"p..>T######
+         #######
+"eof"l<..#######
 
 0"If you give the VTE both inputs and outputs, it acts as both a screen and a"
 0"buffered keyboard. The screen shows both typed characters and characters read"
@@ -2410,11 +2429,11 @@ SsssssS3"ASCII code in to screen"
           lllllll3"keyboard ASCII code out"0
           ^^^^^^^
           |||||||
-"out"p..>TTTTTTTT<...p3"read from in to screen"0
-         TTTTTTTT
-"eof"l<..TTTTTTTT
-         TTTTTTTT
-         TTTTTTTT
+"out"p..>T#######<...p3"read from in to screen"0
+         ########
+"eof"l<..########
+         ########
+         ########
           ^^^^^^^
           |||||||
           SsssssS"ASCII code in to screen"0
@@ -2422,7 +2441,7 @@ SsssssS3"ASCII code in to screen"
 0"With only inputs and no read/out flags, it will instead show the binary input"
 0"in decimal."
 
-         TTTTTTTT"decimal"6 T
+         T#######"decimal"6 T
          ^^^^^^^^           ^
          ||||||||           |
          sSsssssS"binary"6  s
@@ -2432,19 +2451,19 @@ SsssssS3"ASCII code in to screen"
 
          llllllll
          ^^^^^^^^
-         TTTTTTTT
+         T#######
 
 0"With a single input, it acts as an up-counter. An optional reset an be added"
 
          lllllll
          ^^^^^^^
-         TTTTTTT
+         T######
                ^
                p
 
          lllllll
          ^^^^^^^
-         TTTTTTT<p"reset"0
+         T######<p"reset"0
                ^
                p
 
@@ -2488,6 +2507,7 @@ s....>?..>l    p....>?..>l    r....>?..>l
 0"error, and one solution is to OR them. An alternative solution here is to"
 0"use tri-state buffers (or open collector outputs if you will)."
 
+0"error expected"
 s.....          s.....          s..>z...
      .               v                 .
 s.....          s...>o          s..>z...
@@ -2832,7 +2852,7 @@ s---v----v----v---->l
 0"error. This is the same rule as seen earlier that you cannot connect outputs"
 0"from different devices to a single wire"
 
-s--v--s
+s--v--s 0"error expected"
    l
 
 3"NEW PART: multi device input"
@@ -3577,12 +3597,12 @@ registerCircuit('Electronic Diagram', `
 4" IC USAGE                   "
 4"                            "
 4"        +---u---+           " ->i4081
-4"       -|       |-Vdd       " ->iiiii<-
-4"       -|  IC   |-          " --iiiii<-
-4"       -|       |-          " --iiiii--
-4"       -| 4081  |-          " ->iiiii--
-4"       -|       |-          " ->iiiii<-
-4"       -|       |-          "   iiiii<-
+4"       -|       |-Vdd       " ->#####<-
+4"       -|  IC   |-          " --#####<-
+4"       -|       |-          " --#####--
+4"       -| 4081  |-          " ->#####--
+4"       -|       |-          " ->#####<-
+4"       -|       |-          "   #####<-
 4"    Vss-|       |-          "
 4"        +-------+           "
 4"                            "
@@ -3627,8 +3647,8 @@ registerCircuit('Electronic Diagram', `
 4"          _                 "
 4"         | -_               "
 4"       --|   |              " ..>M...
-4"         |   |              "    M
-4" MUX     |   |---           " ..>M
+4"         |   |              "    #
+4" MUX     |   |---           " ..>#
 4"       --|  _|              "    ^
 4"         |_-                "    .
 4"           |                "    .
@@ -3639,8 +3659,8 @@ registerCircuit('Electronic Diagram', `
 4"          _                 "
 4"         | -_               "
 4"         |   |--            " ..>M...
-4"         |   |              "    M
-4"DEMUX  --|   |              "    M...
+4"         |   |              "    #
+4"DEMUX  --|   |              "    #...
 4"         |  _|--            "    ^
 4"         |_-                "    .
 4"           |                "    .
@@ -3837,15 +3857,15 @@ registerCircuit('Keyboard Terminal (T)', `
      lllllll
      ^^^^^^^
      |||||||
-     TTTTTTT<p
-     TTTTTTT>l"eof"0
-     TTTTTTT
+     T######<p
+     #######>l"eof"0
+     #######
 `, 'component' + componentid++);
 
 registerCircuit('ASCII Terminal Screen (T)', `
-     TTTTTTT<p"read"
-     TTTTTTT
-     TTTTTTT
+     T######<p"read"
+     #######
+     #######
      ^^^^^^^
      Sssssss
 `, 'component' + componentid++);
@@ -3855,15 +3875,15 @@ registerCircuit('Terminal With Both (T)', `
                 lllllll
                 ^^^^^^^
                 |||||||
-   2"output"p-->TTTTTTT<--p0"read"
-       "EOF"l<--TTTTTTT
+   2"output"p-->T######<--p0"read"
+       "EOF"l<--#######
                 ^^^^^^^
                 |||||||
                 sssssss
 `, 'component' + componentid++);
 
 registerCircuit('Decimal Display Terminal (T)', `
-     TTTTTTT
+     T######
      ^^^^^^^
      sssssss
 `, 'component' + componentid++);
@@ -3871,13 +3891,13 @@ registerCircuit('Decimal Display Terminal (T)', `
 registerCircuit('Decimal Keyboard Terminal (T)', `
      lllllll
      ^^^^^^^
-     TTTTTTT
+     T######
 `, 'component' + componentid++);
 
 registerCircuit('Terminal Counter With Reset (T)', `
      lllllll
      ^^^^^^^
-     TTTTTTT<p"reset"0
+     T######<p"reset"0
            ^
            p
 `, 'component' + componentid++);
@@ -3972,8 +3992,8 @@ registerCircuit('Mux (M)', `
     .
     .
 s..>M..>l
-    M
-s..>M
+    #
+s..>#
     ^
     .
     .
@@ -3987,8 +4007,8 @@ registerCircuit('Demux (M)', `
     l
     ^
 s..>M..>l
-    M
-    M..>l
+    #
+    #..>l
     ^
     s
 
@@ -4000,10 +4020,10 @@ registerCircuit('Multi-input mux (M)', `
     ^^
     ||
     ||
-s-->MM-->l
-s-->MM
-s-->MM
-s-->MM
+s-->M#-->l
+s-->##
+s-->##
+s-->##
     ^^
     ||
     ||
@@ -4017,10 +4037,10 @@ registerCircuit('Multi-output demux (M)', `
     ^^
     ||
     ||
-s-->MM-->l
-    MM-->l
-    MM-->l
-    MM-->l
+s-->M#-->l
+    ##-->l
+    ##-->l
+    ##-->l
     ^^
     ||
     ||
@@ -4035,10 +4055,10 @@ registerCircuit('Mux of buses (M)', `
     |
     |
 s-->M-->l
-s-->M-->l
-    M
-s-->M
-s-->M
+s-->#-->l
+    #
+s-->#
+s-->#
     ^
     |
     |
@@ -4053,10 +4073,10 @@ registerCircuit('Demux of bus (M)', `
     |
     |
 s-->M-->l
-s-->M-->l
-    M
-    M-->l
-    M-->l
+s-->#-->l
+    #
+    #-->l
+    #-->l
     ^
     |
     |
@@ -4071,8 +4091,8 @@ registerCircuit('Mux with controlled swap (M)', `
     .
     .
 s..>M..>l
-    M
-s..>M..>l
+    #
+s..>#..>l
     ^
     .
     .
@@ -4087,10 +4107,10 @@ registerCircuit('Mux with controlled swap of buses(M)', `
     .
     .
 s-->M-->l
-s-->M-->l
-    M
-s-->M-->l
-s-->M-->l
+s-->#-->l
+    #
+s-->#-->l
+s-->#-->l
     ^
     .
     .
@@ -4302,6 +4322,22 @@ C>q---------]l
 
 C>q>c------->l
 
+C-->a##----->l
+
+C-->a#a----->l
+
+C-->a------->l
+c-->a-------]l
+C-->a------->l
+
+C-->a-------]l
+c-->#-------]l
+C-->a-------]l
+
+C-->o------->l
+c-->#------->l
+C-->o------->l
+
 C-->d
     #
 C>q>c------->l
@@ -4399,6 +4435,16 @@ Bb---------->l
 bB-------->O>l
 BB---------->l
 bB-------->O>l
+
+  b---------]l
+  b--------->l
+S>b---------]l
+s>b---------]l
+
+s>b
+S>b
+s>b--------->l
+s>b---------]l
 
 
 C..( ). ).>O>l
@@ -4625,9 +4671,9 @@ s-----------]l
 S---------->o
             >l
 
-    TT------]l
-    TT------]l
-    TT------]l
+    T#------]l
+    ##------]l
+    ##------]l
     |^
     &+------>l
      s
@@ -4636,32 +4682,32 @@ S---------->o
     ........]l
     .
 s-->M-------]l
-    M
-S-->M
+    #
+S-->#
     ^
     s
 
     ........>l
     .
 s-->M------->l
-    M
-S-->M
+    #
+S-->#
     ^
     S
 
     ........>l
     .
 S-->M-------]l
-    M
-s-->M
+    #
+s-->#
     ^
     S
 
     ........>l
     .
 S-->M-------]l
-    M
-s-->M------->l
+    #
+s-->#------->l
     ^
     S
 
@@ -4910,16 +4956,16 @@ s##
 .     ......>l
 .     .
 . c..>M.....>l
-.     M
-. C..>M.....]l
+.     #
+. C..>#.....]l
 .     ^
 .......
 .
 .     ......>l
 .     .
 . C..>M.....]l
-.     M
-.     M.....>l
+.     #
+.     #.....>l
 .     ^
 .......
 .
@@ -5123,6 +5169,10 @@ s---.
     .--------->l
 s---.
 
+s---a
+    #--------->l
+s---o
+
 s--->i741----->l
 
 I195
@@ -5144,15 +5194,15 @@ I196
       llll        llll
       ^^^^  :     ^^^^
       ||||#sD     ||||
-    I0||||| :     iiiiiiiiii0
-   :  |||&%:      i    ^    i
-   As-.|.-sC      i    s    i
-   :   | : :      i"C  B" s>i
-       #sB        i<s    "A"i
-         :        i  "D"    i
-                  i   s     i
-                  i   v     i
-                  iiiiiiiiiii
+    I0||||| :     #########i0
+   :  |||&%:      #    ^    #
+   As-.|.-sC      #    s    #
+   :   | : :      #"C  B" s>#
+       #sB        #<s    "A"#
+         :        #  "D"    #
+                  #   s     #
+                  #   v     #
+                  ###########
 
 0"RENDER:text"
 `, 'unittest');
@@ -5169,7 +5219,7 @@ registerCircuit('Drawing Test', `
 0"# LED Colors"
                                       ###
 0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7     ###
-l l l l l l l l   l l l l l l l l     G##     TTTT
+l l l l l l l l   l l l l l l l l     G##     T###
 ^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^     ^^^     ^^^^
 s s s s s s s s   S S S S S S S S     sss     ssss
                                      "BGR"   "8421"

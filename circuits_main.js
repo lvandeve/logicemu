@@ -1532,10 +1532,10 @@ registerCircuit('10 7-segments', `
 
 registerCircuit('Hello World terminal', `
 
-    TTTTTTT<............................
-    TTTTTTT                            .
-    TTTTTTT                            .
-    TTTTTTT                            .
+    T######<............................
+    #######                            .
+    #######                            .
+    #######                            .
     ^^^^^^^                            .
     |||||||                            .
     bBbbbbB<-----------------------.   .
@@ -1567,21 +1567,21 @@ registerCircuit('Keyboard and screen', `
 0"screen"
 
 
-   TTTTTTTTTTTTTT
-   TTTTTTTTTTTTTT
-   TTTTTTTTTTTTTT
-   TTTTTTTTTTTTTT
- .>TTTTTTTTTTTTTT
- . TTTTTTTTTTTTTT
+   T#############
+   ##############
+   ##############
+   ##############
+ .>##############
+ . ##############
  .        ^^^^^^^
  .        |||||||
  .        |||||||
  .        |||||||
- d<......>TTTTTTT
-     .    TTTTTTT
-     .    TTTTTTT
-     .    TTTTTTT
-     a[...TTTTTTT
+ d<......>T######
+     .    #######
+     .    #######
+     .    #######
+     a[...#######
      ^
      r5
 
@@ -1728,7 +1728,7 @@ registerCircuit('register', `
        .                .
 "C"s-->c    "C"s.....>c#d..
 "E"s-->y                ^ .
-       d    "E"s.....>MMM .
+       d    "E"s.....>M## .
        ^              ^ ^ .
        .              . ...
        .              .
@@ -1760,7 +1760,7 @@ registerCircuit('register', `
     c#d....       l  l  l  l  l  l  l  lI8
     ^ ^   .       ^  ^  ^  ^  ^  ^  ^  ^
    s..+...+.>l  s>i1>i1>i1>i1>i1>i1>i1>i1-
-      .   .     s>ii>ii>ii>ii>ii>ii>ii>ii-
+      .   .     s>##>##>##>##>##>##>##>##-
    s..+...+.>l    ^  ^  ^  ^  ^  ^  ^  ^
     v . w .       s  s  s  s  s  s  s  s
     a>o<a<.
@@ -1771,8 +1771,8 @@ registerCircuit('register', `
 
        llllllll
        ^^^^^^^^
-"C"s-->iiiiiii8
-"E"s-->iiiiiiii
+"C"s-->######i8
+"E"s-->########
        ^^^^^^^^
        ssssssss
 
@@ -3409,7 +3409,7 @@ registerCircuit('random number', `
 0"Roll a random number from 0-255 by pushing the button"
 
 
-TTTTTTTT
+T#######
 ^^^^^^^^
 ????????
 ^^^^^^^^
@@ -3481,85 +3481,80 @@ registerCircuit('Conway\'s game of life', `
 
 
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
-     x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
 
 0"FIT:y"
@@ -3604,85 +3599,80 @@ registerCircuit('Conway\'s game of life galaxy', `
 
 
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiviiiiv1iiiv1iiiv1iiiv1iiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i#^##i1^##i1^##i1^##i1^##i1^##i1^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiviiiiv1iiiv1iiiv1iiiv1iiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i#^##i1^##i1^##i1^##i1^##i1^##i1^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiv1iiiv1iiiv1iiiv1iiiviiiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i1^##i1^##i1^##i1^##i#^##i1^##i1^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiv1iiiv1iiiv1iiiv1iiiviiiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i1^##i1^##i1^##i1^##i#^##i1^##i1^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
-     x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
-    viiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv
-    >i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>
-    <i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<
-    ^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^
+    v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v
+    >#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>
+    <#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<
+    ^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^
      x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx
 
 0"FIT:y"
@@ -3728,85 +3718,85 @@ registerCircuit('Conway\'s game of life wrap', `
 
      nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
      uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
 
 0"FIT:y"
@@ -3854,85 +3844,85 @@ registerCircuit('Conway\'s game of life ship', `
 
      nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv1iiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv1iiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv1iiiv1iiiv1iiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i1^##i1^##i1^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
-    (iiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiviiiiv)
-    (i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>i<pi>)
-    (i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<i>li<)
-    (iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^iiii^)
+    (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
+    (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
+    (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
+    (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
      uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
 
 0"FIT:y"
@@ -3979,64 +3969,64 @@ registerCircuit('Langtons Ant', `
 
       nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<i1i<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<i1i<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
-     (<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii<iii)
-     ( ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi ivi)
+     (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
+     ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
       uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
 
@@ -4110,9 +4100,9 @@ registerCircuit('16-bit carry lookahead adder', `
                            ||     .             ||     .        ||     .    ||     .
                            ||llll .             ||llll .        ||llll .    ||llll .
                            ||^^^^ v             ||^^^^ v        ||^^^^ v    ||^^^^ v
-                           iiiiiiii             iiiiiiii        iiiiiiii    iiiiiiii
-                           iiiiiiii             iiiiiiii        iiiiiiii    iiiiiiii
-                           iiiiiii0             iiiiiii0        iiiiiii0    iiiiiii0
+                           ########             ########        ########    ########
+                           ########             ########        ########    ########
+                           ######i0             ######i0        ######i0    ######i0
                            ^^^^^^^^             ^^^^^^^^        ^^^^^^^^    ^^^^^^^^
                            ssssssss             ssssssss        ssssssss    ssssssss
                           "abababab             abababab        abababab    abababab"
@@ -4202,9 +4192,9 @@ l<o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e 
                              |||||| .             |||||| .        |||||| .    |||||| .
                              |||||| .             |||||| .        |||||| .    |||||| .
                              |||||| v             |||||| v        |||||| v    |||||| v
-                             iiiiiiii             iiiiiiii        iiiiiiii    iiiiiiii
-                             iiiiiiii             iiiiiiii        iiiiiiii    iiiiiiii
-                             iiiiiii0             iiiiiii0        iiiiiii0    iiiiiii0
+                             ########             ########        ########    ########
+                             ########             ########        ########    ########
+                             ######i0             ######i0        ######i0    ######i0
                              ^^^^^^^^             ^^^^^^^^        ^^^^^^^^    ^^^^^^^^
                              SsSsSsSsS            SsSsSsSs        SsSsSsSs    SsSsSsSs##3"B1"
                                                                                      ###
@@ -4589,10 +4579,10 @@ registerCircuit('74181 ALU', `
      "c m a0b0a1b1a2b2a3b3"
       s s s s s s s s s s
       v v v v v v v v v v
-      iiiiiiiiiiiiiiiiiii<s"s0"
-      iiiiiiiiiiiiiiiiiii<s"s1"
-      iiiiiiiiiiiiiiiiiii<s"s2"
-      iiiiiiiiiiiiii74181<s"s3"
+      ###################<s"s0"
+      ###################<s"s1"
+      ###################<s"s2"
+      #############i74181<s"s3"
       v v v v v     v v v
       l l l l l     l l l
      "f0f1= f2f3    g c p"
@@ -4602,10 +4592,10 @@ registerCircuit('74181 ALU', `
      "c m a0b0a1b1a2b2a3b3"
       S s s s s s s s s s
       v v v v v v v v v v
-      iiiiiiiiiiiiiiiiiii<S"s0"
-      iiiiiiiiiiiiiiiiiii<s"s1"
-      iiiiiiiiiiiiiiiiiii<s"s2"
-      iiiiiiiiiiiiii74181<S"s3"
+      ###################<S"s0"
+      ###################<s"s1"
+      ###################<s"s2"
+      #############i74181<S"s3"
       v v v v v     v v v
       l l l l l     l l l
      "f0f1= f2f3    g c p"
@@ -4615,10 +4605,10 @@ registerCircuit('74181 ALU', `
      "c m a0b0a1b1a2b2a3b3"
       s s S S S S S S S S
       v v v v v v v v v v
-      iiiiiiiiiiiiiiiiiii<S"s0"
-      iiiiiiiiiiiiiiiiiii<s"s1"
-      iiiiiiiiiiiiiiiiiii<s"s2"
-      iiiiiiiiiiiiii74181<S"s3"
+      ###################<S"s0"
+      ###################<s"s1"
+      ###################<s"s2"
+      #############i74181<S"s3"
       v v v v v     v v v
       l l l l l     l l l
      "f0f1= f2f3    g c p"
@@ -4628,10 +4618,10 @@ registerCircuit('74181 ALU', `
      "c m a0b0a1b1a2b2a3b3"
       s S s s s s s s s s
       v v v v v v v v v v
-      iiiiiiiiiiiiiiiiiii<S"s0"
-      iiiiiiiiiiiiiiiiiii<s"s1"
-      iiiiiiiiiiiiiiiiiii<s"s2"
-      iiiiiiiiiiiiii74181<S"s3"
+      ###################<S"s0"
+      ###################<s"s1"
+      ###################<s"s2"
+      #############i74181<S"s3"
       v v v v v     v v v
       l l l l l     l l l
      "f0f1= f2f3    g c p"
@@ -4647,10 +4637,10 @@ registerCircuit('74181 ALU', `
       v v v v v v v v v v
       o o O O O O O O O OI2
       v v v v v v v v v v
-      iiiiiiiiiiiiiiiiiii<s"s0"
-      iiiiiiiiiiiiiiiiiii<s"s1"
-      iiiiiiiiiiiiiiiiiii<s"s2"
-      iiiiiiiiiiiiii74181<s"s3"
+      ###################<s"s0"
+      ###################<s"s1"
+      ###################<s"s2"
+      #############i74181<s"s3"
       v v v v v     v v v
       O O o O O     O o O
       v v v v v     v v v
@@ -4662,10 +4652,10 @@ registerCircuit('74181 ALU', `
      "c m a0b0a1b1a2b2a3b3"
       s s s s s s s s s s
       v v v v v v v v v v
-      iiiiiiiiiiiiiiiiiii<s"s0"
-      iiiiiiiiiiiiiiiiiii<s"s1"
-      iiiiiiiiiiiiiiiiiii<s"s2"
-      iiiiiiiiiiiiiiiiii2<s"s3"
+      ###################<s"s0"
+      ###################<s"s1"
+      ###################<s"s2"
+      #################i2<s"s3"
       v v v v v     v v v
       l l l l l     l l l
      "f0f1= f2f3    g c p"
@@ -4777,11 +4767,11 @@ registerCircuit('16-bit adder with decimal IO', `
 
 0"Click with mouse in input field to move keyboard cursor there."
 
-TTTTTTTTTTTTTTTTT
+T################
 ^^^^^^^^^^^^^^^^^
-.iiiiiiiiiiiiiiiiiiiiiiiiiiiiiii16<c
+.##############################i16<c
  ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
- TTTTTTTTTTTTTTTT TTTTTTTTTTTTTTTT
+ T############### T###############
 
 
 0"(IC definitions below)"
@@ -4991,73 +4981,73 @@ registerCircuit('4-bit CPU', `
   3 0                              ^^^^
   g g                    ==========3210
   . .                    =         ||||
-  . .   3210============ =         MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<g17
-  . .   ||||           = =         MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<g18
+  . .   3210============ =         M############################################<g17
+  . .   ||||           = =         #############################################<g18
   . .   ||||"registers"= =         ^^^^                  ^^^^  ^^^^         ^^^^
   . .   ||||"memory"   = =         ||||     0g>c"carry"  ||||  ||||         ||||
-  . ...>iiiiilllli     = =         |||| 1  13g>yg19      ||||  ||||         ||||
-  .-+-->i"r0"^^^^i<b<0 = =         |||| 0   1g>Q         ||||  ||||         ||||
-  . . .>iiiiiiii32 # = = =         |||| g      d g10  8g>a|||  ||||         ||||
+  . ...>####illlli     = =         |||| 1  13g>yg19      ||||  ||||         ||||
+  .-+-->#"r0"^^^^#<b<0 = =         |||| 0   1g>Q         ||||  ||||         ||||
+  . . .>#######i32 # = = =         |||| g      d g10  8g>a|||  ||||         ||||
   . . . ^^^^       # = = =         |||| w      ^ v       ^|||  ||||         ||||
-  . ..+>iiiiilllli # = = =   ......++++>a----->o<a<..... g|||  ||||         ||||
-  .-+-+>i"r1"^^^^i<b<1 = =   .     ||||                . 1|||  ||||  98     ||||
-  . . .>iiiiiiii32 # = = =   .iiiiiii21<...e<a<g19     . 9|||  ||||  gg     ||||
+  . ..+>####illlli # = = =   ......++++>a----->o<a<..... g|||  ||||         ||||
+  .-+-+>#"r1"^^^^#<b<1 = =   .     ||||                . 1|||  ||||  98     ||||
+  . . .>#######i32 # = = =   .######i21<...e<a<g19     . 9|||  ||||  gg     ||||
   . . . ^^^^       # = = =    ^^^^ ^^^^    ^ ^         .  |||  ||||  vv     ||||
-  . ..+>iiiiilllli # = = =    |||| ii22<g9.. g8        ...|||  iiiiii23     ||||
-  .-+-+>i"r2"^^^^i<b<2 = =    |||| ^^^^                  ||||  ^^^^^^^^     ||||
-  . . .>iiiiiiii32 # = = = ===3210=7654==================0321==32107654=====7654==3210==
+  . ..+>####illlli # = = =    |||| #i22<g9.. g8        ...|||  #####i23     ||||
+  .-+-+>#"r2"^^^^#<b<2 = =    |||| ^^^^                  ||||  ^^^^^^^^     ||||
+  . . .>#######i32 # = = = ===3210=7654==================0321==32107654=====7654==3210==
   . . . ^^^^       # = = = =    "adder"             "shift"     "logic"           vvvv
-  . ..+>iiiiilllli # = = = =                                                      O###
-  .-+-+>i"r3"^^^^i<b<3 = = =     "ALU inputs"                                     v
-  . . .>iiiiiiii32 # = = = =======3210====7654                                    lg20 "zero"
+  . ..+>####illlli # = = = =                                                      O###
+  .-+-+>#"r3"^^^^#<b<3 = = =     "ALU #nputs"                                     v
+  . . .>#######i32 # = = = =======3210====7654                                    lg20 "zero"
   . . . ^^^^       # = = = =      ||||    ||||
-  . ..+>iiiiilllli # = = = =   "A"llll    llll"B"
-  .-+-+>i"r4"^^^^i<b = = = =      ^^^^    ^^^^
-  . . .>iiiiiiii32 # = = = =   0g>ii31 0g>ii31
-  . . . ^^^^       # = = = =   4g>iiii 5g>iiii
-  . ..+>iiiiilllli # = = = =   1g>iiii 1g>iiii
-  .-+-+>i"r5"^^^^i<b = = = =      ^^^^    ^^^^
-  . . .>iiiiiiii32 # = = = =      3210====3210
+  . ..+>####illlli # = = = =   "A"llll    llll"B"
+  .-+-+>#"r4"^^^^#<b = = = =      ^^^^    ^^^^
+  . . .>#######i32 # = = = =   0g>#i31 0g>#i31
+  . . . ^^^^       # = = = =   4g>#### 5g>####
+  . ..+>####illlli # = = = =   1g>#### 1g>####
+  .-+-+>#"r5"^^^^#<b = = = =      ^^^^    ^^^^
+  . . .>#######i32 # = = = =      3210====3210
   . . . ^^^^       # = = = =              ||||
-  . ..+>iiiiilllli # = = = =         MMMMMMMMM<a<g14
-  .-+-+>i"r6"^^^^i<b = = = =         ^^^^ ^^^^
-  . . .>iiiiiiii32 # = ==+=+=========3210 3210======
-  . . . ^^^^       # =   = =          "B imm"      =
-  . ..+>iiiiilllli # =   = =                       =
-  .---+>i"r7"^^^^i<b ====+=+=========3210          =
-      .>iiiiiiii32 #     = =         ||||"A ind"   =
-      . ^^^^       #     = =         MMMMMMMMM[g15 =
+  . ..+>####illlli # = = = =         M########<a<g14
+  .-+-+>#"r6"^^^^#<b = = = =         ^^^^ ^^^^
+  . . .>#######i32 # = ==+=+=========3210 3210======
+  . . . ^^^^       # =   = =          "B #mm"      =
+  . ..+>####illlli # =   = =                       =
+  .---+>#"r7"^^^^#<b ====+=+=========3210          =
+      .>#######i32 #     = =         ||||"A #nd"   =
+      . ^^^^       #     = =         M########[g15 =
       g ||||       #     = =         ^^^^ ^^^^     =
       1 ||||"user" #     = ==========3210 3210===============3210
-        MMMMMMMMMM<b     =                                   ||||
+        M#########<b     =                                   ||||
     "r8"^^^^ ^^^^  #     =                                   ||||"ABC"
-        |||| SSSS  #     =          "jump"                   MMMMMMMMMMMMMM<g5
-        ||||       #     =         ==3210                    MMMMMMMMMMMMMM<g6
-        MMMMMMMMMM<b     =         = ||||                    ^^^^ ^^^^ ^^^^
-    "r9"^^^^ ^^^^  #     =         = MMMMMMMMM[g16           |||| |||| c|||
+        |||| SSSS  #     =          "jump"                   M#############<g5
+        ||||       #     =         ==3210                    ##############<g6
+        M#########<b     =         = ||||                    ^^^^ ^^^^ ^^^^
+    "r9"^^^^ ^^^^  #     =         = M########[g16           |||| |||| c|||
         |||| sSSS  #     =         = ^^^^ ^^^^               |||| ||||  |||
         ||||       #     ==========+=3210 ||||          11   |||| |||| 1|||
-        MMMMMMMMMM<b     =         =      ||||          1098 |||| |||| 2|||
+        M#########<b     =         =      ||||          1098 |||| |||| 2|||
     "ra"^^^^ ^^^^  #     =         =     2||||          gggg |||| |||| g|||
         |||| ssSS  #     =         =     1||||"inc"     |||| |||| |||| ||||
         ||||       #     =         =     g||||"IP"      llll llll llll llll
-    "rb"MMMMMMMMMM<b     =         =     .ii20<C        ^^^^ ^^^^ ^^^^ ^^^^
+    "rb"M#########<b     =         =     .#i20<C        ^^^^ ^^^^ ^^^^ ^^^^
         ^^^^ ^^^^  #     =         =      ^^^^          |||| |||| |||| ||||"instruction ROM"0
         |||| sssS  #     =         =      ||||          |||| |||| |||| ||||"put program here"0
         ||||       #     =         =    .-.+++--------->bbbb#Bbbb#bbbb#bbbb"0 0000"
-    "rc"MMMMMMMMMM<b     =         =    |.-.++--------->bbbb#BbbB#bbbb#bbbB"1 0001"
+    "rc"M#########<b     =         =    |.-.++--------->bbbb#BbbB#bbbb#bbbB"1 0001"
         ^^^^ ^^^^  #     =         ="IP"||.-.+--------->bbbb#BbBb#bbbb#bbBb"2 0010"
         |||| ssss  #     =         =    |||.-.--------->bbbb#BbBB#bbbb#bbBB"3 0011"
-        ||||       #     =         = 0g>ii31            BBbB#bBbb#bBBb#bbbb"4 0100"
-    "rd"MMMMMMMMMM<b     =         = 7g>iiii            bbbb#BBBB#bbBB#bBbb"5 0101"
-        ^^^^ ^^^^  #     =         = 2g>iiii            bBBb#bBbb#bbbb#bBbB"6 0110"
+        ||||       #     =         = 0g>#i31            BBbB#bBbb#bBBb#bbbb"4 0100"
+    "rd"M#########<b     =         = 7g>####            bbbb#BBBB#bbBB#bBbb"5 0101"
+        ^^^^ ^^^^  #     =         = 2g>####            bBBb#bBbb#bbbb#bBbB"6 0110"
         |||| ssss  #     =         =    ^^^^            bbBb#bBbb#bbbB#bBbb"7 0111"
         ||||       #     =         =    llll            bBBb#bBbb#bbbb#bBBb"8 1000"
-    "rd"MMMMMMMMMM<b     =         =    ^^^^            bbBb#bBbB#bBBb#BBBB"9 1001"
-        ^^^^ ^^^^  #     =         = 0g>ii31            BBBb#bbbb#BBBb#bbbb"a 1010"
-        |||| ssss  #     =         = 6g>iiii            bBBB#bBbb#bBbB#Bbbb"b 1011"
-        ||||       #     =         = 1g>iiii            bbbb#bBbb#bbbB#bBBB"c 1100"
-    "rf"MMMMMMMMMM<b     =         =    ^^^^            bBBB#bBBB#bBBb#Bbbb"d 1101"
+    "rd"M#########<b     =         =    ^^^^            bbBb#bBbB#bBBb#BBBB"9 1001"
+        ^^^^ ^^^^  #     =         = 0g>#i31            BBBb#bbbb#BBBb#bbbb"a 1010"
+        |||| ssss  #     =         = 6g>####            bBBB#bBbb#bBbB#Bbbb"b 1011"
+        ||||       #     =         = 1g>####            bbbb#bBbb#bbbB#bBBB"c 1100"
+    "rf"M#########<b     =         =    ^^^^            bBBB#bBBB#bBBb#Bbbb"d 1101"
         ^^^^ ^^^^        =         =====3210            BBbb#BBBB#bBbb#bbbb"e 1110"
         |||| ssss        =                              bbbb#bbbb#bbbb#bbbb"f 1111"
         ||||             =                                                 "      "
@@ -5119,8 +5109,8 @@ registerCircuit('4-bit CPU', `
 
                   llll                                                          s sI23
                   ^^^^                                                          . .
-                  MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<. |
-                  MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<--.
+                  M############################################################<. |
+                  #############################################################<--.
                   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^
                   a<. a<. a<. a<. A<. A<. A<. A<. o<. o<. o<. o<. e<. e<. e<. e<.
                   ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ .
@@ -5134,22 +5124,22 @@ registerCircuit('4-bit CPU', `
            l   l   l   lI31                        "bus"
            ^   ^   ^   ^                           llllI32
          ==+===+===+===+=                          ^^^^
-     "c"s0>c 0>c 0>c 0>c                      MMMMMMMMM<. llll"state"
+     "c"s0>c 0>c 0>c 0>c                      M########<. llll"state"
      "e"s1>y 1>y 1>y 1>y                      ^^^^ ^^^^ . ^^^^
      "r"s2>Q 2>Q 2>Q 2>Q                 =====3210 3210=+=3210
            d   d   d   d                 =         |||| .
            ^   ^   ^   ^               ..+.........++++....s"en. r/w"
            s   s   s   s               . =         ||||
-                                       v = s>iiiiiiii31
-                              "en. w"s>a-+-->iiiiiiiiii
-                                         = s>iiiiiiiiii
+                                       v = s>#######i31
+                              "en. w"s>a-+-->##########
+                                         = s>##########
                                          =         ^^^^
                                          ==========3210
                                                    ssss
 
 
 
-"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"3
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 0"4-bit CPU information"
 

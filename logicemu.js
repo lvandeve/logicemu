@@ -173,6 +173,14 @@ function clone(obj) {
   throw new Error('Cloning this object not supported.');
 }
 
+function mergeMaps(a, b) {
+  var c = clone(a);
+  for(var k in b) {
+    if(b.hasOwnProperty(k)) c[k] = b[k];
+  }
+  return c;
+}
+
 function getCGIParameterByName(name, opt_url) {
   var url = opt_url || window.location.href;
   name = name.replace(/[\[\]]/g, "\\$&");
@@ -378,7 +386,7 @@ var TYPE_index = 0;
 var TYPE_NULL = TYPE_index++; // uninited
 var TYPE_LOOSE_WIRE_EXPLICIT = TYPE_index++; // it has no core, it's just a loose wire, always outputs 0 (in real life, would be "floating" instead)
 var TYPE_LOOSE_WIRE_IMPLICIT = TYPE_index++; // like TYPE_LOOSE_WIRE_EXPLICIT, but without any explicit added things like -, |, ^, ..., only implicit part of +, x, X, ...
-var TYPE_UNKNOWN_DEVICE = TYPE_index++; // e.g. a # without proper core cell
+var TYPE_UNKNOWN_DEVICE = TYPE_index++; // unknown device, which has only device extenders '#', no core. May become one or more TYPE_VTE, TYPE_ROM, ... in a later parsing step if it was a # that extends such device. But for others like AND gate, it will not become a TYPE_UNKNOWN_DEVICE but already be part of TYPE_AND initially (but the big types like VTE need multiple components due to multiple outputs)
 var TYPE_SWITCH_OFF = TYPE_index++;
 var TYPE_SWITCH_ON = TYPE_index++;
 var TYPE_LED = TYPE_index++;
@@ -444,8 +452,9 @@ var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 's'
                  'S':true, 'l':true, 'G':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
                  'b':true, 'B':true, 'M':true, 'i':true, 'T':true, 'z':true, 'Z':true, '?':true};
+var specialextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#T':true}; // special extenders for large devices (not all of those are used yet)
 // devicemap as well as # (with extends devices)
-var devicemaparea = clone(devicemap); devicemaparea['#'] = true;
+var devicemaparea = mergeMaps(devicemap, specialextendmap); devicemaparea['#'] = true;
 var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true};
 var rommap = {'b':true, 'B':true};
 var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true};
@@ -460,7 +469,7 @@ var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x'
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
                 '#':true, '=':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
-                'z':true, 'Z':true, '?':true, 'toc':true};
+                'z':true, 'Z':true, '?':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#T':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
 var defsubs = {}; // key is number of the sub (but those are not consecutive like in an array, e.g. one could make a I555 and the index would be 555)
@@ -805,8 +814,10 @@ function CallSub(id) {
 
   // must be called after components were parsed and inputs resolved
   this.init = function(parent) {
-    if(this.inited) return;
+    if(this.inited) return true;
     this.inited  = true;
+    var alreadyerror = this.error; // already error, but try to parse anyway, so that it can find the components to which to set this error
+    if(alreadyerror) this.error = false;
 
     // these inputs and outputs are the world components. For the internal components, defsub.inputs/outputs can be used. They should have the exact same order and amount
     // inputs are component that sends the input to us; x,y is where the device input is
@@ -899,6 +910,8 @@ function CallSub(id) {
       this.markError('unequal outputs amount in ' + this.subindex + ': IC instance: ' + outputs.length + ', IC template: ' + defsub.outputs.length);
       return false;
     }
+
+    if(alreadyerror && !this.error) this.markError(this.errormessage);
 
     return true; // ok
   };
@@ -1772,7 +1785,7 @@ function Mux() {
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
-        if(c.circuitsymbol == 'M') {
+        if(c.circuitsymbol == 'M' || c.circuitsymbol == '#M') {
           this.master = c.components[0] || c.components[1];
           break;
         }
@@ -2042,7 +2055,7 @@ function Mux() {
       var y = side[1] + side[3] * j;
       var z = side[4];
       var c = world[y][x];
-      if(c.circuitsymbol != 'M' && c.circuitsymbol != '#') continue;
+      if(c.circuitsymbol != 'M' && c.circuitsymbol != '#M') continue;
       if(c.components[z]) c.components[z].rom_out_pos = rompos++;
     }
 
@@ -2056,7 +2069,7 @@ function Mux() {
       var y = side[1] + side[3] * j;
       var z = side[4];
       var c = world[y][x];
-      if(c.circuitsymbol != 'M' && c.circuitsymbol != '#') continue;
+      if(c.circuitsymbol != 'M' && c.circuitsymbol != '#M') continue;
       if(c.components[z]) c.components[z].rom_out_pos = rompos++;
     }
   };
@@ -2297,7 +2310,7 @@ function VTE() {
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
-        if(c.symbol != 'T') return false;
+        if(c.circuitsymbol != 'T' && c.circuitsymbol != '#T') return false;
         if(c.components[0]) {
           this.master = c.components[0];
           this.master_orig_x = x;
@@ -4023,7 +4036,9 @@ function Cell() {
   this.commentlength2 = 0; // including any quotes or styling numbers
   this.antennax = -1; // horizontal matching antenna, if any
   this.antennay = -1; // vertical matching antenna, if any
-  this.drawchip = false; // when drawing the 'i' of a chip in canvas mode, only do it if this is true, it indicates a good looking "core" cell for it (next to number, ...)
+  this.drawchip = false; // TODO: this feature is now ignored! stop setting this field and remove it. -- when drawing the 'i' of a chip in canvas mode, only do it if this is true, it indicates a good looking "core" cell for it (next to number, ...)
+  this.isvte = false; // for drawing
+  this.clusterindex = -1; // for components connected together with extenders '#'
 
   this.renderer = null;
   this.clickFun = null;
@@ -4048,7 +4063,7 @@ function Cell() {
       value = false;
     }
 
-    if(this.circuitsymbol == 'T') {
+    if(this.isvte) {
       var master = this.components[0];
       if(!master) return;
       if(master.master) master = master.master;
@@ -4088,7 +4103,7 @@ function Cell() {
     var c = this.circuitsymbol;
     var symbol = this.displaysymbol;
     var virtualsymbol = symbol;
-    if((symbol == '#') && this.components[0]) {
+    if(symbol == '#' && this.components[0]) {
       // TODO: use "typesymbols"
       if(this.components[0].type == TYPE_SWITCH_ON) virtualsymbol = 'S';
       if(this.components[0].type == TYPE_SWITCH_OFF) virtualsymbol = 's';
@@ -4101,8 +4116,9 @@ function Cell() {
       if(this.components[0].type == TYPE_VTE) virtualsymbol = 'T';
       if(this.components[0].type == TYPE_MUX) virtualsymbol = 'M';
     }
-    if((symbol == '#') && this.components[1]) {
+    if(symbol == '#' && this.components[1]) {
       if(this.components[1].type == TYPE_MUX) virtualsymbol = 'M';
+      if(this.components[1].type == TYPE_VTE) virtualsymbol = 'T';
     }
 
 
@@ -4297,7 +4313,7 @@ function Cell() {
         console.log('CLICKDEBUG enabled!');
         console.log('===================');
         var w = world[y][x];
-        var s = 'x: ' + x + ', y: ' + y + ', circuitsymbol: ' + w.circuitsymbol;
+        var s = 'x: ' + x + ', y: ' + y + ', circuitsymbol: ' + w.circuitsymbol + ' | clusterindex: ' + w.clusterindex;
         if(w.number >= -2) s += ', number: ' + w.number;
         console.log(s);
         if(w.antennax != -1 || w.antennay != -1) console.log('antennax: ' + w.antennax + ', antennay: ' + w.antennay);
@@ -4874,8 +4890,7 @@ function sameDevice(x, y, dir) {
   var y2 = n.y;
   var c = world[y][x].circuitsymbol;
   var c2 = world[y2][x2].circuitsymbol;
-  if(c == 'M' && c2 == 'M') return true;
-  if(c == 'i' && c2 == 'i') return true;
+
   if((c == 'b' || c == 'B') && (c2 == 'b' || c2 == 'B')) return true;
   /*if(c == 'c' && c2 == 'c') {
     return !!world[y][x].ff && (world[y][x].ff == world[y2][x2].ff);
@@ -4889,9 +4904,8 @@ function sameDevice(x, y, dir) {
     return !!ff1 && ff1 == ff2;
   }
   if(devicemap[c] && devicemap[c2]) return false;
-  //if(c == '#' || c2 == '#') return true;
-  if((c == '#') && (devicemaparea[c2])) return true;
-  if((c2 == '#') && (devicemaparea[c])) return true;
+  if((c == '#' || specialextendmap[c]) && (devicemaparea[c2])) return true;
+  if((c2 == '#' || specialextendmap[c2]) && (devicemaparea[c])) return true;
   return false;
 }
 
@@ -6394,8 +6408,11 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
         }
         var okdraw = true;
-        if(c == '#') okdraw = false;
-        if(c == 'i' && !(cell.drawchip || digitmap[cell.metasymbol])) okdraw = false;
+        if(c == '#' || specialextendmap[c]) {
+          okdraw = false;
+          if(c == '#i' && digitmap[cell.metasymbol]) okdraw = true; // do still draw chip numbers
+        }
+        //if((c == 'i') && !(cell.drawchip || digitmap[cell.metasymbol])) okdraw = false;
         if(okdraw) {
           /*ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -7822,12 +7839,15 @@ function parseSubs() {
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
       if(used[y0][x0]) continue;
-      if(world[y0][x0].circuitsymbol != 'i') continue;
+      var c0 = world[y0][x0].circuitsymbol;
+      if(c0 != 'i') continue;
 
       var stack = [[x0, y0]];
       used[y0][x0] = true;
 
       var array = [];
+
+      var error = false;
 
       var subindex = -2; // >= -1 means actual sub
 
@@ -7842,7 +7862,7 @@ function parseSubs() {
         var y = s[1];
         if(x < 0 || x >= w || y < 0 || y >= h) continue;
         var c = world[y][x].circuitsymbol;
-        if(c != '#' && c != 'i' && !digitmap[c]) continue; // we only care about i, # and digits, they form a group, the 'i' component
+
         array.push(s);
 
         if(c == 'i') {
@@ -7880,6 +7900,10 @@ function parseSubs() {
           var y2 = y + ((i == 0 || i == 4 || i == 7) ? -1 : ((i == 2 || i == 5 || i == 6) ? 1 : 0));*/
           if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
           if(used[y2][x2]) continue;
+          var c2 = world[y2][x2].circuitsymbol;
+          if(c != 'i' && c2 != 'i' && devicemap[c2]) error = true;
+          if(c2 != '#' && c2 != 'i' && !digitmap[c2]) continue; // we only care about i, # and digits, they form a group, the 'i' component
+          if(c == 'i' && c2 == 'i') continue; // i's don't interact with each other
           stack.push([x2, y2]);
           used[y2][x2] = true;
         }
@@ -7896,9 +7920,13 @@ function parseSubs() {
           world[y][x].callsubindex = subindex;
           world[y][x].callsub = callsub;
           // Unlike other digits, those for ICs become extenders of the IC component, and
-          // extenders should also be marked with a 'i' because we will treat them all
+          // extenders should also be marked with a '#i' because we will treat them all
           // specially in the "connected" function, which takes only the circuitsymbol character as input.
-          world[y][x].circuitsymbol = 'i';
+          if(world[y][x].circuitsymbol != 'i') world[y][x].circuitsymbol = '#i';
+          if(error) {
+            world[y][x].error = true;
+            callsub.markError('chip area extension error');
+          }
           callsub.cells.push([x, y]);
         }
         if(drawchip) drawchip.drawchip = true;
@@ -7933,7 +7961,8 @@ function parseSubs() {
         var x = s[0];
         var y = s[1];
         if(x < 0 || x >= w || y < 0 || y >= h) continue;
-        var c = world[y][x].metasymbol;
+        var c = world[y][x].metasymbol; // TODO: do we need metasymbol at all, or can drop cc below and just do c = circuitsymbol?
+        var cc = world[y][x].circuitsymbol;
         if(!knownmap[c] && !digitmap[c] && c != 'I' && world[y][x].symbol != '@') continue; // it's an isolator
         array.push(s);
 
@@ -7955,7 +7984,7 @@ function parseSubs() {
           }
         }
 
-        if(c == 'i') {
+        if(c == 'i' || cc == '#i') {
           called[world[y][x].callsubindex] = true;
         }
 
@@ -8218,10 +8247,8 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
 
   if(todir <= 3 && (c == 'x' || c2 == 'x')) return false; // x's do not interact with the sides
 
-  if(z > 3 && c != 'i') return false;
-  if(z > 1 && !(c == 'i' || c == 'X' || c2 == 'X' || c == 'Y' || c2 == 'Y' || c == '*' || c2 == '*')) return false;
-
-  //if(c == 'i' && c2 != 'i') return false; // connecting sub-calls is implemented later. And full subs are marked with 'i' earlier, so u's connect only with u's.
+  if(z > 3 && c != 'i' && c != '#i') return false;
+  if(z > 1 && !(c == 'i' || c == '#i' || c == 'X' || c2 == 'X' || c == 'Y' || c2 == 'Y' || c == '*' || c2 == '*')) return false;
 
   if(c == '-' && (todir2 == 0 || todir2 == 2 || todir2 >= 4)) return false;
   if(c == '|' && (todir2 == 1 || todir2 == 3 || todir2 >= 4)) return false;
@@ -8231,16 +8258,9 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   // Multi-part devices like flip-flop should not have their individual cells connected,
   // they are initially all their own device (to be able to handle multiple inputs), so
   // don't let device extenders extend those here yet.
-  if(c == 'T' && (c2 == '#')) return false;
-  if(c2 == 'T' && (c == '#')) return false;
-  if(c == 'M' && (c2 == '#')) return false;
-  if(c2 == 'M' && (c == '#')) return false;
-  if(ffmap[c] && (c2 == '#')) return false;
-  if(ffmap[c2] && (c == '#')) return false;
-  if(rommap[c] && (c2 == '#')) return false;
-  if(rommap[c2] && (c == '#')) return false;
-  if(c == 'i' && (c2 == '#')) return false;
-  if(c2 == 'i' && (c == '#')) return false;
+  if(devicemap[c] && specialextendmap[c2]) return false;
+  if(devicemap[c2] && specialextendmap[c]) return false;
+  if(specialextendmap[c] && specialextendmap[c2]) return false;
 
   if(!knownmap[c2]) return false; // it's an isolator
 
@@ -8309,8 +8329,8 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(((dinputmap[c] && inputmap[c2]) || (inputmap[c] && dinputmap[c2]))) return false; // inputs don't interact, including not > with V, but V with V do interact
   if(devicemap[c] && devicemap[c2]) return false; // device cores don't interact
 
-  if(c == 'i' && z != todir) return false;
-  if(c == 'M') {
+  if((c == 'i' || c == '#i') && z != todir) return false;
+  if(c == 'M' || c == '#M') {
     if((todir == 0 || todir == 2) && z != 1) return false;
     if((todir == 1 || todir == 3) && z != 0) return false;
     if(todir > 3) return false;
@@ -8364,11 +8384,11 @@ function getZ2(c, c2, ce, ce2, todir, z) {
   if(c2 == '%' && (todir2 == 1 || todir2 == 2)) z2 = 1;
   if(c2 == '&' && (todir2 == 3 || todir2 == 2)) z2 = 1;
   if(c2 == 'x' && (todir == 5 || todir == 7)) z2 = 1;
-  if(c2 == 'i') {
+  if(c2 == 'i' || c2 == '#i') {
     if(todir < 4) z2 = ((todir + 2) & 3);
     else z2 = 4 + ((todir + 2) & 3);
   }
-  if(c2 == 'M') {
+  if(c2 == 'M' || c2 == '#M') {
     if(todir == 0 || todir == 2) z2 = 1;
   }
   if(dinputmap[c2] && ce2 == 2) {
@@ -8629,9 +8649,140 @@ function parseComponents() {
     }
   }
 
+
+
+
+  // PASS 1: big device and extension ('#') clusters
+  var clusterindex = 0;
+  used = initUsed3();
+  for(var y0 = 0; y0 < h; y0++) {
+    for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
+      if(used[y0][x0][0]) continue;
+      var c0 = world[y0][x0].circuitsymbol;
+      if(c0 == '#') continue;
+      if(!devicemap[c0]) continue;
+      if(c0 == 'i') continue; // this one is currently handled in parseSubs instead
+
+      var stack = [[x0, y0, 0]];
+      used[y0][x0][0] = true;
+      var rom = false;
+      var mux = false;
+      var vte = false;
+      var ff = false;
+      var other = false;
+      var error = false;
+      var array = [];
+
+      if(ffmap[c0]) ff = true;
+      else if(rommap[c0]) rom = true;
+      else if(c0 == 'T') vte = true;
+      else if(c0 == 'M') mux = true;
+      else other = true;
+
+      while (stack.length) {
+        var s = stack.pop();
+        var x = s[0];
+        var y = s[1];
+        var z = s[2];
+        if(x < 0 || x >= w || y < 0 || y >= h) continue;
+        var c = world[y][x].circuitsymbol;
+        var ce = world[y][x].circuitextra;
+
+        array.push(s);
+
+        // neighbors
+        for(var i = 0; i < 8; i++) { // N, E, S, W ; NE, SE, SW, NW
+          var x2 = x + ((i == 1 || i == 4 || i == 5) ? 1 : ((i == 3 || i == 6 || i == 7) ? -1 : 0));
+          var y2 = y + ((i == 0 || i == 4 || i == 7) ? -1 : ((i == 2 || i == 5 || i == 6) ? 1 : 0));
+          if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
+          var c2 = world[y2][x2].circuitsymbol;
+          var ce2 = world[y2][x2].circuitextra;
+
+          /*if(ff && i >= 4) continue;
+          if(rom && i >= 4) continue;
+          if(vte && i >= 4) continue;
+          if(mux && i >= 4) continue;*/
+          if(i >= 4) continue;
+
+          var z2 = getZ2(c, c2, ce, ce2, i, z); // z coordinate for the neighbor
+          if(used[y2][x2][z2]) continue;
+
+          // don't allow any flip-flop parts of the same type to touch, only different types will mix together to form one bigger component
+          // this also ensures standalone d's (delay) or c's (clock) don't interact with each other
+          if(ffmap[c] && c == c2) continue;
+
+          if(c2 != '#') {
+            if(ff) {
+              if(!ffmap[c2] && c2 != '#') continue;
+              if((c == 'c' || c == 'C') && (c2 == 'c' || c2 == 'C')) continue; //c and C also don't connect in flip-flops, only different types
+            }
+            else if(rom) {
+              if(!rommap[c2] && c2 != '#') continue;
+            }
+            else if(vte) {
+              if(c == '#' && c2 != 'T' && devicemap[c2]) error = true; // the extension # touches another device type
+              if(c != '#' || c2 != 'T') continue; // device cells don't interact (e.g. no T with T), plus we also ignore any other cells like wires, ...
+            }
+            else if(mux) {
+              if(c == '#' && c2 != 'M' && devicemap[c2]) error = true; // the extension # touches another device type
+              if(c != '#' || c2 != 'M') continue; // device cells don't interact (e.g. no M with M), plus we also ignore any other cells like wires, ...
+            }
+            else {
+              //if(c == '#' && c2 != c && devicemap[c2]) error = true; // error already found in other way further on
+              if(c != '#' || c2 != c0) continue; // device cells don't interact (e.g. no a with a), plus we also ignore any other cells like wires, ...
+            }
+          }
+
+          stack.push([x2, y2, z2]);
+          used[y2][x2][z2] = true;
+        }
+
+        if(mux) {
+          var x2 = x;
+          var y2 = y;
+          var z2 = (z == 0) ? 1 : 0;
+          if(!used[y2][x2][z2]) {
+            stack.push([x2, y2, z2]);
+            used[y2][x2][z2] = true;
+          }
+        }
+
+        handleBackPlaneConnections(used, stack, x, y, z);
+        handleJunctionConnections(used, stack, x, y);
+      }
+
+      for(var i = 0; i < array.length; i++) {
+        var x = array[i][0];
+        var y = array[i][1];
+        if(other) {
+          // nothing to do
+        } else {
+          if(world[y][x].circuitsymbol == '#') {
+            if(ff) world[y][x].circuitsymbol = '#c';
+            if(mux) world[y][x].circuitsymbol = '#M';
+            if(vte) world[y][x].circuitsymbol = '#T';
+            if(rom) world[y][x].circuitsymbol = '#b';
+          } else {
+            world[y][x].bigdevicearray = array;
+          }
+          if(vte) world[y][x].isvte = true;
+        }
+        if(error) world[y][x].error = true;
+      }
+      if(array.length > 1) {
+        for(var i = 0; i < array.length; i++) {
+          var x = array[i][0];
+          var y = array[i][1];
+          world[y][x].clusterindex = clusterindex;
+        }
+        clusterindex++;
+      }
+    }
+  }
+
   logPerformance('parseComponents pass 1 begin');
 
-  // PASS 1: parse all components
+  // PASS 2: parse all components
   used = initUsed3();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
@@ -8675,7 +8826,31 @@ function parseComponents() {
 
           array.push(s);
 
-          if(devicemap[c]) {
+          if(devicemap[c] || specialextendmap[c]) {
+            var type2 = TYPE_NULL;
+            if(c == 's') type2 = TYPE_SWITCH_OFF;
+            if(c == 'S') type2 = TYPE_SWITCH_ON;
+            if(c == 'l') type2 = TYPE_LED;
+            if(c == 'G') type2 = TYPE_LED_RGB;
+            if(c == 'p') type2 = TYPE_PUSHBUTTON_OFF;
+            if(c == 'P') type2 = TYPE_PUSHBUTTON_ON;
+            if(c == 'r') type2 = TYPE_TIMER_OFF;
+            if(c == 'R') type2 = TYPE_TIMER_ON;
+            if(c == 'a') type2 = TYPE_AND;
+            if(c == 'A') type2 = TYPE_NAND;
+            if(c == 'o') type2 = TYPE_OR;
+            if(c == 'O') type2 = TYPE_NOR;
+            if(c == 'e') type2 = TYPE_XOR;
+            if(c == 'E') type2 = TYPE_XNOR;
+            if(c == 'b' || c == 'B' || c == '#b') type2 = TYPE_ROM;
+            if(c == 'M' || c == '#M') type2 = TYPE_MUX;
+            if(c == 'i' || c == '#i') type2 = TYPE_IC;
+            if(c == 'T' || c == '#T') type2 = TYPE_VTE;
+            if(c == 'z') type2 = TYPE_TRISTATE;
+            if(c == 'Z') type2 = TYPE_TRISTATE_INV;
+            if(c == '?') type2 = TYPE_RANDOM;
+            if(ffmap[c] || c == '#c') type2 = TYPE_FLIPFLOP;
+
             if(type != TYPE_NULL && type != TYPE_UNKNOWN_DEVICE) {
               var ok = false;
               // allow input that touches same special shaped chip with multiple sides
@@ -8683,6 +8858,7 @@ function parseComponents() {
               if(world[y][x].callsub != null && world[y][x].callsub == corecell.callsub) ok = true;
               if(type == TYPE_TRISTATE && c == 'z') ok = true;
               if(type == TYPE_TRISTATE_INV && c == 'Z') ok = true;
+              if(corecell && corecell.clusterindex >= 0 && corecell.clusterindex == world[y][x].clusterindex && type == type2) ok = true;
               if(!ok) {
                 if((type == TYPE_TRISTATE && c == 'Z') || (type == TYPE_TRISTATE_INV && c == 'z')) {
                   errormessage = 'error: cannot mix low and high tristate buffers (z and Z)';
@@ -8694,34 +8870,17 @@ function parseComponents() {
                 error = true;
               }
             }
-            corecell = world[y][x];
-            if(c == 's') type = TYPE_SWITCH_OFF;
-            if(c == 'S') type = TYPE_SWITCH_ON;
-            if(c == 'l') type = TYPE_LED;
-            if(c == 'G') type = TYPE_LED_RGB;
-            if(c == 'p') type = TYPE_PUSHBUTTON_OFF;
-            if(c == 'P') type = TYPE_PUSHBUTTON_ON;
-            if(c == 'r') type = TYPE_TIMER_OFF;
-            if(c == 'R') type = TYPE_TIMER_ON;
-            if(c == 'a') type = TYPE_AND;
-            if(c == 'A') type = TYPE_NAND;
-            if(c == 'o') type = TYPE_OR;
-            if(c == 'O') type = TYPE_NOR;
-            if(c == 'e') type = TYPE_XOR;
-            if(c == 'E') type = TYPE_XNOR;
-            if(c == 'b' || c == 'B') type = TYPE_ROM;
-            if(c == 'M') type = TYPE_MUX;
-            if(c == 'i') type = TYPE_IC;
-            if(c == 'T') type = TYPE_VTE;
-            if(c == 'z') type = TYPE_TRISTATE;
-            if(c == 'Z') type = TYPE_TRISTATE_INV;
-            if(c == '?') type = TYPE_RANDOM;
-            if(ffmap[c]) type = TYPE_FLIPFLOP;
+
+            if(!corecell) {
+              corecell = world[y][x];
+              if(type2 != TYPE_NULL) type = type2;
+            }
           }
 
           if(c == 'toc') type = TYPE_TOC;
 
           if(type == TYPE_NULL && (c == '#')) type = TYPE_UNKNOWN_DEVICE;
+          if(type == TYPE_NULL && specialextendmap[c]) type = TYPE_UNKNOWN_DEVICE;
           if(world[y][x].number >= 0 && devicemaparea[c]) {
             // TODO: check if the above if really needs devicemaparea instead of just devicemap,
             // because numbers currently don't interact with # anyway (for e.g. chip, led, ...)
@@ -8840,13 +8999,14 @@ function parseComponents() {
 
   logPerformance('parseComponents pass 2 begin');
 
-  // PASS 2, now to resolve devices made out of multiple devices (ROM, VTE, FF). TODO: remove more code duplication
+  // PASS 3, now to resolve devices made out of multiple devices (ROM, VTE, FF). TODO: remove more code duplication
   used = initUsed3();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
       if(used[y0][x0][0]) continue;
       var c0 = world[y0][x0].circuitsymbol;
       //if(c0 == '#') continue; // this is so that we will NOT start parsing with a symbol of which we do not know what component it is. Start with b or B for example so we know it's ROM and correctly handle # extending it (otherwise bug if top row is #)
+      if(c0 == '#' || specialextendmap[c0]) continue;
 
       var stack = [[x0, y0, 0]];
       used[y0][x0][0] = true;
@@ -8864,75 +9024,13 @@ function parseComponents() {
       else if(c0 == 'M' && world[y0][x0].components[1] && world[y0][x0].components[1].type == TYPE_MUX) mux = true;
       else continue;
 
-      while (stack.length) {
-        var s = stack.pop();
-        var x = s[0];
-        var y = s[1];
-        var z = s[2];
-        if(x < 0 || x >= w || y < 0 || y >= h) continue;
-        var c = world[y][x].circuitsymbol;
-        var ce = world[y][x].circuitextra;
-        if(!knownmap[c] || world[y][x].comment) continue; // it's an isolator
+      array = world[y0][x0].bigdevicearray;
 
-        /*if(ff && !ffmap[c] && c != '#') continue;
-        if(vte && c != 'T' && c != '#') continue;
-        if(mux && c != 'M' && c != '#') continue;
-        if(rom && !rommap[c] && c != '#') continue;*/
-
-        array.push(s);
-
-        // neighbors
-        for(var i = 0; i < 8; i++) { // N, E, S, W ; NE, SE, SW, NW
-          var x2 = x + ((i == 1 || i == 4 || i == 5) ? 1 : ((i == 3 || i == 6 || i == 7) ? -1 : 0));
-          var y2 = y + ((i == 0 || i == 4 || i == 7) ? -1 : ((i == 2 || i == 5 || i == 6) ? 1 : 0));
-          if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
-          var c2 = world[y2][x2].circuitsymbol;
-          var ce2 = world[y2][x2].circuitextra;
-
-          if(ff && i >= 4) continue;
-          if(rom && i >= 4) continue;
-          if(vte && i >= 4) continue;
-          if(mux && i >= 4) continue;
-
-          var z2 = getZ2(c, c2, ce, ce2, i, z); // z coordinate for the neighbor
-          if(used[y2][x2][z2]) continue;
-
-          // don't allow any flip-flop parts of the same type to touch, only different types will mix together to form one bigger component
-          // this also ensures standalone d's (delay) or c's (clock) don't interact with each other
-          if(ffmap[c] && c == c2) continue;
-
-          //if(c2 != '#') {
-            if(ff && !ffmap[c2] && c2 != '#') continue;
-            if(ff && (c == 'c' || c == 'C') && (c2 == 'c' || c2 == 'C')) continue; //c and C also don't connect in flip-flops, only different types
-            if(rom && !rommap[c2] && c2 != '#') continue;
-            if(vte && c2 != 'T') continue;
-            if(mux && c2 != 'M') continue;
-          //}
-
-          /*if(!rom && !vte && !ff && !mux) {
-            if(!connected(c, c2, ce, ce2, i, z, z2)) continue;
-            var fromdir = (i <= 3) ? ((i + 2) & 3) : (4 + ((i - 2) & 3));
-            if(!connected(c2, c, ce2, ce, fromdir, z2, z)) continue;
-            // in addition, for this search we don't go through devices, or other ff elements or extensions
-            if(devicemaparea[c] || devicemaparea[c2]) continue;
-          }*/
-
-          stack.push([x2, y2, z2]);
-          used[y2][x2][z2] = true;
-        }
-
-        if(c == 'M') {
-          var x2 = x;
-          var y2 = y;
-          var z2 = (z == 0) ? 1 : 0;
-          if(!used[y2][x2][z2]) {
-            stack.push([x2, y2, z2]);
-            used[y2][x2][z2] = true;
-          }
-        }
-
-        handleBackPlaneConnections(used, stack, x, y, z);
-        handleJunctionConnections(used, stack, x, y);
+      for(var i = 0; i < array.length; i++) {
+        var x = array[i][0];
+        var y = array[i][1];
+        var z = array[i][2];
+        used[y][x][z] = true;
       }
 
       if(rom) {
@@ -9018,7 +9116,7 @@ function parseComponents() {
     }
   }
 
-  // pass 3: now resolve inputs and outputs of all components
+  // pass 4: now resolve inputs and outputs of all components
   var inputused = initUsed2();
   for(var i = 0; i < components.length; i++) {
     var component = components[i];
