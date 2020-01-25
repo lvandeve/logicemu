@@ -2308,6 +2308,25 @@ function Mux() {
   };
 }
 
+// for BigInt only. Raises a^b with the result modulo (1 << bits)
+// this is faster than using a ** b directly (which could have enormous amount
+// of digits, e.g. 315K digits for 65536n ** 65536n) and taking the modulo
+// only at the end.
+// NOTE: can't use 'n' suffix of numbers, like 1n, or browsers without BigInt
+// support will refuse to parse this JavaScript file. So BigInt(1) is used.
+function modpow(a, b, bits) {
+  var n1 = BigInt(1);
+  var mask = (n1 << BigInt(bits)) - n1;
+  var c = n1;
+  a &= mask;
+  while(b > 0) {
+    if(b & n1) c = ((c * a) & mask);
+    b >>= n1;
+    a = ((a * a) & mask);
+  }
+  return c;
+}
+
 
 
 // Arithmetic Logic Unit ('U')
@@ -2714,7 +2733,18 @@ function Alu() {
         // avoid too huge BigInt value giving problems and slow computation
         if(a == 1 || b == 0) c = n1;
         else if(b == 1) c = a;
-        else c = n0;
+        else {
+          if(usebigint) {
+            var neg = a < 0;
+            if(neg) a = -a;
+            c = modpow(a, b, this.numc);
+            if(neg && (a & n1)) {
+              c = -c;
+            }
+          } else {
+            overflow = true;
+          }
+        }
       } else {
         if(b < 0) {
           if(a == 0) {
