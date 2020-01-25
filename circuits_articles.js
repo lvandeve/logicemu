@@ -1890,13 +1890,27 @@ s..>c....>l
 0"T flip-flop"
 
 0"Despite 'c' being a single-input T flip-flop, two c's are needed to use it"
-0"for one with separate T and clock input."
+0"for one with separate T and clock input
 
 "T" s..>e<.
         v .
         a>c>a>c....>l
         m   ^
 "C" s........
+
+0"The reason it's not possible like that with one 'c' is, if you would make"
+0"the clock only toggle the 'c' if T is enabled, with an AND gate, then"
+0"enabling T while the clock is already on, would also toggle it, but an edge"
+0"triggered flip-flop may only trigger on a clock edge."
+
+0"A technique with a short clock pulse allows to do it with a single 'c', but"
+0"this depends on precise timing so is not as stable:"
+
+"T" s.....>a>c..>l
+           ^
+"C" s...>d]a
+       .   ^
+       .....
 
 0"SR flipflop"
 
@@ -2148,9 +2162,9 @@ s....>e..>l
 
 "a"s..>i..>l2
        #
-"0"c..>#..>l2
+"0"f..>#..>l2
        #
-"1"C..>#..>l 0"not a"
+"1"F..>#..>l 0"not a"
 
 0"## AND"
 
@@ -2158,7 +2172,7 @@ s....>e..>l
        #
 "b"s..>#..>l2
        #
-"0"c..>#..>l 0"a and b"
+"0"f..>#..>l 0"a and b"
 
 0"## NAND"
 
@@ -2170,9 +2184,9 @@ s....>e..>l
        #
 "b"s..>#. .>i.....>l2
        # x  #
-"0"c..>#. .>#.....>l2
+"0"f..>#. .>#.....>l2
             #
-"1"C.......>#.....>l 0"a nand b"
+"1"F.......>#.....>l 0"a nand b"
 
 0"Nicer version if NOT can be used:"
 
@@ -2180,7 +2194,7 @@ s....>e..>l
        #
 "b"s..>#......>l2
        #
-"0"c..>#..>O..>l 0"a nand b"
+"0"f..>#..>O..>l 0"a nand b"
 
 
 0"## OR"
@@ -2189,7 +2203,7 @@ s....>e..>l
        #
 "b"s..>#..>l 0"a or b"
        #
-"1"C..>#..>l2
+"1"F..>#..>l2
 
 
 
@@ -2197,11 +2211,11 @@ s....>e..>l
 
 "a"s..>i..........>l2
        #
-"1"C..>#. .>i.....>l2
+"1"F..>#. .>i.....>l2
        # x  #
 "b"s..>#. .>#.....>l 0"a nor b"
             #
-"0"c.......>#.....>l2
+"0"f.......>#.....>l2
 
 0"Nicer version if NOT can be used:"
 
@@ -2209,7 +2223,7 @@ s....>e..>l
        #
 "b"s..>#..>O..>l 0"a nor b"
        #
-"1"C..>#......>l2
+"1"F..>#......>l2
 
 
 0"## XOR, XNOR"
@@ -2222,9 +2236,9 @@ s....>e..>l
              #
 "b"s..>i...( # ).....>l2
        #     #
-"0"c..>#....>#.......>l 0"a xor b"
+"0"f..>#....>#.......>l 0"a xor b"
        #     #
-"1"C..>#....>#.......>l 0"a xnor b"
+"1"F..>#....>#.......>l 0"a xnor b"
 
 
 
@@ -2236,9 +2250,9 @@ s....>e..>l
        #     #                 #
 "c"s.( # ).( # )..>i... >i. ..>#....>l 0"carry"
        #     #     #   x # x   #
-"0"c..>#....>#....>#... >#. .( # )..>l 0"sum"
+"0"f..>#....>#....>#... >#. .( # )..>l 0"sum"
        #     #     #     #     #
-"1"C..>#....>#....>#....>#....>#....>l2
+"1"F..>#....>#....>#....>#....>#....>l2
 
 
 
@@ -2287,9 +2301,9 @@ s..>#..>l
 
 0"## NOT"
 
-"1"C..>i..>l2
+"1"F..>i..>l2
        #
-"1"C..>#..>l2
+"1"F..>#..>l2
        #
 "a"s..>#..>l 0"NOT a"
 
@@ -2300,7 +2314,7 @@ s..>#..>l
        #
 "b"s..>#..>l2
        #
-"0"c..>#..>l 0"a AND b"
+"0"f..>#..>l 0"a AND b"
 
 
 0"## NAND"
@@ -2309,7 +2323,7 @@ s..>#..>l
        #
 "b"s..>#..>l2
        #
-"1"C..>#..>l 0"a NAND b"
+"1"F..>#..>l 0"a NAND b"
 
 
 0"## OR"
@@ -2318,7 +2332,7 @@ s..>#..>l
        #    #
 "b"s..>#. .>#...>l2
        # x  #
-"1"C..>#. .>#...>l 0"a OR b"
+"1"F..>#. .>#...>l 0"a OR b"
 
 0"Nicer version if NOT can be used (with Morgan's law):"
 
@@ -2326,7 +2340,7 @@ s..>#..>l
            #
 "b"s..>O..>#..>l2
            #
-"1"C......>#..>l 0"a OR b"
+"1"F......>#..>l 0"a OR b"
 
 
 0"## NOR"
@@ -2337,9 +2351,9 @@ s..>#..>l
          x    . .
 "b"s..>i. .>i.-*-.>i...>l2
        #    # . .  #
-"1"C..>#...>#.. ..>#...>l2
+"1"F..>#...>#.. ..>#...>l2
        #    #      #
-"1"C..>#...>#.....>#...>l 0"a NOR b"
+"1"F..>#...>#.....>#...>l 0"a NOR b"
 
 0"Nicer version if NOT can be used (with Morgan's law):"
 
@@ -2349,13 +2363,13 @@ s..>#..>l
            #
 "b"s..>O..>#......>l2
            #
-"1"C......>#..>O..>l 0"a NOR b"
+"1"F......>#..>O..>l 0"a NOR b"
 
 0"## XOR"
 
 "a"s..>i..>l2
        #
-"1"C..>#..>l2
+"1"F..>#..>l2
        #
 "b"s..>#..>l 0"a XOR b"
 
@@ -2365,11 +2379,11 @@ s..>#..>l
 0"Please note how 'antennas' are used to make some wires cross the chip,"
 0"the --(i)-- wire passes through it."
 
-"1"C......>i...>l2
+"1"F......>i...>l2
            #
 "a"s..>i..(#)..>l2
        #   #
-"1"C..>#..>#...>l2
+"1"F..>#..>#...>l2
        #   #
 "b"s..>#..>#...>l 0"a XNOR b"
 
@@ -2377,7 +2391,7 @@ s..>#..>l
 
 "a"s..>i......>l2
        #
-"1"C..>#......>l2
+"1"F..>#......>l2
        #
 "b"s..>#..>O..>l 0"a XNOR b"
 
@@ -2703,7 +2717,7 @@ s.    w                    w .>l
   s   s
   v   v
   i   i
-C>1..>1..>l
+F>1..>1..>l
   1   1
 
 0"This is a two-input AND gate: only if the two coils are activates, will the"
@@ -2715,7 +2729,7 @@ C>1..>1..>l
   s s s s
   v v v v
   i i i i
-C>1>1>1>1>l
+F>1>1>1>1>l
   1 1 1 1
 
 0"## OR gate"
@@ -2724,7 +2738,7 @@ C>1>1>1>1>l
 
       s     s
       .     .
-C.....+.... .
+F.....+.... .
     . v   . v
     . i   . i
     .>1.. .>1..
@@ -2741,7 +2755,7 @@ C.....+.... .
 
       s     s     s     s
       .     .     .     .
-C.....+.....+.....+.....+.........
+F.....+.....+.....+.....+.........
     . v   . v   . v   . v
     . i   . i   . i   . i
     .>1.. .>1.. .>1.. .>1..
@@ -2766,7 +2780,7 @@ C.....+.....+.....+.....+.........
     s   s
     v   v
     i. >i
-C..>1 x 2..>l
+F..>1 x 2..>l
     2. >1
 
 0"## Multi-input XOR gate"
@@ -2787,7 +2801,7 @@ C..>1 x 2..>l
     s     s     s
     v     v     v
     i....>#....>i
-C..>1 .   #     2..>l
+F..>1 .   #     2..>l
     2.+..>#....>1
       . . #
       . .>i
@@ -2797,7 +2811,7 @@ C..>1 .   #     2..>l
     s     s     s     s
     v     v     v     v
     i....>#....>#.. .>i
-C..>1 .   # .   #  x  2..>l
+F..>1 .   # .   #  x  2..>l
     2.+..>#.+..>#.. .>1
       . . # . . #
       . .>i . .>i
@@ -2813,7 +2827,7 @@ C..>1 .   # .   #  x  2..>l
     s
     v
     i
-C..>1..>l
+F..>1..>l
     9
 
 0"It can be made easily with an SPDT as well:"
@@ -2821,7 +2835,7 @@ C..>1..>l
     s
     v
     i..
-C..>1
+F..>1
     2..>l
 
 0"## Two NOT gates"
@@ -2838,7 +2852,7 @@ C..>1
   .>1 . .>1
   . 9.. . 9..>l
   .     .
-C........
+F........
 
 0"## NAND gate"
 
@@ -2852,7 +2866,7 @@ C........
 
       s     s
       .     .
-C.....+.... .
+F.....+.... .
     . v   . v
     . i   . i
     .>1   .>1
@@ -2865,7 +2879,7 @@ C.....+.... .
 
       s     s     s     s
       .     .     .     .
-C.....+.....+.....+.....+.........
+F.....+.....+.....+.....+.........
     . v   . v   . v   . v
     . i   . i   . i   . i
     .>1.. .>1.. .>1.. .>1..
@@ -2887,7 +2901,7 @@ C.....+.....+.....+.....+.........
   s   s
   v   v
   i   i
-C>1..>1..>l
+F>1..>1..>l
   9   9
 
 0"## Multi-input NOR gate"
@@ -2895,7 +2909,7 @@ C>1..>1..>l
   s s s s
   v v v v
   i i i i
-C>1>1>1>1..>l
+F>1>1>1>1..>l
   9 9 9 9
 
 
@@ -2907,7 +2921,7 @@ C>1>1>1>1..>l
     s   s
     v   v
     i..>i
-C..>1   2..>l
+F..>1   2..>l
     2..>1
 
 0"## Multi-input XNOR gate"
@@ -2921,7 +2935,7 @@ C..>1   2..>l
     s     s     s
     v     v     v
     i....>#.. .>i
-C..>1 .   #  x  2..>l
+F..>1 .   #  x  2..>l
     2.+..>#.. .>1
       . . #
       . .>i
@@ -2931,7 +2945,7 @@ C..>1 .   #  x  2..>l
     s     s     s     s
     v     v     v     v
     i....>#....>#....>i
-C..>1 .   # .   #     2..>l
+F..>1 .   # .   #     2..>l
     2.+..>#.+..>#....>1
       . . # . . #
       . .>i . .>i
@@ -2954,7 +2968,7 @@ C..>1 .   # .   #     2..>l
      .        .
      v        v
      #.....   #.......>l"AND"
-C...>#    ...>#
+F...>#    ...>#
    . #..      #..
    . #        #
    . i....    i<....
@@ -2985,7 +2999,7 @@ C...>#    ...>#
         .   .z<.
         v   v  .
         i   #...
-    C..>1..>#
+    F..>1..>#
       . 9   #..
       .     #
       .     i.........>l"Q"

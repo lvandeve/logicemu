@@ -63,7 +63,7 @@ s....
 0"button and dropdown to see their explanation."
 
 0"The rest of this tutorial explains what the different symbols and components"
-0"in circuits do."
+0"in circuits do. Another tutorial goes in more detail over the user interface."
 
 0"# Input / Output / Wires"
 
@@ -242,13 +242,12 @@ O....>l    s....>O....>l
 
 E....>l    s....>E....>l
 
-0"Instead of 0-input gates, constants can be used to have a 0 or 1 signal."
-0"In text mode, these are shown with 'c' and 'C' instead of '0' and '1'."
+0"There also exist constants, displayed with '0' and '1' in graphics mode or"
+0"as 'f' and 'F' ('fixed value') in text mode:"
 
-c....>l
+f....>l    s....>f....>l
 
-C....>l
-
+F....>l    s....>F....>l
 
 0"There also exist negated inputs. Normal inputs are indicated with an"
 0"arrow head, negated inputs instead with a little circle (or in text"
@@ -404,11 +403,6 @@ s-->q-->l 0"J+K combination overridden by D"
 s-->Q-->l
 S-->y-->l
 
-0"So to summarize, the 'c' and 'C' can actually mean three different things:"
-0"- counter (1-input T flip-flop): when standalone with an input"
-0"- constant: when standalone without an input"
-0"- clock: when combined with other flip-flop cells like j, k, ..."
-
 0"# Integrated Circuits"
 
 0"An integrated circuit or chip needs to be defined only once, and can then be"
@@ -525,7 +519,7 @@ s-.>d]a->l   s..>c..>l
 
 
 
-0"Capital M's form multiplexer, demultiplexer or controlled swap, depending on"
+0"A capital M forms a multiplexer, demultiplexer or controlled swap, depending on"
 0"the configuration. Mouse over them to see a tooltip that explains each one."
 
 0"Mux:"
@@ -622,6 +616,88 @@ s..>#..>l
          T######<p"reset"0
                ^
                p
+
+
+0"A capital U forms an ALU (arithmetic logic unit) with built-in support for"
+0"various advanced mathematical operations. While these can be made from"
+0"individual logic gates, having it available as a single unit saves space"
+0"in higher level circuits. The number next to the U determines the operation."
+0"The full list is in the editing tutorial instead. A tooltip and a label on"
+0"the component (if there's enough space) will also show the operation."
+
+
+
+0"Example: 2-input operation example: 8-bit adder"
+
+            T#######
+            ^^^^^^^^
+            llllllll
+            ^^^^^^^^
+ l<U24##############<s
+   ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss
+  " ...8421  ...8421"
+  "       A        B"
+
+0"1-input operation example: 8-bit increment"
+
+   T#######
+   ^^^^^^^^
+   llllllll
+   ^^^^^^^^
+ l<U32#####<s
+   ^^^^^^^^
+   ssssssss
+  " ...8421"
+  "       A"
+
+0"Example: multiply with 16-bit inputs and 32-bit output:"
+
+ "                             A*B"
+ T################################
+ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ lllllllllllllllllllllllllllllllll
+ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ |||||||||||||||||||||||||||||||||
+ U26##############################
+ ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
+ |||||||||||||||| ||||||||||||||||
+ T############### T###############
+ ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
+ ssssssssssssssss ssssssssssssssss
+"         ...8421          ...8421"
+"               A                B"
+
+0"Example: the integer power operation with 16-bit inputs and 32-bit output:"
+
+ "                             A^B"
+ T################################
+ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ lllllllllllllllllllllllllllllllll
+ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ |||||||||||||||||||||||||||||||||
+ U48##############################
+ ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
+ |||||||||||||||| ||||||||||||||||
+ T############### T###############
+ ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
+ ssssssssssssssss ssssssssssssssss
+"         ...8421          ...8421"
+"               A                B"
+
+0"Example: controlled bit invert using xor:"
+
+            T#######
+            ^^^^^^^^
+            llllllll
+            ^^^^^^^^
+   U6###############
+   ^^^^^^^^        ^
+   ssssssss        s
+  " ...8421        1"
+  "       A        B"
+
+
 
 
 0"A ? is a random generator. It starts with a random initial value. If it"
@@ -1730,6 +1806,24 @@ s..>A..>l
 
 s..]o..>l
 
+3"NEW PART: constant"
+3"f: constant ('fixed') off"
+3"F: constant ('fixed') on"
+
+0"The constant value, indicated with 'f' or 'F' from 'fixed' always outputs 0"
+0"(for small 'f') or '1' (for capital 'F'), even if it has inputs (so its"
+0"inputs are meaningless)."
+
+0"These are rendered as a '0' and a '1' instead of an 'f' and 'F' in graphics"
+0"mode."
+
+f-->l    s-->f-->l
+
+F-->l    s-->F-->l
+
+0"NOTE: the letter 'f' from 'fixed' instead of 'c' from 'constant' is used"
+0"because 'c' is already used for 'counter' and 'clock' seen further on."
+
 3"NEW BEHAVIOUR: rules for wire with multiple devices"
 
 0"A single wire can output to multiple devices. Note that we call the entire"
@@ -1952,11 +2046,6 @@ s-->dcyQq-->l
 0"This is only a selection of the combinations you can do with those. Also, you"
 0"can make flip-flops from the ground up with more basic components instead as"
 0"well (e.g. NAND-only). Other built-in circuits demonstrate those."
-
-0"To summarize the meaning of 'c' and 'C': they can mean three different things:"
-0"- counter (1-input T flip-flop): when standalone with an input"
-0"- constant: when standalone without an input"
-0"- clock: when combined with other flip-flop cells like j, k, ..."
 
 0"A few combinations of the above with missing parts, or standalone parts (such"
 0"as a lone d, or a lone q) would not perform useful behavior with the rules"
@@ -2476,6 +2565,108 @@ SsssssS3"ASCII code in to screen"
          T######<p"reset"0
                ^
                p
+
+3"NEW PART: ALU (Arithmetic Logic Unit)"
+3"U: ALU"
+
+0"The ALU is a built-in component that can do various mathematical operations"
+0"in binary. This takes away the fun of building mathematical operations from"
+0"logic gates, but can be useful to save space in higher level designs."
+
+
+0"2-input operation example: 8-bit adder"
+
+            T#######
+            ^^^^^^^^
+            llllllll
+            ^^^^^^^^
+ l<U24##############<s
+   ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss
+  " ...8421  ...8421"
+  "       A        B"
+
+0"1-input operation example: 8-bit increment"
+
+   T#######
+   ^^^^^^^^
+   llllllll
+   ^^^^^^^^
+ l<U32#####<s
+   ^^^^^^^^
+   ssssssss
+  " ...8421"
+  "       A"
+
+0"The top side is the output. The button side contains the input(s). The"
+0"left and right side are optional and contain special flag bits, the input"
+0"bit is carry (only used for a few operations, such as add). The output bit"
+0"is overflow (can serve as carry if the amount of output bits is set up"
+0"correctly)"
+
+0"The configuration can be rotated or mirrored, and the optional flag input or"
+0"output side can be left out, but the main input side always must be on the"
+0"opposite side of the main output side, and there always must be 1 main output"
+0"side and a side with 1 or 2 main inputs."
+
+0"The numeric code tells the operation. Without number, it has operation 0."
+
+0"The operations are (the first 16 operate bitwise. Not all numbers used.):"
+0"0:zero, 1:and, 2:nimply b, 3:a, 4:nimply a, 5:b, 6:xor, 7:or,"
+0"8:nor, 9:xnor, 10:not b, 11:imply a, 12:not a, 13:imply b, 14:nand, 15:ones,"
+0"16:==, 17:<, 18:<=, 19:!=, 20:>=, 21:>, 22:min, 23:max,"
+0"24:add, 25:sub, 26:mul, 27:div, 28:remainder,"
+0"32:incr, 33:decr, 34:negate, 35:abs, 36:sign, 37:copysign,"
+0"40:lshift, 41:rshift, 42:rot lshift, 43:rot rshift,"
+0"48:power,52:gcd,53:lcm,"
+0"56:popcount, 57:log2, 60:binary to BCD, 61:BCD to binary,"
+
+0"single-input operators such as abs or popcount will use operand A and ignore"
+0"operand B"
+
+0"Adding 64 to the number makes the operation signed, e.g. operation 27 is"
+0"division, and operation 91 is signed division. Signed operations use twos"
+0"complements"
+
+0"The ALU can have as many input and output bits as you want, but depending on"
+0"the version of your browser, values with more than 31 bits will not work."
+0"Browsers since around 2019, supporting BigInt, will support practically any"
+0"bit size."
+
+0"Example: the integer power operation with 16-bit inputs and 32-bit output:"
+
+   "                             A^B"
+   T################################
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   lllllllllllllllllllllllllllllllll
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |||||||||||||||||||||||||||||||||
+ l<U48##############################<s
+   ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
+   |||||||||||||||| ||||||||||||||||
+   T############### T###############
+   ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
+   ssssssssssssssss ssssssssssssssss
+  "         ...8421          ...8421"
+  "               A                B"
+
+0"Example: multiply with 16-bit inputs and 32-bit output:"
+
+   "                             A*B"
+   T################################
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   lllllllllllllllllllllllllllllllll
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |||||||||||||||||||||||||||||||||
+ l<U26##############################<s
+   ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
+   |||||||||||||||| ||||||||||||||||
+   T############### T###############
+   ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
+   ssssssssssssssss ssssssssssssssss
+  "         ...8421          ...8421"
+  "               A                B"
+
 
 3"NEW PART: Random generator"
 3"?: random generator"
@@ -3177,13 +3368,14 @@ registerCircuit('ASCII symbol summary', `
 3"O: NOR gate, NOT gate"
 3"E: XNOR gate"
 
-3"cC: counter, constant"
+3"fF: constant off/on ('fixed')"
+3"cC: counter (see also 'clock' meaning below)"
 
 3"#: extend the surface area of devices"
 
 0"# Extended"
 
-3"cC: as flip-flop clock"
+3"cC: flip-flop clock"
 3"jkdt: flip-flop inputs"
 3"qQ: flip-flop outputs/asynch inputs"
 3"y: flip-flop enable"
@@ -3213,8 +3405,9 @@ registerCircuit('ASCII symbol summary', `
 3"?: random bit generator"
 
 3"bB: ROM/RAM bits"
-3"T: terminal (ASCII keyboard/screen)"
 3"M: MUX"
+3"T: terminal (ASCII keyboard/screen)"
+3"U: ALU (prebuilt mathematical operations)"
 
 3"0123456789: modifiers: LED color, timer speed, bus/ic/backplane id"
 
@@ -3530,13 +3723,13 @@ registerCircuit('Electronic Diagram', `
 4"                            "
 4"                            "
 4"                            "
-4"CONSTANT 0     GND-----     " c....
+4"CONSTANT 0     GND-----     " f....
 4"                            "
 4"                            "
-4"CONSTANT 1      V+-----     " C....
+4"CONSTANT 1      V+-----     " F....
 4"                            "
 4"                            "
-4"FLOATING Z      -------     " c....     0"(Not supported, '0' is used)"
+4"FLOATING Z      -------     " f....     0"(Not supported, '0' is used)"
 4"                            "
 4"                            "
 4"                            "
@@ -3803,12 +3996,12 @@ s--]o-->l
 s---.
 `, 'component' + componentid++);
 
-registerCircuit('Constant Off (c)', `
-c-->l
+registerCircuit('Constant Off (f)', `
+f-->l
 `, 'component' + componentid++);
 
-registerCircuit('Constant On (C)', `
-C-->l
+registerCircuit('Constant On (F)', `
+F-->l
 `, 'component' + componentid++);
 
 registerCircuit('Random Generator (?)', `
@@ -4108,7 +4301,7 @@ s..>#..>l
 
 `, 'component' + componentid++);
 
-registerCircuit('Mux with controlled swap of buses(M)', `
+registerCircuit('Mux with controlled swap of buses (M)', `
 
     l
     ^
@@ -4123,6 +4316,32 @@ s-->#-->l
     .
     .
     s
+
+`, 'component' + componentid++);
+
+registerCircuit('ALU with 2-input operation (U)', `
+
+
+            T#######
+            ^^^^^^^^
+            llllllll
+            ^^^^^^^^
+ l<U36##############<s
+   ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('ALU with 1-input operation (U)', `
+
+
+   T#######
+   ^^^^^^^^
+   llllllll
+   ^^^^^^^^
+ l<U19#####<s
+   ^^^^^^^^
+   ssssssss
 
 `, 'component' + componentid++);
 
@@ -4280,29 +4499,45 @@ registerCircuit('Unit Test', `
 0"OFF, something is broken. A short delay just after loading is allowed."
 0"There should also be no errors indicated."
 
-C...........>l
+F...........>l
 
-C----------->l
+F----------->l
 
-C>e-ha-VVo+.>l
+f...........]l
 
-c....>O.....>l
+F>e-ha-VVo+.>l
 
-c....>O#....>l
+f....>O.....>l
+
+f....>O#....>l
 
 a...........>l
+
+A...........]l
+
+o...........]l
 
 O...........>l
 
 E...........>l
 
+e...........]l
+
+C...........>l
+
+c...........]l
+
+p...........]l
+
 P...........>l
+
+s...........]l
 
 S...........>l
 
 Q...........>l
 
-C...........>lI11
+F...........>lI11
 
 i11.........>l
 
@@ -4322,99 +4557,99 @@ s---->k----->l
 s---->q--->O>l
 s---->Q----->l
 
-C>j--------->l
+F>j--------->l
 
-c>k--------->l
+f>k--------->l
 
-C>q---------]l
+F>q---------]l
 
-C>q>c------->l
+F>q>c------->l
 
-C-->a##----->l
+F-->a##----->l
 
-C-->a#a----->l
+F-->a#a----->l
 
-C-->a------->l
-c-->a-------]l
-C-->a------->l
+F-->a------->l
+f-->a-------]l
+F-->a------->l
 
-C-->a-------]l
-c-->#-------]l
-C-->a-------]l
+F-->a-------]l
+f-->#-------]l
+F-->a-------]l
 
-C-->o------->l
-c-->#------->l
-C-->o------->l
+F-->o------->l
+f-->#------->l
+F-->o------->l
 
-C-->d
+F-->d
     #
-C>q>c------->l
+F>q>c------->l
 
-c-->d
+f-->d
     #
-C>q>c-------]l
+F>q>c-------]l
 
-C-->t
+F-->t
     #
-C>q>c------->l
+F>q>c------->l
 
-c-->t
+f-->t
     #
-C>q>c-------]l
+F>q>c-------]l
 
-c-->j
-c-->k
-C>q>c-------]l
+f-->j
+f-->k
+F>q>c-------]l
 
-C-->j
-c-->k
-C>q>c------->l
+F-->j
+f-->k
+F>q>c------->l
 
-c-->j
-C-->k
-C>q>c-------]l
+f-->j
+F-->k
+F>q>c-------]l
 
-C-->j
-C-->k
-C>q>c------->l
+F-->j
+F-->k
+F>q>c------->l
 
-C-->d
-C-->Q
-C>q>c-------]l
+F-->d
+F-->Q
+F>q>c-------]l
 
-c-->d
-C-->q
-c-->c------->l
+f-->d
+F-->q
+f-->c------->l
 
      C
      v
      qS
      vv
-C-->dcyQq--->l
-C-->dcyQq--->l
-c-->dcyQq---]l
-C-->dcyQq--->l
+F-->dcyQq--->l
+F-->dcyQq--->l
+f-->dcyQq---]l
+F-->dcyQq--->l
 
 
        .-->O>l
-C------+---->l
-c------.
+F------+---->l
+f------.
 
-c .--------->l
+f .--------->l
  x
-C .------->O>l
+F .------->O>l
 
-c---v
-c-->a-------]l
+f---v
+f-->a-------]l
 
-c---w
-c-->a-------]l
+f---w
+f-->a-------]l
 
-c---v
-c--]a-------]l
+f---v
+f--]a-------]l
 
-c---w
-c--]a------->l
+f---w
+f--]a------->l
 
 1Rw
   e--------->l
@@ -4424,11 +4659,11 @@ c--]a------->l
   e--------->l
 1R^
 
-s->A->q----->l
-s---->Q
+f->A->q----->l
+f---->Q
 
-s->a-]q----->l
-s---->Q
+f->a-]q----->l
+f---->Q
 
  c
  v
@@ -4454,26 +4689,30 @@ S>b
 s>b--------->l
 s>b---------]l
 
+F+++++++++++>l
 
-C..( ). ).>O>l
+F.-+*XY+*.-+>l
+
+
+F..( ). ).>O>l
       .
       ......>l
 
-C...
+F...
     x
      .......>l
 
-C...
+F...
     X
      .......>l
 
-C...X.......>l
+F...X.......>l
 
-c->O-------->lI5
+f->O-------->lI5
 
 i5---------->l
 
-c->O-------.
+f->O-------.
             X
 i6           lI6
   x
@@ -4482,25 +4721,25 @@ i6           lI6
 S-->C>C>C>C->l
 
 
-C-----.
+F-----.
        \\
         .--->l
 
         .--->l
        /
-C-----.
+F-----.
 
-C           >l
+F           >l
  ;         /
   .-------.
 
-C-------&
+F-------&
         &--->l
 
         %--->l
-C-------%
+F-------%
 
-C----g10
+F----g10
 
        10g-->l
 
@@ -4508,7 +4747,7 @@ C----g10
          1
          0
 
-C--( ( ) )-->l
+F--( ( ) )-->l
 
 
             ]l
@@ -4519,23 +4758,23 @@ C--( ( ) )-->l
             Yl
              l
 
-C---------->#l
+F---------->#l
 
-C----------VVl
+F----------VVl
 
-C----------VXl
+F----------VXl
 
-C----0=0---->l
+F----0=0---->l
 
-C12=     =21]l
+F12=     =21]l
    ==---==
-c21=     =12>l
+f21=     =12>l
 
 
-C---12=45--->l
-C---23=34---]l
-c---34=12--->l
-C---45=23--->l
+F---12=45--->l
+F---23=34---]l
+f---34=12--->l
+F---45=23--->l
 
   I8
 S.(@@@).....>l
@@ -4578,23 +4817,23 @@ S------>2--->l
 
 #------->O-->l
 
-C..>c.......>l
+F..>c.......>l
 
 O..>c.......>l
 
 S..>c.......>l
 
-C..]C.......>l
+F..]C.......>l
 
-c..]C.......>l
+f..]C.......>l
 
-c..>C.......>l
+f..>C.......>l
 
 O.....>d....>l
 
          e-->l
         >
-C------+---->l
+F------+---->l
       >
        e---->l
 
@@ -4602,31 +4841,31 @@ S-->dy------>l
      ^
      S
 
-C..>z.......>l
+F..>z.......>l
 
-    c
+    f
     v
-C..>z.......]l
+F..>z.......]l
 
-    C
+    F
     v
-C..>z.......>l
+F..>z.......>l
      .
-c..>z.
+f..>z.
 
-    c
+    f
     v
-C..>Z.......>l
+F..>Z.......>l
      .
-C..>Z.
+F..>Z.
 
-    C
+    F
     v
-C..>Z.......]l
+F..>Z.......]l
      .
-c..>Z.
+f..>Z.
     ^
-    c
+    f
 
           |
 S5110g 5110g>l
@@ -4635,42 +4874,42 @@ S5110g 5110g>l
 S5120g 5120g>l
 
 
-C--.
+F--.
    |
-C. | .------>l
+F. | .------>l
   ;|/
-C--*-------->l
+F--*-------->l
   /|;
-C. | .------>l
+F. | .------>l
    |
    .-------->l
 
 
-C--.
+F--.
    |
-C. | .------]l
+F. | .------]l
   ;|/
-c--*--------]l
+f--*--------]l
   /|;
-c. | .------>l
+f. | .------>l
    |
    .-------->l
 
 
-C--.
+F--.
    |
-c. | .------]l
+f. | .------]l
   ;|/
-C--*-------->l
+F--*-------->l
   /|;
-c. | .------]l
+f. | .------]l
    |
    .-------->l
 
 
     .------->l
-C---,------->l
-c...,.......]l
+F---,------->l
+f...,.......]l
     .-------]l
 
 S---------->o
@@ -4691,9 +4930,15 @@ S>#--------->l
 s>#---------]l
 S>#--------->l
 S>#--------->l
-S>#--------->l
 s>#---------]l
 
+s>T>l s>i---]l
+s>#>l S>1--->l
+s>#>l S>6--->l
+s>#>l s>5---]l
+s>#>l s>#---]l
+s>#>l S>#--->l
+I165
 
     ........]l
     .
@@ -4727,6 +4972,33 @@ s-->#------->l
     ^
     S
 
+  .---------]l
+s>U
+s>4
+S>8
+S>#
+  #
+s>#--------->l
+s>#---------]l
+S>#---------]l
+s>#--------->l
+  ^
+  s
+
+  .---------]l
+s>U---------]l
+s>6---------]l
+S>1---------]l
+s>#--------->l
+s>#---------]l
+s>#--------->l
+S>#--------->l
+S>#--------->l
+  ^
+  s
+
+
+
 0"# Off"
 
 0"In this section, the LED on the right of each contraption must be OFF. If"
@@ -4734,14 +5006,14 @@ s-->#------->l
 
 ............>l
 
-c...........>l
+f...........>l
 
-C.....@.....>l
+F.....@.....>l
 
       ......>l
-C.....+
+F.....+
 
-C.....|.....>l
+F.....|.....>l
 
 o...........>l
 
@@ -4759,24 +5031,24 @@ s.....>a....>l
 
 s.....>e....>l
 
-C.....( (...>l
+F.....( (...>l
 
-C...( ( )...>l
+F...( ( )...>l
 
-C.....
+F.....
       X.....>l
 
-c---- ------>l
+f---- ------>l
      x
-C---- ------>l
+F---- ------>l
 
-C-----------
+F-----------
             Vl
 
-C-----------V
+F-----------V
              l
 
-C----------.
+F----------.
             Vl
 1Rw
   E--------->l
@@ -4786,17 +5058,17 @@ s---->R----->l
 
 r---->R----->l
 
-C...........]l
+F...........]l
 
-C---------->Xl
+F---------->Xl
 
-C----------V>l
+F----------V>l
 
       :
-C...........>l
+F...........>l
       :
 
-C......
+F......
       .
      "."
       .
@@ -4816,19 +5088,19 @@ S----->i92-->l
          :
 S----->i92-->l
 
-C.....>o
+F.....>o
       >o---->l
 
 
-C---=0==0--->l
+F---=0==0--->l
 
-C---=0=0---->l
+F---=0=0---->l
 
-C---=0------>l
+F---=0------>l
 
-C---=====--->l
+F---=====--->l
 
-C----=0=---->l
+F----=0=---->l
 
 S...........]l
 
@@ -4838,7 +5110,7 @@ s....>S.....>l
 S...(")"
       ......>l
 
-C..>C.......>l
+F..>C.......>l
 
 O..>C.......>l
 
@@ -4847,7 +5119,7 @@ S..>C.......>l
 
        e---->l
       ^
-C-----
+F-----
 
 S-->dy------>l
      ^
@@ -5233,12 +5505,12 @@ registerCircuit('Drawing Test', `
 0"This is a unit test for testing and development."
 
 0"# LED Colors"
-                                      ###
-0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7     ###
-l l l l l l l l   l l l l l l l l     G##     T###
-^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^     ^^^     ^^^^
-s s s s s s s s   S S S S S S S S     sss     ssss
-                                     "BGR"   "8421"
+                                      ###    ###
+0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7     ###    ###
+l l l l l l l l   l l l l l l l l     G##    G##     T###
+^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^     ^^^    ^^^     ^^^^
+s s s s s s s s   S S S S S S S S     sss    ssS     ssss
+                                     "BGR"  "BGR"   "8421"
 
 
 0"# Devices"
@@ -5254,13 +5526,13 @@ s-->e             s-->#i#             s-->kQ-->l    s-->#-->l
                                                         ^
                                                         s
 
-  s->a>l
-  p->e>l
-  r->o>l
-  S->A>l
-  P->E>l
-  R->O>l
-  s->?>l
+  s->a>l      s>U>l         lll
+  p->e>l      s>2>l         ^^^
+  r->o>l      s>4>l         |||
+  S->A>l        #        s->bbB
+  P->E>l      s>#        S->BBb
+  R->O>l      s>#        s->BbB
+  s->?>l      s>#        s->bBb
 
 
 0"# Wire Shapes"
