@@ -1441,7 +1441,7 @@ function ROM() {
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
-        if(!(rommap[c.circuitsymbol] || c.circuitsymbol == '#')) return false;
+        if(!(rommap[c.circuitsymbol] || c.circuitsymbol == '#b')) return false;
         if(c.components[0]) {
           this.master = c.components[0];
           this.master_orig_x = x;
@@ -1614,13 +1614,13 @@ function ROM() {
       if(addressdir != outdir) return null; // must be accross for enc/dec
       var numin = io[addressheading][1];
       var numout = io[outheading][1];
-      if(numout == wordsize && numin < wordsize) {
+      if(numin < numout) {
         // decoder (binary to unary)
         type = 2;
-      } else if(numin == wordsize && numout < wordsize) {
+      } else if(numout < numin) {
         // encoder (unary to binary)
         type = 3;
-      } else if(numin == wordsize && numout == wordsize) {
+      } else if(numin == numout) {
         // priority (unary to unary)
         type = 4;
       } else {
@@ -1745,11 +1745,16 @@ function ROM() {
     newOrder(this.master.inputs_x2, array);
     newOrder(this.master.inputs_y2, array);
 
+    // The '#b' symbols are not used if this is memory where b and B matter, but
+    // is used if this is a non-memory device, where you can use a single b and
+    // multiple #
+    var usefiller = (this.decoder || this.encoder || this.priority);
+
     var components = [[this.master, this.master_orig_x, this.master_orig_y]];
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
-        if(!rommap[c.circuitsymbol]) continue;
+        if(!rommap[c.circuitsymbol] && !(usefiller && c.circuitsymbol == '#b')) continue;
         if(c.components[0] && c.components[0] != this.master) {
           components.push([c.components[0], x, y]);
         }
@@ -5502,7 +5507,7 @@ function Cell() {
       if(tc == 'u') title = 'backplane wire that connects to one matching connector to the top ("antenna")';
       if(tc == 'I' || this.numbertype == NUMBER_ICDEF) title = 'IC definition';
       if(tc == 'i' || tc == '#i') title = 'IC instance ' + this.components[0].callsubindex;
-      if(tc == 'b' || tc == 'B') {
+      if(tc == 'b' || tc == 'B' || tc == '#b') {
         title = 'ROM/RAM bit (b=0, B=1)';
         if(this.components[0]) {
           var master = this.components[0].master;

@@ -778,7 +778,7 @@ s....>?..>l    p....>?..>l    r....>?..>l
     llllllll
     ^^^^^^^^
     ||||||||
-    bbbbbbbb 0"binary to unary"
+    b####### 0"binary to unary"
          ^^^
          |||
          sss
@@ -789,7 +789,7 @@ s....>?..>l    p....>?..>l    r....>?..>l
          lll
          ^^^
          |||
-    bbbbbbbb 0"unary to binary"
+    b####### 0"unary to binary"
     ^^^^^^^^
     ||||||||
     ssssssss
@@ -800,7 +800,7 @@ s....>?..>l    p....>?..>l    r....>?..>l
     llllllll
     ^^^^^^^^
     ||||||||
-    bbbbbbbb 0"priority select (highest input)"
+    b####### 0"priority select (highest input)"
     ^^^^^^^^
     ||||||||
     ssssssss
@@ -1088,7 +1088,7 @@ r--->l
 
 llllllll    llllllll
 ^^^^^^^^    ^^^^^^^^
-bbbbbbbb    T#######
+b#######    T#######
      ^^^           ^
      sss           s
 
@@ -2214,6 +2214,10 @@ s-->k-->l
 
 3"NEW BEHAVIOR: decoder and encoder"
 
+0"The ROM/RAM components can also be set up to do a completely different"
+0"not memory-related operation: binary decoder, binary encoder or priority"
+0"selector. This still makes sense, since those are operations the above"
+0"ROM/RAM components do to handle the unary and/or binary address select."
 
 0"Binary N to unary 2^N decoder"
 
@@ -2221,7 +2225,7 @@ s-->k-->l
  llllllll
  ^^^^^^^^
  ||||||||
- bbbbbbbb
+ b#######
       ^^^
       |||
       sss
@@ -2234,7 +2238,20 @@ s-->k-->l
       lll
       ^^^
       |||
- bbbbbbbb
+ b#######
+ ^^^^^^^^
+ ||||||||
+ ssssssss
+"76543210"
+
+
+0"Unary to unary: priority selector"
+
+"76543210"
+ llllllll
+ ^^^^^^^^
+ ||||||||
+ b#######
  ^^^^^^^^
  ||||||||
  ssssssss
@@ -2624,7 +2641,8 @@ SsssssS3"ASCII code in to screen"
 0"left and right side are optional and contain special flag bits, the input"
 0"bit is carry (only used for a few operations, such as add). The output bit"
 0"is overflow (can serve as carry if the amount of output bits is set up"
-0"correctly)"
+0"correctly) or error (e.g. logarithm of 0 or division through 0) depending"
+0"on the operation."
 
 0"The configuration can be rotated or mirrored, and the optional flag input or"
 0"output side can be left out, but the main input side always must be on the"
@@ -2644,12 +2662,16 @@ SsssssS3"ASCII code in to screen"
 0"48:power, 52:gcd, 53:lcm,"
 0"56:modular inverse, 57:log2, 60:binary to BCD, 61:BCD to binary,"
 
-0"single-input operators such as abs or popcount will use operand A and ignore"
-0"operand B"
-
 0"Adding 64 to the number makes the operation signed, e.g. operation 27 is"
 0"division, and operation 91 is signed division. Signed operations use twos"
 0"complements"
+
+0"single-input operators such as abs or popcount will use operand A and ignore"
+0"operand B"
+
+0"Not all operators use the flag input or flag output bit. It's not required to"
+0"add them in the circuit and it's ok (not an error) to add them even if the"
+0"operation doesn't use them."
 
 0"The ALU can have as many input and output bits as you want, but depending on"
 0"the version of your browser, values with more than 31 bits will not work."
@@ -2689,6 +2711,21 @@ SsssssS3"ASCII code in to screen"
    ssssssssssssssss ssssssssssssssss
   "         ...8421          ...8421"
   "               A                B"
+
+0"Some operators can have different effect depending on the amount of inputs"
+0"or support 3 inputs. For example the power operator supports 3 inputs, and"
+0"then acts as modular exponentiation: power modulo the third argument, e.g."
+0"power modulo the prime 37:"
+
+  T#########################
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  llllllllllllllllllllllllll
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+l<U48#######################<s
+  ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
+  T####### T####### T#######
+  ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
+  ssssssss ssssssss ssSssSsS
 
 
 3"NEW PART: Random generator"
@@ -4182,7 +4219,7 @@ registerCircuit('Binary to Unary (b)', `
   llll
   ^^^^
   ||||
-  bbbb
+  b###
     ^^
     ||
     ss
@@ -4194,7 +4231,7 @@ registerCircuit('Unary to Binary (b)', `
    ll
    ^^
    ||
- bbbb
+ b###
  ^^^^
  ||||
  ssss
@@ -4206,7 +4243,7 @@ registerCircuit('Priority Selector (b)', `
  llll
  ^^^^
  ||||
- bbbb
+ b###
  ^^^^
  ||||
  ssss
@@ -4218,7 +4255,7 @@ registerCircuit('Priority Selector (LSB left) (b)', `
  llll
  ^^^^
  ||||
-0bbbb
+0b###
  ^^^^
  ||||
  ssss
@@ -4744,10 +4781,20 @@ bB-------->O>l
 BB---------->l
 bB-------->O>l
 
+  #---------]l
+  b--------->l
+S>#---------]l
+s>b---------]l
+
   b---------]l
   b--------->l
 S>b---------]l
 s>b---------]l
+
+s>b
+S>#
+s>#--------->l
+s>#---------]l
 
 s>b
 S>b
