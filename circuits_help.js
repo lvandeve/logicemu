@@ -996,6 +996,22 @@ l<----.
 registerCircuit('Glossary', `
 0"This lists some of the LogicEmu-specific terms that appear in some articles:"
 
+0"- Algorithm: This refers to how circuit state is computed each tick."
+0"There are two main algorithms that can be chosen with a dropdown selector:"
+0"immediate mode and electron mode. See their respective entries in this list."
+
+0"- ALU: Arithmetic Logic Unit. This may refer to an actual ALU in a CPU, to"
+0"an ALU built from logic gates in logicemu, or to a built-in component type"
+0"in logicemu indicated with the letter 'U' that provides built-in mathematical"
+0"operations."
+
+0"- Antenna: This is a metaphor for a certain kind of backplane wire (see:"
+0"Backplane), and while it could be seen as if the signal is transferred"
+0"wirelessly, it can just as well be seen as there being a wire connection"
+0"behind the visible circuit board. The antennas, unlike other types of"
+0"backplane wires, connect with another antenna they are 'aimed' at, instead"
+0"of a matching numbered connection, hence their name."
+
 0"- Backplane: This usually refers to any kind of way that parts of wires can"
 0"connect to each other from a distance without having to draw all cells"
 0"between them. It's considered that this happens on another hidden circuit"
@@ -1027,6 +1043,8 @@ s-->c-->l
 0"generally look more graphical than the text mode."
 0"INSERT:link:renderhelp"
 
+0"- Graphics Mode: see Graphical Mode"
+
 0"- IC: see Integrated Circuit."
 
 0"- Immediate Mode: emulation mode that works globally and faster than electron"
@@ -1037,6 +1055,10 @@ s-->c-->l
 0"- Integrated Circuit: the ability to define a circuit and reuse it multiple"
 0" times elsewhere on the board. The definition or template is indicated with"
 0"a capital 'I' and a usage or instance with a small 'i'"
+
+0"- Mode: this can refer to algorithm mode (immediate mode or electron mode)"
+0"or to rendering mode (text mode or graphical mode), see their respective"
+0"entries."
 
 0"- Part: a character on a single cell (see Cell), as opposed to a Component"
 0"which is made from one or more parts (or cells)."
@@ -2615,11 +2637,12 @@ SsssssS3"ASCII code in to screen"
 0"0:zero, 1:and, 2:nimply b, 3:a, 4:nimply a, 5:b, 6:xor, 7:or,"
 0"8:nor, 9:xnor, 10:not b, 11:imply a, 12:not a, 13:imply b, 14:nand, 15:ones,"
 0"16:==, 17:<, 18:<=, 19:!=, 20:>=, 21:>, 22:min, 23:max,"
-0"24:add, 25:sub, 26:mul, 27:div, 28:remainder,"
+0"24:add, 25:sub, 26:mul, 27:div, 28:remainder, 28:floored div, 29:modulo,"
 0"32:incr, 33:decr, 34:negate, 35:abs, 36:sign, 37:copysign,"
 0"40:lshift, 41:rshift, 42:rot lshift, 43:rot rshift,"
-0"48:power,52:gcd,53:lcm,"
-0"56:popcount, 57:log2, 60:binary to BCD, 61:BCD to binary,"
+0"44:mirror, 45:count leading zeroes, 46:count trailing zeroes, 47:popcount,"
+0"48:power, 52:gcd, 53:lcm,"
+0"56:modular inverse, 57:log2, 60:binary to BCD, 61:BCD to binary,"
 
 0"single-input operators such as abs or popcount will use operand A and ignore"
 0"operand B"
@@ -2873,7 +2896,9 @@ l<---g    g--->l
 
 
 0"The antenna connects to its corresponding opposing horizontal or vertical"
-0"side of the other antenna, each independently"
+0"side of the other antenna, each independently. So it acts as wire crossings"
+0"that operate over a distance, and not as a wire split that operates over a"
+0"distance."
 
           l
    s      ^
@@ -2882,6 +2907,19 @@ l<---g    g--->l
    |      |
    s      v
           l
+
+0"That means the following swithes and LEDs are *not* connected:"
+
+(--s  )-->l
+
+s--(  l<--)
+
+0"But in the following two cases they are connected:"
+
+s--(  )-->l
+
+(--s  l<--)
+
 
 0"The antenna can also connect some non-wire-like connections, such as be"
 0"in-between an input and a device"
@@ -2909,6 +2947,7 @@ l<---g    g--->l
   ( ^  ^  ^ )
   (/  /  /  )
    uuuuuuuuu
+
 
 3"NEW PART: bus"
 3"=: bus"
@@ -4326,7 +4365,7 @@ registerCircuit('ALU with 2-input operation (U)', `
             ^^^^^^^^
             llllllll
             ^^^^^^^^
- l<U36##############<s
+ l<U24##############<s
    ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
 
@@ -4339,7 +4378,33 @@ registerCircuit('ALU with 1-input operation (U)', `
    ^^^^^^^^
    llllllll
    ^^^^^^^^
- l<U19#####<s
+ l<U32#####<s
+   ^^^^^^^^
+   ssssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('ALU with 2-input operation, no side bits (U)', `
+
+
+            T#######
+            ^^^^^^^^
+            llllllll
+            ^^^^^^^^
+   U48##############
+   ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('ALU with 1-input operation, no side bits (U)', `
+
+
+   T#######
+   ^^^^^^^^
+   llllllll
+   ^^^^^^^^
+   U47#####
    ^^^^^^^^
    ssssssss
 
@@ -5556,7 +5621,7 @@ s---+-*---*-+------->l   ;   /       | /       ; |        ^       ^
 s-*-+-------+-*----->l   /   ;     / |           | ;      v       v
  /  |       |  ;        s     s   s  s           s  s     l       l
 S   s       s   s
-                                            s-g->l
+
        s    s s    s       s    s s    s
   l l  . l  . .  l .  l l  . l  . .  l .      l     l
    X    X    X    X    Y    Y    Y    Y     s.Vl  s.Wl
@@ -5579,17 +5644,41 @@ s...+..>l   .>a       vvv       .    a<.     vvv      .     l<..+...s
             v                   .      v              .
             l                   s      l              s
 
-  l O
-   <^
-s....
+  l O  O l
+   <^  ^>
+s....  ....s
 
-s-1========1->l   s-1========1->l
 
-s-1========1->l   s-1========1->l
 
-s-1========1->l   s-1========1->l
+s--g2 2g-->l   s---g--->l
 
-s-1========1->l   s-1========1->l
+             s                s
+             |                |                s-->e--->l
+             n                n    s-->e--->l      #
+s--( )-->l      (--s l<--)         s--(#)-->l   (--#  )-->l
+             u                u    s-->#           #
+             |                |                s-->#( )-->l
+             v                v
+             l                l
+
+           l               l  l  l
+    s      ^         s s s  ^ ^ ^
+    |      |          ;|/    ;|/
+  s-(-s l<-)->l      s-(-s l<-)->l
+    |      |          /|;    /|;
+    s      v         s s s  v v v
+           l               l  l  l
+
+
+
+
+s-1========1->l   s-1========1->l    s-1========1->l   s-1========1->l
+
+s-1========1->l   s-1========1->l    s-1========1->l   s-1========1->l
+
+
+
+
 
 
 

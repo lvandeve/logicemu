@@ -5467,7 +5467,7 @@ registerCircuit('All supported ALU ops', `
 
 `, 'aluall');
 
-registerCircuit('integer power circuit', `
+registerCircuit('integer power', `
 0"This circuit builds integer power from logic gates (i.e. without using the"
 0"built-in ALU component) by defining multiply from add, then power from"
 0"multiply, defining IC's for each next step"
@@ -5548,8 +5548,6 @@ registerCircuit('integer power circuit', `
 
 
 
-
-
 0"Multiplication of two 8-bit values with 8-bit result can be made by adding"
 0"8 shifted values, enabled/disabled by the bits of B, together."
 
@@ -5561,7 +5559,6 @@ registerCircuit('integer power circuit', `
 0"it's limited to keep it somewhat small."
 
 0"This is defined as IC 2:"
-
 
 
 
@@ -5821,7 +5818,9 @@ registerCircuit('integer power circuit', `
 
 0"NOTE: it of course easily overflows, since results of power get very large"
 0"easily and it only has 8-bit output (max value 255). It computes a^b."
-0"Values such as 2^7, 3^5, 4^3, 5^3, 6^3, 7^2 up to 15^2 work correctly."
+0"Values such as 2^7, 3^5, 4^3, 5^3, 6^3, 7^2 up to 15^2 work correctly. For"
+0"too large output, it still outputs the correct value modulo 256 (this will"
+0"almost always be 0 if a is even, and always non-0 if a is odd)"
 
 
              T#######
@@ -5839,7 +5838,7 @@ registerCircuit('integer power circuit', `
 
 0"Since the power circuit has 14 multipliers in it, each multiplier has 7"
 0"8-bit adders, and each 8-bit adder uses 8 full adders, the power circuit"
-0"contains 14*7*8 = 784 full adders inside! And that just to get lowly 8-bit"
+0"contains 14*7*8 = 784 full adders inside, and that just to get only 8-bit"
 0"output. In practice one would not build a power circuit like this due to"
 0"the inefficiency. Instead a CPU can compute it by doing multiplications in"
 0"multiple cycles, or for floating point power combining log and exp with"

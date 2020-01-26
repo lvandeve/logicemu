@@ -2229,12 +2229,12 @@ s....>e..>l
 0"## XOR, XNOR"
 
 
-0"Please note how 'antennas' are used to make some wires cross the chip,"
-0"the --(i)-- wire passes through it."
+0"NOTE: 'antennas', a form of backplane connection, are used to make some"
+0"wires cross the chip."
 
 "a"s........>i.......>l2
              #
-"b"s..>i...( # ).....>l2
+"b"s..>i....(#)......>l2
        #     #
 "0"f..>#....>#.......>l 0"a xor b"
        #     #
@@ -2246,11 +2246,11 @@ s....>e..>l
 
 "a"s..>i............................>l2
        #
-"b"s.( # )..>i................>i....>l2
+"b"s..(#)...>i................>i....>l2
        #     #                 #
-"c"s.( # ).( # )..>i... >i. ..>#....>l 0"carry"
+"c"s..(#)...(#)...>i... >i. ..>#....>l 0"carry"
        #     #     #   x # x   #
-"0"f..>#....>#....>#... >#. .( # )..>l 0"sum"
+"0"f..>#....>#....>#... >#. ..(#)...>l 0"sum"
        #     #     #     #     #
 "1"F..>#....>#....>#....>#....>#....>l2
 
@@ -2376,8 +2376,8 @@ s..>#..>l
 
 0"## XNOR"
 
-0"Please note how 'antennas' are used to make some wires cross the chip,"
-0"the --(i)-- wire passes through it."
+0"NOTE: 'antennas', a form of backplane connection, are used to make some"
+0"wires cross the chip."
 
 "1"F......>i...>l2
            #

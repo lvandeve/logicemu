@@ -807,6 +807,9 @@ function CallSub(id) {
         alu.cdir = v.alu.cdir;
         alu.clsbpos = v.alu.clsbpos;
         alu.numc = v.alu.numc;
+        alu.odir = v.alu.odir;
+        alu.olsbpos = v.alu.olsbpos;
+        alu.numo = v.alu.numo;
         alu.miscindir = v.alu.miscindir;
         alu.miscoutdir = v.alu.miscoutdir;
         alu.miscinlsbpos = v.alu.miscinlsbpos;
@@ -814,7 +817,6 @@ function CallSub(id) {
         alu.nummiscin = v.alu.nummiscin;
         alu.nummiscout = v.alu.nummiscout;
         alu.output = clone(v.alu.output);
-        alu.binary = v.alu.binary;
         alu.opindex = v.alu.opindex;
         alu.signed = v.alu.signed;
         alu.x0 = v.alu.x0;
@@ -2308,26 +2310,6 @@ function Mux() {
   };
 }
 
-// for BigInt only. Raises a^b with the result modulo (1 << bits)
-// this is faster than using a ** b directly (which could have enormous amount
-// of digits, e.g. 315K digits for 65536n ** 65536n) and taking the modulo
-// only at the end.
-// NOTE: can't use 'n' suffix of numbers, like 1n, or browsers without BigInt
-// support will refuse to parse this JavaScript file. So BigInt(1) is used.
-function modpow(a, b, bits) {
-  var n1 = BigInt(1);
-  var mask = (n1 << BigInt(bits)) - n1;
-  var c = n1;
-  a &= mask;
-  while(b > 0) {
-    if(b & n1) c = ((c * a) & mask);
-    b >>= n1;
-    a = ((a * a) & mask);
-  }
-  return c;
-}
-
-
 
 // Arithmetic Logic Unit ('U')
 function Alu() {
@@ -2341,11 +2323,15 @@ function Alu() {
   // input B
   this.bdir = -1;
   this.blsbpos = 0;
-  this.numb = 0; // must be 0 if !this.binary
-  // output
+  this.numb = 0;
+  // input C
   this.cdir = -1;
   this.clsbpos = 0;
   this.numc = 0;
+  // output
+  this.odir = -1;
+  this.olsbpos = 0;
+  this.numo = 0;
   // misc side: carry in, carry or overflow out
   this.miscindir = -1;
   this.miscoutdir = -1;
@@ -2353,8 +2339,6 @@ function Alu() {
   this.nummiscout = 0;
   this.miscinlsbpos = 0;
   this.miscoutlsbpos = 0;
-  //whether it's a binary op, or an unary op (not using input B)
-  this.binary = false;
   this.signed = false;
   this.opindex = 0;
 
@@ -2369,124 +2353,132 @@ function Alu() {
   // max 4 characters
   this.getOpShortName = function() {
     switch(this.opindex) {
-        case 0: return "zero";
-        case 1: return "and";
-        case 2: return "nimb";
-        case 3: return "a";
-        case 4: return "nima";
-        case 5: return "b";
-        case 6: return "xor";
-        case 7: return "or";
-        case 8: return "nor";
-        case 9: return "xnor";
-        case 10: return "notb";
-        case 11: return "impa";
-        case 12: return "nota";
-        case 13: return "impb";
-        case 14: return "nand";
-        case 15: return "ones";
-        case 16: return "eq";
-        case 17: return "lt";
-        case 18: return "lte";
-        case 19: return "neq";
-        case 20: return "gte";
-        case 21: return "gt";
-        case 22: return "min";
-        case 23: return "max";
-        case 24: return "add";
-        case 25: return "sub";
-        case 26: return "mul";
-        case 27: return "div";
-        case 28: return "rem";
-        //case 29: return "fdiv";
-        //case 30: return "mod";
-        case 32: return "inc";
-        case 33: return "dec";
-        case 34: return "neg";
-        case 35: return "abs";
-        case 36: return "sign";
-        case 37: return "csgn";
-        case 40: return "lsh";
-        case 41: return "rsh";
-        case 42: return "rlsh";
-        case 43: return "rrsh";
-        case 48: return "pow";
-        //case 49: return "log";
-        //case 50: return "root";
-        case 52: return "gcd";
-        case 53: return "lcm";
-        case 56: return "popc";
-        case 57: return "log2";
-        case 58: return "sqrt";
-        //case 59: return "fact";
-        case 60: return "2bcd";
-        case 61: return "bcd2";
-        default: return "unk";
+        case 0: return 'zero';
+        case 1: return 'and';
+        case 2: return 'nimb';
+        case 3: return 'a';
+        case 4: return 'nima';
+        case 5: return 'b';
+        case 6: return 'xor';
+        case 7: return 'or';
+        case 8: return 'nor';
+        case 9: return 'xnor';
+        case 10: return 'notb';
+        case 11: return 'impa';
+        case 12: return 'nota';
+        case 13: return 'impb';
+        case 14: return 'nand';
+        case 15: return 'ones';
+        case 16: return 'eq';
+        case 17: return 'lt';
+        case 18: return 'lte';
+        case 19: return 'neq';
+        case 20: return 'gte';
+        case 21: return 'gt';
+        case 22: return 'min';
+        case 23: return 'max';
+        case 24: return 'add';
+        case 25: return 'sub';
+        case 26: return 'mul';
+        case 27: return 'div';
+        case 28: return 'rem';
+        case 29: return 'fdiv';
+        case 30: return 'mod';
+        case 32: return 'inc';
+        case 33: return 'dec';
+        case 34: return 'neg';
+        case 35: return 'abs';
+        case 36: return 'sign';
+        case 37: return 'csgn';
+        case 40: return 'lsh';
+        case 41: return 'rsh';
+        case 42: return 'rlsh';
+        case 43: return 'rrsh';
+        case 44: return 'mirr';
+        case 45: return 'clz';
+        case 46: return 'ctz';
+        case 47: return 'popc';
+        case 48: return 'pow';
+        //case 49: return 'log';
+        //case 50: return 'root';
+        case 52: return 'gcd';
+        case 53: return 'lcm';
+        case 56: return 'minv';
+        case 57: return 'log2';
+        case 58: return 'sqrt';
+        //case 59: return 'fact';
+        case 60: return '2bcd';
+        case 61: return 'bcd2';
+        default: return 'unk';
     }
   };
 
   this.getOpLongName = function() {
     switch(this.opindex) {
-        case 0: return "zero";
-        case 1: return "bitand";
-        case 2: return "a nimply b";
-        case 3: return "a";
-        case 4: return "b nimply a";
-        case 5: return "b";
-        case 6: return "bitxor";
-        case 7: return "bitor";
-        case 8: return "bitnor";
-        case 9: return "bitxnor";
-        case 10: return "bitinvert b";
-        case 11: return "b imply a";
-        case 12: return "bitinvert a";
-        case 13: return "a imply b";
-        case 14: return "bitnand";
-        case 15: return "all ones";
-        case 16: return "equals";
-        case 17: return "lesser than";
-        case 18: return "lesser than or equals";
-        case 19: return "not equals";
-        case 20: return "greater than or equals";
-        case 21: return "greater than";
-        case 22: return "minimum";
-        case 23: return "maximum";
-        case 24: return "add";
-        case 25: return "subtract";
-        case 26: return "multiply";
-        case 27: return "divide";
-        case 28: return "remainder";
-        //case 29: return "floor divide";
-        //case 30: return "modulo";
-        case 32: return "increment";
-        case 33: return "decrement";
-        case 34: return "negate";
-        case 35: return "absolute value";
-        case 36: return "sign";
-        case 37: return "copysign";
-        case 40: return "left shift";
-        case 41: return "right shift";
-        case 42: return "rotating left shift";
-        case 43: return "rotating right shift";
-        case 48: return "integer power";
-        //case 49: return "integer log";
-        //case 50: return "integer root";
-        case 52: return "greatest common divider";
-        case 53: return "least common multiple";
-        case 56: return "popcount";
-        case 57: return "integer base-2 logarithm";
-        case 58: return "integer square root";
-        //case 59: return "factorial";
-        case 60: return "binary to bcd (binary coded decimal)";
-        case 61: return "bcd to binary (bcd = binary coded decimal)";
-        default: return "unknown";
+        case 0: return 'zero';
+        case 1: return 'bitand';
+        case 2: return 'a nimply b';
+        case 3: return 'a';
+        case 4: return 'b nimply a';
+        case 5: return 'b';
+        case 6: return 'bitxor';
+        case 7: return 'bitor';
+        case 8: return 'bitnor';
+        case 9: return 'bitxnor';
+        case 10: return 'bitinvert b';
+        case 11: return 'b imply a';
+        case 12: return 'bitinvert a';
+        case 13: return 'a imply b';
+        case 14: return 'bitnand';
+        case 15: return 'all ones';
+        case 16: return 'equals';
+        case 17: return 'lesser than';
+        case 18: return 'lesser than or equals';
+        case 19: return 'not equals';
+        case 20: return 'greater than or equals';
+        case 21: return 'greater than';
+        case 22: return 'minimum';
+        case 23: return 'maximum';
+        case 24: return 'add';
+        case 25: return 'subtract';
+        case 26: return 'multiply';
+        case 27: return 'divide';
+        case 28: return 'remainder';
+        case 29: return 'floor divide';
+        case 30: return 'modulo';
+        case 32: return 'increment';
+        case 33: return 'decrement';
+        case 34: return 'negate';
+        case 35: return 'absolute value';
+        case 36: return 'sign';
+        case 37: return 'copysign';
+        case 40: return 'left shift';
+        case 41: return 'right shift';
+        case 42: return 'rotating left shift';
+        case 43: return 'rotating right shift';
+        case 44: return 'mirror bits';
+        case 45: return 'count leading zeros';
+        case 46: return 'count trailing zeros';
+        case 47: return 'popcount';
+        case 48: return this.numc ? 'integer power modulo third argument' : 'integer power';
+        //case 49: return 'integer log';
+        //case 50: return 'integer root';
+        case 52: return 'greatest common divider';
+        case 53: return 'least common multiple';
+        case 56: return this.numb ? 'modular inverse (modulo output size)' : 'modular inverse';
+        case 57: return 'integer base-2 logarithm';
+        case 58: return 'integer square root';
+        //case 59: return 'factorial';
+        case 60: return 'binary to bcd (binary coded decimal)';
+        case 61: return 'bcd to binary (bcd = binary coded decimal)';
+        default: return 'unknown';
     }
   };
 
 
   // first inputs are the data, last the select
   this.update = function(inputs) {
-    if(inputs.length != this.numa + this.numb + this.nummiscin) return false;
+    if(inputs.length != this.numa + this.numb + this.numc + this.nummiscin) return false;
 
     for(var i = 0; i < this.output.length; i++) this.output[i] = 0;
 
@@ -2504,7 +2496,7 @@ function Alu() {
       n15 = BigInt(15);
     }
 
-    var a, b;
+    var a, b, c;
     var op = this.opindex;
 
     var signed = this.signed;
@@ -2514,50 +2506,65 @@ function Alu() {
     if(usebigint) {
       a = n0;
       for(var i = 0; i < this.numa; i++) {
-        var j = i + this.numb;
+        var j = i + this.numb + this.numc;
         if(inputs[j]) a ^= (n1 << BigInt(i));
       }
 
       b = n0;
-      if(this.binary) {
-        for(var i = 0; i < this.numb; i++) {
-          var j = i;
-          if(inputs[j]) b ^= (n1 << BigInt(i));
-        }
+      for(var i = 0; i < this.numb; i++) {
+        var j = i + this.numc;
+        if(inputs[j]) b ^= (n1 << BigInt(i));
+      }
+
+      c = n0;
+      for(var i = 0; i < this.numc; i++) {
+        var j = i;
+        if(inputs[j]) c ^= (n1 << BigInt(i));
       }
 
       if(signed) {
         var na = BigInt(this.numa);
         var nb = BigInt(this.numb);
+        var nc = BigInt(this.numb);
         var maska = ((n1 << na) - n1);
         var maskb = ((n1 << nb) - n1);
+        var maskc = ((n1 << nc) - n1);
         var maxa = (n1 << (na - n1)) - n1;
         var maxb = (n1 << (nb - n1)) - n1;
+        var maxc = (n1 << (nc - n1)) - n1;
         if(a > maxa) a = (a - maska - n1);
         if(b > maxb) b = (b - maskb - n1);
+        if(c > maxc) c = (c - maskc - n1);
       }
     } else {
       a = 0;
       for(var i = 0; i < this.numa; i++) {
-        var j = i + this.numb;
+        var j = i + this.numb + this.numc;
         if(inputs[j]) a ^= (1 << i);
       }
 
       b = 0;
-      if(this.binary) {
-        for(var i = 0; i < this.numb; i++) {
-          var j = i;
-          if(inputs[j]) b ^= (1 << i);
-        }
+      for(var i = 0; i < this.numb; i++) {
+        var j = i + this.numb;
+        if(inputs[j]) b ^= (1 << i);
+      }
+
+      c = 0;
+      for(var i = 0; i < this.numc; i++) {
+        var j = i;
+        if(inputs[j]) c ^= (1 << i);
       }
 
       if(signed) {
         var maska = ((1 << this.numa) - 1);
         var maskb = ((1 << this.numb) - 1);
+        var maskc = ((1 << this.numc) - 1);
         var maxa = (1 << (this.numa - 1)) - 1;
         var maxb = (1 << (this.numb - 1)) - 1;
+        var maxc = (1 << (this.numc - 1)) - 1;
         if(a > maxa) a = (a - maska - 1);
         if(b > maxb) b = (b - maskb - 1);
+        if(c > maxc) c = (c - maskc - 1);
       }
     }
 
@@ -2570,7 +2577,7 @@ function Alu() {
       if(this.numa > 0) {
         n = 0;
         var a2 = n0;
-        while(n < this.numc) {
+        while(n < this.numo) {
           a2 |= usebigint ? (a << BigInt(n)) : (a << n);
           n += this.numa;
         }
@@ -2580,7 +2587,7 @@ function Alu() {
       if(this.numb > 0) {
         n = 0;
         var b2 = n0;
-        while(n < this.numc) {
+        while(n < this.numo) {
           b2 |= usebigint ? (b << BigInt(n)) : (b << n);
           n += this.numb;
         }
@@ -2589,210 +2596,297 @@ function Alu() {
     }
 
     var miscin = 0;
-    if(this.nummiscin) miscin = inputs[this.numa + this.numb];
+    if(this.nummiscin) miscin = inputs[this.numa + this.numb + this.numc];
 
-    var c = n0;
+    var o = n0; // output
 
     var gcd = function(a, b) {
       if(a < 0) a = -a;
       if(b < 0) b = -b;
       for(;;) {
         if(b == 0) return a;
-        var c = a % b;
+        var o = a % b;
         a = b;
-        b = c;
+        b = o;
       }
     };
 
 
     var overflow = false;
     if(op == 0) {
-      c = n0;
+      o = n0;
     } else if(op == 1) {
-      c = a & b;
+      o = a & b;
     } else if(op == 2) {
-      c = a & ~b; // a nimply b
+      o = a & ~b; // a nimply b
     } else if(op == 3) {
-      c = a;
+      o = a;
     } else if(op == 4) {
-      c = b & ~a; // b nimply a
+      o = b & ~a; // b nimply a
     } else if(op == 5) {
-      c = b;
+      o = b;
     } else if(op == 6) {
-      c = a ^ b;
+      o = a ^ b;
     } else if(op == 7) {
-      c = a | b;
+      o = a | b;
     } else if(op == 8) {
-      c = ~(a | b);
+      o = ~(a | b);
     } else if(op == 9) {
-      c = ~(a ^ b);
+      o = ~(a ^ b);
     } else if(op == 10) {
-      c = ~b;
+      o = ~b;
     } else if(op == 22) {
-      c = a | ~b; // b imply a
+      o = a | ~b; // b imply a
     } else if(op == 12) {
-      c = ~a;
+      o = ~a;
     } else if(op == 13) {
-      c = b | ~a; // a imply b
+      o = b | ~a; // a imply b
     } else if(op == 14) {
-      c = ~(a & b);
+      o = ~(a & b);
     } else if(op == 15) {
       // all ones
       if(usebigint) {
-        c = n1 << BigInt(this.numc);
-        c = ~c;
+        o = n1 << BigInt(this.numo);
+        o = ~o;
       } else {
-        c = 0x7fffffff;
+        o = 0x7fffffff;
       }
     } else if(op == 16) {
-      c = (a == b) ? n1 : n0;
+      o = (a == b) ? n1 : n0;
     } else if(op == 17) {
-      c = (a < b) ? n1 : n0;
+      o = (a < b) ? n1 : n0;
     } else if(op == 18) {
-      c = (a <= b) ? n1 : n0;
+      o = (a <= b) ? n1 : n0;
     } else if(op == 19) {
-      c = (a != b) ? n1 : n0;
+      o = (a != b) ? n1 : n0;
     } else if(op == 20) {
-      c = (a >= b) ? n1 : n0;
+      o = (a >= b) ? n1 : n0;
     } else if(op == 21) {
-      c = (a > b) ? n1 : n0;
+      o = (a > b) ? n1 : n0;
     } else if(op == 22) {
-      c = (a < b) ? a : b;
+      o = (a < b) ? a : b;
     } else if(op == 23) {
-      c = (a > b) ? a : b;
+      o = (a > b) ? a : b;
     } else if(op == 24) {
-      c = a + b;
-      if(miscin) c++;
+      o = a + b;
+      if(miscin) o++;
     } else if(op == 25) {
-      c = a - b;
-      if(miscin) c--;
+      o = a - b;
+      if(miscin) o--;
     } else if(op == 26) {
-      c = a * b;
+      o = a * b;
     } else if(op == 27) {
+      // truncating division (rounds towards zero)
       if(b == 0) {
-        c = n0;
+        o = n0;
         overflow = true;
       } else {
         if(usebigint) {
-          c = a / b;
+          o = a / b;
         } else {
-          c = a / b;
-          // emulate division truncating to zero (even though towards -infinity is actually more useful, but this is what major programming languages do)
-          if(c < 0) c = Math.ceil(c);
-          else c = Math.floor(c);
+          o = a / b;
+          if(o < 0) o = Math.ceil(o);
+          else o = Math.floor(o);
         }
       }
     } else if(op == 28) {
+      // remainder of truncating division
       if(b == 0) {
-        c = n0;
+        o = n0;
         overflow = true;
       } else {
         if(usebigint) {
-          c = a % b;
+          o = a % b;
         } else {
-          c = Math.floor(a % b);
+          o = Math.floor(a % b);
         }
       }
+    } else if(op == 29 || op == 30) {
+      // op==29: floor division (rounds towards -Infinity)
+      if(b == 0) {
+        o = n0;
+        overflow = true;
+      } else {
+        if(usebigint) {
+          o = a / b;
+          if((a < 0) != (b < 0)) {
+            var m = o * b;
+            if(m != a) o--;
+          }
+        } else {
+          o = Math.floor(a / b);
+        }
+      }
+      if(op == 30 && !overflow) {
+        // modulo corresponding to floor division
+        o = a - o * b
+      }
     } else if(op == 32) {
-      c = a + n1;
-      if(miscin) c++;
+      o = a + n1;
+      if(miscin) o++;
     } else if(op == 33) {
-      c = a - n1;
-      if(miscin) c--;
+      o = a - n1;
+      if(miscin) o--;
     } else if(op == 34) {
-      c = -a;
+      o = -a;
     } else if(op == 35) {
-      c = (a < 0) ? -a : a;
+      o = (a < 0) ? -a : a;
     } else if(op == 36) {
-      c = (a == 0) ? n0 : ((a > 0) ? n1 : n_1);
+      o = (a == 0) ? n0 : ((a > 0) ? n1 : n_1);
     } else if(op == 37) {
       // copysign
-      c = a;
-      if((b < 0) != (a < 0)) c = -a;
-      if(b == 0) c = n0;
+      o = a;
+      if((b < 0) != (a < 0)) o = -a;
+      if(b == 0) o = n0;
     } else if(op == 40) {
-      c = a << b;
+      o = a << b;
     } else if(op == 41) {
-      c = a >> b;
+      o = a >> b;
     } else if(op == 42) {
       // left rotating shift
       if(usebigint) {
-        c = (a << b) | (a >> (BigInt(this.numa) - b));
+        o = (a << b) | (a >> (BigInt(this.numa) - b));
       } else {
-        c = (a << b) | (a >> (this.numa - b));
+        o = (a << b) | (a >> (this.numa - b));
       }
     } else if(op == 43) {
       // right rotating shift
       if(usebigint) {
-        c = (a >> b) | (a << (BigInt(this.numa) - b));
+        o = (a >> b) | (a << (BigInt(this.numa) - b));
       } else {
-        c = (a >> b) | (a << (this.numa - b));
+        o = (a >> b) | (a << (this.numa - b));
       }
-    } else if(op == 48) {
-      if(((a > 65536 || a < -65536) && b > 16) || b > 256) {
-        // avoid too huge BigInt value giving problems and slow computation
-        if(a == 1 || b == 0) c = n1;
-        else if(b == 1) c = a;
-        else {
-          if(usebigint) {
-            var neg = a < 0;
-            if(neg) a = -a;
-            c = modpow(a, b, this.numc);
-            if(neg && (a & n1)) {
-              c = -c;
-            }
-          } else {
-            overflow = true;
-          }
-        }
-      } else {
-        if(b < 0) {
-          if(a == 0) {
-            c = n0;
-            overflow = true;
-          } else if(a == 1) {
-            c = n1;
-          } else if(a == -1) {
-            c = (b & n1) ? n_1 : n_1;
-          } else {
-            c = n0;
-          }
-        } else {
-          c = a ** b;
-        }
+    } else if(op == 44) {
+      // mirror bits
+      for(var i = 0; i < this.numo; i++) {
+        var j = this.numo - i - 1;
+        var ni = usebigint ? BigInt(i) : i;
+        var nj = usebigint ? BigInt(j) : j;
+        o |= ((a >> ni) << nj);
       }
-    } else if(op == 52) {
-      c = gcd(a, b);
-    } else if(op == 53) {
-      c = gcd(a, b);
-      if(c != 0) c = a * b / c;
-      else overflow = true;
-    } else if(op == 56) {
+    } else if(op == 45) {
+      // count leading zeroes
+      for(var i = 0; i < this.numa; i++) {
+        var j = this.numa - i - 1;
+        var nj = usebigint ? BigInt(j) : j;
+        if((a >> nj) & n1) break;
+        o++;
+      }
+      if(a == 0) overflow = true; // some usages may want to special case this
+    } else if(op == 46) {
+      // count trailing zeroes
+      for(var i = 0; i < this.numa; i++) {
+        var ni = usebigint ? BigInt(i) : i;
+        if((a >> ni) & n1) break;
+        o++;
+      }
+      if(a == 0) overflow = true; // some usages may want to special case this
+    } else if(op == 47) {
       // popcount
-      c = n0;
+      o = n0;
       if(a >= 0) {
         while(a > 0) {
-          if(a & n1) c++;
+          if(a & n1) o++;
           a >>= n1;
         }
       } else {
         overflow = true; // popcount not supported for negative numbers. TODO: support it, use twos complement notation (will do same as unsigned popcount operation then)
       }
+    } else if(op == 48) {
+      if(b < 0) {
+        if(a == 0) {
+          o = n0;
+          overflow = true;
+        } else if(a == 1) {
+          o = n1;
+        } else if(a == -1) {
+          o = (b & n1) ? n_1 : n_1;
+        } else {
+          o = n0;
+        }
+      } else if(b == 0) {
+        o = n1;
+      } else {
+        var neg = a < 0;
+        if(neg) a = -a;
+        if(this.numc) {
+          // use modpow with the third input as the modulo: a useful operation
+          // in case integer power modulo e.g. a prime is desired
+          if(c <= 0) {
+            overflow = true;
+          } else {
+            o = n1;
+            var a2 = a % c;
+            while(b > 0) {
+              if(b & n1) o = ((o * a2) % c);
+              b >>= n1;
+              a2 = ((a2 * a2) % c);
+            }
+          }
+        } else {
+          // use modpow (power modulo the max output value) to get accurate
+          // values
+          var mask = usebigint ? ((n1 << BigInt(this.numo)) - n1) : ((1 << this.numo) - 1);
+          o = n1;
+          var a2 = a & mask;
+          while(b > 0) {
+            if(b & n1) o = ((o * a2) & mask);
+            b >>= n1;
+            a2 = ((a2 * a2) & mask);
+          }
+        }
+        if(neg && (b & n1)) {
+          o = -o;
+        }
+      }
+    } else if(op == 52) {
+      o = gcd(a, b);
+    } else if(op == 53) {
+      o = gcd(a, b);
+      if(o != 0) o = a * b / o;
+      else overflow = true;
+    } else if(op == 56) {
+      // modular inverse, modulo 2^outputbits if 1-input op, module b if 2-input op
+      if(this.numb == 0) b = usebigint ? (n1 << BigInt(this.numo)) : (1 << this.numo);
+      if(a == 0 || b == 0) {
+        overflow = true;
+      } else {
+        var b0 = b;
+        var x = n1, y = n0;
+        for(;;) {
+          if(a == 1) { o = x; break; }
+          if(a == 0) { o = n0; break; }
+          var d = b / a;
+          if(!usebigint) d = Math.floor(d);
+          var m = b - d * a; // modulo (matching floored division)
+          y -= x * d;
+          b = m;
+
+          if(b == 1) { o = y; break; }
+          if(b == 0) { o = n0; break; }
+          d = a / b;
+          if(!usebigint) d = Math.floor(d);
+          m = a - d * b; // modulo (matching floored division)
+          x -= y * d;
+          a = m;
+        }
+        if(o < 0) o = b0 + o;
+      }
     } else if(op == 57) {
       // integer log2
-      c = n0;
+      o = n0;
       if(a <= 0) {
         overflow = true;
       } else {
-        c--;
+        o--;
         while(a > 0) {
-          c++;
+          o++;
           a >>= n1;
         }
       }
     } else if(op == 58) {
       // integer sqrt
-      c = n0;
+      o = n0;
       if(a < 0) {
         overflow = true;
       } else {
@@ -2803,10 +2897,10 @@ function Alu() {
           as = a >> s;
         }
         while(s >= 0) {
-          c <<= n1;
-          var c2 = c + n1;
+          o <<= n1;
+          var c2 = o + n1;
           if(c2 * c2 <= (a >> s)) {
-            c = c2;
+            o = c2;
           }
           s -= n2;
         }
@@ -2818,7 +2912,7 @@ function Alu() {
       var s = n0;
       while(a > 0) {
         var m = a % n10;
-        c |= (m << s);
+        o |= (m << s);
         s += n4;
         a = usebigint ? (a / n10) : Math.floor(a / 10);
       }
@@ -2830,35 +2924,35 @@ function Alu() {
       var s = n1;
       while(a > 0) {
         var m = a & n15;
-        c += (m * s);
+        o += (m * s);
         s *= n10;
         a >>= n4;
       }
       if(neg) s |= (n1 << s);
     } else {
-      c = n0;
+      o = n0;
     }
 
     if(usebigint) {
-      if(c < 0) {
-        if(c < BigInt.asIntN(this.numc, c)) overflow = true;
+      if(o < 0) {
+        if(o < BigInt.asIntN(this.numo, o)) overflow = true;
       } else {
-        if(c > BigInt.asUintN(this.numc, c)) overflow = true;
+        if(o > BigInt.asUintN(this.numo, o)) overflow = true;
       }
-      c = BigInt.asUintN(this.numc, c);
-      for(var i = 0; i < this.numc; i++) {
-        if(c & n1) this.output[i] = 1;
-        c >>= n1;
+      o = BigInt.asUintN(this.numo, o);
+      for(var i = 0; i < this.numo; i++) {
+        if(o & n1) this.output[i] = 1;
+        o >>= n1;
       }
-      if((overflow) && this.nummiscout) this.output[this.numc] = 1; // overflow. In case of add, this can serve as carry if you have exactly 1 output too short.
+      if((overflow) && this.nummiscout) this.output[this.numo] = 1; // overflow. In case of add, this can serve as carry if you have exactly 1 output too short.
     } else {
-      if(c > 0x7fffffff) overflow = true;
-      c &= 0x7fffffff; // JS supports max 31-bit int. This masking does the right thing for both the signed and unsigned case.
-      for(var i = 0; i < this.numc; i++) {
-        this.output[i] = (c & 1);
-        c >>= 1;
+      if(o > 0x7fffffff) overflow = true;
+      o &= 0x7fffffff; // JS supports max 31-bit int. This masking does the right thing for both the signed and unsigned case.
+      for(var i = 0; i < this.numo; i++) {
+        this.output[i] = (o & 1);
+        o >>= 1;
       }
-      if((c != 0 || overflow) && this.nummiscout) this.output[this.numc] = 1; // overflow. In case of add, this can serve as carry if you have exactly 1 output too short.
+      if((o != 0 || overflow) && this.nummiscout) this.output[this.numo] = 1; // overflow. In case of add, this can serve as carry if you have exactly 1 output too short.
     }
 
   };
@@ -2992,7 +3086,8 @@ function Alu() {
   returns object of {
     a [heading, lsbpos, num]: input A's heading, and lsbpos
     b [heading, lsbpos, num]: input B's heading, and lsbpos (or heading -1 and num 0 if none)
-    c [heading, lsbpos, num]: output's heading, and lsbpos
+    c [heading, lsbpos, num]: input C's heading, and lsbpos (or heading -1 and num 0 if none)
+    o [heading, lsbpos, num]: output's heading, and lsbpos
     miscin [heading, num]: misc in side heading, num is 0 or 1 (heading -1 and num 0 if none)
     miscout [heading, num]: misc out side heading, num is 0 or 1 (heading -1 and num 0 if none)
   }
@@ -3014,10 +3109,9 @@ function Alu() {
     var a = [-1, -1, 0];
     var b = [-1, -1, 0];
     var c = [-1, -1, 0];
+    var o = [-1, -1, 0];
     var miscin = [-1, 0];
     var miscout = [-1, 0];
-
-    var binary = false;
 
     /*
     io has format: [array, ni, no, ei, eo, si, so, wi, wo]
@@ -3054,9 +3148,9 @@ function Alu() {
       if(arr[0][1] > num) {
         num = arr[0][1];
         outdir = i;
-        c[0] = outdir;
-        c[1] = (outdir < 2) ? 1 : 0; // TODO: use optional '0' symbol to indicate its LSB position
-        c[2] = num;
+        o[0] = outdir;
+        o[1] = (outdir < 2) ? 1 : 0; // TODO: use optional '0' symbol to indicate its LSB position
+        o[2] = num;
       }
     }
     if(outdir == -1) { this.setError('output side not found'); return null; }
@@ -3090,6 +3184,16 @@ function Alu() {
       b[0] = indir;
       b[1] = inlsbpos;
       b[2] = arr[0][1];
+    } else if(arr.length == 3) {
+      a[0] = indir;
+      a[1] = inlsbpos;
+      a[2] = arr[2][1];
+      b[0] = indir;
+      b[1] = inlsbpos;
+      b[2] = arr[1][1];
+      c[0] = indir;
+      c[1] = inlsbpos;
+      c[2] = arr[0][1];
     } else {
       if(arr.length == 0) { this.setError('must have input side opposite of output side'); return null; }
       if(arr.length > 2) { this.setError('too many inputs'); return null; }
@@ -3109,7 +3213,7 @@ function Alu() {
       miscin[1] = 1;
     }
 
-    var result = [a, b, c, miscin, miscout];
+    var result = [a, b, c, o, miscin, miscout];
 
     return result;
   };
@@ -3183,12 +3287,12 @@ function Alu() {
 
     var rompos = 0;
 
-    var side = getSide(this.cdir);
-    var o = io[2 + this.cdir * 2][0]; // [heading, num, begin, end, output]
+    var side = getSide(this.odir);
+    var o = io[2 + this.odir * 2][0]; // [heading, num, begin, end, output]
     for(var i = 0; i < o[1]; i++) {
       var j = i;
-      if(this.clsbpos) j = o[1] - i - 1;
-      j = o[2] + j - ((this.cdir & 1) ? this.y0 : this.x0);
+      if(this.olsbpos) j = o[1] - i - 1;
+      j = o[2] + j - ((this.odir & 1) ? this.y0 : this.x0);
       var x = side[0] + side[2] * j;
       var y = side[1] + side[3] * j;
       var z = side[4];
@@ -3237,18 +3341,19 @@ function Alu() {
     this.blsbpos = dirs[1][1];
     this.cdir = dirs[2][0];
     this.clsbpos = dirs[2][1];
-    this.miscindir = dirs[3][0];
-    this.miscoutdir = dirs[4][0];
+    this.odir = dirs[3][0];
+    this.olsbpos = dirs[3][1];
+    this.miscindir = dirs[4][0];
+    this.miscoutdir = dirs[5][0];
     this.output = []; // current ouput values (first data output(s), then the select passthrough)
     this.numa = dirs[0][2];
     this.numb = dirs[1][2];
     this.numc = dirs[2][2];
-    this.nummiscin = dirs[3][1];
-    this.nummiscout = dirs[4][1];
+    this.numo = dirs[3][2];
+    this.nummiscin = dirs[4][1];
+    this.nummiscout = dirs[5][1];
 
-    this.binary = this.numb > 0;
-
-    this.output.length = this.numc + this.nummiscout;
+    this.output.length = this.numo + this.nummiscout;
 
     this.sortIO(io);
 
@@ -5391,10 +5496,10 @@ function Cell() {
       if(tc == 'z') title = 'tristate buffer, inputs to same z ANDed, multiple z to wire high when any z high (like OR but read on). Allowed to have multiple output to the same wire, but should be used as one-hot (max 1 high to wire, rest must be low) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
       if(tc == 'Z') title = 'tristate buffer, inputs to same Z ORed, multiple Z to wire low when any Z low (like AND but read on). Allowed to have multiple output to the same wire, but should be used as one-cold (max 1 low to wire, rest must be high) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
       if(tc == 'g') title = 'global (backplane) wire, connects to all other g with matching (or matching absense of) number';
-      if(tc == '(') title = 'backplane wire that connects to one matching connector to the right';
-      if(tc == ')') title = 'backplane wire that connects to one matching connector to the left';
-      if(tc == 'n') title = 'backplane wire that connects to one matching connector to below';
-      if(tc == 'u') title = 'backplane wire that connects to one matching connector to the top';
+      if(tc == '(') title = 'backplane wire that connects to one matching connector to the right ("antenna")';
+      if(tc == ')') title = 'backplane wire that connects to one matching connector to the left ("antenna")';
+      if(tc == 'n') title = 'backplane wire that connects to one matching connector to below ("antenna")';
+      if(tc == 'u') title = 'backplane wire that connects to one matching connector to the top ("antenna")';
       if(tc == 'I' || this.numbertype == NUMBER_ICDEF) title = 'IC definition';
       if(tc == 'i' || tc == '#i') title = 'IC instance ' + this.components[0].callsubindex;
       if(tc == 'b' || tc == 'B') {
@@ -5477,7 +5582,9 @@ function Cell() {
         var master = this.components[0].master;
         var alu = master ? master.alu : this.components[0].alu;
         if(alu) {
-          title = 'ALU (arithmetic logic unit): op: "' + alu.getOpLongName() + '",  opindex: ' + alu.opindex + ', signed: ' + alu.signed + ', num inputs: ' + (alu.binary ? 2 : 1);
+          var numinputs = (alu.numc ? 3 : (alu.numb ? 2 : 1));
+          var op = alu.getOpLongName();
+          title = 'ALU (arithmetic logic unit): op: "' + op + '",  opindex: ' + alu.opindex + ', signed: ' + alu.signed + ', num inputs: ' + numinputs;
         } else {
           title = 'ALU (but has error)';
         }
@@ -6114,6 +6221,34 @@ function connected2b(x, y, dir) {
   return result;
 }
 
+// another for graphics, for antennas, which are special
+// it's very similar to connected2b, but fixes one more antenna edge case in a
+// hacky way: if an antenna is used to cross an IC or other thin long component,
+// then there's no point in treating the IC as connected to this antenna, the
+// chip is already connected to itself anyway, and the connection of the antenna
+// to the chip makes the graphics look very confusing if the antenna was there
+// to make a wire cross the chip. So don't draw that as connected.
+function connected2a(x, y, dir) {
+  if(!connected2b(x, y, dir)) return false;
+
+  var c = world[y][x].circuitsymbol;
+
+  // this is a very simple hacky heuristic: only disable antennas with 1 gap in
+  // between pointing at each other, like ( )
+  // TODO: better solution would be to check if exactly same device (its # or
+  // core cell) are touching both antennas, while the antennas point at each other.
+  if(c == 'u' && dir == 0 && y - 2 >= 0 && world[y - 2][x].circuitsymbol == 'n') return false;
+  if(c == '(' && dir == 1 && x + 2 < w && world[y][x + 2].circuitsymbol == ')') return false;
+  if(c == 'n' && dir == 2 && y + 2 < h && world[y + 2][x].circuitsymbol == 'u') return false;
+  if(c == ')' && dir == 3 && x - 2 >= 0 && world[y][x - 2].circuitsymbol == '(') return false;
+
+  return true;
+
+
+}
+
+
+
 // for canvas drawing of % and & and x without too much stray arms
 function isInterestingComponent(cell, z) {
   if(!cell.components[z]) return false;
@@ -6124,8 +6259,11 @@ function isInterestingComponent(cell, z) {
 }
 
 // whether the neighbouring cell at given dir is part of the same device
+// used for rendering boxes around large devices, to determine what are the
+// outer sides of the device
 function sameDevice(x, y, dir) {
-  var n = getNeighbor(x, y, dir);
+  // getNeighborNoAntennas, not getNeighbor, because the box drawing is local only.
+  var n = getNeighborNoAntennas(x, y, dir);
   if(!n) return false;
   var x2 = n.x;
   var y2 = n.y;
@@ -6408,19 +6546,44 @@ function RendererDrawer() {
   };
 
   // for 'g' and antennas
+  // returns array of [numconnections, binary connection code]
   this.drawBGSplit_ = function(cell, ctx) {
-    var num = 0;
+    var num = 0, code = 0;
     ctx.beginPath();
-    if(connected2b(cell.x, cell.y, 0)) { num++; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5); }
-    if(connected2b(cell.x, cell.y, 1)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5); }
-    if(connected2b(cell.x, cell.y, 2)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1); }
-    if(connected2b(cell.x, cell.y, 3)) { num++; this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5); }
-    if(connected2b(cell.x, cell.y, 4)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0); }
-    if(connected2b(cell.x, cell.y, 5)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 1, 1); }
-    if(connected2b(cell.x, cell.y, 6)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 1); }
-    if(connected2b(cell.x, cell.y, 7)) { num++; this.drawLineCore_(ctx, 0.5, 0.5, 0, 0); }
+    if(connected2b(cell.x, cell.y, 0)) { num++; code |= 1; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5); }
+    if(connected2b(cell.x, cell.y, 1)) { num++; code |= 2; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5); }
+    if(connected2b(cell.x, cell.y, 2)) { num++; code |= 4; this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1); }
+    if(connected2b(cell.x, cell.y, 3)) { num++; code |= 8; this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5); }
+    if(connected2b(cell.x, cell.y, 4)) { num++; code |= 16; this.drawLineCore_(ctx, 0.5, 0.5, 1, 0); }
+    if(connected2b(cell.x, cell.y, 5)) { num++; code |= 32; this.drawLineCore_(ctx, 0.5, 0.5, 1, 1); }
+    if(connected2b(cell.x, cell.y, 6)) { num++; code |= 64; this.drawLineCore_(ctx, 0.5, 0.5, 0, 1); }
+    if(connected2b(cell.x, cell.y, 7)) { num++; code |= 128; this.drawLineCore_(ctx, 0.5, 0.5, 0, 0); }
     ctx.stroke();
-    return num;
+    return [num, code];
+  };
+
+  // returns array of [numconnections, binary connection code]
+  this.drawAntennaSplit_ = function(cell, ctx) {
+    var num = 0, code = 0;
+    ctx.beginPath();
+    if(connected2a(cell.x, cell.y, 0)) { num++; code |= 1; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.4); }
+    if(connected2a(cell.x, cell.y, 1)) { num++; code |= 2; this.drawLineCore_(ctx, 0.6, 0.5, 1, 0.5); }
+    if(connected2a(cell.x, cell.y, 2)) { num++; code |= 4; this.drawLineCore_(ctx, 0.5, 0.6, 0.5, 1); }
+    if(connected2a(cell.x, cell.y, 3)) { num++; code |= 8; this.drawLineCore_(ctx, 0, 0.5, 0.4, 0.5); }
+    if(connected2a(cell.x, cell.y, 4)) { num++; code |= 16; this.drawLineCore_(ctx, 0.6, 0.4, 1, 0); }
+    if(connected2a(cell.x, cell.y, 5)) { num++; code |= 32; this.drawLineCore_(ctx, 0.6, 0.6, 1, 1); }
+    if(connected2a(cell.x, cell.y, 6)) { num++; code |= 64; this.drawLineCore_(ctx, 0.4, 0.6, 0, 1); }
+    if(connected2a(cell.x, cell.y, 7)) { num++; code |= 128; this.drawLineCore_(ctx, 0.4, 0.4, 0, 0); }
+    ctx.stroke();
+    if(connected2a(cell.x, cell.y, 0)) { drawer.drawFilledCircle_(ctx, 0.50, 0.35, 0.07); }
+    if(connected2a(cell.x, cell.y, 1)) { drawer.drawFilledCircle_(ctx, 0.65, 0.50, 0.07); }
+    if(connected2a(cell.x, cell.y, 2)) { drawer.drawFilledCircle_(ctx, 0.50, 0.65, 0.07); }
+    if(connected2a(cell.x, cell.y, 3)) { drawer.drawFilledCircle_(ctx, 0.35, 0.50, 0.07); }
+    if(connected2a(cell.x, cell.y, 4)) { drawer.drawFilledCircle_(ctx, 0.65, 0.35, 0.07); }
+    if(connected2a(cell.x, cell.y, 5)) { drawer.drawFilledCircle_(ctx, 0.65, 0.65, 0.07); }
+    if(connected2a(cell.x, cell.y, 6)) { drawer.drawFilledCircle_(ctx, 0.35, 0.65, 0.07); }
+    if(connected2a(cell.x, cell.y, 7)) { drawer.drawFilledCircle_(ctx, 0.35, 0.35, 0.07); }
+    return [num, code];
   };
 
   // also returns amount of wires
@@ -7544,23 +7707,24 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       } else if(antennamap[c]) {
         //drawer.fillBg_(ctx, ctx.fillStyle);
         //this.ctx0.strokeStyle = this.ctx0.fillStyle = BGCOLOR;
-        drawer.drawBGSplit_(cell, ctx);
+        var code = drawer.drawAntennaSplit_(cell, ctx)[1];
         if(c == ')') {
           //drawer.drawArc_(ctx, -0.3, 0.5, 0.75, 0.1, 0.8);
           drawer.drawArc_(ctx, 0.5, 0.5, 0.75, 0.25, 0.4);
-          drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.3);
+          //drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.1);
         } else if(c == '(') {
           //drawer.drawArc_(ctx, 1.3, 0.5, 0.4, 0.75, 0.8);
           drawer.drawArc_(ctx, 0.5, 0.5, 0.25, 0.75, 0.4);
-          drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.3);
+          //if(code & 2) drawer.drawFilledCircle_(ctx, 0.6, 0.5, 0.1);
+          //if(code & 8) drawer.drawFilledCircle_(ctx, 0.4, 0.5, 0.1);
         } else if(c == 'u') {
           //drawer.drawArc_(ctx, 0.5, -0.3, 0.65, 0.35, 0.8);
           drawer.drawArc_(ctx, 0.5, 0.5, 0, 0.5, 0.4);
-          drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.3);
+          //drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.1);
         } else if(c == 'n') {
           //drawer.drawArc_(ctx, 0.5, 1.3, 0.65, 0.85, 0.8);
           drawer.drawArc_(ctx, 0.5, 0.5, 0.5, 0, 0.4);
-          drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.3);
+          //drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.1);
         }
       } else if(c == '=') {
         var bus = cell.bus;
@@ -8206,6 +8370,18 @@ function render() {
       if(cell.components[5]) value |= (cell.components[5].value << 5);
       if(cell.components[6]) value |= (cell.components[6].value << 6);
       if(cell.components[7]) value |= (cell.components[7].value << 7);
+      if(antennamap[cell.circuitsymbol]) {
+        // This is an inaccurate hack to make antennas light up as well.
+        // Antennas are actually more like "warp portals" that make far away cells treated as neighbors, but the antennas
+        // themselves don't participate in the component structure.
+        // The inaccurate hack makes the antenna light up if some neighboring and probably connected component lights up.
+        // It is wrong in some edge cases, doesn't check any components beyond 0, and doesn't check diagonal directions
+        // TODO: implement more accurate way. Maybe give antenna cells a component array of relevant components for rendering too, then this code can go away again.
+        if(y > 0 && world[y - 1][x].components[0] && world[y - 1][x].components[0].value && connected2a(x, y, 0)) value |= 1;
+        if(x + 1 < w && world[y][x + 1].components[0] && world[y][x + 1].components[0].value && connected2a(x, y, 1)) value |= 1;
+        if(y + 1 < h && world[y + 1][x].components[0] && world[y + 1][x].components[0].value && connected2a(x, y, 2)) value |= 1;
+        if(x > 0 && world[y][x - 1].components[0] && world[y][x - 1].components[0].value && connected2a(x, y, 3)) value |= 1;
+      }
       cell.setValue(value);
     }
   }
@@ -8594,6 +8770,16 @@ function parseExtra() {
   }
 
   return true;
+}
+
+// Similar to getNeighbor, but without antenna support
+function getNeighborNoAntennas(x, y, dir) {
+  var x2 = x + ((dir == 1 || dir == 4 || dir == 5) ? 1 : ((dir == 3 || dir == 6 || dir == 7) ? -1 : 0));
+  var y2 = y + ((dir == 0 || dir == 4 || dir == 7) ? -1 : ((dir == 2 || dir == 5 || dir == 6) ? 1 : 0));
+  if(x2 < 0 || x2 >= w) return null;
+  if(y2 < 0 || y2 >= h) return null;
+
+  return world[y2][x2];
 }
 
 // get neighbor, or if antenna, warps to position on other side
