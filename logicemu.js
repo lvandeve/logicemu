@@ -2315,6 +2315,17 @@ function Mux() {
   };
 }
 
+// a modulo b, matching floored division (not matching truncated division, like the % operation does)
+function mod(a, b) {
+  var negb = (b < 0);
+  if(negb) b = -b;
+  var nega = (a < 0);
+  if(nega) a = -a;
+  a %= b;
+  if(nega) { a = (b - a) % b; } // not the most optimal implementation, but made to easily work for both Number and BigInt
+  if(negb) a = -a;
+  return a;
+}
 
 // Arithmetic Logic Unit ('U')
 function Alu() {
@@ -2411,7 +2422,7 @@ function Alu() {
         case 56: return 'minv';
         case 57: return 'log2';
         case 58: return 'sqrt';
-        //case 59: return 'fact';
+        case 59: return 'fact';
         case 60: return '2bcd';
         case 61: return 'bcd2';
         default: return 'unk';
@@ -2436,20 +2447,20 @@ function Alu() {
         case 13: return 'a imply b';
         case 14: return 'bitnand';
         case 15: return 'all ones';
-        case 16: return 'equals';
+        case 16: return this.numc ? 'equals modulo third input' : 'equals';
         case 17: return 'lesser than';
         case 18: return 'lesser than or equals';
-        case 19: return 'not equals';
+        case 19: return this.numc ? 'not equals modulo third input' : 'not equals';
         case 20: return 'greater than or equals';
         case 21: return 'greater than';
         case 22: return 'minimum';
         case 23: return 'maximum';
-        case 24: return 'add';
-        case 25: return 'subtract';
-        case 26: return 'multiply';
-        case 27: return 'divide';
+        case 24: return this.numc ? 'add modulo third input' : 'add';
+        case 25: return this.numc ? 'subtract modulo third input' : 'subtract';
+        case 26: return this.numc ? 'multiply modulo third input' : 'multiply';
+        case 27: return this.numc ? 'divide modulo third input' : 'divide';
         case 28: return 'remainder';
-        case 29: return 'floor divide';
+        case 29: return this.numc ? 'floor divide modulo third input' : 'floor divide';
         case 30: return 'modulo';
         case 32: return 'increment';
         case 33: return 'decrement';
@@ -2465,7 +2476,7 @@ function Alu() {
         case 45: return 'count leading zeros';
         case 46: return 'count trailing zeros';
         case 47: return 'popcount';
-        case 48: return this.numc ? 'integer power modulo third argument' : 'integer power';
+        case 48: return this.numc ? 'integer power modulo third input' : 'integer power';
         //case 49: return 'integer log';
         //case 50: return 'integer root';
         case 52: return 'greatest common divider';
@@ -2473,7 +2484,7 @@ function Alu() {
         case 56: return this.numb ? 'modular inverse (modulo output size)' : 'modular inverse';
         case 57: return 'integer base-2 logarithm';
         case 58: return 'integer square root';
-        //case 59: return 'factorial';
+        case 59: return this.numb ? 'factorial modulo second input' : 'factorial';
         case 60: return 'binary to bcd (binary coded decimal)';
         case 61: return 'bcd to binary (bcd = binary coded decimal)';
         default: return 'unknown';
@@ -2550,7 +2561,7 @@ function Alu() {
 
       b = 0;
       for(var i = 0; i < this.numb; i++) {
-        var j = i + this.numb;
+        var j = i + this.numc;
         if(inputs[j]) b ^= (1 << i);
       }
 
@@ -2657,13 +2668,25 @@ function Alu() {
         o = 0x7fffffff;
       }
     } else if(op == 16) {
-      o = (a == b) ? n1 : n0;
+      // equals
+      if(this.numc) {
+        if(c == 0) overflow = true;
+        else o = (mod(a - b, c) == 0) ? n1 : n0;
+      } else {
+        o = (a == b) ? n1 : n0;
+      }
     } else if(op == 17) {
       o = (a < b) ? n1 : n0;
     } else if(op == 18) {
       o = (a <= b) ? n1 : n0;
     } else if(op == 19) {
-      o = (a != b) ? n1 : n0;
+      // not equals
+      if(this.numc) {
+        if(c == 0) overflow = true;
+        else o = (mod(a - b, c) != 0) ? n1 : n0;
+      } else {
+        o = (a != b) ? n1 : n0;
+      }
     } else if(op == 20) {
       o = (a >= b) ? n1 : n0;
     } else if(op == 21) {
@@ -2673,13 +2696,40 @@ function Alu() {
     } else if(op == 23) {
       o = (a > b) ? a : b;
     } else if(op == 24) {
+      // add
       o = a + b;
       if(miscin) o++;
+      if(this.numc) {
+        if(c == 0) {
+          overflow = true;
+          o = n0;
+        } else {
+          o = mod(o, c);
+        }
+      }
     } else if(op == 25) {
+      // sub
       o = a - b;
       if(miscin) o--;
+      if(this.numc) {
+        if(c == 0) {
+          overflow = true;
+          o = n0;
+        } else {
+          o = mod(o, c);
+        }
+      }
     } else if(op == 26) {
+      // mul
       o = a * b;
+      if(this.numc) {
+        if(c == 0) {
+          overflow = true;
+          o = n0;
+        } else {
+          o = mod(o, c);
+        }
+      }
     } else if(op == 27) {
       // truncating division (rounds towards zero)
       if(b == 0) {
@@ -2694,19 +2744,22 @@ function Alu() {
           else o = Math.floor(o);
         }
       }
+      if(this.numc && !overflow) {
+        if(c == 0) {
+          overflow = true;
+          o = n0;
+        } else {
+          o = mod(o, c);
+        }
+      }
     } else if(op == 28) {
       // remainder of truncating division
       if(b == 0) {
-        o = n0;
         overflow = true;
       } else {
-        if(usebigint) {
-          o = a % b;
-        } else {
-          o = Math.floor(a % b);
-        }
+        o = a % b;
       }
-    } else if(op == 29 || op == 30) {
+    } else if(op == 29) {
       // op==29: floor division (rounds towards -Infinity)
       if(b == 0) {
         o = n0;
@@ -2722,9 +2775,19 @@ function Alu() {
           o = Math.floor(a / b);
         }
       }
-      if(op == 30 && !overflow) {
-        // modulo corresponding to floor division
-        o = a - o * b
+      if(this.numc && !overflow) {
+        if(c == 0) {
+          overflow = true;
+          o = n0;
+        } else {
+          o = mod(o, c);
+        }
+      }
+    } else if(op == 30) {
+      if(b == 0) {
+        overflow = true;
+      } else {
+        o = mod(a, b);
       }
     } else if(op == 32) {
       o = a + n1;
@@ -2908,6 +2971,51 @@ function Alu() {
             o = c2;
           }
           s -= n2;
+        }
+      }
+    } else if(op == 59) {
+      // factorial. Limited to a size to keep it reasonable.
+      // modulo b if a second input is present.
+
+      // if a/2 is larger than amount of output bits (and we're not doing modulo b),
+      // then we know that all visible output bits will be 0, due to the amount of
+      // factors '2' in the result. So no need to compute then, plus also
+      // indicate overflow
+      var allzeroes = !this.numb && (a > this.numo * 2);
+      if(a < 0 || a > 4096 || allzeroes) {
+        overflow = true;
+      } else {
+        o = n1;
+        if(this.numb) {
+          if(b == 0) {
+            overflow = true;
+          } else {
+            if(a >= b) {
+              // result is guaranteed to be 0, since the modulo itself will be
+              // contained in the factors when a >= b. So no need to compute.
+            } else {
+              for(var i = n2; i <= a; i++) {
+                o *= i;
+                o = mod(o, b);
+                // once the modulo operation made the result 0, which can easily happen as soon
+                // as we passed all the prime factors of b, we can stop since the result is
+                // guaranteed to stay 0.
+                if(o == 0) break;
+                // note: overflow flag not used for this since when using the second modulo
+                // input, it's deliberate.
+              }
+            }
+          }
+        } else {
+          var mask = usebigint ? ((n1 << BigInt(this.numo)) - n1) : ((1 << this.numo) - 1);
+          for(var i = n2; i <= a; i++) {
+            o *= i;
+            if(o >= mask) {
+              overflow = true;
+              o &= mask;
+              if(o == 0) break;
+            }
+          }
         }
       }
     } else if(op == 60) {

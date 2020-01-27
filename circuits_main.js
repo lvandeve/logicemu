@@ -5348,9 +5348,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U32######<s l<U33######<s l<U34######<s l<U35######<s l<U36######<s l<U37######<s l<U38######<s l<U39######<s
-   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
-   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
-   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+   ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg          gggg          gggg          gggg          gggg          gggg gggg     gggg gggg     gggg gggg
+   3210          3210          3210          3210          3210          3210 7654     3210 7654     3210 7654
 
 
         T###          T###          T###          T###          T###          T###          T###          T###
@@ -5358,9 +5358,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U40######<s l<U41######<s l<U42######<s l<U43######<s l<U44######<s l<U45######<s l<U46######<s l<U47######<s
-   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
-   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
-   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^          ^^^^          ^^^^          ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg          gggg          gggg          gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210          3210          3210          3210
 
 
         T###          T###          T###          T###          T###          T###          T###          T###
@@ -5378,9 +5378,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U56######<s l<U57######<s l<U58######<s l<U59######<s l<U60######<s l<U61######<s l<U62######<s l<U63######<s
-   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
-   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
-   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+   ^^^^ ^^^^     ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg          gggg          gggg          gggg          gggg          gggg gggg     gggg gggg
+   3210 7654     3210          3210          3210          3210          3210          3210 7654     3210 7654
 
 
 0"# Signed operations"
@@ -5431,9 +5431,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U96######<s l<U97######<s l<U98######<s l<U99######<s l<U100#####<s l<U101#####<s l<U102#####<s l<U103#####<s
-   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
-   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
-   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+   ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg          gggg          gggg          gggg          gggg          gggg gggg     gggg gggg     gggg gggg
+   3210          3210          3210          3210          3210          3210 7654     3210 7654     3210 7654
 
 
         T###          T###          T###          T###          T###          T###          T###          T###
@@ -5441,9 +5441,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U104#####<s l<U105#####<s l<U106#####<s l<U107#####<s l<U108#####<s l<U109#####<s l<U110#####<s l<U111#####<s
-   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
-   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
-   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^          ^^^^          ^^^^          ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg          gggg          gggg          gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210          3210          3210          3210
 
 
         T###          T###          T###          T###          T###          T###          T###          T###
@@ -5461,9 +5461,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U120#####<s l<U121#####<s l<U122#####<s l<U123#####<s l<U124#####<s l<U125#####<s l<U126#####<s l<U127#####<s
-   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
-   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
-   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+   ^^^^ ^^^^     ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^ ^^^^
+   gggg gggg     gggg          gggg          gggg          gggg          gggg          gggg          gggg gggg
+   3210 7654     3210          3210          3210          3210          3210          3210          3210 7654
 
 `, 'aluall');
 

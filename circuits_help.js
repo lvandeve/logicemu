@@ -862,9 +862,11 @@ s..>z..>l
  s..>z......>l
 
 
-0"Capital Z does the opposite: it ORs its inputs and multiple get ANDed"
+0"Capital Z does the opposite: it ORs its inputs and multiple get ANDed. This"
+0"can be seen as: the output is high by default (instead of low like 'z'),"
+0"but any fully zero Z will pull the output to 0. So the opposite of z."
 
-0"To summarize it:"
+0"To summarize z and Z:"
 
 s....                   s....
     v                       v
@@ -2812,7 +2814,13 @@ s..>z..>l
      v  .
  s..>z......>l
 
-0"To summarize it:"
+
+0"Capital Z does the opposite: it ORs its inputs and multiple get ANDed. This"
+0"can be seen as: the output is high by default (instead of low like 'z'),"
+0"but any fully zero Z will pull the output to 0. So the opposite of z."
+
+
+0"To summarize z and Z:"
 
 s....                      s....
     v                          v
