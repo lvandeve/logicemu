@@ -391,17 +391,18 @@ var TYPE_UNKNOWN_DEVICE = TYPE_index++; // unknown device, which has only device
 var TYPE_SWITCH_OFF = TYPE_index++;
 var TYPE_SWITCH_ON = TYPE_index++;
 var TYPE_LED = TYPE_index++;
-var TYPE_LED_RGB = TYPE_index++;
 var TYPE_PUSHBUTTON_OFF = TYPE_index++;
 var TYPE_PUSHBUTTON_ON = TYPE_index++;
 var TYPE_TIMER_OFF = TYPE_index++; // initially off, then will go on, off again, etc...
 var TYPE_TIMER_ON = TYPE_index++; // initially on, then will go off, on again, etc...
 var TYPE_AND = TYPE_index++;
 var TYPE_OR = TYPE_index++;
-var TYPE_XOR = TYPE_index++;
+var TYPE_XOR = TYPE_index++; // odd parity gate
 var TYPE_NAND = TYPE_index++;
 var TYPE_NOR = TYPE_index++;
-var TYPE_XNOR = TYPE_index++;
+var TYPE_XNOR = TYPE_index++; // even parity gate
+var TYPE_ONEHOT = TYPE_index++; // the 'real' exclusive or, a one hot detector, but not a primitive gate like XOR since it is more expensive to build than cascating multiple 2-input XORs
+var TYPE_NONEHOT = TYPE_index++; // inverted one-hot (not-one-hot, not none-hot)
 var TYPE_FLIPFLOP = TYPE_index++; // "c", "C" when combined with other FF parts
 var TYPE_COUNTER = TYPE_index++; // standalone "c", "C". TODO: this does not need a separate type, since the TYPE_FLIPFLOP's programming can also handle its behaviour (it handles the c+y combination, which does the same if y is on, for example)
 var TYPE_CONSTANT_OFF = TYPE_index++; // 'f' and 'F' from fixed, since letter c is already for counter and clock
@@ -413,6 +414,7 @@ var TYPE_ALU = TYPE_index++;
 var TYPE_IC = TYPE_index++; // also called "sub"
 var TYPE_IC_PASSTHROUGH = TYPE_index++; // the switch gets internally converted into this. Behaves like OR, but will have always only 1 input
 var TYPE_VTE = TYPE_index++;
+var TYPE_DOTMATRIX = TYPE_index++;
 var TYPE_TRISTATE = TYPE_index++;
 var TYPE_TRISTATE_INV = TYPE_index++;
 var TYPE_RANDOM = TYPE_index++;
@@ -441,21 +443,23 @@ connected together with a "master".
 // this is mainly for the "change type" dropdown.
 var typesymbols = {}; // cannot use object colon notation because JS then interprets the variable names as strings, not as their numeric values
 typesymbols[TYPE_NULL] = '`'; typesymbols[TYPE_SWITCH_OFF] = 's'; typesymbols[TYPE_SWITCH_ON] = 'S';
-typesymbols[TYPE_LED] = 'l'; typesymbols[TYPE_LED_RGB] = 'G';
+typesymbols[TYPE_LED] = 'l'; typesymbols[TYPE_DOTMATRIX] = 'D';
 typesymbols[TYPE_PUSHBUTTON_OFF] = 'p'; typesymbols[TYPE_PUSHBUTTON_ON] = 'P';
-typesymbols[TYPE_TIMER_OFF] = 'r'; typesymbols[TYPE_TIMER_ON] = 'R'; typesymbols[TYPE_AND] = 'a';
-typesymbols[TYPE_OR] = 'o'; typesymbols[TYPE_XOR] = 'e'; typesymbols[TYPE_NAND] = 'A';
-typesymbols[TYPE_NOR] = 'O'; typesymbols[TYPE_XNOR] = 'E'; typesymbols[TYPE_FLIPFLOP] = 'c';
+typesymbols[TYPE_TIMER_OFF] = 'r'; typesymbols[TYPE_TIMER_ON] = 'R';
+typesymbols[TYPE_AND] = 'a'; typesymbols[TYPE_NAND] = 'A';
+typesymbols[TYPE_OR] = 'o'; typesymbols[TYPE_NOR] = 'O';
+typesymbols[TYPE_XOR] = 'e';  typesymbols[TYPE_XNOR] = 'E';
+typesymbols[TYPE_ONEHOT] = 'h'; typesymbols[TYPE_NONEHOT] = 'H';
 typesymbols[TYPE_CONSTANT_OFF] = 'f'; typesymbols[TYPE_CONSTANT_ON] = 'F';
-typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd';
+typesymbols[TYPE_FLIPFLOP] = 'c'; typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd';
 typesymbols[TYPE_TRISTATE] = 'z'; typesymbols[TYPE_TRISTATE_INV] = 'Z';
 
 
 // all devices except flipflop, those are treated differently because multiple different cells of its type can form one component
-var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'f':true, 'F':true,
-                 's':true, 'S':true, 'l':true, 'G':true, 'r':true, 'R':true, 'p':true, 'P':true,
+var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'h':true, 'H':true, 'f':true, 'F':true,
+                 's':true, 'S':true, 'l':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
-                 'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'z':true, 'Z':true, '?':true};
+                 'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true, '?':true};
 var specialextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true}; // special extenders for large devices (not all of those are used yet)
 // devicemap as well as # (with extends devices)
 var devicemaparea = mergeMaps(devicemap, specialextendmap); devicemaparea['#'] = true;
@@ -469,11 +473,11 @@ var antennamap = {'(':true, ')':true, 'n':true, 'u':true};
 var diagonalmap = {'x':true, 'X':true, 'Y':true, '/':true, '\\':true, '*':true};
 //non-isolators (does not include isolators like ' ' and '0-9' despite being "known"). I is also not part of this, but i is.
 var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x':true, 'g':true,
-                'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'f':true, 'F':true,
-                's':true, 'S':true, 'l':true, 'G':true, 'r':true, 'R':true, 'p':true, 'P':true,
+                'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'h':true, 'H':true, 'f':true, 'F':true,
+                's':true, 'S':true, 'l':true, 'r':true, 'R':true, 'p':true, 'P':true,
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true, 'U':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
-                '#':true, '=':true, 'i':true, 'T':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
+                '#':true, '=':true, 'i':true, 'T':true, 'D':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
                 'z':true, 'Z':true, '?':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
@@ -845,6 +849,10 @@ function CallSub(id) {
         tristate.invout = v.tristate.invout;
         component.tristate = tristate;
       }
+      if(v.dotmatrix) {
+        // Do nothing, don't copy the dotmatrix: it's an output-only
+        // component, and is invisible inside IC's, so has no effect
+      }
 
       if(v.type == TYPE_SWITCH_OFF || v.type == TYPE_SWITCH_ON) {
         component.type = TYPE_IC_PASSTHROUGH;
@@ -1154,12 +1162,8 @@ function getIO(x0, y0, x1, y1, master) {
 }
 
 
-// More powerful version of getIO: can return input and output series on all sides. 0-4 input sides and 0-4 output sides supported. But max 1 input series and 1 output series per side.
+// Different output format than getIO: can return input and output series on all sides. 0-4 input sides and 0-4 output sides supported. But max 1 input series and 1 output series per side.
 // returns 2D array of form:
-// BEFORE:
-// [[ni0, ni1, ni1-ni0], [ei0, ei1, ei1-ei0], [si0, si1, si1-si0], [wi0, wi1, wi1-wi0],[no0, no1, no1-no0], [eo0, eo1, eo1-eo0], [so0, so1, so1-so0], [wo0, wo1, wo1-wo0]];
-// with first letter the direction (NESW), next i or o for input/output, and next symbol: 0 for start, 1 for end, 1-0 = num inputs or outputs
-// AFTER:
 // [[[niv], nic], [[eiv], eic], [[siv], sic], [[wiv], wic],[[nov], noc], [[eov], eoc], [[sov], soc], [[wov], woc]];
 // with first letter the direction (NESW), next i or o for input/output, and next symbol: v for array, c for count
 // end is non-inclusive
@@ -1187,7 +1191,9 @@ function getIO2(x0, y0, x1, y1, master) {
       niv.push(x);
     } else if(y == y1) {
       siv.push(x);
-    } else return null;
+    } else {
+      return null;
+    }
   }
 
   for(var x = x0; x < x1; x++) {
@@ -1218,7 +1224,7 @@ function getIO2(x0, y0, x1, y1, master) {
 }
 
 
-// like getIO, but allows gaps in between
+// Another different output format of getIO. Allows gaps in between
 // returns 2D array of form: [[[nv], nc, nt], [[ev], ec, et], [[sv], sc, st], [[wv], wc, wt], ic, oc];
 // with first letter the direction (NESW), and next symbol: v is array with the locations, c num inputs or outputs and t meaning type: 0:none,1:input,2:output.
 // ic and oc are input count and output count
@@ -2405,15 +2411,16 @@ function Alu() {
         case 34: return 'neg';
         case 35: return 'abs';
         case 36: return 'sign';
-        case 37: return 'csgn';
+        case 38: return '2bcd';
+        case 39: return 'bcd2';
         case 40: return 'lsh';
         case 41: return 'rsh';
         case 42: return 'rlsh';
         case 43: return 'rrsh';
         case 44: return 'mirr';
-        case 45: return 'clz';
-        case 46: return 'ctz';
-        case 47: return 'popc';
+        case 45: return 'popc';
+        case 46: return 'clz';
+        case 47: return 'ctz';
         case 48: return 'pow';
         //case 49: return 'log';
         //case 50: return 'root';
@@ -2423,8 +2430,7 @@ function Alu() {
         case 57: return 'log2';
         case 58: return 'sqrt';
         case 59: return 'fact';
-        case 60: return '2bcd';
-        case 61: return 'bcd2';
+        case 60: return 'sin';
         default: return 'unk';
     }
   };
@@ -2466,16 +2472,17 @@ function Alu() {
         case 33: return 'decrement';
         case 34: return 'negate';
         case 35: return 'absolute value';
-        case 36: return 'sign';
-        case 37: return 'copysign';
+        case 36: return this.numb ? 'copysign' : 'sign';
+        case 38: return 'binary to bcd (binary coded decimal)';
+        case 39: return 'bcd to binary (bcd = binary coded decimal)';
         case 40: return 'left shift';
         case 41: return 'right shift';
         case 42: return 'rotating left shift';
         case 43: return 'rotating right shift';
         case 44: return 'mirror bits';
-        case 45: return 'count leading zeros';
-        case 46: return 'count trailing zeros';
-        case 47: return 'popcount';
+        case 45: return 'popcount';
+        case 46: return 'count leading zeros';
+        case 47: return 'count trailing zeros';
         case 48: return this.numc ? 'integer power modulo third input' : 'integer power';
         //case 49: return 'integer log';
         //case 50: return 'integer root';
@@ -2485,8 +2492,7 @@ function Alu() {
         case 57: return 'integer base-2 logarithm';
         case 58: return 'integer square root';
         case 59: return this.numb ? 'factorial modulo second input' : 'factorial';
-        case 60: return 'binary to bcd (binary coded decimal)';
-        case 61: return 'bcd to binary (bcd = binary coded decimal)';
+        case 60: return 'sine (scaled)';
         default: return 'unknown';
     }
   };
@@ -2800,12 +2806,39 @@ function Alu() {
     } else if(op == 35) {
       o = (a < 0) ? -a : a;
     } else if(op == 36) {
-      o = (a == 0) ? n0 : ((a > 0) ? n1 : n_1);
-    } else if(op == 37) {
-      // copysign
-      o = a;
-      if((b < 0) != (a < 0)) o = -a;
-      if(b == 0) o = n0;
+      if(this.numb) {
+        // copysign
+        o = a;
+        if((b < 0) != (a < 0)) o = -a;
+        if(b == 0) o = n0;
+      } else {
+        // sign
+        o = (a == 0) ? n0 : ((a > 0) ? n1 : n_1);
+      }
+    } else if(op == 38) {
+      // binary to bcd
+      var neg = a < 0;
+      if(neg) a = -a;
+      var s = n0;
+      while(a > 0) {
+        var m = a % n10;
+        o |= (m << s);
+        s += n4;
+        a = usebigint ? (a / n10) : Math.floor(a / 10);
+      }
+      if(neg) s |= (n1 << s);
+    } else if(op == 39) {
+      // bcd to binary
+      var neg = a < 0;
+      if(neg) a = -a;
+      var s = n1;
+      while(a > 0) {
+        var m = a & n15;
+        o += (m * s);
+        s *= n10;
+        a >>= n4;
+      }
+      if(neg) s |= (n1 << s);
     } else if(op == 40) {
       o = a << b;
     } else if(op == 41) {
@@ -2833,23 +2866,6 @@ function Alu() {
         o |= ((a >> ni) << nj);
       }
     } else if(op == 45) {
-      // count leading zeroes
-      for(var i = 0; i < this.numa; i++) {
-        var j = this.numa - i - 1;
-        var nj = usebigint ? BigInt(j) : j;
-        if((a >> nj) & n1) break;
-        o++;
-      }
-      if(a == 0) overflow = true; // some usages may want to special case this
-    } else if(op == 46) {
-      // count trailing zeroes
-      for(var i = 0; i < this.numa; i++) {
-        var ni = usebigint ? BigInt(i) : i;
-        if((a >> ni) & n1) break;
-        o++;
-      }
-      if(a == 0) overflow = true; // some usages may want to special case this
-    } else if(op == 47) {
       // popcount
       o = n0;
       if(a >= 0) {
@@ -2860,7 +2876,25 @@ function Alu() {
       } else {
         overflow = true; // popcount not supported for negative numbers. TODO: support it, use twos complement notation (will do same as unsigned popcount operation then)
       }
+    } else if(op == 46) {
+      // count leading zeroes
+      for(var i = 0; i < this.numa; i++) {
+        var j = this.numa - i - 1;
+        var nj = usebigint ? BigInt(j) : j;
+        if((a >> nj) & n1) break;
+        o++;
+      }
+      if(a == 0) overflow = true; // some usages may want to special case this
+    } else if(op == 47) {
+      // count trailing zeroes
+      for(var i = 0; i < this.numa; i++) {
+        var ni = usebigint ? BigInt(i) : i;
+        if((a >> ni) & n1) break;
+        o++;
+      }
+      if(a == 0) overflow = true; // some usages may want to special case this
     } else if(op == 48) {
+      // integer power
       if(b < 0) {
         if(a == 0) {
           o = n0;
@@ -3019,29 +3053,12 @@ function Alu() {
         }
       }
     } else if(op == 60) {
-      // binary to bcd
-      var neg = a < 0;
-      if(neg) a = -a;
-      var s = n0;
-      while(a > 0) {
-        var m = a % n10;
-        o |= (m << s);
-        s += n4;
-        a = usebigint ? (a / n10) : Math.floor(a / 10);
-      }
-      if(neg) s |= (n1 << s);
-    } else if(op == 61) {
-      // bcd to binary
-      var neg = a < 0;
-      if(neg) a = -a;
-      var s = n1;
-      while(a > 0) {
-        var m = a & n15;
-        o += (m * s);
-        s *= n10;
-        a >>= n4;
-      }
-      if(neg) s |= (n1 << s);
+      // TODO: support signed
+      var f = Number(a) * Math.PI * 2.0 / ((1 << this.numa) - 0);
+      f = Math.sin(f);
+      f = (f + 1.0) / 2.0; // make in range 0..1 instead of -1..1
+      o = Math.floor(f * (Math.pow(2, this.numo) - 1));
+      if(usebigint) o = BigInt(o);
     } else {
       o = n0;
     }
@@ -3145,9 +3162,9 @@ function Alu() {
         var c = world[y][x];
         if(c.metasymbol == '#') count++;
         else count = 0;
-        if(count == len + 2) {
+        if(count == len + 1 || (count == len && x - len + 1 == x0)) {
           labelok = true;
-          labelx = x - len;
+          labelx = x - len + 1;
           labely = y;
           break;
         }
@@ -3543,6 +3560,7 @@ function VTE() {
         x--;
         //if(x >= this.x1 - this.x0) { x = 0; y++; }
         if(x < 0) { x = this.x1 - 1; y--; }
+        if(y < 0) break;
       }
       var mul = 1;
       for(var i = 0; i < this.numoutputs; i++) {
@@ -3568,6 +3586,7 @@ function VTE() {
         x--;
         //if(x >= this.x1 - this.x0) { x = 0; y++; }
         if(x < 0) { x = this.x1 - this.x0 - 1; y--; }
+        if(y < 0) break;
       }
       if(this.passthrough) {
         for(var i = 0; i < this.numoutputs; i++) {
@@ -4000,6 +4019,358 @@ function VTE() {
   };
 }
 
+
+// has no outputs, so no master needed
+function DotMatrix() {
+  this.x0 = 0;
+  this.y0 = 0;
+  this.x1 = 0;
+  this.y1 = 0;
+  this.text = null; // not as string but as 2D array of characters
+  this.w = -1;
+  this.h = -1;
+  this.numx = -1;
+  this.numy = -1;
+  this.numc = -1; // num bits to control color
+
+  this.direct = false; // if true, the x/y addresses are direct, not binary addresses, and multiple dots could be set at the same time
+
+  this.prevdot = false;
+  this.prevfill = false;
+  this.prevcolor = -1;
+
+  this.error = false;
+  this.errormessage = '';
+
+  this.array = [];
+
+  this.master = null;
+
+  this.rgbled = false; // if true, is not a dot matrix screen but a single RGB led with up to 3 inputs
+
+  this.setError = function(text) {
+    this.error = true;
+    if(!this.errormessage) this.errormessage = text;
+  };
+
+  this.update = function(inputs) {
+    var led = this.rgbled;
+    var index = 0;
+    var mul = 1;
+    var dot = !led && inputs[0]; // place a single pixel
+    var fill = led || inputs[1]; // fill all pixels
+    var color = 0;
+    var c0 = led ? 0 : 2;
+    if(this.numc == 1) {
+      color = inputs[c0] ? 7 : 0;
+    } else if(this.numc == 2) {
+      if(inputs[c0] && inputs[c0 + 1]) color = 7;
+      else if(inputs[c0] && !inputs[c0 + 1]) color = 1;
+      else if(!inputs[c0] && inputs[c0 + 1]) color = 2;
+    } else if(this.numc == 3) {
+      color = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2];
+    }
+
+    if(led) {
+      var prevcolor = this.prevcolor;
+      this.prevcolor = color;
+
+      if(prevcolor != color) {
+        for(var y = 0; y < this.h; y++) {
+          for(var x = 0; x < this.w; x++) {
+            this.array[y][x] = color;
+          }
+        }
+      }
+    } else {
+      // for direct
+      var xarray = [];
+      var yarray = [];
+
+      var x = 0;
+      for(var i = 0; i < this.numx; i++) {
+        var v = inputs[2 + this.numc + i];
+        x += (v << i);
+        if(v) xarray.push(i);
+      }
+      var y = 0;
+      for(var i = 0; i < this.numy; i++) {
+        var v = inputs[2 + this.numc + this.numx + i];
+        y += (v << i);
+        if(v) yarray.push(i);
+      }
+
+      var prevdot = this.prevdot;
+      this.prevdot = dot;
+      var prevfill = this.prevfill;
+      this.prevfill = fill;
+
+      if(!prevfill && fill) {
+        for(var y = 0; y < this.h; y++) {
+          for(var x = 0; x < this.w; x++) {
+            this.array[y][x] = color;
+          }
+        }
+      } else if(!prevdot && dot) {
+        if(this.direct) {
+          for(var j = 0; j < yarray.length; j++) {
+            for(var i = 0; i < xarray.length; i++) {
+              var x = xarray[i];
+              var y = yarray[j];
+              this.array[y][x] = color;
+            }
+          }
+        } else {
+          if(y < this.h && x < this.w) this.array[y][x] = color;
+        }
+      }
+    }
+  };
+
+
+  // init before inputs are resolved
+  // returns true if ok, false if error
+  this.init1 = function(component) {
+    // unlike other large components, the master component is the only single
+    // component here, since this component has only inputs, and  multiple
+    // components is only needed if multiple different output values must be
+    // supported.
+    this.master = component;
+    var x0 = w, x1 = 0, y0 = h, y1 = 0;
+    for(var i = 0; i < component.cells.length; i++) {
+      var x = component.cells[i][0];
+      var y = component.cells[i][1];
+      x0 = Math.min(x, x0);
+      x1 = Math.max(x, x1);
+      y0 = Math.min(y, y0);
+      y1 = Math.max(y, y1);
+    }
+    x1++;
+    y1++;
+    this.x0 = x0;
+    this.y0 = y0;
+    this.x1 = x1;
+    this.y1 = y1;
+    this.w = this.x1 - this.x0;
+    this.h = this.y1 - this.y0;
+    component.dotmatrix = this;
+    return true;
+  };
+
+
+  /*
+  given the array returned by getIO2,
+  returns object of {
+    rgbled: boolean, true if this is rgbled, then only the field "empty" below is present, used to sort the inputs in clockwise order starting from that side
+    empty [heading, numc]: side with nothing, and also TOTAL amount of inputs (relevant for RGB LED only)
+    misc [heading, dir, num, lsbpos]: side with dot/fill/color
+    x [heading, dir, num, lsbpos]: side with x coordinate
+    y [heading, dir, num, lsbpos]: side with y coordinate
+  }
+  sets this.rgbled if it's an rgb led. Then misc, x and y have no meaning other than containing the desired inputs in clockwise order.
+  with
+  heading: wind direction of side with this inputs/outputs (NESW), or -1 if not present
+  dir: heading & 1: 0=horizontal, 1=vertical
+  i0: begin coordinate (x or y depends on dir)
+  i1: end coordinate
+  num: i1 - i0
+  lsbpos: is lsbpos for this left or right (not relevant for everything)
+  }
+  returns null on error.
+  */
+  this.getDirs = function(io) {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
+    // io format: [[[niv], nic], [[eiv], eic], [[siv], sic], [[wiv], wic],[[nov], noc], [[eov], eoc], [[sov], soc], [[wov], woc]];
+
+    var numinputs = 0;
+
+    for(var i = 0; i < 4; i++) {
+      // commented out: ignore outputs altogether instead.
+      //if(io[i + 4][1] != 0) { this.setError('dotmatrix cannot have outputs'); return false; }
+      numinputs += io[i][1];
+    }
+
+    var rgbled = false;
+    if(numinputs < 4) {
+      rgbled = true;
+    }
+
+    var emptyheading = -1; // the one side without inputs
+
+    for(var i = 0; i < 4; i++) {
+      if(io[i][1] == 0) {
+        emptyheading = i;
+        break;
+      }
+    }
+
+    if(emptyheading < 0) { this.setError('must have side without input'); return null; }
+    var empty = [emptyheading, numinputs];
+    if(rgbled) return {'rgbled':true, 'empty':empty};
+
+    var mischeading = -1;
+    var xheading = -1;
+    var yheading = -1;
+    for(var i = 0; i < 3; i++) {
+      var j = ((emptyheading + i + 1) & 3);
+      if(!io[j][1]) { this.setError('missing input side, there must be 3'); return null; }
+      if(i == 0) {
+        mischeading = j;
+      } else {
+        if(j & 1) yheading = j;
+        else xheading = j;
+      }
+    }
+
+    var misclsbpos = (mischeading >= 2) ? 1 : 0;
+    var xlsbpos = (xheading >= 2) ? 1 : 0;
+    var ylsbpos = (yheading >= 2) ? 1 : 0;
+
+    var misc = [mischeading, mischeading & 1, io[mischeading][1], misclsbpos];
+    var x = [xheading, xheading & 1, io[xheading][1], xlsbpos];
+    var y = [yheading, yheading & 1, io[yheading][1], ylsbpos];
+
+    var result = {'rgbled':false, 'empty':empty, 'misc':misc, 'x':x, 'y':y };
+    return result;
+  };
+
+  /*
+  Sorts inputs from getDirs
+  -first the misc bits: dot, fill, R, G, B
+  -then the x coordinate, starting from lsb
+  -then the y coordinate, starting from lsb
+  }
+  */
+  this.sortIO = function(dirs) {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
+    var led = dirs.rgbled;
+    var emptyheading = dirs.empty[0];
+
+    var getDir = function(x, y) {
+      if(y < y0) return 0;
+      if(x >= x1) return 1;
+      if(y >= y1) return 2;
+      if(x < x0) return 3;
+      return -1;
+    };
+
+
+    //sort inputs from lsb to msb, then the write input
+    var array = [];
+    for(var i = 0; i < this.master.inputs.length; i++) array[i] = i;
+    var self = this;
+
+    if(led) {
+      // sort clockwise starting from the empty side
+      array = array.sort(function(a, b) {
+        var xa = self.master.inputs_x[a];
+        var ya = self.master.inputs_y[a];
+        var xb = self.master.inputs_x[b];
+        var yb = self.master.inputs_y[b];
+        var da = (getDir(xa, ya) + 4 - emptyheading) & 3;
+        var db = (getDir(xb, yb) + 4 - emptyheading) & 3;
+        if(da != db) return da > db ? 1 : -1;
+        if(((da & 1) == 0)) return xb - xa;
+        return yb - ya;
+      });
+    } else {
+      var mischeading = dirs.misc[0];
+      var xheading = dirs.x[0];
+      var yheading = dirs.y[0];
+      var miscdir = dirs.misc[1];
+      var xdir = dirs.x[1];
+      var ydir = dirs.y[1];
+      var misclsbpos = dirs.misc[3];
+      var xlsbpos = dirs.x[3];
+      var ylsbpos = dirs.y[3];
+
+
+      array = array.sort(function(a, b) {
+        var xa = self.master.inputs_x[a];
+        var ya = self.master.inputs_y[a];
+        var xb = self.master.inputs_x[b];
+        var yb = self.master.inputs_y[b];
+        var da = getDir(xa, ya);
+        var db = getDir(xb, yb);
+        if(da != db) {
+          // order is: misc, x, y
+          if(da == mischeading) return -1;
+          if(db == mischeading) return 1;
+          if(da == xheading) return -1;
+          if(db == xheading) return 1;
+        }
+        var lsbpos = (da == miscdir) ? misclsbpos : ((da == xdir) ? xlsbpos : ylsbpos);
+        if(((da & 1) == 0) && lsbpos) return xb - xa;
+        if(((da & 1) == 0)) return xa - xb;
+        if(lsbpos) return yb - ya;
+        return ya - yb;
+      });
+    }
+    newOrder(this.master.inputs, array);
+    newOrder(this.master.inputs_negated, array);
+    newOrder(this.master.inputs_x, array);
+    newOrder(this.master.inputs_y, array);
+    newOrder(this.master.inputs_x2, array);
+    newOrder(this.master.inputs_y2, array);
+  };
+
+  this.init2 = function() {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+    var w = x1 - x0;
+    var h = y1 - y0;
+
+    if(!this.master) return false;
+
+    var io = getIO2(x0, y0, x1, y1, this.master);
+    if(!io) { this.setError('getIO failed'); return false; }
+
+    var dirs = this.getDirs(io);
+    if(!dirs) { this.setError('getDirs failed'); return false; }
+
+    this.rgbled = dirs.rgbled;
+
+    // num color bits
+    this.numc = this.rgbled ? dirs.empty[1] : (dirs.misc[2] - 2);
+    if(this.numc < 1 || this.numc > 3) { this.setError('not enough or too much misc inputs, need 3-5'); return false; }
+    this.numx = this.rgbled ? 0 : dirs.x[2];
+    this.numy = this.rgbled ? 0 : dirs.y[2];
+
+
+    if(this.numx == w && this.numy == h) {
+      this.direct = true;
+      // not binary addressing, make the lsbpos match lowest cell x/y index instead
+      dirs.x[3] = 0;
+      dirs.y[3] = 0;
+    }
+
+    this.sortIO(dirs);
+
+    this.array = [];
+    for(var y = 0; y < h; y++) {
+      this.array[y] = [];
+      for(var x = 0; x < w; x++) {
+        this.array[y][x] = 0;
+      }
+    }
+
+    return true;
+  };
+}
+
+
+
+
 function countFFComponents(array) {
   var o = {};
   o.numc = 0;
@@ -4287,41 +4658,6 @@ function Component() {
     if(message && !this.errormessage) this.errormessage = message;
   };
 
-  // for RGB led
-  this.sortInputsNESW = function() {
-    var self = this;
-    var array = [];
-    for(var i = 0; i < this.inputs.length; i++) array[i] = i;
-    var x = self.corecell.x;
-    var y = self.corecell.y;
-    array = array.sort(function(a, b) {
-      var xa =  self.inputs_x[a];
-      var ya =  self.inputs_y[a];
-      var xb =  self.inputs_x[b];
-      var yb =  self.inputs_y[b];
-      var xa2 =  self.inputs_x2[a];
-      var ya2 =  self.inputs_y2[a];
-      var xb2 =  self.inputs_x2[b];
-      var yb2 =  self.inputs_y2[b];
-      var dira = (ya < ya2) ? 0 : ((xa > xa2) ? 1 : ((ya > ya2) ? 2 : 3));
-      var dirb = (yb < yb2) ? 0 : ((xb > xb2) ? 1 : ((yb > yb2) ? 2 : 3));
-
-      if(dira != dirb) return dira - dirb;
-      if(dira == 0) return xa - xb;
-      if(dira == 1) return yb - ya;
-      if(dira == 2) return xb - xa;
-      if(dira == 3) return ya - yb;
-      return 0;
-    });
-    newOrder(this.inputs, array);
-    newOrder(this.inputs_negated, array);
-    newOrder(this.inputs_x, array);
-    newOrder(this.inputs_y, array);
-    newOrder(this.inputs_x2, array);
-    newOrder(this.inputs_y2, array);
-    newOrder(this.input_ff_types, array);
-  };
-
   this.hasLength2CycleWithTwoInputs = function() {
     if(this.type == TYPE_FLIPFLOP) return false;
     if(this.type == TYPE_VTE) return false;
@@ -4399,6 +4735,10 @@ function Component() {
       return numon == 0;
     } else if(this.type == TYPE_XNOR) {
       return (numon & 1) == 0;
+    } else if(this.type == TYPE_ONEHOT) {
+      return numon == 1;
+    } else if(this.type == TYPE_NONEHOT) {
+      return numon != 1;
     } else if(this.type == TYPE_DELAY) {
       return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_COUNTER) {
@@ -4412,6 +4752,8 @@ function Component() {
     } else if(this.type == TYPE_ALU) {
       return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_VTE) {
+      return this.value; // not implemented in this function, but elsewhere
+    } else if(this.type == TYPE_DOTMATRIX) {
       return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_RANDOM) {
       return (Math.random() < 0.5);
@@ -4573,7 +4915,7 @@ function Component() {
         if(!value2 && prevvalue2) numc_neg_edge++;
       }
 
-      if(this.type == TYPE_ROM || this.type == TYPE_MUX || this.type == TYPE_ALU || this.type == TYPE_LED_RGB || this.type == TYPE_VTE) {
+      if(this.type == TYPE_ROM || this.type == TYPE_MUX || this.type == TYPE_ALU || this.type == TYPE_VTE || this.type == TYPE_DOTMATRIX) {
         rom_inputs[i] = value2;
       }
     }
@@ -4602,14 +4944,13 @@ function Component() {
         var vte = this.vte || this.master.vte;
         this.value = vte.output[this.rom_out_pos];
       }
+    } else if(this.type == TYPE_DOTMATRIX) {
+      if(this.dotmatrix) {
+        this.dotmatrix.update(rom_inputs);
+      }
     } else if(this.type == TYPE_IC) {
       // a component of this type in theory should do nothing and not be connected with anything, it's just
       this.value = false;
-    } else if(this.type == TYPE_LED_RGB) {
-      this.value = (numon > 0);
-      var color = 0;
-      for(var i = 0; i < rom_inputs.length && i < 3; i++) color += (rom_inputs[i] << i);
-      this.rgbcolor = color;
     } else if(this.type == TYPE_FLIPFLOP) {
       // beware that the flip flop inputs such as numd1, numj0, ..., which are the data inputs,
       // have been delayed by 1 above, for the fast algorithms! This to make the built-in
@@ -4798,6 +5139,10 @@ function Component() {
         this.type = TYPE_XNOR;
       } else if(this.type == TYPE_XNOR) {
         this.type = TYPE_XOR;
+      } else if(this.type == TYPE_ONEHOT) {
+        this.type = TYPE_NONEHOT;
+      } else if(this.type == TYPE_NONEHOT) {
+        this.type = TYPE_ONEHOT;
       } else if(this.type == TYPE_TRISTATE) {
         this.type = TYPE_TRISTATE_INV;
       } else if(this.type == TYPE_TRISTATE_INV) {
@@ -5536,7 +5881,6 @@ function Cell() {
       if(this.components[0].type == TYPE_SWITCH_ON) virtualsymbol = 'S';
       if(this.components[0].type == TYPE_SWITCH_OFF) virtualsymbol = 's';
       if(this.components[0].type == TYPE_LED) virtualsymbol = 'l';
-      if(this.components[0].type == TYPE_LED_RGB) virtualsymbol = 'G';
       if(this.components[0].type == TYPE_PUSHBUTTON_ON) virtualsymbol = 'P';
       if(this.components[0].type == TYPE_PUSHBUTTON_OFF) virtualsymbol = 'p';
       if(this.components[0].type == TYPE_TIMER_ON) virtualsymbol = 'R';
@@ -5544,6 +5888,7 @@ function Cell() {
       if(this.components[0].type == TYPE_MUX) virtualsymbol = 'M';
       if(this.components[0].type == TYPE_ALU) virtualsymbol = 'U';
       if(this.components[0].type == TYPE_VTE) virtualsymbol = 'T';
+      if(this.components[0].type == TYPE_DOTMATRIX) virtualsymbol = 'D';
     }
     if(symbol == '#' && this.components[1]) {
       if(this.components[1].type == TYPE_MUX) virtualsymbol = 'M';
@@ -5575,14 +5920,15 @@ function Cell() {
       if(tc == 'P') title = 'pushbutton (hold mouse down to disable)';
       if(tc == 'r' || tc == 'R') title = 'timer (click to freeze/unfreeze)';
       if(tc == 'l') title = 'LED';
-      if(tc == 'G') title = 'RGB LED';
       if(tc == '?') title = 'random generator';
       if(tc == 'a') title = 'AND gate';
       if(tc == 'A') title = 'NAND gate';
       if(tc == 'o') title = 'OR gate';
       if(tc == 'O') title = 'NOR gate';
-      if(tc == 'e') title = 'XOR gate';
-      if(tc == 'E') title = 'XNOR gate';
+      if(tc == 'e') title = 'XOR gate (odd parity detector)';
+      if(tc == 'E') title = 'XNOR gate (even parity detector)';
+      if(tc == 'h') title = 'one-hot detector';
+      if(tc == 'H') title = 'inverted one-hot detector';
       if(tc == 'f') title = 'constant off (fixed off)';
       if(tc == 'F') title = 'constant on (fixed on)';
       if(tc == 'c' || tc == 'C') {
@@ -5720,6 +6066,13 @@ function Cell() {
             }
             if(vte.decimalinput && !vte.counter) title += ' (as decimal input, click to put cursor here, and type decimal digits, or hex digits preceded with 0x)';
           }
+        }
+      }
+      if(tc == 'D') {
+        title = 'RGB LED';
+        if(this.components[0]) {
+          var dot = this.components[0].dotmatrix;
+          if(dot && !dot.rgbled) title = 'dot matrix screen';
         }
       }
     }
@@ -6132,9 +6485,9 @@ function RendererText() {
         this.div1.style.backgroundColor = led_on_bg_colors[color];
         if(this.div1.innerText == 'l') this.div1.innerText = 'L';
       }
-      if(virtualsymbol == 'G') {
+      if(virtualsymbol == 'D') {
         var color = 0;
-        //this.div0.innerText = 'G';
+        //this.div0.innerText = 'D';
         this.div0.style.color = '#888';
         this.div0.style.backgroundColor = '#888';
         this.div0.style.visibility = 'visible';
@@ -6218,8 +6571,11 @@ function RendererText() {
 
   this.setValue = function(cell, value, type) {
     if(!this.div1) return; // e.g. if this is a comment (TODO: fix the fact that comment gets setValue at all, it should not be part of a component)
-    if(type == TYPE_LED_RGB && (cell.circuitsymbol == 'G' || cell.circuitsymbol == '#')) {
-      value = cell.components[0].rgbcolor;
+    if(type == TYPE_DOTMATRIX && (cell.circuitsymbol == 'D' || cell.circuitsymbol == '#')) {
+      var dotmatrix = cell.components[0].dotmatrix;
+      var x = cell.x - dotmatrix.x0;
+      var y = cell.y - dotmatrix.y0;
+      value = dotmatrix.array[y][x];
       if(value != this.prevvalue) {
         this.div0.style.color = rgb_led_fg_colors[value];
         this.div0.style.backgroundColor = rgb_led_bg_colors[value];
@@ -7859,10 +8215,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'T') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
-      } else if(virtualsymbol == 'G') {
-        // don't render #, only G
-        this.fallback.init2(cell, (symbol == 'G') ? 'G' : ' ', virtualsymbol); this.usefallbackonly = true; break;
-        // alternative: always pass space: render the RGB LED purely as a plane color, no letter symbols
+      } else if(virtualsymbol == 'D') {
+        this.fallback.init2(cell, (symbol == 'D') ? 'D' : ' ', virtualsymbol); this.usefallbackonly = true; break;
+        // alternative: always pass space: render the DOTMATRIX purely as a plain color, no letter symbols
         //this.fallback.init2(cell, ' ', virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'g') {
         drawer.drawBGSplit_(cell, ctx);
@@ -10383,7 +10738,6 @@ function parseComponents() {
             if(c == 's') type2 = TYPE_SWITCH_OFF;
             if(c == 'S') type2 = TYPE_SWITCH_ON;
             if(c == 'l') type2 = TYPE_LED;
-            if(c == 'G') type2 = TYPE_LED_RGB;
             if(c == 'p') type2 = TYPE_PUSHBUTTON_OFF;
             if(c == 'P') type2 = TYPE_PUSHBUTTON_ON;
             if(c == 'r') type2 = TYPE_TIMER_OFF;
@@ -10394,6 +10748,8 @@ function parseComponents() {
             if(c == 'O') type2 = TYPE_NOR;
             if(c == 'e') type2 = TYPE_XOR;
             if(c == 'E') type2 = TYPE_XNOR;
+            if(c == 'h') type2 = TYPE_ONEHOT;
+            if(c == 'H') type2 = TYPE_NONEHOT;
             if(c == 'f') type2 = TYPE_CONSTANT_OFF;
             if(c == 'F') type2 = TYPE_CONSTANT_ON;
             if(c == 'b' || c == 'B' || c == '#b') type2 = TYPE_ROM;
@@ -10401,6 +10757,7 @@ function parseComponents() {
             if(c == 'M' || c == '#M') type2 = TYPE_MUX;
             if(c == 'U' || c == '#U') type2 = TYPE_ALU;
             if(c == 'T' || c == '#T') type2 = TYPE_VTE;
+            if(c == 'D') type2 = TYPE_DOTMATRIX;
             if(c == 'z') type2 = TYPE_TRISTATE;
             if(c == 'Z') type2 = TYPE_TRISTATE_INV;
             if(c == '?') type2 = TYPE_RANDOM;
@@ -10539,6 +10896,10 @@ function parseComponents() {
           }
           if(type == TYPE_TIMER_OFF) {
             component.clocked = false;
+          }
+          if(type == TYPE_DOTMATRIX) {
+            var dot = new DotMatrix();
+            dot.init1(component);
           }
 
           for(var i = 0; i < array.length; i++) {
@@ -10940,6 +11301,12 @@ function parseComponents() {
       if(!component.vte.error && !component.vte.init2()) component.vte.error = true;
       if(component.vte.error) component.error = true;
     }
+    if(component.dotmatrix) {
+      if(!component.dotmatrix.error && !component.dotmatrix.init2()) component.dotmatrix.error = true;
+      if(component.dotmatrix.error) {
+        component.markError(component.dotmatrix.errormessage);
+      }
+    }
     if(component.type == TYPE_TRISTATE || component.type == TYPE_TRISTATE_INV) {
       component.tristate = new TriState();
       component.tristate.init(component);
@@ -10972,9 +11339,8 @@ function parseComponents() {
     if(component.type == TYPE_VTE && (!component.master && !component.vte)) {
       component.markError('is vte but has no master');
     }
-
-    if(component.type == TYPE_LED_RGB) {
-      component.sortInputsNESW();
+    if(component.type == TYPE_DOTMATRIX && component.dotmatrix.error) {
+      component.markError(component.dotmatrix.errormessage);
     }
   }
 
@@ -11597,13 +11963,14 @@ registerChangeDropdownElement(TYPE_PUSHBUTTON_ON);
 registerChangeDropdownElement(TYPE_TIMER_OFF);
 registerChangeDropdownElement(TYPE_TIMER_ON);
 registerChangeDropdownElement(TYPE_LED);
-registerChangeDropdownElement(TYPE_LED_RGB);
 registerChangeDropdownElement(TYPE_AND);
-registerChangeDropdownElement(TYPE_OR);
-registerChangeDropdownElement(TYPE_XOR);
 registerChangeDropdownElement(TYPE_NAND);
+registerChangeDropdownElement(TYPE_OR);
 registerChangeDropdownElement(TYPE_NOR);
+registerChangeDropdownElement(TYPE_XOR);
 registerChangeDropdownElement(TYPE_XNOR);
+registerChangeDropdownElement(TYPE_ONEHOT);
+registerChangeDropdownElement(TYPE_NONEHOT);
 registerChangeDropdownElement(TYPE_CONSTANT_OFF);
 registerChangeDropdownElement(TYPE_CONSTANT_ON);
 // For 'c' and 'C' I can unfortunately not use TYPE, because both for on and off it's just called "TYPE_COUNTER", plus it

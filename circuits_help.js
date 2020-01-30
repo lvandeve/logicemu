@@ -507,9 +507,9 @@ s-.>d]a->l   s..>c..>l
 
 
 
-0"An RGB LED 'G' takes a red, green and blue input:"
+0"An RGB LED 'D' takes a red, green and blue input:"
 
-8"B"s--->G<---s"R"6
+8"B"s--->D<---s"R"6
          ^
          |
          |
@@ -517,7 +517,34 @@ s-.>d]a->l   s..>c..>l
          s
         "G"
 
+0"With more inputs, D is the Dot Matrix screen:"
 
+0"With binary addressing:"
+
+      D#######<p"dot"
+      ########<p"fill"
+      ########
+      ########<s"r"
+      ########<S"g"
+    s>########<s"b"
+    s>########
+    s>########
+           ^^^
+           sss
+
+
+0"With line based matrix addressing:"
+
+    s>D#######<p"dot"
+    s>########<p"fill"
+    S>########
+    s>########<s"r"
+    s>########<S"g"
+    S>########<s"b"
+    s>########
+    s>########
+      ^^^^^^^^
+      ssSssSss
 
 0"A capital M forms a multiplexer, demultiplexer or controlled swap, depending on"
 0"the configuration. Mouse over them to see a tooltip that explains each one."
@@ -805,6 +832,25 @@ s....>?..>l    p....>?..>l    r....>?..>l
     ||||||||
     ssssssss
    "76543210"
+
+
+0"h and H represent a one-hot detector and inverted one-hot detector. These"
+0"are the 'real' XOR gates: the one-hot detector only outputs 1 if there is"
+0"exactly 1 input enabled. However, this is not the behavior that cascading"
+0"multiple XOR gates does, and more expensive to implement from primitive"
+0"gates, so this is not considered an as primitive building block as the 'e'"
+0"XOR gate is. For 2 inputs, h and H behave the same as e and E."
+
+s..>h..>l  s..>H..>l
+    ^          ^
+s....      s....
+
+
+s-->h-->l  s-->H-->l
+s-->#      s-->#
+s-->#      s-->#
+s-->#      s-->#
+
 
 
 0"z and Z are representations of a tristate buffer, or open collector outputs."
@@ -2448,13 +2494,47 @@ s s s s s s s s        r r r r r r r r r r r
 0"remain visible and have different styling than normal comments (matching the"
 0"color of circuits rather than comments)."
 
-3"NEW PART: RGB LED"
-3"G: RGB LED"
+3"NEW PART: DOT MATRIX, RGB LED"
+3"D: dot matrix screen, RGB LED"
 
-s.>G<.s
-   ^
-   .
-   s
+0"With three or less inputs, D is a single RGB LED (a single pixel, which"
+0"can be made larger):"
+
+s.>D<.s    D##
+   ^       ###
+   .       ###
+   s       ^^^
+           sss
+
+0"With more inputs, D is the Dot Matrix screen:"
+
+0"With binary addressing:"
+
+      D#######<p"dot"
+      ########<p"fill"
+      ########
+      ########<s"r"
+      ########<S"g"
+    s>########<s"b"
+    s>########
+    s>########
+           ^^^
+           sss
+
+
+0"With line based matrix addressing:"
+
+    s>D#######<p"dot"
+    s>########<p"fill"
+    S>########
+    s>########<s"r"
+    s>########<S"g"
+    S>########<s"b"
+    s>########
+    s>########
+      ^^^^^^^^
+      ssSssSss
+
 
 3"NEW PART: Mux"
 3"M: Multiplexer (various functions)"
@@ -2658,11 +2738,11 @@ SsssssS3"ASCII code in to screen"
 0"8:nor, 9:xnor, 10:not b, 11:imply a, 12:not a, 13:imply b, 14:nand, 15:ones,"
 0"16:==, 17:<, 18:<=, 19:!=, 20:>=, 21:>, 22:min, 23:max,"
 0"24:add, 25:sub, 26:mul, 27:div, 28:remainder, 28:floored div, 29:modulo,"
-0"32:incr, 33:decr, 34:negate, 35:abs, 36:sign, 37:copysign,"
+0"32:incr, 33:decr, 34:negate, 35:abs, 36:sign, 38:binary to BCD, 39:BCD to binary"
 0"40:lshift, 41:rshift, 42:rot lshift, 43:rot rshift,"
-0"44:mirror, 45:count leading zeroes, 46:count trailing zeroes, 47:popcount,"
+0"44:mirror, 45:popcount, 46:count leading zeroes, 47:count trailing zeroes,"
 0"48:power, 52:gcd, 53:lcm,"
-0"56:modular inverse, 57:log2, 60:binary to BCD, 61:BCD to binary,"
+0"56:modular inverse, 57:log2, 58:sqrt, 59:factorial, 60:sine"
 
 0"Adding 64 to the number makes the operation signed, e.g. operation 27 is"
 0"division, and operation 91 is signed division. Signed operations use twos"
@@ -2753,6 +2833,35 @@ R..>?..>l
    ....           ....           ....
    .  w           .  w        2  .  w
 s....>?..>l    p....>?..>l    r....>?..>l
+
+
+
+
+
+3"NEW PART: one-hot detector"
+3"h: one-hot detector"
+3"H: inverted one-hot detector"
+
+0"h and H represent a one-hot detector and inverted one-hot detector. These"
+0"are the 'real' XOR gates: the one-hot detector only outputs 1 if there is"
+0"exactly 1 input enabled. However, this is not the behavior that cascading"
+0"multiple XOR gates does, and more expensive to implement from primitive"
+0"gates, so this is not considered an as primitive building block as the 'e'"
+0"XOR gate is. For 2 inputs, h and H behave the same as e and E."
+0"The inverted one-hot gate has the opposite output value of the one-hot gate."
+0"It is not a one-cold gate, for that, invert all the inputs of a one-hot gate."
+
+s..>h..>l  s..>H..>l
+    ^          ^
+s....      s....
+
+
+s-->h-->l  s-->H-->l
+s-->#      s-->#
+s-->#      s-->#
+s-->#      s-->#
+
+
 
 
 3"NEW PART: tri-state buffer (or open collector output)"
@@ -3483,8 +3592,10 @@ registerCircuit('ASCII symbol summary', `
 
 3"z: tri-state buffer"
 3"Z: inverted tri-state buffer"
+3"h: one-hot detector ('the real XOR')"
+3"H: inverted one-hot detector"
 
-3"G: RGB LED: 3 inputs, red, green and blue"
+3"D: dot matrix screen, RGB LED"
 3"rR: real-time timer"
 3"?: random bit generator"
 
@@ -3986,12 +4097,40 @@ registerCircuit('Colored LED (l)', `
  s-->l2
 `, 'component' + componentid++);
 
-registerCircuit('RGB LED (G)', `
- s-->G<--s
+registerCircuit('RGB LED (D)', `
+ s-->D<--s
      ^
      |
      |
      s
+`, 'component' + componentid++);
+
+registerCircuit('Dot Matrix Screen, Binary Addressing (D)', `
+      D#######<p"dot"
+      ########<p"fill"
+      ########
+      ########<s"r"
+      ########<S"g"
+    s>########<s"b"
+    s>########
+    s>########
+           ^^^
+           sss
+
+`, 'component' + componentid++);
+
+registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
+    s>D#######<p"dot"
+    s>########<p"fill"
+    S>########
+    s>########<s"r"
+    s>########<S"g"
+    S>########<s"b"
+    s>########
+    s>########
+      ^^^^^^^^
+      ssSssSss
+
 `, 'component' + componentid++);
 
 registerCircuit('Wire Split (.)', `
@@ -4044,20 +4183,14 @@ s-->a-->l
 s---.
 `, 'component' + componentid++);
 
-registerCircuit('OR Gate (o)', `
-s-->o-->l
-    ^
-s---.
-`, 'component' + componentid++);
-
-registerCircuit('XOR Gate (e)', `
-s-->e-->l
-    ^
-s---.
-`, 'component' + componentid++);
-
 registerCircuit('NAND Gate (A)', `
 s-->A-->l
+    ^
+s---.
+`, 'component' + componentid++);
+
+registerCircuit('OR Gate (o)', `
+s-->o-->l
     ^
 s---.
 `, 'component' + componentid++);
@@ -4068,8 +4201,26 @@ s-->O-->l
 s---.
 `, 'component' + componentid++);
 
+registerCircuit('XOR Gate (e)', `
+s-->e-->l
+    ^
+s---.
+`, 'component' + componentid++);
+
 registerCircuit('XNOR Gate (E)', `
 s-->E-->l
+    ^
+s---.
+`, 'component' + componentid++);
+
+registerCircuit('One-hot Gate (h)', `
+s-->h-->l
+    ^
+s---.
+`, 'component' + componentid++);
+
+registerCircuit('Inverted One-hot Gate (H)', `
+s-->H-->l
     ^
 s---.
 `, 'component' + componentid++);
@@ -4615,7 +4766,7 @@ F----------->l
 
 f...........]l
 
-F>e-ha-VVo+.>l
+F>e-Xa-VVo+.>l
 
 f....>O.....>l
 
@@ -5107,8 +5258,8 @@ s>#--------->l
 
   .---------]l
 s>U---------]l
-s>6---------]l
-S>1---------]l
+s>3---------]l
+S>9---------]l
 s>#--------->l
 s>#---------]l
 s>#--------->l
@@ -5117,7 +5268,21 @@ S>#--------->l
   ^
   s
 
+S>e--------->l
+s>#
+s>#
 
+S>e--------->l
+S>#
+S>#
+
+S>h--------->l
+s>#
+s>#
+
+S>h---------]l
+S>#
+S>#
 
 0"# Off"
 
@@ -5627,7 +5792,7 @@ registerCircuit('Drawing Test', `
 0"# LED Colors"
                                       ###    ###
 0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7     ###    ###
-l l l l l l l l   l l l l l l l l     G##    G##     T###
+l l l l l l l l   l l l l l l l l     D##    D##     T###
 ^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^     ^^^    ^^^     ^^^^
 s s s s s s s s   S S S S S S S S     sss    ssS     ssss
                                      "BGR"  "BGR"   "8421"
@@ -5646,13 +5811,17 @@ s-->e             s-->#i#             s-->kQ-->l    s-->#-->l
                                                         ^
                                                         s
 
-  s->a>l      s>U>l         lll
-  p->e>l      s>2>l         ^^^
-  r->o>l      s>4>l         |||
-  S->A>l        #        s->bbB
-  P->E>l      s>#        S->BBb
-  R->O>l      s>#        s->BbB
-  s->?>l      s>#        s->bBb
+
+                                      s>D#######<p"dot"
+                                      s>########<p"fill"
+  s->a>l      s>U>l         lll       S>########
+  p->e>l      s>2>l         ^^^       s>########<s"r"
+  r->o>l      s>4>l         |||       s>########<S"g"
+  S->A>l        #        s->bbB       S>########<s"b"
+  P->E>l      s>#        S->BBb       s>########
+  R->O>l      s>#        s->BbB       s>########
+  s->?>l      s>#        s->bBb         ^^^^^^^^
+                                        ssSssSss
 
 
 0"# Wire Shapes"
