@@ -1463,19 +1463,19 @@ registerTitle('Displays');
 registerCircuit('colored LEDs', `
 
    0 1 2 3 4 5 6 7
-   l l l l l l l l   >G<
+   l l l l l l l l   >D<
    ^ ^ ^ ^ ^ ^ ^ ^   |^|
    | | | | | | | |   |||
    s s s s s s s s   sss
 
    0 1 2 3 4 5 6 7
-   l l l l l l l l   >G<
+   l l l l l l l l   >D<
    ^ ^ ^ ^ ^ ^ ^ ^   |^|
    | | | | | | | |   |||
    S S S S S S S S   SSS
 
 
-  >G< >G[ >G< >G[ ]G< ]G[ ]G< ]G[
+  >D< >D[ >D< >D[ ]D< ]D[ ]D< ]D[
   .^. .^. .m. .m. .^. .^. .m. .m.
    |   |   |   |   |   |   |   |
    s   s   s   s   s   s   s   s
@@ -5292,7 +5292,10 @@ registerCircuit('4-bit CPU', `
 `, 'cpu');
 
 
-registerCircuit('All supported ALU ops', `
+registerCircuit('All supported ALU ops (2-input)', `
+
+0"This lists all possible ALU ops, with 2 inputs attached, even for operators"
+0"that don't exist or normally take 1 input."
 
    T### T###
    ^^^^ ^^^^
@@ -5348,9 +5351,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U32######<s l<U33######<s l<U34######<s l<U35######<s l<U36######<s l<U37######<s l<U38######<s l<U39######<s
-   ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
-   gggg          gggg          gggg          gggg          gggg          gggg gggg     gggg gggg     gggg gggg
-   3210          3210          3210          3210          3210          3210 7654     3210 7654     3210 7654
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
         T###          T###          T###          T###          T###          T###          T###          T###
@@ -5358,9 +5361,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U40######<s l<U41######<s l<U42######<s l<U43######<s l<U44######<s l<U45######<s l<U46######<s l<U47######<s
-   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^          ^^^^          ^^^^          ^^^^
-   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg          gggg          gggg          gggg
-   3210 7654     3210 7654     3210 7654     3210 7654     3210          3210          3210          3210
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
         T###          T###          T###          T###          T###          T###          T###          T###
@@ -5378,9 +5381,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U56######<s l<U57######<s l<U58######<s l<U59######<s l<U60######<s l<U61######<s l<U62######<s l<U63######<s
-   ^^^^ ^^^^     ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^ ^^^^     ^^^^ ^^^^
-   gggg gggg     gggg          gggg          gggg          gggg          gggg          gggg gggg     gggg gggg
-   3210 7654     3210          3210          3210          3210          3210          3210 7654     3210 7654
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
 0"# Signed operations"
@@ -5431,9 +5434,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U96######<s l<U97######<s l<U98######<s l<U99######<s l<U100#####<s l<U101#####<s l<U102#####<s l<U103#####<s
-   ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
-   gggg          gggg          gggg          gggg          gggg          gggg gggg     gggg gggg     gggg gggg
-   3210          3210          3210          3210          3210          3210 7654     3210 7654     3210 7654
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
         T###          T###          T###          T###          T###          T###          T###          T###
@@ -5441,9 +5444,9 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U104#####<s l<U105#####<s l<U106#####<s l<U107#####<s l<U108#####<s l<U109#####<s l<U110#####<s l<U111#####<s
-   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^          ^^^^          ^^^^          ^^^^
-   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg          gggg          gggg          gggg
-   3210 7654     3210 7654     3210 7654     3210 7654     3210          3210          3210          3210
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
         T###          T###          T###          T###          T###          T###          T###          T###
@@ -5461,11 +5464,207 @@ registerCircuit('All supported ALU ops', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U120#####<s l<U121#####<s l<U122#####<s l<U123#####<s l<U124#####<s l<U125#####<s l<U126#####<s l<U127#####<s
-   ^^^^ ^^^^     ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^ ^^^^
-   gggg gggg     gggg          gggg          gggg          gggg          gggg          gggg          gggg gggg
-   3210 7654     3210          3210          3210          3210          3210          3210          3210 7654
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
-`, 'aluall');
+`, 'aluall2');
+
+
+registerCircuit('All supported ALU ops (1-input)', `
+
+0"This lists all possible ALU ops, with 1 input attached, even for operators"
+0"that don't exist or normally take 2+ inputs."
+
+   T###
+   ^^^^
+   3210
+   gggg
+   ssss
+  "8421"
+  "   A"
+
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U0##<s l<U1##<s l<U2##<s l<U3##<s l<U4##<s l<U5##<s l<U6##<s l<U7##<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U8##<s l<U9##<s l<U10#<s l<U11#<s l<U12#<s l<U13#<s l<U14#<s l<U15#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U16#<s l<U17#<s l<U18#<s l<U19#<s l<U20#<s l<U21#<s l<U22#<s l<U23#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U24#<s l<U25#<s l<U26#<s l<U27#<s l<U28#<s l<U29#<s l<U30#<s l<U31#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U32#<s l<U33#<s l<U34#<s l<U35#<s l<U36#<s l<U37#<s l<U38#<s l<U39#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U40#<s l<U41#<s l<U42#<s l<U43#<s l<U44#<s l<U45#<s l<U46#<s l<U47#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U48#<s l<U49#<s l<U50#<s l<U51#<s l<U52#<s l<U53#<s l<U54#<s l<U55#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U56#<s l<U57#<s l<U58#<s l<U59#<s l<U60#<s l<U61#<s l<U62#<s l<U63#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+0"# Signed operations"
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U64#<s l<U65#<s l<U66#<s l<U67#<s l<U68#<s l<U69#<s l<U70#<s l<U71#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U72#<s l<U73#<s l<U74#<s l<U75#<s l<U76#<s l<U77#<s l<U78#<s l<U79#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U80#<s l<U81#<s l<U82#<s l<U83#<s l<U84#<s l<U85#<s l<U86#<s l<U87#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U88#<s l<U89#<s l<U90#<s l<U91#<s l<U92#<s l<U93#<s l<U94#<s l<U95#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U96#<s l<U97#<s l<U98#<s l<U99#<s l<U100<s l<U101<s l<U102<s l<U103<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U104<s l<U105<s l<U106<s l<U107<s l<U108<s l<U109<s l<U110<s l<U111<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U112<s l<U113<s l<U114<s l<U115<s l<U116<s l<U117<s l<U118<s l<U119<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U120<s l<U121<s l<U122<s l<U123<s l<U124<s l<U125<s l<U126<s l<U127<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+`, 'aluall1');
 
 registerCircuit('integer power', `
 0"This circuit builds integer power from logic gates (i.e. without using the"
@@ -5847,6 +6046,81 @@ registerCircuit('integer power', `
 
 
 `, 'power');
+
+
+registerCircuit('lissajous', `
+
+0"This circuit draws a Lissajous curve on the dot matrix screen. This is done"
+0"with two mathematical sine operators, one running at double the frequency"
+0"as the other, and using them as X and Y coordinates for the pixel placement"
+0"on the screen."
+
+0"The result should look butterfly-shaped."
+
+0"The curve is very pixelated because the resolution of the sine results"
+0"is very low, and so is the screen resolution. A timer activates everything"
+0"automatically, and a random color is chosen for each pixel drawn."
+
+0"The frequency halving for one of the sines happens at the bottom, where"
+0"there is a counter: one sine receives a higher shifted wires from the counter"
+0"than the other (one gets wires 0-5, the other wires 1-6)."
+
+                                               1
+      D###############################<--g    gr###
+      ################################<s       ####
+      ################################         ####
+      ################################         ####
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################
+      ################################ a####
+      ################################ v mmm
+   9g>################################<o<.++-?<g"R"
+   8g>################################<---.+-?<g"G"
+   7g>################################<----.-?<g"B"
+   6g>################################
+   5g>################################
+           ^^^^^
+           ggggg
+           43210
+
+
+      98765    43210
+      ggggg    ggggg
+      T####    T####
+      ^^^^^    ^^^^^
+      U60###   U60###
+      ######   ######
+      ^^^^^^   ^^^^^^
+      T#####   T#####
+      ^^^^^^   ^^^^^^
+      543210   654321
+      ===============
+      6543210
+      T######<p
+            ^
+            g
+
+`, 'lissajous');
+
 
 registerCircuit('8-bit divider effect', `
 

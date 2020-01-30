@@ -79,9 +79,58 @@ Here are examples of what circuits look like in ASCII:
               c     c     c     c     c     c     c
               ^     ^     ^     ^     ^     ^     ^
  "C"s..............................................
-
-
 </pre></font>
+
+<h2>Supported Components</h2>
+
+Components are made from letters and symbols:
+
+<ul>
+<li>-|/\ — wires</li>
+<li>. — wire split, corner</li>
+<li>+x* — wire crossings</li>
+<li>(space) — isolator</li>
+<li>": — text, label</li>
+<li>^>v&lt; — gate and device inputs</li>
+<li>m]w[ — inverted gate and device inputs</li>
+<li>s — switch off</li>
+<li>S — switch on</li>
+<li>p — pushbutton off</li>
+<li>P — pushbutton on</li>
+<li>r — timer off</li>
+<li>R — timer on</li>
+<li>l — LED</li>
+<li>a — AND gate</li>
+<li>A — NAND gate</li>
+<li>o — OR gate</li>
+<li>O — NOR gate</li>
+<li>e — XOR gate (parity)</li>
+<li>E — XNOR gate (parity)</li>
+<li>h — XOR gate (one-hot)</li>
+<li>H — XNOR gate (one-hot)</li>
+<li>f — constant off (fixed)</li>
+<li>F — constant on (fixed)</li>
+<li>c — counter gate off</li>
+<li>C — counter gate on</li>
+<li>cCdtjkqQy — flip-flops and latches: SR, JK, D or T, optional asynch set/reset/enable</li>
+<li>I — define IC</li>
+<li>i — use IC instance</li>
+<li>bB — ROM/RAM, predefined bits, encoders/decoders</li>
+<li>M — multiplexer</li>
+<li>U — arithmetic logic unit, built-in mathematical operators</li>
+<li>T — terminal screen/keyboard/ASCII/decimal</li>
+<li>D — dot-matrix screen, RGB LED</li>
+<li>zZ — tristate buffer</li>
+<li>? — random bit generator</li>
+<li>g — global backplane wires</li>
+<li>u(n) — directed backplane wires</li>
+<li>= — bus (wire bundle)</li>
+<li>0123456789 — mark colors, timings, indices, connections, ...</li>
+<li>@ — visible isolator, case</li>
+<li># — extend device surface area</li>
+<li>&amp;%,VWXY — special wires/inputs/crossings</li>
+</ul>
+
 
 <p/>
 LogicEmu. Copyright (c) 2018-2020 by Lode Vandevenne
@@ -89,10 +138,10 @@ LogicEmu. Copyright (c) 2018-2020 by Lode Vandevenne
 </body>
 </html>
 <!--the version cgi params are to encourage browsers to update js file cache when new version uploaded, by changing it to new date-->
-<script src="editor.js?v=20200127"></script>
-<script src="logicemu.js?v=20200127"></script>
-<script src="circuits_help.js?v=20200127"></script>
-<script src="circuits_articles.js?v=20200127"></script>
-<script src="circuits_main.js?v=20200127"></script>
-<script src="footer.js?v=20200127"></script>
+<script src="editor.js?v=20200129"></script>
+<script src="logicemu.js?v=20200129"></script>
+<script src="circuits_help.js?v=20200129"></script>
+<script src="circuits_articles.js?v=20200129"></script>
+<script src="circuits_main.js?v=20200129"></script>
+<script src="footer.js?v=20200129"></script>
 
