@@ -347,7 +347,7 @@ var UPDATE_ALGORITHM = 2; // values described below
 // search words: autochoose auto_choose autoalgo auto_algo
 var AUTO_CHOOSE_MODE = true; // automatically choose AUTOUPDATE and UPDATE_ALGORITHM based on the circuit
 
-// [search terms: timerspeed autospeed clockspeed timer_speed auto_seconds timer_seconds]
+// [search terms: timerspeed autospeed clockspeed timer_speed auto_seconds timer_seconds tickspeed]
 var NORMALAUTOSECONDS = 0.05;
 var NORMALTIMERSECONDS = 0.1;
 var AUTOSECONDS = NORMALAUTOSECONDS; // good value: 0.05. computers can handle faster but this makes operating circuits visible
@@ -4054,6 +4054,7 @@ function DotMatrix() {
   };
 
   this.update = function(inputs) {
+    if(this.error) return;
     var led = this.rgbled;
     var index = 0;
     var mul = 1;
@@ -4061,14 +4062,19 @@ function DotMatrix() {
     var fill = led || inputs[1]; // fill all pixels
     var color = 0;
     var c0 = led ? 0 : 2;
+
+    // Choose from palette depending on amount of color input wires.
     if(this.numc == 1) {
-      color = inputs[c0] ? 7 : 0;
+      color = 0 + inputs[c0];
     } else if(this.numc == 2) {
-      if(inputs[c0] && inputs[c0 + 1]) color = 7;
-      else if(inputs[c0] && !inputs[c0 + 1]) color = 1;
-      else if(!inputs[c0] && inputs[c0 + 1]) color = 2;
+      var value = inputs[c0] + 2 * inputs[c0 + 1];
+      color = 2 + value;
     } else if(this.numc == 3) {
-      color = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2];
+      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2];
+      color = 6 + value;
+    } else if(this.numc == 4) {
+      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3];
+      color = 14 + value;
     }
 
     if(led) {
@@ -4195,7 +4201,7 @@ function DotMatrix() {
     }
 
     var rgbled = false;
-    if(numinputs < 4) {
+    if(numinputs <= 4) {
       rgbled = true;
     }
 
@@ -4342,7 +4348,7 @@ function DotMatrix() {
 
     // num color bits
     this.numc = this.rgbled ? dirs.empty[1] : (dirs.misc[2] - 2);
-    if(this.numc < 1 || this.numc > 3) { this.setError('not enough or too much misc inputs, need 3-5'); return false; }
+    if(this.numc < 1 || this.numc > 4) { this.setError('not enough or too much misc inputs, need 3-6'); return false; }
     this.numx = this.rgbled ? 0 : dirs.x[2];
     this.numy = this.rgbled ? 0 : dirs.y[2];
 
@@ -5344,9 +5350,8 @@ var led_on_fg_colors;
 var led_on_bg_colors;
 var led_on_border_colors;
 
-// RGB order: bit 1: red, bit 2: green, bit 4: blue
-// black, red, green, yellow, blue, magenta, cyan, white
-// the RGB led can make cyan, magenta and black, regular leds can make orange, violet and pink
+// Colors for RGB LED and Dot Matrix Screen.
+// Array of multiple colors spread over multiple palettes.
 var rgb_led_fg_colors;
 var rgb_led_bg_colors;
 
@@ -5386,6 +5391,19 @@ function setColorScheme(index) {
   ERRORFGCOLOROFF = '#f00';
   ERRORFGCOLORON = '#f88';
 
+
+  rgb_led_bg_colors = [
+      '#111', '#eee', // 2 colors. Slightly different values instead of #000 #fff to be subtly visible against white/black main background
+      '#111', '#0f0', '#f00', '#ff0', // 4 colors
+      '#111', '#00f', '#0f0', '#0ff', '#f00', '#f0f', '#ff0', '#fff', // 8 colors
+      '#111', '#00a', '#0a0', '#0aa', '#a00', '#a0a', '#a50', '#aaa', '#555', '#55f', '#5f5', '#5ff', '#f55', '#f5f', '#ff5', '#fff' // 16 colors
+  ];
+  rgb_led_fg_colors = [];
+  for(var i = 0; i < rgb_led_bg_colors.length; i++) {
+    rgb_led_fg_colors[i] = twiddleColor(rgb_led_bg_colors[i], 80);
+  }
+
+
   if(index == 0) { // light
     ONCOLOR = 'black';
     OFFCOLOR = '#888';
@@ -5400,8 +5418,7 @@ function setColorScheme(index) {
     led_on_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
     led_on_border_colors = led_on_fg_colors;
 
-    rgb_led_fg_colors = ['#888', '#f77', '#dfd', '#dd0', '#ccf', '#f8f', '#0dd', '#888'];
-    rgb_led_bg_colors = ['#000', '#f00', '#0f0', '#ff0', '#00f', '#f0f', '#0ff', '#eee'];
+
 
     BUSCOLORS = ['#aaa', '#aab', '#aba', '#baa', '#bba', '#bab', '#abb', '#bbb'];
 
@@ -5432,9 +5449,6 @@ function setColorScheme(index) {
     led_on_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
     led_on_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
     led_on_border_colors = led_on_fg_colors;
-
-    rgb_led_fg_colors = ['#888', '#f77', '#dfd', '#dd0', '#ccf', '#f8f', '#0dd', '#888'];
-    rgb_led_bg_colors = ['#222', '#f00', '#0f0', '#ff0', '#00f', '#f0f', '#0ff', '#fff'];
 
     BUSCOLORS = ['#080', '#480', '#0c0', '#4c0', '#084', '#484', '#0c4', '#4c4'];
 
@@ -5609,8 +5623,17 @@ function setColorScheme(index) {
     led_on_border_colors = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
 
     // for monochrome RGB led: hidden in main background if off, same color as wire if on (for its bg color; its letter G has opposite color)
-    rgb_led_fg_colors = [ONCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
-    rgb_led_bg_colors = [BGCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
+    rgb_led_bg_colors = [];
+    rgb_led_fg_colors = [];
+    for(var i = 0; i < 30; i++) {
+      if(i == 0 || i == 2 || i == 6 || i == 14) {
+        rgb_led_bg_colors[i] = BGCOLOR;
+        rgb_led_fg_colors[i] = ONCOLOR;
+      } else {
+        rgb_led_bg_colors[i] = ONCOLOR;
+        rgb_led_fg_colors[i] = BGCOLOR;
+      }
+    }
 
     BUSCOLORS = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
 
@@ -5693,6 +5716,34 @@ function negateLigntness(css) {
   g = 255 - mm + g;
   b = 255 - mm + b;
   return formatCSSColor([r, g, b]);
+}
+
+// slightly darkens the color
+function darkenColor(css, amount) {
+  amount = amount || 16;
+  var rgb = parseCSSColor(css);
+  rgb[0] = Math.max(0, rgb[0] - amount);
+  rgb[1] = Math.max(0, rgb[1] - amount);
+  rgb[2] = Math.max(0, rgb[2] - amount);
+  return formatCSSColor(rgb);
+}
+
+// slightly brightens the color
+function brightenColor(css, amount) {
+  amount = amount || 16;
+  var rgb = parseCSSColor(css);
+  rgb[0] = Math.min(255, rgb[0] + amount);
+  rgb[1] = Math.min(255, rgb[1] + amount);
+  rgb[2] = Math.min(255, rgb[2] + amount);
+  return formatCSSColor(rgb);
+}
+
+// either darkens or lightens the color, depending on how light it is
+function twiddleColor(css, amount) {
+  amount = amount || 16;
+  var rgb = parseCSSColor(css);
+  var lightness = 0.21 * rgb[0] + 0.72 * rgb[1] + 0.07 * rgb[2];
+  return lightness < 128 ? brightenColor(css, amount) : darkenColor(css, amount);
 }
 
 // alpha given in range 0.0-1.0
@@ -6342,7 +6393,7 @@ function RendererText() {
     removeElement(this.div1);
   };
 
-  // one time initialization
+  // one time initialization of a cell
   this.init = function(cell, x, y, clickfun) {
     this.div0 = makeDiv(x * tw, y * th, tw, th, worldDiv);
     this.div0.onmousedown = clickfun;
@@ -6477,13 +6528,12 @@ function RendererText() {
         var color = cell.components[0] ? cell.components[0].number : 0;
         if(color == -1) color = 0;
         if(color > led_off_fg_colors.length) color = 0; // not more colors than that supported
-        //this.div0.innerText = 'l';
-        //this.div1.innerText = 'L';
+        this.div0.innerText = 'l';
+        this.div1.innerText = 'L';
         this.div0.style.color = led_off_fg_colors[color];
         this.div0.style.backgroundColor = led_off_bg_colors[color];
         this.div1.style.color = led_on_fg_colors[color];
         this.div1.style.backgroundColor = led_on_bg_colors[color];
-        if(this.div1.innerText == 'l') this.div1.innerText = 'L';
       }
       if(virtualsymbol == 'D') {
         var color = 0;
@@ -6511,8 +6561,8 @@ function RendererText() {
         this.div1.style.color = SWITCHON_FGCOLOR;
         this.div0.style.backgroundColor = SWITCHOFF_BGCOLOR;
         this.div1.style.backgroundColor = SWITCHON_BGCOLOR;
-        if(this.div0.innerText == 'R') this.div1.innerText = 'r';
-        if(this.div1.innerText == 'r') this.div1.innerText = 'R';
+        this.div0.innerText = 'r';
+        this.div1.innerText = 'R';
       }
       if(symbol == 'b' || symbol == 'B') {
         //this.div1.style.color = this.div0.style.color;
@@ -6573,12 +6623,14 @@ function RendererText() {
     if(!this.div1) return; // e.g. if this is a comment (TODO: fix the fact that comment gets setValue at all, it should not be part of a component)
     if(type == TYPE_DOTMATRIX && (cell.circuitsymbol == 'D' || cell.circuitsymbol == '#')) {
       var dotmatrix = cell.components[0].dotmatrix;
-      var x = cell.x - dotmatrix.x0;
-      var y = cell.y - dotmatrix.y0;
-      value = dotmatrix.array[y][x];
-      if(value != this.prevvalue) {
-        this.div0.style.color = rgb_led_fg_colors[value];
-        this.div0.style.backgroundColor = rgb_led_bg_colors[value];
+      if(dotmatrix && !dotmatrix.error) {
+        var x = cell.x - dotmatrix.x0;
+        var y = cell.y - dotmatrix.y0;
+        value = dotmatrix.array[y][x];
+        if(value != this.prevvalue) {
+          this.div0.style.color = rgb_led_fg_colors[value];
+          this.div0.style.backgroundColor = rgb_led_bg_colors[value];
+        }
       }
     } else {
       if(value != this.prevvalue) { // changing visibility is slow in case of lots of elements, so only do if it changed
@@ -7613,7 +7665,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     this.fallback.cleanup();
   };
 
-  // one time initialization
+  // one time initialization of a cell
   this.init = function(cell, x, y, clickfun) {
     var c = cell.circuitsymbol;
     if(NOUSETEXTMAP[c]) {

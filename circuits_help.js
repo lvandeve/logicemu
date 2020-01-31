@@ -509,7 +509,7 @@ s-.>d]a->l   s..>c..>l
 
 0"An RGB LED 'D' takes a red, green and blue input:"
 
-8"B"s--->D<---s"R"6
+8"R"s--->D<---s"B"6
          ^
          |
          |
@@ -524,10 +524,10 @@ s-.>d]a->l   s..>c..>l
       D#######<p"dot"
       ########<p"fill"
       ########
-      ########<s"r"
+      ########<s"b"
       ########<S"g"
-    s>########<s"b"
-    s>########
+    s>########<s"r"
+    s>########<s"i"
     s>########
            ^^^
            sss
@@ -538,10 +538,10 @@ s-.>d]a->l   s..>c..>l
     s>D#######<p"dot"
     s>########<p"fill"
     S>########
-    s>########<s"r"
+    s>########<s"b"
     s>########<S"g"
-    S>########<s"b"
-    s>########
+    S>########<s"r"
+    s>########<s"i"
     s>########
       ^^^^^^^^
       ssSssSss
@@ -2505,6 +2505,7 @@ s.>D<.s    D##
    .       ###
    s       ^^^
            sss
+          "RGB"
 
 0"With more inputs, D is the Dot Matrix screen:"
 
@@ -2513,13 +2514,17 @@ s.>D<.s    D##
       D#######<p"dot"
       ########<p"fill"
       ########
-      ########<s"r"
+      ########<s"b"
       ########<S"g"
-    s>########<s"b"
-    s>########
+    s>########<s"r"
+    s>########<s"i"
     s>########
            ^^^
            sss
+
+0"The BGRI inputs are blue, green, red and intensity. Not all must be present,"
+0"any of 1, 2, 3 or 4 color bits are possible and each amount has a different"
+0"color palette. If there are 3 inputs, each pixel represents an RGB LED."
 
 
 0"With line based matrix addressing:"
@@ -2527,10 +2532,10 @@ s.>D<.s    D##
     s>D#######<p"dot"
     s>########<p"fill"
     S>########
-    s>########<s"r"
+    s>########<s"b"
     s>########<S"g"
-    S>########<s"b"
-    s>########
+    S>########<s"r"
+    s>########<s"i"
     s>########
       ^^^^^^^^
       ssSssSss
@@ -4109,9 +4114,9 @@ registerCircuit('Dot Matrix Screen, Binary Addressing (D)', `
       D#######<p"dot"
       ########<p"fill"
       ########
-      ########<s"r"
+      ########<s"b"
       ########<S"g"
-    s>########<s"b"
+    s>########<s"r"
     s>########
     s>########
            ^^^
@@ -4123,9 +4128,9 @@ registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
     s>D#######<p"dot"
     s>########<p"fill"
     S>########
-    s>########<s"r"
+    s>########<s"b"
     s>########<S"g"
-    S>########<s"b"
+    S>########<s"r"
     s>########
     s>########
       ^^^^^^^^
@@ -5794,8 +5799,8 @@ registerCircuit('Drawing Test', `
 0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7     ###    ###
 l l l l l l l l   l l l l l l l l     D##    D##     T###
 ^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^     ^^^    ^^^     ^^^^
-s s s s s s s s   S S S S S S S S     sss    ssS     ssss
-                                     "BGR"  "BGR"   "8421"
+s s s s s s s s   S S S S S S S S     sss    Sss     ssss
+                                     "RGB"  "RGB"   "8421"
 
 
 0"# Devices"
@@ -5815,9 +5820,9 @@ s-->e             s-->#i#             s-->kQ-->l    s-->#-->l
                                       s>D#######<p"dot"
                                       s>########<p"fill"
   s->a>l      s>U>l         lll       S>########
-  p->e>l      s>2>l         ^^^       s>########<s"r"
+  p->e>l      s>2>l         ^^^       s>########<s"b"
   r->o>l      s>4>l         |||       s>########<S"g"
-  S->A>l        #        s->bbB       S>########<s"b"
+  S->A>l        #        s->bbB       S>########<s"r"
   P->E>l      s>#        S->BBb       s>########
   R->O>l      s>#        s->BbB       s>########
   s->?>l      s>#        s->bBb         ^^^^^^^^
@@ -5966,6 +5971,29 @@ S--X-   S--X-     S--Xl    X   S--Xl  S--X-  S--Xl   S--X-  S--X-  S--Xl  S--Xl 
 -X--S   -X--S     lX--S   X    lX--S  -X--S  lX--S   -X--S  -X--S  lX--S  lX--S   lX--S
 /       /          |     / ;     ;    l      /       l ;     l;    /l     /l;     /l;
                             s     s         s           s      s             s   s   s
+
+
+0"# All dot matrix / RGB LED colors"
+
+ D D
+ ^ ^
+ s S
+"I I"
+
+ D# D# D# D#
+ ^^ ^^ ^^ ^^
+ ss sS Ss SS
+"RG RG RG RG"
+
+ D## D## D## D## D## D## D## D##
+ ^^^ ^^^ ^^^ ^^^ ^^^ ^^^ ^^^ ^^^
+ sss ssS sSs sSS Sss SsS SSs SSS
+"RGB RGB RGB RGB RGB RGB RGB RGB"
+
+ D### D### D### D### D### D### D### D### D### D### D### D### D### D### D### D###
+ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^
+ ssss sssS ssSs ssSS sSss sSsS sSSs sSSS Ssss SssS SsSs SsSS SSss SSsS SSSs SSSS
+"IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB"
 
 
 
