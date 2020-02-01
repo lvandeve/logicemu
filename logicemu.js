@@ -22,286 +22,424 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
-Main program js file
 
-Welcome to the main JS source code of LogicEmu, in all its frameworkless glory.
-
-This has been tested to work in Chrome and Firefox, and hopefully works in other browsers too.
-*/
-
-var doNotAddToParent = 'doNotAddToParent';
-
-function makeElement(tag, opt_parent) {
-  var parent = opt_parent || document.body;
-  var el =  document.createElement(tag);
-  if(parent != doNotAddToParent) parent.appendChild(el);
-  return el;
-}
-
-function makeElementAt(tag, x, y, opt_parent) {
-  var el = makeElement(tag, opt_parent);
-  el.style.position = 'absolute';
-  el.style.left = '' + Math.floor(x) + 'px';
-  el.style.top = '' + Math.floor(y) + 'px';
-  return el;
-}
-
-function makeAbsElement(tag, x, y, w, h, opt_parent) {
-  var el = makeElement(tag, opt_parent);
-  el.style.position = 'absolute';
-  el.style.left = '' + Math.floor(x) + 'px';
-  el.style.top = '' + Math.floor(y) + 'px';
-  el.style.width = '' + Math.floor(w) + 'px';
-  el.style.height = '' + Math.floor(h) + 'px';
-  return el;
-}
-
-function removeElement(el) {
-  if(!el) return;
-  var p = el.parentNode;
-  if(p && p.contains(el)) {
-    p.removeChild(el);
-  }
-}
-
-function removeAllChildren(el) {
-  while(el.firstChild) el.removeChild(el.firstChild);
-}
-
-function makeDiv(x, y, w, h, opt_parent) {
-  var el =  makeAbsElement('div', x, y, w, h, opt_parent);
-  return el;
-}
-
-function styleUIElementBorder(el) {
-  el.style.border = '1px solid #888';
-}
-
-function highlightUIElementBorder(el, opt_color) {
-  var color = opt_color || 'black';
-  el.style.border = '2px solid ' + color;
-}
-
-function styleUIElement(el, opt_smallbutton) {
-  styleUIElementBorder(el);
-  el.style.height = '20px';
-  el.style.width = '80px';
-  el.style.margin = '1px';
-  el.style.padding = '0';
-  el.style.backgroundColor = '#eee';
-  el.style.cursor = 'pointer';
-  el.style.boxShadow = '0.5px 0.5px #aaa';
-  el.style.textAlign = 'center';
-  el.style.boxSizing = 'border-box';
-  el.style.font = '400 13px Arial';
-
-  if (opt_smallbutton == 1) {
-    el.style.width = '20px';
-  }
-
-  if (opt_smallbutton == 2) {
-    el.style.width = '40px';
-  }
-
-  if (opt_smallbutton == 3) {
-    el.style.width = '60px';
-  }
-}
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 
-function makeUIElement(tag, opt_parent, opt_smallbutton) {
-  var el = makeElement(tag, opt_parent);
-  styleUIElement(el, opt_smallbutton);
-  return el;
-}
+// Generic JavaScript utilities for LogicEmu
+var LogicEmuUtils = (function() {
+  // exported functions are assigned to result which will be returned by this self invoking anonymous function expression
+  var result = {};
 
-function makeUISpacer(width, el) {
-  var s = makeElement('span', el);
-  s.style.width = width + 'px';
-  s.style.display = 'inline-block';
-}
+  var doNotAddToParent = 'doNotAddToParent';
 
-function makeInternalButton(title, parent, x, y, fun) {
-  var button = makeUIElement('button', parent);
-  button.style.position = 'absolute';
-  button.style.left = x + 'px';
-  button.style.top = y + 'px';
-  button.innerText = title;
-  button.onclick = function() {
-    fun();
+  var makeElement = function(tag, opt_parent) {
+    var parent = opt_parent || document.body;
+    var el =  document.createElement(tag);
+    if(parent != doNotAddToParent) parent.appendChild(el);
+    return el;
   };
-}
+  result.makeElement = makeElement;
 
-//bind a single argument to a function
-function bind(f, arg) {
-  var args = Array.prototype.slice.call(arguments, 1);
-  var result = function() {
-    return f.apply(this, args.concat(Array.prototype.slice.call(arguments)));
+  var makeElementAt = function(tag, x, y, opt_parent) {
+    var el = makeElement(tag, opt_parent);
+    el.style.position = 'absolute';
+    el.style.left = '' + Math.floor(x) + 'px';
+    el.style.top = '' + Math.floor(y) + 'px';
+    return el;
   };
-  result.bound_f = f; // to be able to "extract" the original function out of it for debugging and by code
-  result.bound_arg = arg; // to be able to "extract" the original function out of it for debugging and by code
+  result.makeElementAt = makeElementAt;
+
+  var makeAbsElement = function(tag, x, y, w, h, opt_parent) {
+    var el = makeElement(tag, opt_parent);
+    el.style.position = 'absolute';
+    el.style.left = '' + Math.floor(x) + 'px';
+    el.style.top = '' + Math.floor(y) + 'px';
+    el.style.width = '' + Math.floor(w) + 'px';
+    el.style.height = '' + Math.floor(h) + 'px';
+    return el;
+  };
+  result.makeAbsElement = makeAbsElement;
+
+  var removeElement = function(el) {
+    if(!el) return;
+    var p = el.parentNode;
+    if(p && p.contains(el)) {
+      p.removeChild(el);
+    }
+  };
+  result.removeElement = removeElement;
+
+  var makeDiv = function(x, y, w, h, opt_parent) {
+    var el =  makeAbsElement('div', x, y, w, h, opt_parent);
+    return el;
+  };
+  result.makeDiv = makeDiv;
+
+  var styleUIElementBorder = function(el) {
+    el.style.border = '1px solid #888';
+  };
+  result.styleUIElementBorder = styleUIElementBorder;
+
+  var highlightUIElementBorder = function(el, opt_color) {
+    var color = opt_color || 'black';
+    el.style.border = '2px solid ' + color;
+  };
+  result.highlightUIElementBorder = highlightUIElementBorder;
+
+  var styleUIElement = function(el, opt_smallbutton) {
+    styleUIElementBorder(el);
+    el.style.height = '20px';
+    el.style.width = '80px';
+    el.style.margin = '1px';
+    el.style.padding = '0';
+    el.style.backgroundColor = '#eee';
+    el.style.cursor = 'pointer';
+    el.style.boxShadow = '0.5px 0.5px #aaa';
+    el.style.textAlign = 'center';
+    el.style.boxSizing = 'border-box';
+    el.style.font = '400 13px Arial';
+
+    if (opt_smallbutton == 1) {
+      el.style.width = '20px';
+    }
+
+    if (opt_smallbutton == 2) {
+      el.style.width = '40px';
+    }
+
+    if (opt_smallbutton == 3) {
+      el.style.width = '60px';
+    }
+  };
+
+
+  var makeUIElement = function(tag, opt_parent, opt_smallbutton) {
+    var el = makeElement(tag, opt_parent);
+    styleUIElement(el, opt_smallbutton);
+    return el;
+  };
+  result.makeUIElement = makeUIElement;
+
+  var makeUISpacer = function(width, el) {
+    var s = makeElement('span', el);
+    s.style.width = width + 'px';
+    s.style.display = 'inline-block';
+  };
+  result.makeUISpacer = makeUISpacer;
+
+  var makeInternalButton = function(title, parent, x, y, fun) {
+    var button = makeUIElement('button', parent);
+    button.style.position = 'absolute';
+    button.style.left = x + 'px';
+    button.style.top = y + 'px';
+    button.innerText = title;
+    button.onclick = function() {
+      fun();
+    };
+  };
+  result.makeInternalButton = makeInternalButton;
+
+  //bind a single argument to a function
+  var bind = function(f, arg) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    var result = function() {
+      return f.apply(this, args.concat(Array.prototype.slice.call(arguments)));
+    };
+    result.bound_f = f; // to be able to "extract" the original function out of it for debugging and by code
+    result.bound_arg = arg; // to be able to "extract" the original function out of it for debugging and by code
+    return result;
+  };
+  result.bind = bind;
+
+  var clone = function(obj) {
+    // Handle the 3 simple types, and null or undefined
+    if(null == obj || 'object' != typeof obj) return obj;
+
+    // Handle Array
+    if(obj instanceof Array) {
+      var copy = [];
+      for(var i = 0, len = obj.length; i < len; i++) {
+        copy[i] = clone(obj[i]);
+      }
+      return copy;
+    }
+
+    // Handle Object
+    if (obj instanceof Object) {
+      var copy = new obj.constructor(); //This makes it also have the correct prototype
+      for(var attr in obj) {
+        if(obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+      }
+      return copy;
+    }
+
+    throw new Error('Cloning this object not supported.');
+  };
+  result.clone = clone;
+
+  var textHasAt = function(text, pos, sub) {
+    return text.substr(pos, sub.length) == sub;
+  };
+  result.textHasAt = textHasAt;
+
+  var mergeMaps = function(a, b) {
+    var c = clone(a);
+    for(var k in b) {
+      if(b.hasOwnProperty(k)) c[k] = b[k];
+    }
+    return c;
+  };
+  result.mergeMaps = mergeMaps;
+
+  var getCGIParameterByName = function(name, opt_url) {
+    var url = opt_url || window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+    var results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  };
+  result.getCGIParameterByName = getCGIParameterByName;
+
+  // like getCGIParameterByName, but with # instead of ?
+  var getFragmentParameterByName = function(name, opt_url) {
+    var url = opt_url || window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[#&]" + name + "(=([^&#]*)|&|#|$)");
+    var results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  };
+  result.getFragmentParameterByName = getFragmentParameterByName;
+
+  // sets fragment with this value. Supports only max 1 fragment in total.
+  var setFragment = function(name, value) {
+    if(history && history.replaceState) {
+      // using history to NOT have history!
+      // with history.replaceState, this avoids it creating a new back-button entry each time you update the URL fragment
+      // reason for not storing this as history: it doesn't actually work because there's nothing here that handles pressing the back button,
+      // and, it's quite annoying if this app creates a long back button history so you can't go back to the real previous website you came from.
+      // if I do implement history button at some point, maybe it should only go back to index, but not through all circuits visited to avoid that annoyance
+      if(!value) {
+        if(window.location.hash) history.replaceState(undefined, undefined, '#');
+      } else {
+        history.replaceState(undefined, undefined, '#' + name + '=' + value);
+      }
+    } else {
+      // fallback for browsers that don't support history.replaceState
+      if(!value) {
+        if(window.location.hash) window.location.hash = '';
+      } else {
+        window.location.hash = '#' + name + '=' + value;
+      }
+    }
+  };
+  result.setFragment = setFragment;
+
+  var clearFragment = function() {
+    setFragment('', null);
+  };
+  result.clearFragment = clearFragment;
+
+  // removes queries and fragments
+  var getUrlWithoutQueries = function() {
+    var url = window.location.href;
+    var q = url.indexOf('?');
+    if(q >= 0) url = url.substr(0, q);
+    q = url.indexOf('#');
+    if(q >= 0) url = url.substr(0, q);
+    return url;
+  };
+  result.getUrlWithoutQueries = getUrlWithoutQueries;
+
+  var clearSelection = function() {
+    if(document.selection) {
+      document.selection.empty();
+    } else if(window.getSelection) {
+      window.getSelection().removeAllRanges();
+    }
+  };
+  result.clearSelection = clearSelection;
+
+
+  var localStorageSupported = function() {
+    try {
+      return 'localStorage' in window && window['localStorage'] !== null;
+    } catch(e) {
+      return false;
+    }
+  };
+  result.localStorageSupported = localStorageSupported;
+
+  //remember user settings locally (note that this is all fully local, nothing gets sent to any server)
+  var setLocalStorage = function(data, name) {
+    if(!localStorageSupported()) return;
+    localStorage[name] = data;
+  };
+  result.setLocalStorage = setLocalStorage;
+
+  //note: returns values as strings, e.g. booleans will get string 'true' or 'false'
+  var getLocalStorage = function(name, opt_default) {
+    if(!localStorageSupported()) return opt_default;
+    if(localStorage[name] == undefined) return opt_default;
+    return localStorage[name];
+  };
+  result.getLocalStorage = getLocalStorage;
+
+
+  // Replacement for setInterval that hopefully works a bit better in modern background-tab-throttling browsers
+  // This is not attempting to circumvent background throttling, but instead trying to prevent the tab hanging
+  // when coming back to it and browsers may make it do all the missed intervals at once...
+  // This tries to combine timeouts with the desired timing, with requestAnimationFrame which has better guarantees that
+  // the browser will not do any more frames when the tab is in the background (rather than collect more and more "debt" of expensive updates it will try to call all at once)
+  // TODO: this may require updating every now and then as browsers change their behavior of background tabs
+  var setIntervalSafe = function(fun, msec) {
+    var clear = false;
+    var fun2 = function() {
+      if(clear) return;
+      fun();
+      // requestAnimationFrame is used because this one will not run in background tab, which is better than being throttled in background tab but then do all updates at once when the tab becomes foreground, causing slow computation
+      // NOTE: this may add an extra delay to the desired msec, of 1/60th of a second probably
+      requestAnimationFrame(function() {
+        // setTimeout is used becuase this one uses the desired milliseconds unlike requestAnimationFrame.
+        window.setTimeout(fun2, msec);
+      });
+    };
+    window.setTimeout(fun2, msec);
+    var clearfun = function() {
+      clear = true;
+    };
+    return clearfun;
+  };
+  result.setIntervalSafe = setIntervalSafe;
+
+  var clearIntervalSafe = function(id) {
+    id(); // id is actually a function.
+  };
+  result.clearIntervalSafe = clearIntervalSafe;
+
+
+  // warning: does not validate input
+  var normalizeCSSColor = function(css) {
+    // only has named colors used somewhere in here.
+    if(css == 'black') css = '#000000';
+    if(css == 'white') css = '#ffffff';
+    if(css == 'red') css = '#ff0000';
+    if(css == 'green') css = '#00ff00';
+    if(css == 'blue') css = '#0000ff';
+    if(css == 'yellow') css = '#00ffff';
+    if(css.length == 4) {
+      css = '#' + css[1] + css[1] + css[2] + css[2] + css[3] + css[3];
+    }
+    return css;
+  };
+
+  var parseCSSColor = function(css) {
+    css = normalizeCSSColor(css);
+    var r = parseInt(css.substr(1, 2), 16);
+    var g = parseInt(css.substr(3, 2), 16);
+    var b = parseInt(css.substr(5, 2), 16);
+    return [r, g, b];
+  };
+
+
+  var formatCSSColor = function(rgb) {
+    var r = rgb[0].toString(16);
+    var g = rgb[1].toString(16);
+    var b = rgb[2].toString(16);
+    if(r.length == 1) r = '0' + r;
+    if(g.length == 1) g = '0' + g;
+    if(b.length == 1) b = '0' + b;
+    return '#' + r + g + b;
+  };
+
+  var formatCSSColorAlpha = function(rgba) {
+    return 'rgba(' + rgba[0].toString(10) + ', ' + rgba[1].toString(10) + ', ' +
+           rgba[2].toString(10) + ', ' + (rgba[3] / 255.0) + ')';
+  };
+
+  // slightly darkens the color
+  var darkenColor = function(css, amount) {
+    amount = amount || 16;
+    var rgb = parseCSSColor(css);
+    rgb[0] = Math.max(0, rgb[0] - amount);
+    rgb[1] = Math.max(0, rgb[1] - amount);
+    rgb[2] = Math.max(0, rgb[2] - amount);
+    return formatCSSColor(rgb);
+  };
+
+  // slightly brightens the color
+  var brightenColor = function(css, amount) {
+    amount = amount || 16;
+    var rgb = parseCSSColor(css);
+    rgb[0] = Math.min(255, rgb[0] + amount);
+    rgb[1] = Math.min(255, rgb[1] + amount);
+    rgb[2] = Math.min(255, rgb[2] + amount);
+    return formatCSSColor(rgb);
+  };
+
+  // alpha given in range 0.0-1.0
+  var addAlpha = function(css, alpha) {
+    var rgb = parseCSSColor(css);
+    return formatCSSColorAlpha([rgb[0], rgb[1], rgb[2], alpha * 255]);
+  };
+  result.addAlpha = addAlpha;
+
+  // either darkens or lightens the color, depending on how light it is
+  var twiddleColor = function(css, amount) {
+    amount = amount || 16;
+    var rgb = parseCSSColor(css);
+    var lightness = 0.21 * rgb[0] + 0.72 * rgb[1] + 0.07 * rgb[2];
+    return lightness < 128 ? brightenColor(css, amount) : darkenColor(css, amount);
+  };
+  result.twiddleColor = twiddleColor;
+
+
+  var negateColor = function(css) {
+    var rgb = parseCSSColor(css);
+    rgb[0] = (255 - rgb[0]);
+    rgb[1] = (255 - rgb[1]);
+    rgb[2] = (255 - rgb[2]);
+    return formatCSSColor(rgb);
+  };
+  result.negateColor = negateColor;
+
+  var negateLigntness = function(css) {
+    var rgb = parseCSSColor(css);
+    var r = rgb[0];
+    var g = rgb[1];
+    var b = rgb[2];
+    var mm = Math.min(Math.min(r, g), b) + Math.max(Math.max(r, g), b);
+    r = 255 - mm + r;
+    g = 255 - mm + g;
+    b = 255 - mm + b;
+    return formatCSSColor([r, g, b]);
+  };
+  result.negateLigntness = negateLigntness;
+
+
+
   return result;
-}
+}());
 
-function textHasAt(text, pos, sub) {
-  return text.substr(pos, sub.length) == sub;
-}
+var util = LogicEmuUtils;
 
-function clone(obj) {
-  // Handle the 3 simple types, and null or undefined
-  if(null == obj || 'object' != typeof obj) return obj;
-
-  // Handle Array
-  if(obj instanceof Array) {
-    var copy = [];
-    for(var i = 0, len = obj.length; i < len; i++) {
-      copy[i] = clone(obj[i]);
-    }
-    return copy;
-  }
-
-  // Handle Object
-  if (obj instanceof Object) {
-    var copy = new obj.constructor(); //This makes it also have the correct prototype
-    for(var attr in obj) {
-      if(obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
-    }
-    return copy;
-  }
-
-  throw new Error('Cloning this object not supported.');
-}
-
-function mergeMaps(a, b) {
-  var c = clone(a);
-  for(var k in b) {
-    if(b.hasOwnProperty(k)) c[k] = b[k];
-  }
-  return c;
-}
-
-function getCGIParameterByName(name, opt_url) {
-  var url = opt_url || window.location.href;
-  name = name.replace(/[\[\]]/g, "\\$&");
-  var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
-  var results = regex.exec(url);
-  if (!results) return null;
-  if (!results[2]) return '';
-  return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
-
-// like getCGIParameterByName, but with # instead of ?
-function getFragmentParameterByName(name, opt_url) {
-  var url = opt_url || window.location.href;
-  name = name.replace(/[\[\]]/g, "\\$&");
-  var regex = new RegExp("[#&]" + name + "(=([^&#]*)|&|#|$)");
-  var results = regex.exec(url);
-  if (!results) return null;
-  if (!results[2]) return '';
-  return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
-
-// sets fragment with this value. Supports only max 1 fragment in total.
-function setFragment(name, value) {
-  if(history && history.replaceState) {
-    // using history to NOT have history!
-    // with history.replaceState, this avoids it creating a new back-button entry each time you update the URL fragment
-    // reason for not storing this as history: it doesn't actually work because there's nothing here that handles pressing the back button,
-    // and, it's quite annoying if this app creates a long back button history so you can't go back to the real previous website you came from.
-    // if I do implement history button at some point, maybe it should only go back to index, but not through all circuits visited to avoid that annoyance
-    if(!value) {
-      if(window.location.hash) history.replaceState(undefined, undefined, '#');
-    } else {
-      history.replaceState(undefined, undefined, '#' + name + '=' + value);
-    }
-  } else {
-    // fallback for browsers that don't support history.replaceState
-    if(!value) {
-      if(window.location.hash) window.location.hash = '';
-    } else {
-      window.location.hash = '#' + name + '=' + value;
-    }
-  }
-}
-
-function clearFragment() {
-  setFragment('', null);
-}
-
-// removes queries and fragments
-function getUrlWithoutQueries() {
-  var url = window.location.href;
-  var q = url.indexOf('?');
-  if(q >= 0) url = url.substr(0, q);
-  q = url.indexOf('#');
-  if(q >= 0) url = url.substr(0, q);
-  return url;
-}
-
-function clearSelection() {
-  if(document.selection) {
-    document.selection.empty();
-  } else if(window.getSelection) {
-    window.getSelection().removeAllRanges();
-  }
-}
-
-function localStorageSupported() {
-  try {
-    return 'localStorage' in window && window['localStorage'] !== null;
-  } catch(e) {
-    return false;
-  }
-}
-
-//remember user settings locally (note that this is all fully local, nothing gets sent to any server)
-function setLocalStorage(data, name) {
-  if(!localStorageSupported()) return;
-  localStorage[name] = data;
-}
-
-//note: returns values as strings, e.g. booleans will get string 'true' or 'false'
-function getLocalStorage(name, opt_default) {
-  if(!localStorageSupported()) return opt_default;
-  if(localStorage[name] == undefined) return opt_default;
-  return localStorage[name];
-}
-
-
-// Replacement for setInterval that hopefully works a bit better in modern background-tab-throttling browsers
-// This is not attempting to circumvent background throttling, but instead trying to prevent the tab hanging
-// when coming back to it and browsers may make it do all the missed intervals at once...
-// This tries to combine timeouts with the desired timing, with requestAnimationFrame which has better guarantees that
-// the browser will not do any more frames when the tab is in the background (rather than collect more and more "debt" of expensive updates it will try to call all at once)
-// TODO: this may require updating every now and then as browsers change their behavior of background tabs
-function setIntervalSafe(fun, msec) {
-  var clear = false;
-  var fun2 = function() {
-    if(clear) return;
-    fun();
-    // requestAnimationFrame is used because this one will not run in background tab, which is better than being throttled in background tab but then do all updates at once when the tab becomes foreground, causing slow computation
-    // NOTE: this may add an extra delay to the desired msec, of 1/60th of a second probably
-    requestAnimationFrame(function() {
-      // setTimeout is used becuase this one uses the desired milliseconds unlike requestAnimationFrame.
-      window.setTimeout(fun2, msec);
-    });
-  };
-  window.setTimeout(fun2, msec);
-  var clearfun = function() {
-    clear = true;
-  };
-  return clearfun;
-}
-
-function clearIntervalSafe(id) {
-  id(); // id is actually a function.
-}
-
+// for now, export this very often used utility functions directly
+var bind = util.bind;
+var makeDiv = util.makeDiv;
 
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 
 
 /*
@@ -462,7 +600,7 @@ var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'h'
                  'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true, '?':true};
 var specialextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true}; // special extenders for large devices (not all of those are used yet)
 // devicemap as well as # (with extends devices)
-var devicemaparea = mergeMaps(devicemap, specialextendmap); devicemaparea['#'] = true;
+var devicemaparea = util.mergeMaps(devicemap, specialextendmap); devicemaparea['#'] = true;
 var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true};
 var rommap = {'b':true, 'B':true};
 var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true};
@@ -697,7 +835,7 @@ function CallSub(id) {
       component.updated = v.updated;
       component.error = v.error;
       component.errormessage = v.errormessage;
-      component.previnputs = clone(v.previnputs);
+      component.previnputs = util.clone(v.previnputs);
       component.ff_cycle = v.ff_cycle;
       component.ff_cycle_time = v.ff_cycle_time;
       component.master = null; // handled further
@@ -726,8 +864,8 @@ function CallSub(id) {
         var rom = new ROM();
         component.rom = rom;
         rom.onehot = v.rom.onehot;
-        rom.array = v.rom.ram ? clone(v.rom.array) : v.rom.array;
-        rom.output = clone(v.rom.output);
+        rom.array = v.rom.ram ? util.clone(v.rom.array) : v.rom.array;
+        rom.output = util.clone(v.rom.output);
         rom.x0 = v.rom.x0;
         rom.y0 = v.rom.y0;
         rom.x1 = v.rom.x1;
@@ -741,7 +879,7 @@ function CallSub(id) {
         rom.addresslsbpos = v.rom.addresslsbpos;
         rom.worddir = v.rom.worddir;
         rom.wordlsbpos = v.rom.wordlsbpos;
-        rom.selected = clone(v.rom.selected);
+        rom.selected = util.clone(v.rom.selected);
         rom.num_address_inputs = v.rom.num_address_inputs;
         rom.ram = v.rom.ram;
         rom.decoder = v.rom.decoder;
@@ -757,7 +895,7 @@ function CallSub(id) {
         mux.datainlsbpos = v.mux.datainlsbpos;
         mux.selindir = v.mux.selindir;
         mux.selinlsbpos = v.mux.selinlsbpos;
-        mux.output = clone(v.mux.output);
+        mux.output = util.clone(v.mux.output);
         mux.numdatain = v.mux.numdatain;
         mux.numselin = v.mux.numselin;
         mux.numdataout = v.mux.numdataout;
@@ -777,14 +915,14 @@ function CallSub(id) {
         vte.y0 = v.vte.y0;
         vte.x1 = v.vte.x1;
         vte.y1 = v.vte.y1;
-        vte.text = clone(v.vte.text);
+        vte.text = util.clone(v.vte.text);
         vte.numinputs = v.vte.numinputs;
         vte.numoutputs = v.vte.numoutputs;
         vte.cursorx = v.vte.cursorx;
         vte.cursory = v.vte.cursory;
         vte.prevwrite = v.vte.prevwrite;
         vte.prevread = v.vte.prevread;
-        vte.output = clone(v.vte.output);
+        vte.output = util.clone(v.vte.output);
         vte.decimaldisplay = v.vte.decimaldisplay;
         vte.passthrough = v.vte.passthrough;
         vte.decimalinput = v.vte.decimalinput;
@@ -793,7 +931,7 @@ function CallSub(id) {
         vte.previnput = v.vte.previnput;
         vte.previnput2 = v.vte.previnput2;
         vte.allowstyping = v.vte.allowstyping;
-        vte.keybuffer = clone(v.vte.keybuffer);
+        vte.keybuffer = util.clone(v.vte.keybuffer);
         vte.invisible = true;
       }
       if(v.alu) {
@@ -820,7 +958,7 @@ function CallSub(id) {
         alu.miscoutlsbpos = v.alu.miscoutlsbpos;
         alu.nummiscin = v.alu.nummiscin;
         alu.nummiscout = v.alu.nummiscout;
-        alu.output = clone(v.alu.output);
+        alu.output = util.clone(v.alu.output);
         alu.opindex = v.alu.opindex;
         alu.signed = v.alu.signed;
         alu.x0 = v.alu.x0;
@@ -5295,49 +5433,16 @@ function Component() {
   };
 }
 
-////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////
 
-var activeVTE = null;
 
-document.body.onkeypress = function(e) {
-  //console.log('body keypress: vte: ' + activeVTE + ', event: ' + e);
-  if(activeVTE) {
-    if(editmode) return;
-    if(e.code == 'Backspace') {
-      // do nothing. onkeydown does backspace already.
-      // chrome only handles backspace in onkeydown, while firefox
-      // handles it in both onkeypress and onkeydown
-    } else {
-      var key = e.which || e.charCode || e.keyCode || 0;
-      activeVTE.typeKeyboard(key);
-    }
-    global_changed_something = true;
-    // use render() if no update of components should be done but you still want to see the
-    // new character appear. Use update() to do a full component update, similar to what
-    // is done after pressing on button with mouse.
-    //render();
-    update();
-  }
-};
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-document.body.onkeydown = function(e) {
-  if(editmode) {
-    if(edit.onkeydown) {
-      return edit.onkeydown(e);
-    }
-  }
-  if(activeVTE && e && e.code == 'Backspace') {
-    if(editmode) return;
-    activeVTE.doBackspace();
-    global_changed_something = true;
-    update();
-  }
-};
 
-var lastmousedowncomponent = null;
 
 var changeMode = null;
 
@@ -5400,7 +5505,7 @@ function setColorScheme(index) {
   ];
   rgb_led_fg_colors = [];
   for(var i = 0; i < rgb_led_bg_colors.length; i++) {
-    rgb_led_fg_colors[i] = twiddleColor(rgb_led_bg_colors[i], 80);
+    rgb_led_fg_colors[i] = util.twiddleColor(rgb_led_bg_colors[i], 80);
   }
 
 
@@ -5660,128 +5765,36 @@ function setColorScheme(index) {
   }
 }
 
-// warning: does not validate input
-function normalizeCSSColor(css) {
-  // only has named colors used somewhere in here.
-  if(css == 'black') css = '#000000';
-  if(css == 'white') css = '#ffffff';
-  if(css == 'red') css = '#ff0000';
-  if(css == 'green') css = '#00ff00';
-  if(css == 'blue') css = '#0000ff';
-  if(css == 'yellow') css = '#00ffff';
-  if(css.length == 4) {
-    css = '#' + css[1] + css[1] + css[2] + css[2] + css[3] + css[3];
-  }
-  return css;
-}
-
-function parseCSSColor(css) {
-  css = normalizeCSSColor(css);
-  var r = parseInt(css.substr(1, 2), 16);
-  var g = parseInt(css.substr(3, 2), 16);
-  var b = parseInt(css.substr(5, 2), 16);
-  return [r, g, b];
-}
-
-function formatCSSColor(rgb) {
-  var r = rgb[0].toString(16);
-  var g = rgb[1].toString(16);
-  var b = rgb[2].toString(16);
-  if(r.length == 1) r = '0' + r;
-  if(g.length == 1) g = '0' + g;
-  if(b.length == 1) b = '0' + b;
-  return '#' + r + g + b;
-}
-
-function formatCSSColorAlpha(rgba) {
-  return 'rgba(' + rgba[0].toString(10) + ', ' + rgba[1].toString(10) + ', ' +
-         rgba[2].toString(10) + ', ' + (rgba[3] / 255.0) + ')';
-}
-
-function negateColor(css) {
-  var rgb = parseCSSColor(css);
-  rgb[0] = (255 - rgb[0]);
-  rgb[1] = (255 - rgb[1]);
-  rgb[2] = (255 - rgb[2]);
-  return formatCSSColor(rgb);
-}
-
-function negateLigntness(css) {
-  var rgb = parseCSSColor(css);
-  var r = rgb[0];
-  var g = rgb[1];
-  var b = rgb[2];
-  var mm = Math.min(Math.min(r, g), b) + Math.max(Math.max(r, g), b);
-  r = 255 - mm + r;
-  g = 255 - mm + g;
-  b = 255 - mm + b;
-  return formatCSSColor([r, g, b]);
-}
-
-// slightly darkens the color
-function darkenColor(css, amount) {
-  amount = amount || 16;
-  var rgb = parseCSSColor(css);
-  rgb[0] = Math.max(0, rgb[0] - amount);
-  rgb[1] = Math.max(0, rgb[1] - amount);
-  rgb[2] = Math.max(0, rgb[2] - amount);
-  return formatCSSColor(rgb);
-}
-
-// slightly brightens the color
-function brightenColor(css, amount) {
-  amount = amount || 16;
-  var rgb = parseCSSColor(css);
-  rgb[0] = Math.min(255, rgb[0] + amount);
-  rgb[1] = Math.min(255, rgb[1] + amount);
-  rgb[2] = Math.min(255, rgb[2] + amount);
-  return formatCSSColor(rgb);
-}
-
-// either darkens or lightens the color, depending on how light it is
-function twiddleColor(css, amount) {
-  amount = amount || 16;
-  var rgb = parseCSSColor(css);
-  var lightness = 0.21 * rgb[0] + 0.72 * rgb[1] + 0.07 * rgb[2];
-  return lightness < 128 ? brightenColor(css, amount) : darkenColor(css, amount);
-}
-
-// alpha given in range 0.0-1.0
-function addAlpha(css, alpha) {
-  var rgb = parseCSSColor(css);
-  return formatCSSColorAlpha([rgb[0], rgb[1], rgb[2], alpha * 255]);
-}
-
 function negateColorScheme() {
-  ONCOLOR = negateColor(ONCOLOR);
-  OFFCOLOR = negateColor(OFFCOLOR);
-  BGCOLOR = negateColor(BGCOLOR);
-  TEXTFGCOLOR = negateColor(TEXTFGCOLOR);
-  TEXTBGCOLOR = negateColor(TEXTBGCOLOR);
-  for(var i = 0; i < led_off_fg_colors.length; i++) led_off_fg_colors[i] = negateLigntness(led_off_fg_colors[i]);
-  for(var i = 0; i < led_off_bg_colors.length; i++) led_off_bg_colors[i] = negateLigntness(led_off_bg_colors[i]);
-  for(var i = 0; i < led_off_border_colors.length; i++) led_off_border_colors[i] = negateLigntness(led_off_border_colors[i]);
-  for(var i = 0; i < led_on_fg_colors.length; i++) led_on_fg_colors[i] = negateLigntness(led_on_fg_colors[i]);
-  for(var i = 0; i < led_on_bg_colors.length; i++) led_on_bg_colors[i] = negateLigntness(led_on_bg_colors[i]);
-  for(var i = 0; i < led_on_border_colors.length; i++) led_on_border_colors[i] = negateLigntness(led_on_border_colors[i]);
-  for(var i = 0; i < BUSCOLORS.length; i++) BUSCOLORS[i] = negateColor(BUSCOLORS[i]);
-  SWITCHON_FGCOLOR = negateLigntness(SWITCHON_FGCOLOR);
-  SWITCHON_BGCOLOR = negateLigntness(SWITCHON_BGCOLOR);
-  SWITCHOFF_FGCOLOR = negateLigntness(SWITCHOFF_FGCOLOR);
-  SWITCHOFF_BGCOLOR = negateLigntness(SWITCHOFF_BGCOLOR);
-  SWITCHON_BORDERCOLOR = negateLigntness(SWITCHON_BORDERCOLOR);
-  SWITCHOFF_BORDERCOLOR = negateLigntness(SWITCHOFF_BORDERCOLOR);
-  GATEBGCOLOR = negateColor(GATEBGCOLOR);
-  LINKCOLOR = negateColor(LINKCOLOR);
-  TITLECOLOR = negateColor(TITLECOLOR);
-  TERMINALBGCOLOR = negateColor(TERMINALBGCOLOR);
-  TERMINALFGCOLOR = negateColor(TERMINALFGCOLOR);
-  CHIPLABELBGCOLOR = negateColor(CHIPLABELBGCOLOR);
-  CHIPLABELFGCOLOR = negateColor(CHIPLABELFGCOLOR);
+  ONCOLOR = util.negateColor(ONCOLOR);
+  OFFCOLOR = util.negateColor(OFFCOLOR);
+  BGCOLOR = util.negateColor(BGCOLOR);
+  TEXTFGCOLOR = util.negateColor(TEXTFGCOLOR);
+  TEXTBGCOLOR = util.negateColor(TEXTBGCOLOR);
+  for(var i = 0; i < led_off_fg_colors.length; i++) led_off_fg_colors[i] = util.negateLigntness(led_off_fg_colors[i]);
+  for(var i = 0; i < led_off_bg_colors.length; i++) led_off_bg_colors[i] = util.negateLigntness(led_off_bg_colors[i]);
+  for(var i = 0; i < led_off_border_colors.length; i++) led_off_border_colors[i] = util.negateLigntness(led_off_border_colors[i]);
+  for(var i = 0; i < led_on_fg_colors.length; i++) led_on_fg_colors[i] = util.negateLigntness(led_on_fg_colors[i]);
+  for(var i = 0; i < led_on_bg_colors.length; i++) led_on_bg_colors[i] = util.negateLigntness(led_on_bg_colors[i]);
+  for(var i = 0; i < led_on_border_colors.length; i++) led_on_border_colors[i] = util.negateLigntness(led_on_border_colors[i]);
+  for(var i = 0; i < BUSCOLORS.length; i++) BUSCOLORS[i] = util.negateColor(BUSCOLORS[i]);
+  SWITCHON_FGCOLOR = util.negateLigntness(SWITCHON_FGCOLOR);
+  SWITCHON_BGCOLOR = util.negateLigntness(SWITCHON_BGCOLOR);
+  SWITCHOFF_FGCOLOR = util.negateLigntness(SWITCHOFF_FGCOLOR);
+  SWITCHOFF_BGCOLOR = util.negateLigntness(SWITCHOFF_BGCOLOR);
+  SWITCHON_BORDERCOLOR = util.negateLigntness(SWITCHON_BORDERCOLOR);
+  SWITCHOFF_BORDERCOLOR = util.negateLigntness(SWITCHOFF_BORDERCOLOR);
+  GATEBGCOLOR = util.negateColor(GATEBGCOLOR);
+  LINKCOLOR = util.negateColor(LINKCOLOR);
+  TITLECOLOR = util.negateColor(TITLECOLOR);
+  TERMINALBGCOLOR = util.negateColor(TERMINALBGCOLOR);
+  TERMINALFGCOLOR = util.negateColor(TERMINALFGCOLOR);
+  CHIPLABELBGCOLOR = util.negateColor(CHIPLABELBGCOLOR);
+  CHIPLABELFGCOLOR = util.negateColor(CHIPLABELFGCOLOR);
   // error-colors not negated, should remain yellow+red
 }
 
-var colorscheme = getLocalStorage('color_scheme') || 0;
+var colorscheme = util.getLocalStorage('color_scheme') || 0;
 
 
 setColorScheme(colorscheme);
@@ -6158,7 +6171,7 @@ function Cell() {
 
     //clickFun
     var f = bind(function(component, x, y, e) {
-      clearSelection(); // we allow selection of comments, but not of other items because it's annoying that selections appear when double clicking. However, do clear the comment selection if it happens to exist when clicking anything.
+      util.clearSelection(); // we allow selection of comments, but not of other items because it's annoying that selections appear when double clicking. However, do clear the comment selection if it happens to exist when clicking anything.
       e.stopPropagation();
       e.preventDefault();
       if(!changeMode) lastmousedowncomponent = component;
@@ -6255,7 +6268,7 @@ function setTocHTML(tocType, linkid, el) {
       var indent = (chapters[i][2] - 1) * tw;
       var width = Math.floor(text.length * tw * 0.66 + indent + tw * 4);
       div.style.width = width + 'px';
-      var span = makeElementAt('span', indent, 0, div);
+      var span = util.makeElementAt('span', indent, 0, div);
       span.innerText = text;
       //a.href = '#' + chapters[i][1]; // anchor
       var anchorname = chapters[i][1];
@@ -6278,7 +6291,7 @@ function setTocHTML(tocType, linkid, el) {
       //var div = makeDiv(0, (i * th), w * tw, th, el);
       var div = makeDiv(0, (j * th), tw, th, el);
       div.style.width = '800px';
-      var span = makeElementAt('span', 0, 0, div);
+      var span = util.makeElementAt('span', 0, 0, div);
       var id = allRegisteredCircuits[i].linkid;
       var circuit = allRegisteredCircuits[i].text;
       var title = allRegisteredCircuits[i].title;
@@ -6302,7 +6315,7 @@ function setTocHTML(tocType, linkid, el) {
     var div = makeDiv(0, (j * th), tw, th, el);
     div.style.textAlign = 'left';
     div.style.width = '800px';
-    var span = makeElementAt('span', 0, 0, div);
+    var span = util.makeElementAt('span', 0, 0, div);
     if(linkableCircuits[linkid]) {
       var c = linkableCircuits[linkid];
       var circuit = c.text;
@@ -6358,6 +6371,9 @@ var MAINZINDEX = 2;
 var AROUNDZINDEX = 1;
 var BGZINDEX = 0;
 
+
+
+
 /** @implements Renderer */
 function RendererText() {
   this.prevvalue = -1;
@@ -6389,8 +6405,8 @@ function RendererText() {
   };
 
   this.cleanup = function() {
-    removeElement(this.div0);
-    removeElement(this.div1);
+    util.removeElement(this.div0);
+    util.removeElement(this.div1);
   };
 
   // one time initialization of a cell
@@ -6469,7 +6485,7 @@ function RendererText() {
           this.div0.style.width = '' + (tw * (w - cell.x)) + 'px';
         } else {
           // this span is there so that we can have the background color only over the text, not whitespace parts left or right
-          var span0 = makeElement('span', this.div0);
+          var span0 = util.makeElement('span', this.div0);
           span0.innerText = symbol;
           span0.style.color = fgcolor;
           // don't do the bgcolor for standard non-monospace text, that one is distinguishable enough from circuit elements
@@ -7484,7 +7500,7 @@ function MultiCanvas() {
       for(var x2 = 0; x2 < numx; x2++) {
         var h2 = Math.min(this.S, h - y2 * this.S);
         var w2 = Math.min(this.S, w - x2 * this.S);
-        this.canvases[y2][x2] = makeAbsElement('canvas', x + x2 * this.S, y + y2 * this.S, w2, h2, parent);
+        this.canvases[y2][x2] = util.makeAbsElement('canvas', x + x2 * this.S, y + y2 * this.S, w2, h2, parent);
         this.canvases[y2][x2].width = w2;
         this.canvases[y2][x2].height = h2;
         this.canvases[y2][x2].style.display = 'block';
@@ -7498,7 +7514,7 @@ function MultiCanvas() {
 
     for(var y2 = 0; y2 < this.canvases.length; y2++) {
       for(var x2 = 0; x2 < this.canvases[y2].length; x2++) {
-        removeElement(this.canvases[y2][x2]);
+        util.removeElement(this.canvases[y2][x2]);
       }
     }
     this.canvases = null;
@@ -7659,8 +7675,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
   this.cleanup = function() {
     if(this.text0) {
-      removeElement(this.text0);
-      removeElement(this.text1);
+      util.removeElement(this.text0);
+      util.removeElement(this.text1);
     }
     this.fallback.cleanup();
   };
@@ -7676,8 +7692,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     this.tx = tw * cell.x + rglobal.offcanvas0.getXOffsetForCell(cell);
     this.ty = th * cell.y + rglobal.offcanvas0.getYOffsetForCell(cell);
     if(!cell.comment && cell.circuitsymbol != ' ') {
-      this.canvas0 = rglobal.offcanvas0.getCanvasForCell(cell); //makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div0*/);
-      this.canvas1 = rglobal.offcanvas1.getCanvasForCell(cell); //makeAbsElement('canvas', 0, 0, tw, th, doNotAddToParent/*this.fallback.div1*/);
+      this.canvas0 = rglobal.offcanvas0.getCanvasForCell(cell); //util.makeAbsElement('canvas', 0, 0, tw, th, util.doNotAddToParent/*this.fallback.div0*/);
+      this.canvas1 = rglobal.offcanvas1.getCanvasForCell(cell); //util.makeAbsElement('canvas', 0, 0, tw, th, util.doNotAddToParent/*this.fallback.div1*/);
       this.ctx0 = rglobal.offcanvas0.getContextForCell(cell);
       this.ctx1 = rglobal.offcanvas1.getContextForCell(cell);
       if(this.usetext) {
@@ -8854,14 +8870,17 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
 
 
-document.body.onmouseup = function(e) {
-  if(lastmousedowncomponent) {
-    var didsomething = lastmousedowncomponent.mouseup(e);
-    lastmousedowncomponent = null;
-    if(didsomething && (AUTOUPDATE == 1/* || AUTOUPDATE == 3*/)) update();
-  }
-  global_changed_something = true;
-};
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 var components = [];
 var components_order = [];
@@ -11482,11 +11501,11 @@ function parseComponents() {
 
     var modeindex = origtext.indexOf('MODE:');
     if(modeindex >= 0) {
-      if(textHasAt(origtext, modeindex + 5, 'immediate')) {
+      if(util.textHasAt(origtext, modeindex + 5, 'immediate')) {
         UPDATE_ALGORITHM = 1;
         AUTOUPDATE = 3;
       }
-      else if(textHasAt(origtext, modeindex + 5, 'electron')) {
+      else if(util.textHasAt(origtext, modeindex + 5, 'electron')) {
         UPDATE_ALGORITHM = 3;
         AUTOUPDATE = 3;
       }
@@ -11708,19 +11727,19 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
 
   if(!opt_fragmentAction) {
     if(opt_id && opt_id != introId) {
-      setFragment('id', opt_id);
+      util.setFragment('id', opt_id);
     } else {
-      clearFragment();
+      util.clearFragment();
     }
   }
 
   if(opt_fragmentAction == 1) {
     var encoded = encodeBoard(text);
     if(encoded.length < 2000) {
-      setFragment('code', encoded);
+      util.setFragment('code', encoded);
     } else {
-      if(getFragmentParameterByName('code')) {
-        clearFragment();
+      if(util.getFragmentParameterByName('code')) {
+        util.clearFragment();
       }
     }
   }
@@ -11842,10 +11861,10 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   }*/
   var graphicsindex = origtext.indexOf('RENDER:');
   if(graphicsindex >= 0) {
-    if(textHasAt(origtext, graphicsindex + 7, 'text')) {
+    if(util.textHasAt(origtext, graphicsindex + 7, 'text')) {
       graphics_mode_actual = 0;
     }
-    else if(textHasAt(origtext, graphicsindex + 7, 'graphical')) {
+    else if(util.textHasAt(origtext, graphicsindex + 7, 'graphical')) {
       graphics_mode_actual = 1;
     }
   }
@@ -11936,12 +11955,12 @@ var autopauseinterval = null; // I don't want browser to keep ticking in backgro
 
 if(AUTOUPDATE == 2 || AUTOUPDATE == 3) autoupdateinterval = setIntervalSafe(function(){ update(); }, AUTOSECONDS * 1000);
 
-timerinterval = setIntervalSafe(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
+timerinterval = util.setIntervalSafe(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
 
 if(USEAUTOPAUSE) setAutoPauseInterval();
 
 function setAutoPauseInterval() {
-  autopauseinterval = setIntervalSafe(function(){
+  autopauseinterval = util.setIntervalSafe(function(){
     pause();
     autopaused = true;
   }, AUTOPAUSESECONDS * 1000);
@@ -11950,15 +11969,15 @@ function setAutoPauseInterval() {
 function pause() {
   autopaused = false;
   if(autoupdateinterval) {
-    clearIntervalSafe(autoupdateinterval);
+    util.clearIntervalSafe(autoupdateinterval);
     autoupdateinterval = null;
   }
   if(timerinterval) {
-    clearIntervalSafe(timerinterval);
+    util.clearIntervalSafe(timerinterval);
     timerinterval = null;
   }
   if(autopauseinterval) {
-    clearIntervalSafe(autopauseinterval);
+    util.clearIntervalSafe(autopauseinterval);
     autopauseinterval = null;
   }
   updatePauseButtonText();
@@ -11967,7 +11986,7 @@ function pause() {
 
 function pauseUpdateOnly() {
   if(autoupdateinterval) {
-    clearIntervalSafe(autoupdateinterval);
+    util.clearIntervalSafe(autoupdateinterval);
     autoupdateinterval = null;
   }
   updateTimeButtonBorders();
@@ -11977,9 +11996,9 @@ function unpause() {
   autopaused = false;
   highlightedcomponent = null;
   if((AUTOUPDATE == 2 || AUTOUPDATE == 3) && !autoupdateinterval) {
-    autoupdateinterval = setIntervalSafe(function(){ update(); }, AUTOSECONDS * 1000);
+    autoupdateinterval = util.setIntervalSafe(function(){ update(); }, AUTOSECONDS * 1000);
   }
-  if(!timerinterval)  timerinterval = setIntervalSafe(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
+  if(!timerinterval)  timerinterval = util.setIntervalSafe(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
   if(USEAUTOPAUSE && !autopauseinterval) {
     setAutoPauseInterval();
     updatePauseButtonText();
@@ -12036,688 +12055,14 @@ registerChangeDropdownElement('rem_inputs');
 
 
 
-var NEWEDIT = false;
 
-var editmode = false; // could be called modal mode, it's used for some other things than just editing too
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-var textbeforeedit = '';
-// NOTE: This are used not only by SimpleEditor, but also by the import and export buttons.
-var editdiv;
-var editarea;
-
-// anything that sets editmode = true, must also assign a function here that does what's needed when setting editmode = false again
-// the function itself should not assign editmode = false, the caller must do that when also calling this function
-// this should not include saving of map or canceling, only the UI cleanup/restore related functionality
-var editModeCancelFun = undefined;
-var editModeFinishFun = undefined;
-
-function SimpleEditor() {
-  editdiv = undefined;
-  editarea = undefined;
-
-  this.setUp = function() {
-    var docwidth = /*document.body.clientWidth*/window.innerWidth - 24 - 80;
-    var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8 - 80;
-    var fontsize = 10;
-    var ewidth = Math.max(w, 40);
-    var eheight = Math.min(Math.max(origtext.split('\n').length, 16));
-    editdiv = makeAbsElement('div', 30, 128, docwidth, docheight);
-    //editarea = makeAbsElement('textarea', 30, 128, (fontsize + 2) * ewidth, (fontsize + 2) * eheight);
-    editarea = makeAbsElement('textarea', 0, 0, docwidth, docheight - 100, editdiv);
-    editarea.rows = eheight;
-    editarea.cols = ewidth;
-    editarea.value = origtext;
-    editarea.style.fontSize = fontsize + 'px';
-    editarea.style.zIndex = '1'; // anything as long as it's less than the menu bar
-    //worldDiv.style.display = 'none';
-    //editarea.style.position = 'fixed';
-
-    makeInternalButton('cancel', editdiv, (docwidth - 200), (docheight - 80), function() {
-      editModeCancelFun();
-    });
-    makeInternalButton('done', editdiv, (docwidth - 100), (docheight - 80), function() {
-      editModeFinishFun();
-    });
-  };
-
-  // returns the text
-  this.turnDown = function() {
-    var newtext = editarea.value;
-    removeElement(editdiv);
-    return newtext;
-  };
-};
-
-function finishEdit() {
-  var newtext = edit.turnDown();
-  edit = undefined;
-
-  editButton.innerText = 'edit';
-  editmode = false;
-  createMenuUI();
-
-  if(newtext.length == 0) return;
-
-  if(newtext != textbeforeedit) {
-    setLocalStorage(newtext, 'circuit_text');
-    parseText(newtext, 'edited circuit', undefined, 1);
-  } else {
-    parseText(newtext, 'edited circuit', undefined, 2);
-  }
-}
-
-function cancelEdit() {
-  edit.turnDown();
-  edit = undefined;
-  editButton.innerText = 'edit';
-  editmode = false;
-  createMenuUI();
-  parseText(textbeforeedit, origtitle, undefined, 2);
-}
-
-//elements created by createMenuUI
-var menuRows;
-var menuRow0El;
-var menuRow1El;
-var menuRow2El;
-var menuRow3El;
-var ticksCounterEl;
-var rendererDropdown;
-var circuitNameEl;
-var circuitDropdownSpan;
-var editbutton;
-
-// functions created by createMenuUI
-var updatePauseButtonText;
-var updateModeButtonText;
-var updateTimeButtonBorders;
-var updateTicksDisplay;
-var changeDropdown;
-
-// smaller version of the menu rows shown when editing is active
-function createEditorMenuUI(cancelFun, finishFun) {
-  if(menuRows) removeElement(menuRows);
-
-  menuRows = makeElementAt('div', 0, 0);
-  menuRows.style.position = 'fixed';
-  menuRows.style.display = 'block';
-  menuRows.style.width = '100%';
-  menuRows.style.height = '100px';
-
-  menuRow0El = makeElementAt('span', 0, 0, menuRows);
-  menuRow0El.style.background = '#f8f8f8';
-  menuRow0El.style.position = 'absolute';
-  menuRow0El.style.width = '100%';
-  menuRow0El.style.height = '32px';
-
-
-  if(cancelFun) {
-    var cancelLink = makeElement('span', menuRow0El);
-    cancelLink.title = 'cancel the current modal operation';
-    cancelLink.innerHTML = 'cancel';
-    cancelLink.style.paddingLeft = '10px';
-    cancelLink.style.color = '#00e';
-    cancelLink.style.textDecoration = 'underline';
-    cancelLink.style.cursor = 'pointer';
-    cancelLink.onclick = function() {
-      if(cancelFun) cancelFun();
-    };
-  }
-
-  if(finishFun) {
-    var cancelLink = makeElement('span', menuRow0El);
-    cancelLink.title = 'finish and save the current modal operation';
-    cancelLink.innerHTML = 'finish';
-    cancelLink.style.paddingLeft = '10px';
-    cancelLink.style.color = '#00e';
-    cancelLink.style.textDecoration = 'underline';
-    cancelLink.style.cursor = 'pointer';
-    cancelLink.onclick = function() {
-      if(finishFun) finishFun();
-    };
-  }
-
-  var githubLink = makeElement('span', menuRow0El);
-  githubLink.style.paddingLeft = '10px';
-  githubLink.innerHTML = '<a href="https://github.com/lvandeve/logicemu" target="_blank">github</a>';
-  githubLink.style.paddingRight = '10px';
-}
-
-function isPaused() {
-  return !timerinterval && !autoupdateinterval;
-}
-
-
-function createMenuUI() {
-  if(menuRows) removeElement(menuRows);
-
-  menuRows = makeElementAt('div', 0, 0);
-  menuRows.style.position = 'fixed';
-  menuRows.style.display = 'block';
-  menuRows.style.width = '100%';
-  menuRows.style.height = '100px';
-
-  menuRow0El = makeElementAt('span', 0, 0, menuRows);
-  menuRow1El = makeElementAt('span', 0, 24, menuRows);
-  menuRow2El = makeElementAt('span', 0, 72, menuRows);
-  menuRow3El = makeElementAt('span', 0, 104, menuRows);
-
-  menuRows.style.zIndex = 5; // can be anything as long as it's higher than what we assign to editarea
-
-  menuRow0El.style.background = '#f8f8f8';
-  menuRow0El.style.position = 'absolute';
-  menuRow0El.style.width = '100%';
-  menuRow0El.style.height = '32px';
-  menuRow1El.style.background = '#f8f8f8';
-  menuRow1El.style.position = 'absolute';
-  menuRow1El.style.width = '100%';
-  menuRow1El.style.height = '48px';
-  menuRow2El.style.background = '#f8f8f8';
-  menuRow2El.style.position = 'absolute';
-  menuRow2El.style.width = '100%';
-  menuRow2El.style.height = '32px';
-  menuRow3El.style.background = '#f8f8f8';
-  menuRow3El.style.position = 'absolute';
-  menuRow3El.style.width = '100%';
-  menuRow3El.style.height = '32px';
-  menuRow3El.style.boxShadow = '0px 4px 4px #aaa';
-
-  // predesigned algorithm/autoupdate combinations
-  var modes = [
-    ['immediate', 1, 3], // faster than electron: recursively resolved gates, and keeps updating until things stop changing (in combinational circuits, that's after only 1 tick)
-    ['electron', 3, 3], // designed for gate-level flip-flops (but the built-in flip flops don't need this mode, those work as ideal flipflop in all modes!)
-  ];
-  function getMode() {
-    for(var i = 0; i < modes.length; i++) {
-      if(UPDATE_ALGORITHM == modes[i][1] && AUTOUPDATE == modes[i][2]) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-
-  var modeDropdown = makeUIElement('select', menuRow2El);
-  modeDropdown.title = 'Choose Emulation Algorithm. *) immediate: does fast updates (all gates at once in sorted order, or as sorted as possible in case of loops) when using a button or timer. Updates until things stop changing (1 tick for combinational circuits).' +
-                       ' *) electron: does slow update (gate-per-gate) every so many milliseconds, emulates flip-flops crafted from gates in more interesting way with even a randomness mechanism to get them out of metastable state.' +
-                       ' When loading a new circuit, a mode is automatically chosen as follows: by default, immediate. If a particular type of loop between gates (such as in SR latch) is detected, electron. If any other loop is present: immediate'
-                       ;
-  modeDropdown.onchange = function() {
-    var mode = modeDropdown.selectedIndex;
-    if(mode >= modes.length) mode = 0;
-    UPDATE_ALGORITHM = modes[mode][1];
-    AUTOUPDATE = modes[mode][2];
-    updateModeButtonText();
-    updatePauseButtonText();
-    updateRunningState();
-  };
-
-  for(var i = 0; i < modes.length; i++) {
-    var el = makeElement('option', modeDropdown).innerText = modes[i][0];
-  }
-
-  updateModeButtonText = function() {
-    var mode = getMode();
-    if(mode == -1) modeDropdown.selectedIndex = -1;
-    else modeDropdown.selectedIndex = mode;
-  }
-
-
-  var tickButton = makeUIElement('button', menuRow2El);
-  tickButton.innerText = 'tick';
-  tickButton.title = 'Tick once. This allows ticking the circuit when paused, to investigate the signal. Especially useful in paused electron mode, or paused immediate mode if there are flip-flops or other sequential parts.';
-  tickButton.onclick = function() {
-    if(!isPaused()) pause();
-    update();
-  }
-
-  updatePauseButtonText = function() {
-    pauseButton.innerText = isPaused() ? 'paused' : 'pause';
-  }
-  var pauseButton = makeUIElement('button', menuRow2El, 3);
-  pauseButton.innerText = 'pause';
-  pauseButton.title = 'pauses running circuit and timers, or enables them again if already paused. If paused, use the tick button to manually advance circuit state step by step instead. If you press switches of the circuit while paused, the update will be visible after you use the tick button.';
-  pauseButton.onclick = function() {
-    if(isPaused()) {
-      unpause();
-    } else {
-      pause();
-    }
-    updateTimeButtonBorders();
-  };
-  updatePauseButtonText();
-
-
-  var slowerButton = makeUIElement('button', menuRow2El, 3);
-  slowerButton.title = 'slows down simulation';
-  slowerButton.innerText = 'slow';
-  slowerButton.onclick = function() {
-    AUTOSECONDS = NORMALAUTOSECONDS * 10;
-    TIMERSECONDS = NORMALTIMERSECONDS * 10;
-
-    pause();
-    unpause();
-
-    updateTimeButtonBorders();
-  };
-
-  var normalButton = makeUIElement('button', menuRow2El, 3);
-  normalButton.title = 'set to standard speed';
-  normalButton.innerText = 'norm';
-  normalButton.onclick = function() {
-    AUTOSECONDS = NORMALAUTOSECONDS;
-    TIMERSECONDS = NORMALTIMERSECONDS;
-
-    pause();
-    unpause();
-
-    updateTimeButtonBorders();
-  };
-
-  var boostButton = makeUIElement('button', menuRow2El, 3);
-  boostButton.title = 'speeds up simulation, if possible within the computational resources of the web browser';
-  boostButton.innerText = 'fast';
-  boostButton.onclick = function() {
-    AUTOSECONDS = NORMALAUTOSECONDS / 10;
-    TIMERSECONDS = NORMALTIMERSECONDS / 10;
-
-    pause();
-    unpause();
-
-    updateTimeButtonBorders();
-  };
-
-  var timebuttons = [pauseButton, slowerButton, normalButton, boostButton];
-
-  updateTimeButtonBorders = function() {
-    var j = 0;
-    if(isPaused()) j = 0;
-    else if(AUTOSECONDS > NORMALAUTOSECONDS) j = 1;
-    else if(AUTOSECONDS == NORMALAUTOSECONDS) j = 2;
-    else if(AUTOSECONDS < NORMALAUTOSECONDS) j = 3;
-    for (var i = 0; i < 4; i++) {
-      if(i == j) {
-        highlightUIElementBorder(timebuttons[i], i == 2 ? 'black' : 'red');
-      } else {
-        styleUIElementBorder(timebuttons[i]);
-      }
-    }
-  }
-
-
-  ticksCounterEl = makeElement('div', menuRow2El);
-  ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
-  ticksCounterEl.style.width = '100px';
-  ticksCounterEl.style.display = 'inline-block';
-  ticksCounterEl.style.whiteSpace = 'nowrap';
-  //ticksCounterEl.style.fontSize = '90%';
-  ticksCounterEl.title = 'Amount of ticks so far. Click to reset to 0. If in electron mode, is per gate ticks. In immediate mode, one tick per full update.';
-  ticksCounterEl.onclick = function() {
-    numticks = 0;
-    updateTicksDisplay();
-  };
-
-  updateTicksDisplay = function() {
-    ticksCounterEl.innerHTML = '&nbspticks:' + numticks;
-  };
-
-
-
-  rendererDropdown = makeUIElement('select', menuRow2El);
-  rendererDropdown.title = 'Choose renderer: graphical or text. Graphical is with HTML5 canvas and has better looking wire connections but may be slower for huge circuits. Text mode is faster and is more closely related to how you edit circuits with ASCII text.';
-  rendererDropdown.onchange = function() {
-    graphics_mode = rendererDropdown.selectedIndex;
-    graphics_mode_actual = rendererDropdown.selectedIndex;
-    initDivs();
-    render();
-  };
-  makeElement('option', rendererDropdown).innerText = 'text';
-  makeElement('option', rendererDropdown).innerText = 'graphical';
-  rendererDropdown.selectedIndex = graphics_mode;
-
-  var colorDropdown = makeUIElement('select', menuRow2El, 3);
-  colorDropdown.title = 'Choose color scheme';
-  colorDropdown.onchange = function() {
-    setLocalStorage(colorDropdown.selectedIndex, 'color_scheme');
-    setColorScheme(colorDropdown.selectedIndex);
-    initDivs();
-    render();
-  };
-  makeElement('option', colorDropdown).innerText = 'light';
-  makeElement('option', colorDropdown).innerText = 'dark';
-  makeElement('option', colorDropdown).innerText = 'gray';
-  makeElement('option', colorDropdown).innerText = 'blue';
-  makeElement('option', colorDropdown).innerText = 'green';
-  makeElement('option', colorDropdown).innerText = 'candy';
-  makeElement('option', colorDropdown).innerText = 'inverted';
-  makeElement('option', colorDropdown).innerText = 'monochrome';
-  colorDropdown.selectedIndex = colorscheme;
-
-  var zoomoutButton = makeUIElement('button', menuRow2El, 1);
-  zoomoutButton.innerText = '-';
-  zoomoutButton.title = 'Zoom out';
-  zoomoutButton.onclick = function() {
-    if(tw <= 8 && th <= 8) return;
-    tw = Math.floor(tw * 0.66);
-    th = Math.floor(th * 0.66);
-    if(tw < 8) tw = 8;
-    if(th < 8) th = 8;
-    initDivs();
-    render();
-  };
-
-  var zoominButton = makeUIElement('button', menuRow2El, 1);
-  zoominButton.innerText = '+';
-  zoominButton.title = 'Zoom in';
-  zoominButton.onclick = function() {
-    if(tw >= 64 && th >= 64) return;
-    tw = Math.floor(tw * 1.5);
-    th = Math.floor(th * 1.5);
-    if(tw > 64) tw = 64;
-    if(th > 64) th = 64;
-    initDivs();
-    render();
-  };
-
-  makeUISpacer(16, menuRow2El);
-
-  changeDropdown = makeUIElement('select', menuRow2El);
-  changeDropdown.title = 'A simpler more primitive form of edit, but it works while a circuit is running. Change the type of a gate, switch or LED to this. First click an option from this list, then the main cell of a device (e.g. the "a" of an AND gate).' +
-      ' This is a very limited form of editing. It doesn\'t support creating or removing wire connections. It can only change a device that has one of the types in the list to another type in the list. On other devices it may either do nothing, or cause' +
-      ' unexpected behavior. Changes in IC templates have no effect on instances. Changes are not saved and not visible under the edit button. To do full editing, use the edit button instead.';
-  changeDropdown.onchange = function() {
-    changeMode = changeDropdownElements[changeDropdown.selectedIndex];
-  };
-  for(var i = 0; i < changeDropdownElements.length; i++) {
-    var type = changeDropdownElements[i];
-    var text = (typesymbols[type] == undefined) ? '[change]' : typesymbols[type];
-    if(type == 'rem_inputs') text = 'disconnect inputs';
-    if(type == 'c' || type == 'C') text = type;
-    var el = makeElement('option', changeDropdown).innerText = text;
-  }
-
-
-
-  editButton = makeUIElement('button', menuRow2El, 3);
-  editButton.innerText = 'edit';
-  editButton.title = 'Opens text field to edit the map. Press this button again to stop editing and run the new circuit. Read the editing tutorial under "help" first. Advice: for large projects, do not actually edit in the text field because that is fiddly, use a good text editor (that has block selection), or copypaste a circuit in here from an external source. ' +
-                     'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead. Note that nothing gets sent to any server or cloud, everything is' +
-                     'local to your computer only.';
-  editButton.onclick = function() {
-    if(!editmode) {
-      textbeforeedit = origtext;
-
-      if (NEWEDIT) {
-        edit = new Editor();
-      } else {
-        edit = new SimpleEditor();
-      }
-
-      //setUpEditor();
-      edit.setUp();
-      var oldw = w;
-      var oldh = h;
-      resetForParse();
-      w = oldw;
-      h = oldh;
-
-      pause();
-      numticks = 0;
-      initDivs();
-
-      editButton.innerText = 'done';
-      window.scrollTo(0, 0);
-      editmode = true;
-      editModeCancelFun = cancelEdit;
-      editModeFinishFun = finishEdit;
-      createEditorMenuUI(editModeCancelFun, editModeFinishFun);
-    } else {
-      editModeFinishFun();
-    }
-  };
-
-  if(getLocalStorage('circuit_text')) {
-    var restoreButton = makeUIElement('button', menuRow2El, 3);
-    restoreButton.innerText = 'restore';
-    restoreButton.title = 'Restore circuit you created before with edit. Only works if an actual circuit was found in local storage.';
-    restoreButton.onclick = function() {
-      if(maybeLoadFromLocalStorage()) {
-        parseText(initialCircuitText, initialTitle, initialId ? linkableCircuits[initialId] : null, 1);
-      }
-    };
-
-    var forgetButton = makeUIElement('button', menuRow2El, 3);
-    forgetButton.innerText = 'forget';
-    forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button' +
-                         'and also remove URL fragments (#id=... or #code=...), you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
-                         'if you want to keep your circuit, make sure you save it to disk first! That can be done by' +
-                         'copypasting it from the edit field into a text editor and saving to your disk, e.g. as a .txt file.';
-    forgetButton.onclick = function() {
-      setLocalStorage('', 'circuit_text');
-      clearFragment();
-    };
-  }
-
-  circuitDropdownSpan = makeElement('span', menuRow1El);
-
-  var prevCircuitButton = makeUIElement('button', menuRow1El, 1);
-  prevCircuitButton.innerText = '<';
-  prevCircuitButton.title = 'Previous built-in circuit';
-  prevCircuitButton.onclick = function() {
-    for(;;) {
-      if(currentSelectedCircuit == 0) return;
-      currentSelectedCircuit--;
-      if(!allRegisteredCircuits[currentSelectedCircuit].istitle) break;
-    }
-    parseText(allRegisteredCircuits[currentSelectedCircuit].text,
-        allRegisteredCircuits[currentSelectedCircuit].title,
-        allRegisteredCircuits[currentSelectedCircuit]);
-  };
-
-  var nextCircuitButton = makeUIElement('button', menuRow1El, 1);
-  nextCircuitButton.innerText = '>';
-  nextCircuitButton.title = 'Next built-in circuit';
-  nextCircuitButton.onclick = function() {
-    for(;;) {
-      if(currentSelectedCircuit + 1 >= allRegisteredCircuits.length) return;
-      currentSelectedCircuit++;
-      if(!allRegisteredCircuits[currentSelectedCircuit].istitle) break;
-    }
-    parseText(allRegisteredCircuits[currentSelectedCircuit].text,
-        allRegisteredCircuits[currentSelectedCircuit].title,
-        allRegisteredCircuits[currentSelectedCircuit]);
-  };
-
-
-  var importButton = makeUIElement('button', menuRow1El);
-  importButton.innerText = 'import';
-  importButton.title = 'Import a circuit from its ASCII diagram copypasted from elsewhere. Paste it into the field that appears and use the buttons to import or cancel. To export or change a circuit instead, use the "edit" button, or create your own circuit in a text editor.';
-  importButton.onclick = function() {
-    if(!editmode) {
-      var fontsize = 10;
-      var ewidth = 60;
-      var eheight = 60;
-      editdiv = makeDiv(30-5, 128-5, 400+15, 400+15+30);
-      editdiv.style.backgroundColor = '#888';
-      editdiv.style.position = 'fixed';
-      editarea = makeAbsElement('textarea', 5, 5, 400, 400, editdiv);
-      editarea.rows = 40;
-      editarea.cols = 40;
-      editarea.value = '';
-      editarea.style.fontSize = fontsize + 'px';
-      editdiv.style.zIndex = '100';
-      editarea.focus();
-
-      makeInternalButton('import', editdiv, 330, 415, importButton.onclick);
-      makeInternalButton('cancel', editdiv, 245, 415, function() {
-        editModeCancelFun();
-      });
-
-      pause();
-      importButton.innerText = 'done';
-      window.scrollTo(0, 0);
-      editmode = true;
-      editModeCancelFun = function() {
-        document.body.removeChild(editdiv);
-        importButton.innerText = 'import';
-        editmode = false;
-        createMenuUI();
-        unpause();
-      };
-      editModeFinishFun = function() {
-        var newtext = editarea.value;
-        document.body.removeChild(editdiv);
-        importButton.innerText = 'import';
-        editmode = false;
-        createMenuUI();
-        if(newtext.length > 0) parseText(newtext, 'imported circuit', undefined, 1);
-      };
-      createEditorMenuUI(editModeCancelFun, editModeFinishFun);
-    } else {
-      editModeFinishFun();
-    }
-  };
-
-
-  var exportButton = makeUIElement('button', menuRow1El);
-  exportButton.innerText = 'export';
-  exportButton.title = 'Export circuit ASCII diagram, to easily store it elsewhere or share.';
-  exportButton.onclick = function() {
-    if(!editmode) {
-      var fontsize = 10;
-      var ewidth = 60;
-      var eheight = 60;
-      editdiv = makeDiv(30-5, 128-5, 400+15, 400+15+30);
-      editdiv.style.backgroundColor = '#888';
-      editdiv.style.position = 'fixed';
-      editarea = makeAbsElement('textarea', 5, 5, 400, 400, editdiv);
-      editarea.rows = 40;
-      editarea.cols = 40;
-      editarea.value = origtext;
-      editarea.style.fontSize = fontsize + 'px';
-      editdiv.style.zIndex = '100';
-      editarea.select();
-      editarea.focus();
-
-      makeInternalButton('cancel', editdiv, 330, 415, function() {
-        editModeCancelFun();
-      });
-
-      pause();
-      exportButton.innerText = 'done';
-      window.scrollTo(0, 0);
-      editmode = true;
-      editModeCancelFun = function() {
-        document.body.removeChild(editdiv);
-        importButton.innerText = 'import';
-        editmode = false;
-        unpause();
-        createMenuUI();
-      };
-      editModeFinishFun = editModeCancelFun;
-      createEditorMenuUI(editModeCancelFun, editModeFinishFun);
-    } else {
-      editModeFinishFun();
-    }
-  };
-
-  var settingsButton = makeUIElement('button', menuRow1El, 3);
-  settingsButton.innerText = 'settings';
-  settingsButton.title = 'settings';
-  settingsButton.onclick = function() {
-    editdiv = makeDiv(30-5, worldstartheight, 400+15, 400+15+30);
-    editdiv.style.backgroundColor = '#888';
-    editdiv.style.position = 'fixed';
-    window.scrollTo(0, 0);
-    editmode = true;
-    editModeFinishFun = function() {
-      createMenuUI();
-    };
-    editModeCancelFun = editModeFinishFun;
-    createEditorMenuUI(undefined, editModeFinishFun);
-    editdiv.style.zIndex = 100;
-    makeInternalButton('ok', editdiv, 300, 415, function() {
-      document.body.removeChild(editdiv);
-      editmode = false;
-      editModeCancelFun();
-    });
-    var cb = makeElementAt('input', 20, 20, editdiv);
-    cb.type = 'checkbox';
-    cb.checked = NEWEDIT;
-    cb.onchange = function() {
-      NEWEDIT = cb.checked;
-    };
-    var text = makeElementAt('span', 50, 20, editdiv);
-    text.innerText = 'enable experimental possible new editor';
-  };
-
-  var indexLink = makeElement('span', menuRow0El);
-  indexLink.title = 'go to the main welcome page and remove tokens from URL';
-  if(getCGIParameterByName('id')) {
-    indexLink.innerHTML = '&nbsp;&nbsp;<a href="' + getUrlWithoutQueries() + '">index</a>';
-  } else {
-    indexLink.innerHTML = 'index';
-    //indexLink.style.paddingLeft = '10px';
-    indexLink.style.color = '#00e';
-    indexLink.style.textDecoration = 'underline';
-    indexLink.style.cursor = 'pointer';
-    indexLink.onclick = function() {
-      if(origtext == introText) return;
-      parseText(introText, introTitle, linkableCircuits[introId]);
-    };
-  }
-
-  var helpLink = makeElement('span', menuRow0El);
-  helpLink.title = 'go to the help index page';
-  helpLink.innerHTML = 'help';
-  helpLink.style.paddingLeft = '10px';
-  helpLink.style.color = '#00e';
-  helpLink.style.textDecoration = 'underline';
-  helpLink.style.cursor = 'pointer';
-  helpLink.onclick = function() {
-    var circuit = linkableCircuits['helpindex'];
-
-    parseText(circuit.text, circuit.id, circuit);
-  };
-
-
-  var githubLink = makeElement('span', menuRow0El);
-  githubLink.style.paddingLeft = '10px';
-  githubLink.innerHTML = '<a href="https://github.com/lvandeve/logicemu" target="_blank">github</a>';
-  githubLink.style.paddingRight = '10px';
-
-
-  circuitNameEl = makeElement('span', menuRow3El);
-  circuitNameEl.innerHTML = 'Circuit Name';
-  //circuitNameEl.style.backgroundColor = '#0f0';
-  //circuitNameEl.style.border = '1px solid #080';
-  circuitNameEl.style.fontSize = '27px';
-  circuitNameEl.style.paddingLeft = '8px';
-  circuitNameEl.style.fontWeight = 'bold';
-  //circuitNameEl.style.marginTop = '-8px';
-  //circuitNameEl.style.marginLeft = '520px';
-  //circuitNameEl.style.marginTop = '20px';
-  //circuitNameEl.style.padding = '2px';
-  //circuitNameEl.style.position = 'absolute';
-  //circuitNameEl.style.top = '32px';
-  //circuitNameEl.style.left = '650px'; // 712px
-  //circuitNameEl.style.height = '34px';
-  //circuitNameEl.style.zIndex = '100';
-
-
-  /*var directLinkSpan = makeElement('span', menuRow1El);
-  directLinkSpan.innerHTML = '&nbsp;&nbsp;';//<a href="' + getUrlWithoutQueries() + '">direct link</a>';
-  var directLink = makeElement('a', directLinkSpan);
-  directLink.innerText = 'direct link';
-  directLink.href = getUrlWithoutQueries();
-  directLink.style.visibility = 'hidden';
-  directLink.title = 'external link to link directly to this circuit rather than the index page';*/
-
-  fillRegisteredCircuits();
-}
-
-//go to editor on load, for easy development on it
-//NEWEDIT=true;window.setTimeout(function(){tw = Math.ceil(tw * 0.75); th = Math.ceil(th * 0.75); editButton.click();}, 300);
 
 
 // utility functions to mirror/rotate a whole circuit
@@ -12915,661 +12260,5 @@ function printTransform(text, op) {
   console.log(transform(text, op));
 }
 
-// called by footer.js
-function maybeLoadFromLocalStorage() {
-  // the text you last edited is remembered. To remove the memory, use the edit button, clear the string, and save
-  var stored_text = getLocalStorage('circuit_text');
-  if(!stored_text) return false;
-  if (stored_text != '' && !!stored_text) {
-    initialCircuitText = stored_text;
-    initialTitle = 'stored circuit';
-    initialId = null;
-  }
 
-  return true;
-}
-
-// called by footer.js
-function maybeLoadFromLinkId() {
-  var link_id = getFragmentParameterByName('id');
-  if(!link_id) return false;
-
-  var linkableCircuit = linkableCircuits[link_id];
-  if(linkableCircuit) {
-    initialCircuitText = linkableCircuit.text;
-    initialTitle = linkableCircuit.title;
-    initialId = link_id;
-    currentSelectedCircuit = linkableCircuit.index;
-  } else {
-    initialCircuitText = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
-    initialTitle = introTitle;
-    initialId = introId;
-  }
-
-  return true;
-}
-
-// called by footer.js
-function maybeLoadFromUrlCode() {
-  var code = getFragmentParameterByName('code');
-  if(!code) return false;
-  var text = decodeBoard(code);
-
-  if(text) {
-    initialCircuitText = text;
-    initialTitle = 'Decoded circuit';
-    initialId = undefined;
-  } else {
-    initialCircuitText = 'R>l 1"Invalid #code in the URL" l<R\n\n' + introText;
-    initialTitle = introTitle;
-    initialId = introId;
-  }
-
-  return true;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-// To URL-compatible base64 (https://tools.ietf.org/html/rfc7515#appendix-C)
-function toBase64(text) {
-  var result = btoa(text);
-  // remove padding, and use -_ instead of +/
-  result = result.split('=')[0];
-  result = result.replace(new RegExp('\\+', 'g'), '-');
-  result = result.replace(new RegExp('/', 'g'), '_');
-  return result;
-}
-
-// From URL-compatible base64 (https://tools.ietf.org/html/rfc7515#appendix-C)
-function fromBase64(enc) {
-  enc = enc.replace(new RegExp('-', 'g'), '+');
-  enc = enc.replace(new RegExp('_', 'g'), '/');
-  if((enc.length & 3) == 2) enc += '==';
-  else if((enc.length & 3) == 3) enc += '=';
-  return atob(enc);
-}
-
-
-// converts array of unicode codepoints to JS string
-function arrayToString(a) {
-  var s = '';
-  for(var i = 0; i < a.length; i++) {
-    //s += String.fromCharCode(a[i]);
-    var c = a[i];
-    if (c < 0x10000) {
-       s += String.fromCharCode(c);
-    } else if (c <= 0x10FFFF) {
-      s += String.fromCharCode((c >> 10) + 0xD7C0);
-      s += String.fromCharCode((c & 0x3FF) + 0xDC00);
-    } else {
-      s += ' ';
-    }
-  }
-  return s;
-}
-
-// ignores the utf-32 unlike arrayToString but that's ok for now
-function arrayToStringPart(a, pos, len) {
-  var s = '';
-  for(var i = pos; i < pos + len; i++) {
-    s += String.fromCharCode(a[i]);
-  }
-  return s;
-}
-
-// converts JS string to array of unicode codepoints
-function stringToArray(s) {
-  var a = [];
-  for(var i = 0; i < s.length; i++) {
-    //a.push(s.charCodeAt(i));
-    var c = s.charCodeAt(i);
-    if (c >= 0xD800 && c <= 0xDBFF && i + 1 < s.length) {
-      var c2 = s.charCodeAt(i + 1);
-      if (c2 >= 0xDC00 && c2 <= 0xDFFF) {
-        c = (c << 10) + c2 - 0x35FDC00;
-        i++;
-      }
-    }
-    a.push(c);
-  }
-  return a;
-}
-
-/** @constructor */
-function LZ77Coder() {
-  this.lz77MatchLen = function(text, i0, i1) {
-    var l = 0;
-    while(i1 + l < text.length && text[i1 + l] == text[i0 + l] && l < 255) {
-      l++;
-    }
-    return l;
-  };
-
-  this.encodeString = function(text) {
-    return arrayToString(this.encode(stringToArray(text)));
-  };
-
-  this.decodeString = function(text) {
-    return arrayToString(this.decode(stringToArray(text)));
-  };
-
-  // Designed mainly for 7-bit ASCII text. Although the text array may contain values
-  // above 127 (e.g. unicode codepoints), only values 0-127 are encoded efficiently.
-  this.encode = function(text) {
-    var result = [];
-    var map = {};
-
-    var encodeVarint = function(i, arr) {
-      if(i < 128) {
-        arr.push(i);
-      } else if(i < 16384) {
-        arr.push(128 | (i & 127));
-        arr.push(i >> 7);
-      } else {
-        arr.push(128 | (i & 127));
-        arr.push(128 | ((i >> 7) & 127));
-        arr.push((i >> 14) & 127);
-      }
-    };
-
-    for(var i = 0; i < text.length; i++) {
-      var len = 0;
-      var dist = 0;
-
-      var sub = arrayToStringPart(text, i, 4);
-      var s = map[sub];
-      if(s) {
-        for(var j = s.length - 1; j >= 0; j--) {
-          var i2 = s[j];
-          var d = i - i2;
-          if(d > 2097151) break;
-          var l = this.lz77MatchLen(text, i2, i);
-          if(l > len) {
-            len = l;
-            dist = d;
-            if(l > 255) break; // good enough, stop search
-          }
-        }
-      }
-
-      if(len > 2097151) len = 2097151;
-
-      if(!(len > 5 || (len > 4 && dist < 16383) || (len > 3 && dist < 127))) {
-        len = 1;
-      }
-
-      for(var j = 0; j < len; j++) {
-        var sub = arrayToStringPart(text, i + j, 4);
-        if(!map[sub]) map[sub] = [];
-        if(map[sub].length > 1000) map[sub] = []; // prune
-        map[sub].push(i + j);
-      }
-      i += len - 1;
-
-      if(len >= 3) {
-        if(len < 130) {
-          result.push(128 + len - 3);
-        } else {
-          var len2 = len - 128;
-          result.push(255);
-          encodeVarint(len2, result);
-        }
-        encodeVarint(dist, result);
-      } else {
-        var c = text[i];
-        if(c < 128) {
-          result.push(c);
-        } else {
-          // Above-ascii character, encoded as unicode codepoint (not UTF-16).
-          // Normally such character does not appear in circuits, but it could in comments.
-          result.push(255);
-          encodeVarint(c - 128, result);
-          result.push(0);
-        }
-      }
-    }
-    return result;
-  };
-
-  this.decode = function(encoded) {
-    var result = [];
-    var temp;
-    for(var i = 0; i < encoded.length;) {
-      var c = encoded[i++];
-      if(c > 127) {
-        var len = c + 3 - 128;
-        if(c == 255) {
-          len = encoded[i++];
-          if(len > 127) len += (encoded[i++] << 7) - 128;
-          if(len > 16383) len += (encoded[i++] << 14) - 16384;
-          len += 128;
-        }
-        dist = encoded[i++];
-        if(dist > 127) dist += (encoded[i++] << 7) - 128;
-        if(dist > 16383) dist += (encoded[i++] << 14) - 16384;
-
-        if(dist == 0) {
-          result.push(len);
-        } else {
-          for(var j = 0; j < len; j++) {
-            result.push(result[result.length - dist]);
-          }
-        }
-      } else {
-        result.push(c);
-      }
-    }
-    return result;
-  };
-}
-
-
-/** @constructor */
-function RangeCoder() {
-  this.base = 256;
-  this.high = 1 << 24;
-  this.low = 1 << 16;
-  this.num = 256;
-  this.values = [];
-  this.inc = 8;
-
-  this.reset = function() {
-    this.values = [];
-    for(var i = 0; i <= this.num; i++) {
-      this.values.push(i);
-    }
-  };
-
-  this.floordiv = function(a, b) {
-    return Math.floor(a / b);
-  };
-
-  // Javascript numbers are doubles with 53 bits of integer precision so can
-  // represent unsigned 32-bit ints, but logic operators like & and >> behave as
-  // if on 32-bit signed integers (31-bit unsigned). Mask32 makes the result
-  // positive again. Use e.g. after multiply to simulate unsigned 32-bit overflow.
-  this.mask32 = function(a) {
-    return ((a >> 1) & 0x7fffffff) * 2 + (a & 1);
-  };
-
-  this.update = function(symbol) {
-    // too large denominator
-    if(this.getTotal() + this.inc >= this.low) {
-      var last = this.values[0];
-      for(var i = 0; i < this.num; i++) {
-        var d = this.values[i + 1] - last;
-        d = (d > 1) ? this.floordiv(d, 2) : d;
-        last = this.values[i + 1];
-        this.values[i + 1] = this.values[i] + d;
-      }
-    }
-    for(var i = symbol + 1; i < this.values.length; i++) {
-      this.values[i] += this.inc;
-    }
-  };
-
-  this.getProbability = function(symbol) {
-    return [this.values[symbol], this.values[symbol + 1]];
-  };
-
-  this.getSymbol = function(scaled_value) {
-    var symbol = this.binSearch(this.values, scaled_value);
-    var p = this.getProbability(symbol);
-    p.push(symbol);
-    return p;
-  };
-
-  this.getTotal = function() {
-    return this.values[this.values.length - 1];
-  };
-
-  // returns last index in values that contains entry that is <= value
-  this.binSearch = function(values, value) {
-    var high = values.length - 1, low = 0, result = 0;
-    if(value > values[high]) return high;
-    while(low <= high) {
-      var mid = this.floordiv(low + high, 2);
-      if(values[mid] >= value) {
-        result = mid;
-        high = mid - 1;
-      } else {
-        low = mid + 1;
-      }
-    }
-    if(result > 0 && values[result] > value) result--;
-    return result;
-  };
-
-  this.encodeString = function(text) {
-    return arrayToString(this.encode(stringToArray(text)));
-  };
-
-  this.decodeString = function(text) {
-    return arrayToString(this.decode(stringToArray(text)));
-  };
-
-  this.encode = function(data) {
-    this.reset();
-
-    var result = [1];
-    var low = 0;
-    var range = 0xffffffff;
-
-    result.push(data.length & 255);
-    result.push((data.length >> 8) & 255);
-    result.push((data.length >> 16) & 255);
-    result.push((data.length >> 24) & 255);
-
-    for(var i = 0; i < data.length; i++) {
-      var c = data[i];
-      var p = this.getProbability(c);
-      var total = this.getTotal();
-      var start = p[0];
-      var size = p[1] - p[0];
-      this.update(c);
-      range = this.floordiv(range, total);
-      low = this.mask32(start * range + low);
-      range = this.mask32(range * size);
-
-      for(;;) {
-        if(low == 0 && range == 0) {
-          return null; // something went wrong, avoid hanging
-        }
-        if(this.mask32(low ^ (low + range)) >= this.high) {
-          if(range >= this.low) break;
-          range = this.mask32((-low) & (this.low - 1));
-        }
-        result.push((this.floordiv(low, this.high)) & (this.base - 1));
-        range = this.mask32(range * this.base);
-        low = this.mask32(low * this.base);
-      }
-    }
-
-    for(var i = this.high; i > 0; i = this.floordiv(i, this.base)) {
-      result.push(this.floordiv(low, this.high) & (this.base - 1));
-      low = this.mask32(low * this.base);
-    }
-
-    if(result.length > data.length) {
-      result = [0];
-      for(var i = 0; i < data.length; i++) result[i + 1] = data[i];
-    }
-
-    return result;
-  };
-
-  this.decode = function(data) {
-    if(data.length < 1) return null;
-    var result = [];
-    if(data[0] == 0) {
-      for(var i = 1; i < data.length; i++) result[i - 1] = data[i];
-      return result;
-    }
-    if(data[0] != 1) return null;
-    if(data.length < 5) return null;
-
-    this.reset();
-
-    var code = 0;
-    var low = 0;
-    var range = 0xffffffff;
-    var pos = 1;
-    var symbolsize = data[pos++];
-    symbolsize |= (data[pos++] << 8);
-    symbolsize |= (data[pos++] << 16);
-    symbolsize |= (data[pos++] << 24);
-    symbolsize = this.mask32(symbolsize);
-
-    for(var i = this.high; i > 0; i = this.floordiv(i, this.base)) {
-      var d = pos >= data.length ? 0 : data[pos++];
-      code = this.mask32(code * this.base + d);
-    }
-    for(var i = 0; i < symbolsize; i++) {
-      var total = this.getTotal();
-      var scaled_value = this.floordiv(code - low, (this.floordiv(range, total)));
-      var p = this.getSymbol(scaled_value);
-      var c = p[2];
-      result.push(c);
-      var start = p[0];
-      var size = p[1] - p[0];
-      this.update(c);
-
-      range = this.floordiv(range, total);
-      low = this.mask32(start * range + low);
-      range = this.mask32(range * size);
-      for(;;) {
-        if(low == 0 && range == 0) {
-          return null; // something went wrong, avoid hanging
-        }
-        if(this.mask32(low ^ (low + range)) >= this.high) {
-          if(range >= this.low) break;
-          range = this.mask32((-low) & (this.low - 1));
-        }
-        var d = pos >= data.length ? 0 : data[pos++];
-        code = this.mask32(code * this.base + d);
-        range = this.mask32(range * this.base);
-        low = this.mask32(low * this.base);
-      }
-    }
-
-    return result;
-  };
-}
-
-
-function encodeBoard(text) {
-  var lz77 = (new LZ77Coder()).encodeString(text);
-  var range = (new RangeCoder()).encodeString(lz77);
-  return '0' + toBase64(range); // '0' = format version
-}
-
-function decodeBoard(enc) {
-  if(enc[0] != '0') return null; // '0' = format version
-  enc = enc.substr(1);
-  var range = fromBase64(enc);
-  var lz77 = (new RangeCoder()).decodeString(range);
-  if(!lz77 && lz77 != '') return null;
-  return (new LZ77Coder()).decodeString(lz77);
-}
-
-
-function testCompression(o) {
-  if(!o && o != '') o = origtext;
-  var e = encodeBoard(o);
-  var d = decodeBoard(e);
-  var ok = (d == o);
-  console.log('o size: ' + Math.ceil(o.length * 8 / 6) + ', e size: ' + e.length + ', ok: ' + ok);
-  if(!ok) console.log('ERROR! not equal!');
-  return ok;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-var currentSelectedCircuit = 0;
-
-function updateCircuitDropdowns(opt_registeredCircuit) {
-  if(!opt_registeredCircuit) {
-    for(var i = 0; i < circuitGroups.length; i++) {
-      circuitGroups[i].dropdown.selectedIndex = 0;
-    }
-    return;
-  }
-
-  for(var i = 0; i < circuitGroups.length; i++) {
-    if(i == opt_registeredCircuit.group) {
-      circuitGroups[i].dropdown.selectedIndex = opt_registeredCircuit.groupindex + 1;
-    } else {
-      circuitGroups[i].dropdown.selectedIndex = 0;
-    }
-  }
-}
-
-function CircuitGroup(name) {
-  this.name = name;
-  this.circuits = [];
-}
-
-// must use registerCircuitGroup, then register circuits to add them to the last registered circuitgroup
-// this is a global variable, designed to use separate .js files which each register one circuit group and then register several circuits in it
-var currentCircuitGroup = null;
-
-var circuitGroups = [];
-
-function registerCircuitGroup(name) {
-  currentCircuitGroup = new CircuitGroup(name);
-  circuitGroups.push(currentCircuitGroup);
-}
-
-var allRegisteredCircuits = [];
-var linkableCircuits = {};
-var linkableCircuitsOrder = [];
-
-function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
-  if(!opt_link_id) opt_link_id = 'circuit' + allRegisteredCircuits.length;
-  var dropdownname = name;
-  if(opt_is_title && name != '--------') dropdownname = '--- ' + name + ' ---';
-  var index = allRegisteredCircuits.length;
-  var c = {};
-  c.name = name;
-  c.dropdownname = dropdownname;
-  c.text = circuit;
-  c.title = name;
-  c.linkid = opt_link_id;
-  c.istitle = opt_is_title;
-  c.group = circuitGroups.length - 1;
-  c.index = index;
-  c.groupindex = currentCircuitGroup.circuits.length;
-  currentCircuitGroup.circuits.push(c);
-  allRegisteredCircuits.push(c);
-  if(opt_link_id) {
-    linkableCircuits[opt_link_id] = c;
-    linkableCircuitsOrder.push(opt_link_id);
-  }
-}
-
-function registerTitle(title) {
-  var name = title;
-  if(!title) name = '--------';
-  var circuit = '0"This is a title section. Choose the next circuit to view the first one under this title.';
-  registerCircuit(name, circuit, undefined, 1);
-}
-var fallbackhelptext = '0"Load any circuit from the dropdowns above, or press edit to make a new one."\n0"Use help if this is your first time"';
-
-// fills the built-in circuits in the UI
-function fillRegisteredCircuits() {
-  for(var i = 0; i < circuitGroups.length; i++) {
-    var g = circuitGroups[i];
-    g.main = makeElement('div', circuitDropdownSpan);
-    g.main.style.display = 'inline-block';
-    g.title = makeElement('span', g.main);
-    g.title.innerText = g.name + ':';
-    makeElement('br', g.main);
-    g.dropdown = makeUIElement('select', g.main);
-    g.dropdown.style.width = '120px';
-    g.dropdown.title = 'Built-in circuit selector dropdown "' + name + '"';
-    g.dropdown.onchange = bind(function(g) {
-      var index = g.dropdown.selectedIndex - 1;
-      var c = g.circuits[index];
-      currentSelectedCircuit = c.index;
-      parseText(c.text, c.title, c);
-    }, g);
-
-    var el = makeElement('option', g.dropdown);
-    el.innerHTML = '[choose circuit]';
-  }
-  for(var i = 0; i < allRegisteredCircuits.length; i++) {
-    var c = allRegisteredCircuits[i];
-    var currentCircuitGroup = circuitGroups[c.group];
-    var el = makeElement('option', currentCircuitGroup.dropdown);
-    if(c.linkid == 'mainhelp') { el.style.fontWeight = 'bold'; }
-    el.innerHTML = c.dropdownname;
-  }
-
-  updateCircuitDropdowns();
-}
-
-
-var introText = `
-0"# Welcome to LogicEmu, an online digital logic simulator!"
-
-0"In circuits, press the green 's' inputs with the mouse to change values."
-0"Read results from the red 'l' outputs. For example, below is an AND gate 'a'."
-0"Only if both switches are on, the LED will go on. Try enabling both"
-0"switches by clicking them:""
-
-  4"AND gate"   4"OR gate"   4"XOR gate"
-
-  s..>a..>l     s..>o..>l    s..>e..>l
-      ^             ^            ^
-  s....         s....        s....
-
-0"There are much more types of gates and devices available: logic gates,"
-0"flip-flops, integrated circuits, ROMs, displays, ... Explore the circuits"
-0"index below or read the help circuits first to learn more!"
-
-     4"adder"          4"JK flipflop"
-
-  s..>a..>o..>l3"carry"
-     >    ^              s-->jq->l
-  s..>e..>a              s-->c#
-         >               s-->kQ->l
-  s......>e..>l3"sum"
-
-0"# Circuits Index"
-
-0"INSERT:links_main"
-
-
-0"You can also use the 'help', 'articles' and 'circuits' dropdowns"
-0"and the prev/next buttons in the top bar to navigate to these. You can also"
-0"edit or create your own circuits instead."
-
-0"Even this welcome page itself is a circuit, named 'Welcome'"
-0"in the 'help' dropdown but hidden in the list and help index above on"
-0"purpose to avoid such redundancy."
-
-0"## A note about running in the browser"
-
-0"Even though it's called an 'online' logic simulator since it can be ran"
-0"conveniently in the browser, LogicEmu runs completely offline. Once the HTML"
-0"and JS got fetched, it doesn't make any further connections. All circuits are"
-0"already loaded since they're part of the source code. If you get LogicEmu"
-0"from github you can run it offline from your own disk."
-
-0"Settings and edited circuit are stored in local storage (not a cookie), which is private"
-0"to you, not shared. Sharing has to be done manually, which you can do either"
-0"using the source code of a circuit or a base64 URL if it's small enough."
-
-0"LogicEmu. Copyright (C) 2018-2020 by Lode Vandevenne"`;
-
-var introTitle = 'Online Logic Simulator';
-
-var introId = 'welcome';
-
-function printComponentsDebug() {
-  for(var i = 0; i < components.length; i++) {
-    var c = components[i];
-    var s = 'comp ' + i + ': ' + c.corecell.symbol + ' t:' + c.type + ' @' + c.corecell.x + ',' + c.corecell.y;
-    if(c.rom) s += ' rom';
-    if(c.master) s += ' master:' + c.master.index;
-    if(c.ff) s += ' ff';
-    console.log(s);
-    for(var tempi = 0; tempi < c.inputs.length; tempi++) {
-      var neg = c.inputs_negated[tempi];
-      var arrowsymbol = neg ? ' -o ' : ' -> ';
-      console.log('' + c.inputs[tempi].index + arrowsymbol + i);
-    }
-  }
-}
-
-
-/*
-Available debug functions:
-printComponentsDebug()
-applyAllTransforms()
-applyTransform(...)
-testCompression()
-CLICKDEBUG=true
-
-*/
 

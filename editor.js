@@ -263,7 +263,7 @@ function EditComponent() {
         this.chargrid[y][x] = c;
         if(c == ' ') {
           if(this.elgrid[y][x]) {
-            removeElement(this.elgrid[y][x]);
+            util.removeElement(this.elgrid[y][x]);
             this.elgrid[y][x] = undefined;
           }
         } else {
@@ -279,7 +279,7 @@ function EditComponent() {
           var c2 = x2 < this.linelen[y] ? this.chargrid[y][x2] : ' ';
           var g2 = x2 < this.linelen[y] ? this.elgrid[y][x2] : undefined;
           this.chargrid[y][x] = c2;
-          if(this.elgrid[y][x]) removeElement(this.elgrid[y][x]);
+          if(this.elgrid[y][x]) util.removeElement(this.elgrid[y][x]);
           this.elgrid[y][x] = g2;
           if(this.elgrid[y][x]) this.elgrid[y][x].style.left = (x * tw) + 'px';
           if(x2 < this.linelen[y]) {
@@ -835,7 +835,7 @@ console.log('selectRegion: ' + xb + ' ' + yb + ' ' + xe + ' ' + ye + ' | ' + rec
     this.areadiv = makeDiv(10, 10, 100, 0, this.div);
     this.areadiv.style.overflow = 'hidden';
 
-    this.textarea = makeAbsElement('textarea', 0, 0, 100, 40, this.areadiv);
+    this.textarea = util.makeAbsElement('textarea', 0, 0, 100, 40, this.areadiv);
     this.textarea.rows = 1;
     this.textarea.cols = 20;
     this.textarea.value = '';
@@ -858,12 +858,12 @@ console.log('selectRegion: ' + xb + ' ' + yb + ' ' + xe + ' ' + ye + ' | ' + rec
     this.cursordiv.style.animation = '1s blink step-end infinite';
 
     this.cursorcenterdiv = makeDiv(0, 0, tw, th, this.div);
-    this.cursorcenterdiv.style.backgroundColor = addAlpha(ONCOLOR, 0.65);
+    this.cursorcenterdiv.style.backgroundColor = util.addAlpha(ONCOLOR, 0.65);
     this.cursortopdiv = makeDiv(0, 0, tw, th, this.div);
-    this.cursortopdiv.style.backgroundColor = addAlpha(ONCOLOR, 0.65);
+    this.cursortopdiv.style.backgroundColor = util.addAlpha(ONCOLOR, 0.65);
     this.cursortopdiv.style.visibility = 'hidden';
     this.cursorbottomdiv = makeDiv(0, 0, tw, th, this.div);
-    this.cursorbottomdiv.style.backgroundColor = addAlpha(ONCOLOR, 0.65);
+    this.cursorbottomdiv.style.backgroundColor = util.addAlpha(ONCOLOR, 0.65);
     this.cursorbottomdiv.style.visibility = 'hidden';
 
     var self = this;
@@ -1506,7 +1506,7 @@ console.log('selectRegion: ' + xb + ' ' + yb + ' ' + xe + ' ' + ye + ' | ' + rec
 
   this.removeLines_ = function(y0, y1) {
     for(var y = y0; y < y1; y++) {
-      if(this.elrow[y]) removeElement(this.elrow[y]);
+      if(this.elrow[y]) util.removeElement(this.elrow[y]);
     }
     for(var y = y0; y + y1 - y0 < h; y++) {
       var y2 = y + y1 - y0;
@@ -1805,8 +1805,8 @@ console.log('selectRegion: ' + xb + ' ' + yb + ' ' + xe + ' ' + ye + ' | ' + rec
 
   this.turnDown = function() {
     if(this.cursorblinkinterval) window.clearInterval(this.cursorblinkinterval);
-    removeElement(this.div);
-    removeElement(this.sidediv);
+    util.removeElement(this.div);
+    util.removeElement(this.sidediv);
     this.div = undefined;
     this.sidediv = undefined;
     this.elgrid = [];
@@ -1843,8 +1843,8 @@ function Editor() {
   this.nb = 0; // number of buttons in sidediv
 
   this.makeSideButton = function() {
-    //var button = makeAbsElement('span', 0, 0, 20, 20, this.sidediv);
-    var button = makeAbsElement('div', 8, this.nb * 24, 50, 20, this.sidediv);
+    //var button = util.makeAbsElement('span', 0, 0, 20, 20, this.sidediv);
+    var button = util.makeAbsElement('div', 8, this.nb * 24, 50, 20, this.sidediv);
     button.style.border = '1px solid black';
     this.nb++;
     return button;
@@ -2108,11 +2108,11 @@ function Editor() {
       area.focusTextArea(); // every button must do this because they steal focus from the region
     };
 
-    this.debugind = makeAbsElement('div', 8, this.nb * 24, 20, 20, this.sidediv); this.nb++;
+    this.debugind = util.makeAbsElement('div', 8, this.nb * 24, 20, 20, this.sidediv); this.nb++;
     this.debugind.style.width = '32px';
     this.debugind.style.height = '32px';
 
-    var overwritemode = getLocalStorage('overwritemode', 'true') == 'true';
+    var overwritemode = util.getLocalStorage('overwritemode', 'true') == 'true';
     if(overwritemode != area.overwritemode) area.toggleOverwriteMode();
 
     var op = new EditorOp();
@@ -2150,7 +2150,7 @@ function Editor() {
   };
 
   this.updateOverwriteMode = function() {
-    setLocalStorage(this.textarea.overwritemode ? 'true' : 'false', 'overwritemode');
+    util.setLocalStorage(this.textarea.overwritemode ? 'true' : 'false', 'overwritemode');
     this.insertbutton.style.backgroundColor = this.textarea.overwritemode ? 'red' : '';
     //if(this.isrectangular && this.xb == this.xe && this.overwritemode) this.xe = this.xb + 1;
     //if(this.isrectangular && this.xa() == this.xi() + 1 && !this.overwritemode) this.xb = this.xe = this.xi();
@@ -2160,8 +2160,8 @@ function Editor() {
   this.turnDown = function() {
     var newtext = this.textarea.toText();
     this.textarea.turnDown();
-    removeElement(this.div);
-    removeElement(this.sidediv);
+    util.removeElement(this.div);
+    util.removeElement(this.sidediv);
     return newtext;
   };
 };
