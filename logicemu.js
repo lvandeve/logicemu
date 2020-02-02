@@ -3934,7 +3934,6 @@ function VTE() {
           var key = e.which || e.charCode || e.keyCode || 0;
           self.typeKeyboard(key);
         }
-        global_changed_something = true;
         // use render() if no update of components should be done but you still want to see the
         // new character appear. Use update() to do a full component update, similar to what
         // is done after pressing on button with mouse.
@@ -3946,7 +3945,6 @@ function VTE() {
     this.textarea.onkeydown = function(e) {
       if(e && e.code == 'Backspace') {
         self.doBackspace();
-        global_changed_something = true;
         update();
         return false;
       }
@@ -5481,7 +5479,8 @@ function Component() {
           this.corecell.renderer.setLook(this.corecell, this.type);
         }
       }
-      render();
+      if(!paused) update();
+      else render();
       return;
     }
     if(changeMode) {
@@ -5497,10 +5496,12 @@ function Component() {
       if(changeMode == 'c') {
         value = false;
         symbol = 'c';
+        type = TYPE_COUNTER;
       }
       if(changeMode == 'C') {
         value = true;
         symbol = 'C';
+        type = TYPE_COUNTER;
       }
       if(type == TYPE_TIMER_OFF) {
         this.clocked = false;
@@ -5525,32 +5526,28 @@ function Component() {
         cell.circuitsymbol = symbol;
         cell.initDiv(cell.x, cell.y);
       }
+      if(!paused) update();
+      else render();
       return;
     }
 
     // For pushbutton, do the update immediately (if not paused), to avoid missing a tick when quickly pressing mouse down then up again
-    var update_immediately = false;
     if(this.type == TYPE_SWITCH_OFF) {
       this.type = TYPE_SWITCH_ON;
       this.corecell.renderer.setLook(this.corecell, this.type);
-      update_immediately = true;
     } else if(this.type == TYPE_SWITCH_ON) {
       this.type = TYPE_SWITCH_OFF;
       this.corecell.renderer.setLook(this.corecell, this.type);
-      update_immediately = true;
     }
     if(this.type == TYPE_PUSHBUTTON_OFF) {
       this.type = TYPE_PUSHBUTTON_ON;
       this.corecell.renderer.setLook(this.corecell, this.type);
-      update_immediately = true;
     } else if(this.type == TYPE_PUSHBUTTON_ON) {
       this.type = TYPE_PUSHBUTTON_OFF;
       this.corecell.renderer.setLook(this.corecell, this.type);
-      update_immediately = true;
     }
     if(this.type == TYPE_TIMER_OFF || this.type == TYPE_TIMER_ON) {
       this.frozen = !this.frozen;
-      update_immediately = true; // need to re-initiate the update cycles to ensure the timers activate again
     }
     if(this.type == TYPE_VTE) {
       var vte = this.vte;
@@ -5582,30 +5579,25 @@ function Component() {
       rom.array[line][bit] = !rom.array[line][bit];
       rom.updateRamDisplay(bit, line);
     }
-    global_changed_something = true;
-    if(update_immediately && !paused) update();
+    if(!paused) update();
   };
 
   this.mouseup = function(e) {
     // For pushbutton, do the update immediately, to avoid missing a tick when quickly pressing mouse down then up again
-    var update_immediately = false;
     if(this.type == TYPE_PUSHBUTTON_OFF) {
       if(!e.shiftKey) {
         this.type = TYPE_PUSHBUTTON_ON;
         this.corecell.renderer.setLook(this.corecell, this.type);
-        update_immediately = true;
       }
     } else if(this.type == TYPE_PUSHBUTTON_ON) {
       if(!e.shiftKey) {
         this.type = TYPE_PUSHBUTTON_OFF;
         this.corecell.renderer.setLook(this.corecell, this.type);
-        update_immediately = true;
       }
     } else {
       return false; // did nothing
     }
-    global_changed_something = true;
-    if(update_immediately && !paused) update();
+    if(!paused) update();
     return !e.shiftKey; // did something
   };
 }
@@ -6402,7 +6394,6 @@ function Cell() {
         }
 
       }
-      global_changed_something = true;
       return false;
     }, this.components[0], x, y);
 
@@ -9166,15 +9157,8 @@ function renderHighlightComponent(component) {
   if(ticksCounterEl) updateTicksDisplay();
 }
 
-global_changed_something = true;
-
 // returns in how many ticks something may potentially change again (indicating more update calls should be done), or 0 if nothing changed or will change
 function updateComponents(components) {
-  // we can stop updates if nothing changed: the state became stable. This is not the same as a full pause. Timers, button clicks, ... will start the updates again
-  if(!global_changed_something && numticks >= 0) {
-    return 0;
-  }
-
   var changed = false;
   var changein = 0;
 
@@ -9191,8 +9175,6 @@ function updateComponents(components) {
 
     if(components[i].changed) changed = true; // this is for updating the "numticks" display
   }
-
-  if(!changein) global_changed_something = false;
 
   if(changed || numticks < 0) numticks++;
   render();
@@ -9217,6 +9199,7 @@ function update() {
   } else {
     timerticks++;
   }
+  console.log(timerticks);
 }
 
 // must be called after (or at the end of) parseCells
@@ -10601,7 +10584,6 @@ function resetForParse() {
   pause(); // also cancels potentially set timeouts
   updateTimeButtonBorders();
   updatePauseButtonText();
-  global_changed_something = true;
   numticks = -1; // -1 because the first implicit tick after parse should not be counted
   timerticks = -1;
   showingLinkIds = false;
@@ -12174,6 +12156,9 @@ function pause() {
   if(updateTimeoutId) {
     util.clearTimeoutSafe(updateTimeoutId);
     updateTimeoutId = null;
+  }
+  if(USEAUTOPAUSE && autopauseinterval) {
+    util.clearIntervalSafe(autopauseinterval);
   }
   autopaused = false;
   paused = true;
