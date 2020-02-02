@@ -39,40 +39,11 @@ This has been tested to work in Chrome and Firefox, and hopefully works in other
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 
-var activeVTE = null;
-
-document.body.onkeypress = function(e) {
-  //console.log('body keypress: vte: ' + activeVTE + ', event: ' + e);
-  if(activeVTE) {
-    if(editmode) return;
-    if(e.code == 'Backspace') {
-      // do nothing. onkeydown does backspace already.
-      // chrome only handles backspace in onkeydown, while firefox
-      // handles it in both onkeypress and onkeydown
-    } else {
-      var key = e.which || e.charCode || e.keyCode || 0;
-      activeVTE.typeKeyboard(key);
-    }
-    global_changed_something = true;
-    // use render() if no update of components should be done but you still want to see the
-    // new character appear. Use update() to do a full component update, similar to what
-    // is done after pressing on button with mouse.
-    //render();
-    update();
-  }
-};
-
 document.body.onkeydown = function(e) {
   if(editmode && !!edit) {
     if(edit.onkeydown) {
       return edit.onkeydown(e);
     }
-  }
-  if(activeVTE && e && e.code == 'Backspace') {
-    if(editmode) return;
-    activeVTE.doBackspace();
-    global_changed_something = true;
-    update();
   }
 };
 
@@ -84,7 +55,6 @@ document.body.onmouseup = function(e) {
   if(lastmousedowncomponent) {
     var didsomething = lastmousedowncomponent.mouseup(e);
     lastmousedowncomponent = null;
-    if(didsomething && (AUTOUPDATE == 1/* || AUTOUPDATE == 3*/)) update();
   }
   global_changed_something = true;
 };
@@ -238,10 +208,6 @@ function createEditorMenuUI(cancelFun, finishFun) {
   githubLink.style.paddingRight = '10px';
 }
 
-function isPaused() {
-  return !timerinterval && !autoupdateinterval;
-}
-
 
 function createMenuUI() {
   if(menuRows) util.removeElement(menuRows);
@@ -277,14 +243,13 @@ function createMenuUI() {
   menuRow3El.style.height = '32px';
   menuRow3El.style.boxShadow = '0px 4px 4px #aaa';
 
-  // predesigned algorithm/autoupdate combinations
   var modes = [
-    ['immediate', 1, 3], // faster than electron: recursively resolved gates, and keeps updating until things stop changing (in combinational circuits, that's after only 1 tick)
-    ['electron', 3, 3], // designed for gate-level flip-flops (but the built-in flip flops don't need this mode, those work as ideal flipflop in all modes!)
+    ['immediate', 1], // faster than electron: recursively resolved gates, and keeps updating until things stop changing (in combinational circuits, that's after only 1 tick)
+    ['electron', 3], // designed for gate-level flip-flops (but the built-in flip flops don't need this mode, those work as ideal flipflop in all modes!)
   ];
   function getMode() {
     for(var i = 0; i < modes.length; i++) {
-      if(UPDATE_ALGORITHM == modes[i][1] && AUTOUPDATE == modes[i][2]) {
+      if(UPDATE_ALGORITHM == modes[i][1]) {
         return i;
       }
     }
@@ -301,10 +266,8 @@ function createMenuUI() {
     var mode = modeDropdown.selectedIndex;
     if(mode >= modes.length) mode = 0;
     UPDATE_ALGORITHM = modes[mode][1];
-    AUTOUPDATE = modes[mode][2];
     updateModeButtonText();
     updatePauseButtonText();
-    updateRunningState();
   };
 
   for(var i = 0; i < modes.length; i++) {
@@ -347,8 +310,7 @@ function createMenuUI() {
   slowerButton.title = 'slows down simulation';
   slowerButton.innerText = 'slow';
   slowerButton.onclick = function() {
-    AUTOSECONDS = NORMALAUTOSECONDS * 10;
-    TIMERSECONDS = NORMALTIMERSECONDS * 10;
+    AUTOSECONDS = NORMALTICKLENGTH * 10;
 
     pause();
     unpause();
@@ -360,8 +322,7 @@ function createMenuUI() {
   normalButton.title = 'set to standard speed';
   normalButton.innerText = 'norm';
   normalButton.onclick = function() {
-    AUTOSECONDS = NORMALAUTOSECONDS;
-    TIMERSECONDS = NORMALTIMERSECONDS;
+    AUTOSECONDS = NORMALTICKLENGTH;
 
     pause();
     unpause();
@@ -373,8 +334,7 @@ function createMenuUI() {
   boostButton.title = 'speeds up simulation, if possible within the computational resources of the web browser';
   boostButton.innerText = 'fast';
   boostButton.onclick = function() {
-    AUTOSECONDS = NORMALAUTOSECONDS / 10;
-    TIMERSECONDS = NORMALTIMERSECONDS / 10;
+    AUTOSECONDS = NORMALTICKLENGTH / 10;
 
     pause();
     unpause();
@@ -387,9 +347,9 @@ function createMenuUI() {
   updateTimeButtonBorders = function() {
     var j = 0;
     if(isPaused()) j = 0;
-    else if(AUTOSECONDS > NORMALAUTOSECONDS) j = 1;
-    else if(AUTOSECONDS == NORMALAUTOSECONDS) j = 2;
-    else if(AUTOSECONDS < NORMALAUTOSECONDS) j = 3;
+    else if(AUTOSECONDS > NORMALTICKLENGTH) j = 1;
+    else if(AUTOSECONDS == NORMALTICKLENGTH) j = 2;
+    else if(AUTOSECONDS < NORMALTICKLENGTH) j = 3;
     for (var i = 0; i < 4; i++) {
       if(i == j) {
         util.highlightUIElementBorder(timebuttons[i], i == 2 ? 'black' : 'red');
@@ -477,81 +437,20 @@ function createMenuUI() {
   util.makeUISpacer(16, menuRow2El);
 
   changeDropdown = util.makeUIElement('select', menuRow2El);
-  changeDropdown.title = 'A simpler more primitive form of edit, but it works while a circuit is running. Change the type of a gate, switch or LED to this. First click an option from this list, then the main cell of a device (e.g. the "a" of an AND gate).' +
+  changeDropdown.title = 'Perform simple edit operations while the circuit is running. Change the type of a gate, switch or LED. First click an option from this list, then the main cell of a device (e.g. the "a" of an AND gate).' +
       ' This is a very limited form of editing. It doesn\'t support creating or removing wire connections. It can only change a device that has one of the types in the list to another type in the list. On other devices it may either do nothing, or cause' +
-      ' unexpected behavior. Changes in IC templates have no effect on instances. Changes are not saved and not visible under the edit button. To do full editing, use the edit button instead.';
+      ' unexpected behavior. Changes in IC templates have no effect on instances. Changes are not saved. Use the full editor or import for more complete features intstead.';
   changeDropdown.onchange = function() {
     changeMode = changeDropdownElements[changeDropdown.selectedIndex];
   };
   for(var i = 0; i < changeDropdownElements.length; i++) {
     var type = changeDropdownElements[i];
     var text = (typesymbols[type] == undefined) ? '[change]' : typesymbols[type];
-    if(type == 'rem_inputs') text = 'disconnect inputs';
+    //if(type == 'rem_inputs') text = 'disconnect inputs';
     if(type == 'c' || type == 'C') text = type;
     var el = util.makeElement('option', changeDropdown).innerText = text;
   }
 
-
-
-  editButton = util.makeUIElement('button', menuRow2El, 3);
-  editButton.innerText = 'edit';
-  editButton.title = 'Opens text field to edit the map. Press this button again to stop editing and run the new circuit. Read the editing tutorial under "help" first. Advice: for large projects, do not actually edit in the text field because that is fiddly, use a good text editor (that has block selection), or copypaste a circuit in here from an external source. ' +
-                     'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead. Note that nothing gets sent to any server or cloud, everything is' +
-                     'local to your computer only.';
-  editButton.onclick = function() {
-    if(!editmode) {
-      textbeforeedit = origtext;
-
-      if (NEWEDIT) {
-        edit = new Editor();
-      } else {
-        edit = new SimpleEditor();
-      }
-
-      //setUpEditor();
-      edit.setUp();
-      var oldw = w;
-      var oldh = h;
-      resetForParse();
-      w = oldw;
-      h = oldh;
-
-      pause();
-      numticks = 0;
-      initDivs();
-
-      editButton.innerText = 'done';
-      window.scrollTo(0, 0);
-      editmode = true;
-      editModeCancelFun = cancelEdit;
-      editModeFinishFun = finishEdit;
-      createEditorMenuUI(editModeCancelFun, editModeFinishFun);
-    } else {
-      editModeFinishFun();
-    }
-  };
-
-  if(util.getLocalStorage('circuit_text')) {
-    var restoreButton = util.makeUIElement('button', menuRow2El, 3);
-    restoreButton.innerText = 'restore';
-    restoreButton.title = 'Restore circuit you created before with edit. Only works if an actual circuit was found in local storage.';
-    restoreButton.onclick = function() {
-      if(maybeLoadFromLocalStorage()) {
-        parseText(initialCircuitText, initialTitle, initialId ? linkableCircuits[initialId] : null, 1);
-      }
-    };
-
-    var forgetButton = util.makeUIElement('button', menuRow2El, 3);
-    forgetButton.innerText = 'forget';
-    forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button' +
-                         'and also remove URL fragments (#id=... or #code=...), you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
-                         'if you want to keep your circuit, make sure you save it to disk first! That can be done by' +
-                         'copypasting it from the edit field into a text editor and saving to your disk, e.g. as a .txt file.';
-    forgetButton.onclick = function() {
-      util.setLocalStorage('', 'circuit_text');
-      util.clearFragment();
-    };
-  }
 
   circuitDropdownSpan = util.makeElement('span', menuRow1El);
 
@@ -583,6 +482,8 @@ function createMenuUI() {
         allRegisteredCircuits[currentSelectedCircuit]);
   };
 
+
+  util.makeUISpacer(16, menuRow1El)
 
   var importButton = util.makeUIElement('button', menuRow1El);
   importButton.innerText = 'import';
@@ -675,6 +576,8 @@ function createMenuUI() {
     }
   };
 
+  util.makeUISpacer(16, menuRow1El)
+
   var settingsButton = util.makeUIElement('button', menuRow1El, 3);
   settingsButton.innerText = 'settings';
   settingsButton.title = 'settings';
@@ -704,6 +607,69 @@ function createMenuUI() {
     var text = util.makeElementAt('span', 50, 20, editdiv);
     text.innerText = 'enable experimental possible new editor';
   };
+
+
+  editButton = util.makeUIElement('button', menuRow1El, 3);
+  editButton.innerText = 'edit';
+  editButton.title = 'Opens text field to edit the map. Press this button again to stop editing and run the new circuit. Read the editing tutorial under "help" first. Advice: for large projects, do not actually edit in the text field because that is fiddly, use a good text editor (that has block selection), or copypaste a circuit in here from an external source. ' +
+                     'Once you use edit, the circuit will be saved in local storage (only the most recent one). To remove such save, press the forget button. Local storage is unreliable, so if you made a circuit you want to keep, copypaste it into a text editor and save it as a .txt file on disk instead. Note that nothing gets sent to any server or cloud, everything is' +
+                     'local to your computer only.';
+  editButton.onclick = function() {
+    if(!editmode) {
+      textbeforeedit = origtext;
+
+      if(NEWEDIT) {
+        edit = new Editor();
+      } else {
+        edit = new SimpleEditor();
+      }
+
+      //setUpEditor();
+      edit.setUp();
+      var oldw = w;
+      var oldh = h;
+      resetForParse();
+      w = oldw;
+      h = oldh;
+
+      pause();
+      numticks = 0;
+      initDivs();
+
+      editButton.innerText = 'done';
+      window.scrollTo(0, 0);
+      editmode = true;
+      editModeCancelFun = cancelEdit;
+      editModeFinishFun = finishEdit;
+      createEditorMenuUI(editModeCancelFun, editModeFinishFun);
+    } else {
+      editModeFinishFun();
+    }
+  };
+
+  if(util.getLocalStorage('circuit_text')) {
+    var restoreButton = util.makeUIElement('button', menuRow1El, 3);
+    restoreButton.innerText = 'restore';
+    restoreButton.title = 'Restore circuit you created before with edit. Only works if an actual circuit was found in local storage.';
+    restoreButton.onclick = function() {
+      if(maybeLoadFromLocalStorage()) {
+        parseText(initialCircuitText, initialTitle, initialId ? linkableCircuits[initialId] : null, 1);
+      }
+    };
+
+    var forgetButton = util.makeUIElement('button', menuRow1El, 3);
+    forgetButton.innerText = 'forget';
+    forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button' +
+                         'and also remove URL fragments (#id=... or #code=...), you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
+                         'if you want to keep your circuit, make sure you save it to disk first! That can be done by' +
+                         'copypasting it from the edit field into a text editor and saving to your disk, e.g. as a .txt file.';
+    forgetButton.onclick = function() {
+      util.setLocalStorage('', 'circuit_text');
+      util.clearFragment();
+    };
+  }
+
+
 
   var indexLink = util.makeElement('span', menuRow0El);
   indexLink.title = 'go to the main welcome page and remove tokens from URL';

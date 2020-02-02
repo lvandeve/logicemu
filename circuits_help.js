@@ -489,9 +489,15 @@ s-->y
 s-.>d]a->l   s..>c..>l
 
 
-0"A timer 'r' or 'R' blinks with a certain speed. The speed is given in tenths"
-0"of a second, and the total period is twice that. If no number is given, the
-0"default is 0.5 seconds to toggle (so 1 second full period)."
+0"A timer 'r' or 'R' blinks with a certain speed. The number indicates the"
+0"duration, in emulation ticks per timer change. The period of the timer is"
+0"two changes. For the normal emulation speed, that means the number gives"
+0"the timer period in tenths of a second. The fast or slow emulation speeds"
+0"alter this."
+0"The default speed, when no number is given or number 0, is a period of 20"
+0"ticks, which means about 1 second (or 0.5 seconds per change) for the normal"
+0"emulation speed."
+
 
  10r------>l
 
@@ -1204,6 +1210,16 @@ s-->e<--s
 0"The 'import' button allows to open another circuit, made by yourself or"
 0"someone else. More info for that is in the 'Loading Circuits' help circuit."
 
+0"Next to that is the full fledged edit button which allows to edit existing"
+0"circuits or create new ones (similar to 'import')."
+0"For more on that, see the 'Editing Help' help circuit. Depending on whether"
+0"you used editing, there may also appear a 'forget' button to bring everything"
+0"back to the normal state before you edited, and a 'restore' button to go back"
+0"to the edited circuit (if not forgotten). Note that if you care about a"
+0"circuit you edited or created, you should back it up to your disk in a text"
+0"editor, since logicemu only stores it in local storage of your browser, where"
+0"it can easily get lost (it does not store it online), and only stores one."
+
 0"## User Interface - Second Row"
 
 0"The first dropdown on the second row allows to choose the 'immediate' or"
@@ -1237,18 +1253,8 @@ s-->e<--s
 
 0"Then there is a 'change' dropdown, which allows to change a gate or other"
 0"device into something else. This only works for simple devices and does not"
-0"allow to change the layout. But it's useful to change a switch into a"
+0"allow to change the wiring layout. But it's useful to change a switch into a"
 0"pushbutton for example."
-
-0"Next to that is the full fledged edit button which allows to edit existing"
-0"circuits or create new ones (similar to 'import')."
-0"For more on that, see the 'Editing Help' help circuit. Depending on whether"
-0"you used editing, there may also appear a 'forget' button to bring everything"
-0"back to the normal state before you edited, and a 'restore' button to go back"
-0"to the edited circuit (if not forgotten). Note that if you care about a"
-0"circuit you edited or created, you should back it up to your disk in a text"
-0"editor, since logicemu only stores it in local storage of your browser, where"
-0"it can easily get lost (it does not store it online), and only stores one."
 
 `, 'controlshelp');
 
@@ -2428,6 +2434,12 @@ l<#<s
 0"This is a realtime timer, toggling state every so many milliseconds. r is"
 0"initially off, R is initially on, so r and R blink with opposite timings"
 0"(they are 180 degrees out of phase)"
+0"The number indicates the duration, in emulation ticks per timer change. The"
+0"full period of the timer is two changes so twice that. For the normal"
+0"emulation speed, that means the number gives the timer period in tenths of a"
+0"second. The fast or slow emulation speeds alter this."
+0"The default speed, when no number is given or number 0, is a period of 20"
+0"ticks, which means about 1 second for the normal emulation speed."
 
 r....>l   R...>l
 
@@ -2445,9 +2457,6 @@ s..>r..>l   S..>r..>l
 0"bus/bundle wire numbers, etc..."
 
 0"Here numbers on LEDs and timers are demonstrated."
-
-0"Timer speeds are the toggle-interval in tenths of a second (exceptions: no"
-0"number gives 0.5 seconds, number 0 gives 1 second)"
 
 0 1 2 3 4 5 6 7
 l l l l l l l l        l l l l l l l l l l l
@@ -4245,7 +4254,7 @@ F-->l
 `, 'component' + componentid++);
 
 registerCircuit('Random Generator (?)', `
-s-->?-->l
+p-->?-->l
 `, 'component' + componentid++);
 
 registerCircuit('Counter Gate (c)', `
@@ -4568,6 +4577,8 @@ registerCircuit('ALU with 2-input operation (U)', `
             ^^^^^^^^
  l<U24##############<s
    ^^^^^^^^ ^^^^^^^^
+   T####### T#######
+   ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
 
 `, 'component' + componentid++);
@@ -4581,6 +4592,8 @@ registerCircuit('ALU with 1-input operation (U)', `
    ^^^^^^^^
  l<U32#####<s
    ^^^^^^^^
+   T#######
+   ^^^^^^^^
    ssssssss
 
 `, 'component' + componentid++);
@@ -4588,11 +4601,13 @@ registerCircuit('ALU with 1-input operation (U)', `
 registerCircuit('ALU with 2-input operation, no side bits (U)', `
 
 
-            T#######
-            ^^^^^^^^
-            llllllll
-            ^^^^^^^^
+   T################
+   ^^^^^^^^^^^^^^^^^
+   lllllllllllllllll
+   ^^^^^^^^^^^^^^^^^
    U48##############
+   ^^^^^^^^ ^^^^^^^^
+   T####### T#######
    ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
 
@@ -4605,7 +4620,9 @@ registerCircuit('ALU with 1-input operation, no side bits (U)', `
    ^^^^^^^^
    llllllll
    ^^^^^^^^
-   U47#####
+   U45#####
+   ^^^^^^^^
+   T#######
    ^^^^^^^^
    ssssssss
 
@@ -4624,6 +4641,20 @@ registerCircuit('Backplane (g)', `
   s----g
 
           g--->l
+`, 'component' + componentid++);
+
+registerCircuit('Backplane Numbered (g)', `
+  s----g2
+
+         3g--->l
+
+  s----g3
+
+         2g--->l
+`, 'component' + componentid++);
+
+registerCircuit('Backplane Antenna ((u)n)', `
+s--(  )-->l
 `, 'component' + componentid++);
 
 registerCircuit('Backplane Wrap-Around ((u)n)', `
@@ -5795,12 +5826,35 @@ registerCircuit('Drawing Test', `
 0"This is a unit test for testing and development."
 
 0"# LED Colors"
-                                      ###    ###
-0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7     ###    ###
-l l l l l l l l   l l l l l l l l     D##    D##     T###
-^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^     ^^^    ^^^     ^^^^
-s s s s s s s s   S S S S S S S S     sss    Sss     ssss
-                                     "RGB"  "RGB"   "8421"
+
+0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7
+l l l l l l l l   l l l l l l l l
+^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^
+s s s s s s s s   S S S S S S S S
+
+ D D
+ ^ ^
+ s S
+"I I"
+
+ ## ## ## ##
+ D# D# D# D#
+ ^^ ^^ ^^ ^^
+ ss sS Ss SS
+"RG RG RG RG"
+
+ ### ### ### ### ### ### ### ###
+ D## D## D## D## D## D## D## D##
+ ^^^ ^^^ ^^^ ^^^ ^^^ ^^^ ^^^ ^^^
+ sss ssS sSs sSS Sss SsS SSs SSS
+"RGB RGB RGB RGB RGB RGB RGB RGB"
+
+ #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
+ D### D### D### D### D### D### D### D### D### D### D### D### D### D### D### D###
+ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^
+ ssss sssS ssSs ssSS sSss sSsS sSSs sSSS Ssss SssS SsSs SsSS SSss SSsS SSSs SSSS
+"IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB"
+
 
 
 0"# Devices"
@@ -5816,17 +5870,19 @@ s-->e             s-->#i#             s-->kQ-->l    s-->#-->l
                                                         ^
                                                         s
 
-
+                                                           llllllll
+                                                           ^^^^^^^^
+                                                           T#######
                                       s>D#######<p"dot"
                                       s>########<p"fill"
-  s->a>l      s>U>l         lll       S>########
-  p->e>l      s>2>l         ^^^       s>########<s"b"
-  r->o>l      s>4>l         |||       s>########<S"g"
+  s->a>l      s>U>l         lll       S>########           llllllll
+  p->e>l      s>2>l         ^^^       s>########<s"b"      ^^^^^^^^
+  r->o>l      s>4>l         |||       s>########<S"g"      T#######
   S->A>l        #        s->bbB       S>########<s"r"
   P->E>l      s>#        S->BBb       s>########
-  R->O>l      s>#        s->BbB       s>########
-  s->?>l      s>#        s->bBb         ^^^^^^^^
-                                        ssSssSss
+  R->O>l      s>#        s->BbB       s>########           T#######
+  s->?>l      s>#        s->bBb         ^^^^^^^^           ^^^^^^^^
+                                        ssSssSss           ssssssss
 
 
 0"# Wire Shapes"
@@ -5971,30 +6027,6 @@ S--X-   S--X-     S--Xl    X   S--Xl  S--X-  S--Xl   S--X-  S--X-  S--Xl  S--Xl 
 -X--S   -X--S     lX--S   X    lX--S  -X--S  lX--S   -X--S  -X--S  lX--S  lX--S   lX--S
 /       /          |     / ;     ;    l      /       l ;     l;    /l     /l;     /l;
                             s     s         s           s      s             s   s   s
-
-
-0"# All dot matrix / RGB LED colors"
-
- D D
- ^ ^
- s S
-"I I"
-
- D# D# D# D#
- ^^ ^^ ^^ ^^
- ss sS Ss SS
-"RG RG RG RG"
-
- D## D## D## D## D## D## D## D##
- ^^^ ^^^ ^^^ ^^^ ^^^ ^^^ ^^^ ^^^
- sss ssS sSs sSS Sss SsS SSs SSS
-"RGB RGB RGB RGB RGB RGB RGB RGB"
-
- D### D### D### D### D### D### D### D### D### D### D### D### D### D### D### D###
- ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^
- ssss sssS ssSs ssSS sSss sSsS sSSs sSSS Ssss SssS SsSs SsSS SSss SSsS SSSs SSSS
-"IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB"
-
 
 
 0"# Error color"

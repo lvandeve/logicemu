@@ -324,6 +324,42 @@ var LogicEmuUtils = (function() {
   };
   result.clearIntervalSafe = clearIntervalSafe;
 
+  // See explanation at setIntervalSafe
+  var setTimeoutSafe = function(fun, msec) {
+    // NOTE: this is very unreliable in modern browsers, especially when tabs come back from background
+    var time0 = (new Date()).getTime(); // milliseconds since epich
+    var canceled = false;
+
+    // test: disable the requestAnimationFrame step: makes it faster for small msec amounts, but however
+    // causes risk of causing browser to hang when this tab was in background and gets enabled again only later
+    // TODO: find way that allows fast updates yet works correctly (= doesnt' consume resources just like the browser wants) in background tabs. Unfortunately requestAnimationFrame is the only thing that guarantees nice behavior but is limited to 60fps... so using requestAnimationFrame only every so many ticks (of the update() function) could work
+    //var requestAnimationFrame = function(fun){fun();};
+
+    requestAnimationFrame(function() {
+      if(canceled) return;
+      var time1 = (new Date()).getTime();
+      var d = time1 - time0;
+      msec -= d;
+      if(msec > 0) {
+        window.setTimeout(function() {
+          if(canceled) return;
+          fun();
+        }, msec);
+      } else {
+        fun();
+      }
+    });
+    return function() {
+      canceled = true;
+    };
+  };
+  result.setTimeoutSafe = setTimeoutSafe;
+
+  var clearTimeoutSafe = function(id) {
+    id(); // id is actually a function.
+  };
+  result.clearTimeoutSafe = clearTimeoutSafe;
+
 
   // warning: does not validate input
   var normalizeCSSColor = function(css) {
@@ -425,6 +461,17 @@ var LogicEmuUtils = (function() {
 
 
 
+  var averageColor = function(css0, css1) {
+    var rgb0 = parseCSSColor(css0);
+    var rgb1 = parseCSSColor(css1);
+    rgb0[0] = ((rgb0[0] + rgb1[0]) >> 1);
+    rgb0[1] = ((rgb0[1] + rgb1[1]) >> 1);
+    rgb0[2] = ((rgb0[2] + rgb1[2]) >> 1);
+    return formatCSSColor(rgb0);
+  };
+  result.averageColor = averageColor;
+
+
   return result;
 }());
 
@@ -440,36 +487,8 @@ var makeDiv = util.makeDiv;
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+var maindiv = undefined;
 
-
-/*
-NOTE: some old names of things you may find in the code. This will help understand functions and variables more
-bus = junction = ygroup = bundle = '=' (current true name: bus. And it means any bundle of wires, like a ribbon cable, not the more complex idea of shared bus in CPU (though it can be used as part of that). Used to use 'y' as ascii symbol instead of '='
-sub = function = integrated circuit = IC = chip = def & call. Now uses symbols i,I. Has used u,U and f,F before. (current true name: I = IC template, i = IC usage, with IC = integrated circuit)
-rom = bits = bB. serves also as ram and more (current true name: bits, with usages rom, ram, binary to unary convertor, ...)
-terminal = VTE = interactive terminal = keyboard and screen. Now uses symbol T. Has used i before. (current true name: terminal, with symbol T)
-global wires = backplane
-*/
-
-
-/*
-AUTOUPDATE and UPDATE_ALGORITHM together form the way to experience the emulation.
-Good combinations of AUTOUPDATE and UPDATE_ALGORITHM are as follows:
--when working on combinatorial aritmhetic things (adder or multiplier with 7-segment display output, ...): AUTOUPDATE=1, UPDATE_ALGORITHM=1
--when working with sequential circuits (with built-in flipflops): AUTOUPDATE=2, UPDATE_ALGORITHM=1
--when working with flipflops from gates: AUTOUPDATE=2, UPDATE_ALGORITHM=3
--when working on circuits where exact timing through wire is important with loops etc...: AUTOUPDATE=0, UPDATE_ALGORITHM=2
--combining the advantages of combinatorial and sequential: AUTOUPDATE=3, UPDATE_ALGORITHM=3
-*/
-
-/*
-AUTOUPDATE values:
-0: never update unless on manual tick
-1: update when the user presses any input button, or when timers update. This is very useful for combinatorial networks with algorithm 1. However, when things take multiple steps to update, such as other update algorithms, or sequential circuits with any update algorithm, this is useless and 0 (manual ticking) or 2 (realtime ticking) should be used.
-2: update automatically every AUTOSECONDS seconds
-3: between 1 and 2: update as long as things keep changing
-*/
-var AUTOUPDATE = 1; // values described below
 /*
 UPDATE_ALGORITHM info:
 0: "scanline": Components updated in scanline order and could read inputs from sometimes already-updated, some not-yet-updated components. This has problems such as shape of circuit affects result, so is only included for completeness, not used.
@@ -486,10 +505,14 @@ var UPDATE_ALGORITHM = 2; // values described below
 var AUTO_CHOOSE_MODE = true; // automatically choose AUTOUPDATE and UPDATE_ALGORITHM based on the circuit
 
 // [search terms: timerspeed autospeed clockspeed timer_speed auto_seconds timer_seconds tickspeed]
-var NORMALAUTOSECONDS = 0.05;
-var NORMALTIMERSECONDS = 0.1;
-var AUTOSECONDS = NORMALAUTOSECONDS; // good value: 0.05. computers can handle faster but this makes operating circuits visible
-var TIMERSECONDS = NORMALTIMERSECONDS; // default speed of "timer" components in seconds (note that the other timers with numbers are all slower than this). Good value: 1.0 or 0.1
+var NORMALTICKLENGTH = 0.05; // the normal speed between circuit updates. Also used for timers. 0.05 normal tick length makes it such that a timer with value 10 will have a full period of 1 second.
+var AUTOSECONDS = NORMALTICKLENGTH;
+
+var AUTOPAUSESECONDS = 3000; // for autopauseinterval
+var USEAUTOPAUSE = true; // pause after LogicEmu was open in a browser tab for a long time (AUTOPAUSESECONDS seconds)
+
+
+
 var TWIDDLE_PROBABILITY = 0.1; // for update algorithm 3
 
 
@@ -507,10 +530,14 @@ var graphics_mode_actual = graphics_mode;
 
 var worldstartheight = 160; // under menu
 
-var worldDiv = makeDiv(10, worldstartheight, 0, 0);
+var worldDiv = makeDiv(10, worldstartheight, 0, 0, maindiv);
 var renderingMessageDiv = makeDiv(10, worldstartheight, 0, 0);
 
+// num active ticks done
 var numticks = 0;
+
+// num ticks from the viewpoint of timer (includes ticks that were never rendered or computed)
+var timerticks = 0;
 
 var supportbigint = !!window.BigInt;
 
@@ -3631,6 +3658,7 @@ function Alu() {
 
 
 
+var activeVTE = null;
 
 // Terminal
 function VTE() {
@@ -3655,6 +3683,10 @@ function VTE() {
   this.previnput2 = 0;
   this.allowstyping = false;
   this.invisible = false; // if true, is invisible, due to being inside of a chip
+  // hidden textarea used to handle typing in better way than pure keyboard events
+  // a separate one per VTE because it must be positioned where the VTE is to avoid
+  // undesired scrolling to wrong place when it gets focused
+  this.textarea = undefined;
 
   this.keybuffer = [];
 
@@ -3743,26 +3775,47 @@ function VTE() {
         x++;
         if(x >= this.x1 - this.x0) { x = n0; y++; }
       }
+      s = s.trim();
+
+      // avoid typing non-digit characters (exception for hex)
+      if(s.length > 0) {
+        var c = s[s.length - 1];
+        var hex = (s.length >= 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X'));
+        if(!hex && !(c >= '0' && c <= '9')) {
+          this.doBackspace();
+          s = s.substr(0, s.length - 1);
+        }
+      }
 
       var index = n0;
-      // parse hex or decimal, not octal (note that whether or not it parses octal if radix not given is browser dependent)
-      if(supportbigint) {
-        s = s.match(/(0x)?[0-9]+/); // BigInt throws exception if string contains invalid characters so extract a valid number part.
-        s = (s == null) ? 0 : s[0];
-        if(!s || s == '' || s == '0x') s = '0';
-        index = BigInt(s);
-      } else {
-        if(s[0] == '0' && s[1] == 'x') index = parseInt(s);
-        else index = parseInt(s, 10);
+      for(;;) {
+        if(s.length == 0) break;
+        var hex = s[0] == '0' && (s[1] == 'x' || s[1] == 'X');
+        if(supportbigint) {
+          // BigInt throws exception if string contains invalid characters so extract a valid number part.
+          if(hex) {
+            s = s.match(/..[0-9a-fA-F]+/);
+          } else {
+            s = s.match(/[0-9]+/);
+          }
+
+          s = (s == null) ? 0 : s[0];
+          if(!s || s == '' || s == '0x') s = '0';
+          index = BigInt(s);
+        } else {
+          // parse hex or decimal, not octal (note that whether or not it parses octal if radix not given is browser dependent)
+          if(hex) index = parseInt(s);
+          else index = parseInt(s, 10);
+        }
+        var ni = supportbigint ? BigInt(this.numoutputs) : this.numoutputs;
+        var maxval = (n1 << ni) - n1;
+        if(index <= maxval) break;
+
+        // typed number too high, remove last character typed
+        this.doBackspace();
+        s = s.substr(0, s.length - 1);
       }
-      var ni = supportbigint ? BigInt(this.numoutputs) : this.numoutputs;
-      var maxval = (n1 << ni) - n1;
-      if(index > maxval) {
-        for(var i = 0; i < s.length; i++) this.doBackspace();
-        index = maxval;
-        s = '' + index;
-        for(var i = 0; i < s.length; i++) this.addChar(s[i]);
-      }
+
       var mul = n1;
       for(var i = 0; i < this.numoutputs; i++) {
         var bit = ((index & mul) ? 1 : 0);
@@ -3841,6 +3894,100 @@ function VTE() {
       }
     }
     this.text[this.cursory][this.cursorx] = '';
+  };
+
+
+
+  this.supportsTyping = function() {
+    return this.numoutputs > 0 && !this.passthrough;
+  };
+
+  // To be done by the renderer
+  this.initTextArea = function(el, x, y) {
+    this.textarea = util.makeAbsElement('textarea', x, y, 10, 10, el);
+    this.textarea.rows = 1;
+    this.textarea.cols = 20;
+    this.textarea.value = '';
+    this.textarea.style.fontSize = '12px';
+    this.textarea.style.zIndex = '1';
+    this.textarea.autocorrect = 'off';
+    this.textarea.spellcheck = false;
+    this.textarea.autocapitalize = 'off';
+    // display=none or visibility=hidden make the typing no longer work, style.opacity=0 still works
+    this.textarea.style.opacity = '0';
+  };
+
+  this.getKeyboardFocus = function() {
+    var self = this;
+    if(!this.textarea) return;
+
+    if(this.decimalinput && this.cursorx == 1 && this.cursory == 0 && this.text[0][0] == '0') {
+      this.doBackspace();
+    }
+
+    this.textarea.onkeypress = function(e) {
+        if(e.code == 'Backspace') {
+          // do nothing. onkeydown does backspace already.
+          // chrome only handles backspace in onkeydown, while firefox
+          // handles it in both onkeypress and onkeydown
+        } else {
+          var key = e.which || e.charCode || e.keyCode || 0;
+          self.typeKeyboard(key);
+        }
+        global_changed_something = true;
+        // use render() if no update of components should be done but you still want to see the
+        // new character appear. Use update() to do a full component update, similar to what
+        // is done after pressing on button with mouse.
+        //render();
+        update();
+        return false;
+    };
+
+    this.textarea.onkeydown = function(e) {
+      if(e && e.code == 'Backspace') {
+        self.doBackspace();
+        global_changed_something = true;
+        update();
+        return false;
+      }
+    };
+
+    this.textarea.oninput = function(e) {
+      // TODO: use this instead of onkeypress
+    };
+
+
+    // When the textarea loses focus, update how the blinking cursor looks to
+    // indicate it's no longer focused.
+    // NOTE: some mouse controlled switches/buttons/... stop the event from
+    // propagating and that causes the textarea to *not* blur and that is
+    // actually nice: user's selected VTE remains selected even if you press
+    // switches. But selecting another VTE, or the background, blurs this one
+    // as intended.
+    this.textarea.onblur = function() {
+      // Not when another VTE got selected
+      if(activeVTE == self) {
+        stopBlinkingCursor();
+        activeVTE = null;
+      }
+    };
+
+    this.textarea.onfocus = function() {
+      activeVTE = self;
+    };
+
+
+    if(document.activeElement) {
+      document.activeElement.blur(); // this prevents that you accidently start typing but it instead selects a different dropdown option
+    }
+
+    this.textarea.focus();
+
+    // This must be done the very last only.
+    activeVTE = this;
+
+    // ensure the blinking cursor will be activated by rendering
+    render();
   };
 
   // init before inputs are resolved
@@ -4114,12 +4261,6 @@ function VTE() {
         }
       }
     }
-
-    // TODO: make better API to decide if it has keyboard input or not
-    if(this.numoutputs > 0 && !this.passthrough) {
-      activeVTE = this;
-      document.activeElement.blur(); // this prevents that you accidently start typing but it instead selects a different dropdown option!
-    }
   };
 
   this.init2 = function() {
@@ -4151,6 +4292,11 @@ function VTE() {
       for(var x = 0; x < w; x++) {
         this.text[y][x] = ' ';
       }
+    }
+
+    // show that this is decimal input by already typing a '0'
+    if(this.decimalinput) {
+      this.addChar('0');
     }
 
     return true;
@@ -4787,9 +4933,11 @@ function Component() {
   // up in changed state due to ticking down, even if their value does not
   // change. What this value really indicates is: might any later combinational
   // clock tick still change the value in the future? The purpose of this value is
-  // to know when auto-tick updates can stop for AUTOUPDATE algorithm 3.
+  // to know when auto-tick updates can stop.
   this.changed = false;
   this.changedticks = 0; // for keeping track of 'changed' for delay
+  this.lasttimerticks = 0; // for timers to keep track when they should tick
+  this.changein = 0; // if non-0, indicates this component will change again in changein ticks. E.g. timer/delay.
 
   this.markError = function(message) {
     this.error = true;
@@ -5216,6 +5364,20 @@ function Component() {
       } else {
         this.value = numon; // delay 0, so immediate
       }
+    } else if(this.type == TYPE_TIMER_OFF || this.type == TYPE_TIMER_ON) {
+      var duration = this.number;
+      if(duration <= 0) duration = 10; // default, or number 0, gives 10 ticks to toggle, 20 ticks period (which for the default of 0.05 seconds per update gives a period of 1 second)
+
+      var d = timerticks - this.lasttimerticks;
+      if(d >= duration) {
+        this.lasttimerticks = timerticks;
+        if(!this.frozen) this.clocked = !this.clocked;
+        this.corecell.renderer.setLook(this.corecell, this.type);
+        d = 0;
+      }
+      if(this.frozen) this.changein = 0;
+      else this.changein = Math.max(1, duration - d);
+      this.value = this.getNewValue(numon, numoff);
     } else if(this.type == TYPE_TRISTATE || this.type == TYPE_TRISTATE_INV) {
       this.value = this.tristate.update();
     } else {
@@ -5231,11 +5393,10 @@ function Component() {
   };
 
   this.mousedown = function(e, x, y) {
-    if(e.shiftKey && !e.ctrlKey) {
+    if(e.shiftKey && !e.ctrlKey && !changeMode) {
       if(isPaused() && highlightedcomponent == this) {
         highlightedcomponent = null;
         unpause();
-        render();
       } else {
         pause();
         highlightedcomponent = this;
@@ -5245,7 +5406,7 @@ function Component() {
       return;
     }
     // for TYPE_ROM, just do default behavior, it already toggles bit
-    if(e.ctrlKey && this.type != TYPE_ROM) {
+    if(e.ctrlKey && this.type != TYPE_ROM && !changeMode) {
       var didsomething = true;
       if(e.shiftKey) {
         if(this.altType) {
@@ -5328,11 +5489,11 @@ function Component() {
       var value = this.value;
       var type = changeMode;
       var symbol = typesymbols[type];
-      if(changeMode == 'rem_inputs') {
+      /*if(changeMode == 'rem_inputs') {
         this.inputs = [];
         changeMode = null;
         return;
-      }
+      }*/
       if(changeMode == 'c') {
         value = false;
         symbol = 'c';
@@ -5350,9 +5511,11 @@ function Component() {
       if(type == TYPE_RANDOM) {
         value = Math.random() < 0.5;
       }
+      if(!e.ctrlKey && !e.shiftKey) changeMode = null;
+      // Do not support changing large devices, it breaks them irreversably during this circuit run
+      if(this.master || this.dotmatrix || this.type == TYPE_IC) return;
       this.type = type;
       this.value = value;
-      changeMode = null;
       if(!symbol) return;
       for(var i = 0; i < this.cells.length; i++) {
         var cell = world[this.cells[i][1]][this.cells[i][0]];
@@ -5364,28 +5527,36 @@ function Component() {
       }
       return;
     }
+
+    // For pushbutton, do the update immediately (if not paused), to avoid missing a tick when quickly pressing mouse down then up again
+    var update_immediately = false;
     if(this.type == TYPE_SWITCH_OFF) {
       this.type = TYPE_SWITCH_ON;
       this.corecell.renderer.setLook(this.corecell, this.type);
+      update_immediately = true;
     } else if(this.type == TYPE_SWITCH_ON) {
       this.type = TYPE_SWITCH_OFF;
       this.corecell.renderer.setLook(this.corecell, this.type);
+      update_immediately = true;
     }
     if(this.type == TYPE_PUSHBUTTON_OFF) {
       this.type = TYPE_PUSHBUTTON_ON;
       this.corecell.renderer.setLook(this.corecell, this.type);
+      update_immediately = true;
     } else if(this.type == TYPE_PUSHBUTTON_ON) {
       this.type = TYPE_PUSHBUTTON_OFF;
       this.corecell.renderer.setLook(this.corecell, this.type);
+      update_immediately = true;
     }
     if(this.type == TYPE_TIMER_OFF || this.type == TYPE_TIMER_ON) {
       this.frozen = !this.frozen;
+      update_immediately = true; // need to re-initiate the update cycles to ensure the timers activate again
     }
     if(this.type == TYPE_VTE) {
       var vte = this.vte;
       if(!vte) vte = this.master.vte;
       if(vte && vte.allowstyping && !vte.invisible) {
-        activeVTE = vte;
+        vte.getKeyboardFocus();
       }
     }
     if(this.type == TYPE_ROM) {
@@ -5412,23 +5583,29 @@ function Component() {
       rom.updateRamDisplay(bit, line);
     }
     global_changed_something = true;
+    if(update_immediately && !paused) update();
   };
 
   this.mouseup = function(e) {
+    // For pushbutton, do the update immediately, to avoid missing a tick when quickly pressing mouse down then up again
+    var update_immediately = false;
     if(this.type == TYPE_PUSHBUTTON_OFF) {
       if(!e.shiftKey) {
         this.type = TYPE_PUSHBUTTON_ON;
         this.corecell.renderer.setLook(this.corecell, this.type);
+        update_immediately = true;
       }
     } else if(this.type == TYPE_PUSHBUTTON_ON) {
       if(!e.shiftKey) {
         this.type = TYPE_PUSHBUTTON_OFF;
         this.corecell.renderer.setLook(this.corecell, this.type);
+        update_immediately = true;
       }
     } else {
       return false; // did nothing
     }
     global_changed_something = true;
+    if(update_immediately && !paused) update();
     return !e.shiftKey; // did something
   };
 }
@@ -5479,6 +5656,7 @@ var LINKCOLOR;
 var TITLECOLOR;
 var TERMINALBGCOLOR;
 var TERMINALFGCOLOR;
+var TERMINALMIDCOLOR; // used to indicate cursor can be placed here
 
 var BUSCOLORS;
 
@@ -5763,6 +5941,8 @@ function setColorScheme(index) {
     ERRORFGCOLOROFF = 'black';
     ERRORFGCOLORON = 'black';
   }
+
+  TERMINALMIDCOLOR = util.averageColor(TERMINALFGCOLOR, TERMINALBGCOLOR);
 }
 
 function negateColorScheme() {
@@ -5788,6 +5968,7 @@ function negateColorScheme() {
   LINKCOLOR = util.negateColor(LINKCOLOR);
   TITLECOLOR = util.negateColor(TITLECOLOR);
   TERMINALBGCOLOR = util.negateColor(TERMINALBGCOLOR);
+  TERMINALMIDCOLOR = util.negateColor(TERMINALMIDCOLOR);
   TERMINALFGCOLOR = util.negateColor(TERMINALFGCOLOR);
   CHIPLABELBGCOLOR = util.negateColor(CHIPLABELBGCOLOR);
   CHIPLABELFGCOLOR = util.negateColor(CHIPLABELFGCOLOR);
@@ -5803,6 +5984,8 @@ setColorScheme(colorscheme);
 
 // I wanted to use CSS animation instead of this javascript solution, but it turns out the CSS animation uses extreme amount of CPU. So do with JS timer instead.
 var globalSingleBlinkingCursor = null;
+var blinkTimer = null;
+
 function registerBlinkingCursor(div) {
   if(div == globalSingleBlinkingCursor) return;
 
@@ -5824,12 +6007,24 @@ function registerBlinkingCursor(div) {
       globalSingleBlinkingCursor.blinkOn = true;
     }
 
-    window.setTimeout(blink, 500);
+    blinkTimer = window.setTimeout(blink, 500);
   };
 
   var initial = !globalSingleBlinkingCursor;
   globalSingleBlinkingCursor = div;
   if(initial) blink();
+}
+
+function stopBlinkingCursor() {
+  if(globalSingleBlinkingCursor) {
+    globalSingleBlinkingCursor.style.backgroundColor = TERMINALMIDCOLOR;
+    globalSingleBlinkingCursor.blinkOn = false;
+    globalSingleBlinkingCursor = null;
+  }
+  if(blinkTimer) {
+    window.clearTimeout(blinkTimer);
+    blinkTimer = null;
+  }
 }
 
 function getNewRenderer() {
@@ -5910,8 +6105,9 @@ function Cell() {
       var y = this.y - vte.y0;
       if(x < 0 || y < 0) return;
       var char = vte.text[y][x];
-      var blink = (vte == activeVTE && x == vte.cursorx && y == vte.cursory);
-      this.renderer.setTerminal(char, blink);
+      var blink = (vte == activeVTE && x == vte.cursorx && y == vte.cursory && vte.supportsTyping());
+      var blur = (vte != activeVTE && x == vte.cursorx && y == vte.cursory && vte.supportsTyping());
+      this.renderer.setTerminal(char, blink, blur);
       return;
     }
 
@@ -6128,7 +6324,12 @@ function Cell() {
               title += ' (as decimal display)';
               if(vte.passthrough) title += ' (passes through the input to the output)';
             }
-            if(vte.decimalinput && !vte.counter) title += ' (as decimal input, click to put cursor here, and type decimal digits, or hex digits preceded with 0x)';
+            if(vte.decimalinput && !vte.counter) {
+              title += ' (as decimal input, click to put cursor here, and type decimal digits, or hex digits preceded with 0x).';
+              title += ' max value, given the ' + vte.numoutputs + ' output wires: ' + (Math.pow(2, vte.numoutputs) - 1);
+            }
+
+            if(vte.supportsTyping()) this.renderer.setCursorPointer(true);
           }
         }
       }
@@ -6145,16 +6346,15 @@ function Cell() {
 
     if(!this.comment) {
       // TODO: use component type instead?
-      // TODO: for T, only show the pointer if it accepts keyboard input
-      var pointer = (c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R' || c == 'b' || c == 'B' || c == 'T');
+      var pointer = (c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R' || c == 'b' || c == 'B');
       // currently cursor pointer not enabled for wires etc... that are part of the switch (even though pressing them actually works... but it would look a bit too messy)
       if((c == '#') && this.components[0]) {
         var type = this.components[0].type;
-        if(type == TYPE_SWITCH_OFF || type == TYPE_SWITCH_ON || type == TYPE_PUSHBUTTON_OFF || type == TYPE_PUSHBUTTON_ON) {
+        if(type == TYPE_SWITCH_OFF || type == TYPE_SWITCH_ON || type == TYPE_PUSHBUTTON_OFF || type == TYPE_PUSHBUTTON_ON || type == TYPE_TIMER_OFF || type == TYPE_TIMER_ON) {
           pointer = true;
         }
       }
-      if(pointer) this.renderer.setCursorPointer();
+      if(pointer) this.renderer.setCursorPointer(false);
     }
   };
 
@@ -6175,8 +6375,8 @@ function Cell() {
       e.stopPropagation();
       e.preventDefault();
       if(!changeMode) lastmousedowncomponent = component;
-      if(AUTOUPDATE == 1/* || AUTOUPDATE == 3*/) update();
       if(component) component.mousedown(e, x, y);
+      // reactivate if it was autopaused
       if(autopaused && isPaused() && !e.shiftKey) {
         // not done with shift key to not interfere with the 'highlight' feature that also uses pause and autopaused state
         unpause();
@@ -6242,7 +6442,9 @@ function Renderer() {
   this.setLook = function(cell, type) {
   };
 
-  this.setTerminal = function(char, blink) {
+  // blink = put active cursor for this terminal.
+  // blur = put icon that indicates it can accept input but doesn't have focus now
+  this.setTerminal = function(char, blink, blur) {
   };
 }
 
@@ -6544,8 +6746,10 @@ function RendererText() {
         var color = cell.components[0] ? cell.components[0].number : 0;
         if(color == -1) color = 0;
         if(color > led_off_fg_colors.length) color = 0; // not more colors than that supported
-        this.div0.innerText = 'l';
-        this.div1.innerText = 'L';
+        if(symbol == 'l') {
+          this.div0.innerText = 'l';
+          this.div1.innerText = 'L';
+        }
         this.div0.style.color = led_off_fg_colors[color];
         this.div0.style.backgroundColor = led_off_bg_colors[color];
         this.div1.style.color = led_on_fg_colors[color];
@@ -6595,6 +6799,15 @@ function RendererText() {
         this.div1.innerText = ' ';
         // The font characters are normally slightly bigger than a cell, but don't do that for the terminal, or bottom of letters gets obscured by the black cell below them, hiding bottom of j, underscores, etc
         this.div1.style.fontSize = Math.floor(tw * 0.9) + 'px';
+
+        if(cell.components[0] && cell.components[0].type == TYPE_VTE) {
+          var comp = cell.components[0];
+          var vte = comp.vte;
+          if(vte && vte.master == comp && vte.supportsTyping() && comp.corecell.x == cell.x && comp.corecell.y == cell.y) {
+            // set at position where this terminal is, because otherwise the browser will scroll the screen towards where the element is placed when focusing it
+            vte.initTextArea(worldDiv, cell.x * tw, cell.y * th);
+          }
+        }
       }
       if(symbol == 'I' || (cell.numbertype == NUMBER_ICDEF && digitmap[symbol])) {
         this.div0.style.color = CHIPLABELFGCOLOR;
@@ -6629,10 +6842,11 @@ function RendererText() {
     this.div1.title = errortext;
   };
 
-  this.setCursorPointer = function() {
-    this.div0.style.cursor = 'pointer';
-    this.div1.style.cursor = 'pointer';
-    if(this.clickDiv) this.clickDiv.style.cursor = 'pointer';
+  this.setCursorPointer = function(opt_textstyle) {
+    var style = opt_textstyle ? 'text' : 'pointer';
+    this.div0.style.cursor = style;
+    this.div1.style.cursor = style;
+    if(this.clickDiv) this.clickDiv.style.cursor = style;
   };
 
   this.setValue = function(cell, value, type) {
@@ -6695,16 +6909,19 @@ function RendererText() {
     }
   };
 
-  this.setTerminal = function(char, blink) {
-    if(char == this.prevchar) return;
-    this.div1.innerText = char;
-    //blinking cursor for the active terminal
+  this.setTerminal = function(char, blink, blur) {
     if(blink) {
-      //this.div1.style.animation = '1.5s blinker linear infinite';
+      //blinking cursor for the active terminal
       this.div1.innerText = '';
       registerBlinkingCursor(this.div1);
+    } else if(blur) {
+      this.div1.innerText = '';
+      this.div1.style.backgroundColor = TERMINALMIDCOLOR;
+    } else {
+      if(char == this.prevchar) return;
+      this.div1.innerText = char;
+      this.div1.style.backgroundColor = TERMINALBGCOLOR;
     }
-    else if(this.div1.style.animation != undefined) this.div1.style.animation = undefined;
   };
 }
 
@@ -6766,6 +6983,7 @@ function connected2b(x, y, dir) {
 // to the chip makes the graphics look very confusing if the antenna was there
 // to make a wire cross the chip. So don't draw that as connected.
 function connected2a(x, y, dir) {
+  // TODO: also consider inputs pointing to this as connected: because thanks to the wraparound antennas let inputs through. Or alternatively, check the partner-antenna as well.
   if(!connected2b(x, y, dir)) return false;
 
   var c = world[y][x].circuitsymbol;
@@ -6780,10 +6998,7 @@ function connected2a(x, y, dir) {
   if(c == ')' && dir == 3 && x - 2 >= 0 && world[y][x - 2].circuitsymbol == '(') return false;
 
   return true;
-
-
 }
-
 
 
 // for canvas drawing of % and & and x without too much stray arms
@@ -8836,8 +9051,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     }
   };
 
-  this.setCursorPointer = function() {
-    this.fallback.setCursorPointer();
+  this.setCursorPointer = function(opt_textstyle) {
+    this.fallback.setCursorPointer(opt_textstyle);
   };
 
   this.setLook = function(cell, type) {
@@ -8863,8 +9078,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     }
   };
 
-  this.setTerminal = function(char, blink) {
-    this.fallback.setTerminal(char, blink);
+  this.setTerminal = function(char, blink, blur) {
+    this.fallback.setTerminal(char, blink, blur);
   };
 }
 
@@ -8914,12 +9129,14 @@ function render() {
         // Antennas are actually more like "warp portals" that make far away cells treated as neighbors, but the antennas
         // themselves don't participate in the component structure.
         // The inaccurate hack makes the antenna light up if some neighboring and probably connected component lights up.
-        // It is wrong in some edge cases, doesn't check any components beyond 0, and doesn't check diagonal directions
+        // It is wrong in some edge cases, doesn't check any components beyond 3, doesn't check diagonal directions, and isn't copied in the renderHighlightComponent function
         // TODO: implement more accurate way. Maybe give antenna cells a component array of relevant components for rendering too, then this code can go away again.
-        if(y > 0 && world[y - 1][x].components[0] && world[y - 1][x].components[0].value && connected2a(x, y, 0)) value |= 1;
-        if(x + 1 < w && world[y][x + 1].components[0] && world[y][x + 1].components[0].value && connected2a(x, y, 1)) value |= 1;
-        if(y + 1 < h && world[y + 1][x].components[0] && world[y + 1][x].components[0].value && connected2a(x, y, 2)) value |= 1;
-        if(x > 0 && world[y][x - 1].components[0] && world[y][x - 1].components[0].value && connected2a(x, y, 3)) value |= 1;
+        for(var i = 0; i < 4; i++) {
+          if(y > 0 && world[y - 1][x].components[i] && world[y - 1][x].components[i].value && connected2a(x, y, 0)) value |= (1 << i);
+          if(x + 1 < w && world[y][x + 1].components[i] && world[y][x + 1].components[i].value && connected2a(x, y, 1)) value |= (1 << i);
+          if(y + 1 < h && world[y + 1][x].components[i] && world[y + 1][x].components[i].value && connected2a(x, y, 2)) value |= (1 << i);
+          if(x > 0 && world[y][x - 1].components[i] && world[y][x - 1].components[i].value && connected2a(x, y, 3)) value |= (1 << i);
+        }
       }
       cell.setValue(value);
     }
@@ -8951,56 +9168,55 @@ function renderHighlightComponent(component) {
 
 global_changed_something = true;
 
+// returns in how many ticks something may potentially change again (indicating more update calls should be done), or 0 if nothing changed or will change
 function updateComponents(components) {
-  // For AUTOUPDATE == 3, we can stop updates if nothing changed: the state became stable. This is not the same as a full pause. Timers, button clicks, ... will start the updates again
-  // TODO: instead of doing this, stop the JS timer (autoupdateinterval) instead (and restart it when action like button or timer component happens with AUTOUPDATE == 3)
-  if(AUTOUPDATE == 3 && !global_changed_something && numticks >= 0) {
-    return;
+  // we can stop updates if nothing changed: the state became stable. This is not the same as a full pause. Timers, button clicks, ... will start the updates again
+  if(!global_changed_something && numticks >= 0) {
+    return 0;
   }
 
   var changed = false;
+  var changein = 0;
+
   for(var i = 0; i < components.length; i++) {
     components[i].changed = false;
+    components[i].changin = 0;
     components[i].updated = false;
     components[i].prevvalue = components[i].value;
   }
   for(var i = 0; i < components.length; i++) {
     components[i].update();
-    if(components[i].changed) changed = true;
+    if(components[i].changein) changein = (changein ? Math.min(changein, components[i].changein) : components[i].changein);
+    if(components[i].changed) changein = 1; // if any component changed, use fastest possible changein since as long as the component changes it or next components can potentially change again
+
+    if(components[i].changed) changed = true; // this is for updating the "numticks" display
   }
 
-  if(!changed) global_changed_something = false;
+  if(!changein) global_changed_something = false;
 
-  if(AUTOUPDATE != 3 || changed || numticks < 0) numticks++;
+  if(changed || numticks < 0) numticks++;
   render();
+
+  return changein;
 }
+
+var updateTimeoutId = null;
 
 function update() {
   //console.log('update ' + (+new Date() / 1000.0));
-  if(UPDATE_ALGORITHM == 1) updateComponents(components_order);
-  else updateComponents(components);
-}
+  var changein = updateComponents((UPDATE_ALGORITHM == 1) ? components_order : components);
 
-var timerticks = 0;
-
-function toggleTimers() {
-  var changed_something = false;
-  for(var i = 0; i < components.length; i++) {
-    if((components[i].type == TYPE_TIMER_OFF || components[i].type == TYPE_TIMER_ON) /*&& !components[i].paused*/) {
-      var n = components[i].number;
-      if(n == 0) n = 10; // 0 represents 10x
-      if(n == -1) n = 5; // the default is half a second (total period is 1 second here by the way as it toggles per half second)
-      if ((timerticks % n) == n - 1) {
-        var c = components[i];
-        if(!c.frozen) c.clocked = !c.clocked;
-        c.corecell.renderer.setLook(c.corecell, c.type);
-        changed_something = true;
-      }
-    }
+  if(changein && !paused && !updateTimeoutId) {
+    timerticks += changein;
+    var time = AUTOSECONDS * 1000 * changein;
+    updateTimeoutId = util.setTimeoutSafe(function() {
+      updateTimeoutId = null;
+      if(paused) return;
+      update();
+    }, time);
+  } else {
+    timerticks++;
   }
-  if((AUTOUPDATE == 1/* || AUTOUPDATE == 3*/) && changed_something) update();
-  if(changed_something) global_changed_something = true;
-  timerticks++;
 }
 
 // must be called after (or at the end of) parseCells
@@ -10382,12 +10598,12 @@ function resetForParse() {
   backplanes_g = [];
   line0 = [];
   line1 = [];
-  // important to pause, else if circuit starts with a timer that is supposed to be initially off, it may randomly affect initial state
-  // especially in case of long parse time...
-  pause();
-  timerticks = 0;
+  pause(); // also cancels potentially set timeouts
+  updateTimeButtonBorders();
+  updatePauseButtonText();
   global_changed_something = true;
   numticks = -1; // -1 because the first implicit tick after parse should not be counted
+  timerticks = -1;
   showingLinkIds = false;
 }
 
@@ -11471,7 +11687,6 @@ function parseComponents() {
 
       // MODE:electron
       UPDATE_ALGORITHM = 3;
-      AUTOUPDATE = 3;
     } else if((cycle_detected && global_counter) || (!cycle_detected && global_delay) || (global_counter && global_delay)) {
       // As soon as the circuit has any loops or delays, the combinational mode does not work and the sequential
       // mode is needed: a single update is no longer guaranteed to bring the circuit to a final stable
@@ -11480,7 +11695,6 @@ function parseComponents() {
 
       // MODE:immediate
       UPDATE_ALGORITHM = 1;
-      AUTOUPDATE = 3;
     } else if(cycle_detected || global_delay /*the global_delay check is in theory not needed here unless I update the above conditions again*/) {
       // The previous check, which set to MODE:sequential, left out a few cases. Those are set to electron instead of sequential here instead.
       // This is circuits with loops but without any flip-flops or counters. It is more likely that the user intended to make a circuit
@@ -11488,7 +11702,6 @@ function parseComponents() {
 
       // MODE:electron
       UPDATE_ALGORITHM = 3;
-      AUTOUPDATE = 3;
     } else {
       // otherwise, by default, set to 'combinational' mode, which has no ticks, only updates when a switch is toggled
       // the circuit should be guaranteed to fully update in a single tick if none of the above conditions triggered
@@ -11496,22 +11709,18 @@ function parseComponents() {
 
       // MODE:immediate
       UPDATE_ALGORITHM = 1;
-      AUTOUPDATE = 3;
     }
 
     var modeindex = origtext.indexOf('MODE:');
     if(modeindex >= 0) {
       if(util.textHasAt(origtext, modeindex + 5, 'immediate')) {
         UPDATE_ALGORITHM = 1;
-        AUTOUPDATE = 3;
       }
       else if(util.textHasAt(origtext, modeindex + 5, 'electron')) {
         UPDATE_ALGORITHM = 3;
-        AUTOUPDATE = 3;
       }
     }
 
-    updateRunningState();
     updateModeButtonText();
     updatePauseButtonText();
   }
@@ -11937,25 +12146,18 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   initDivs();
   logPerformance('initDivs done');
 
-  logPerformance('initial render start');
-  if(UPDATE_ALGORITHM == 1) update();
-  else render();
-  logPerformance('initial render done');
-
   worldDiv.style.display = 'block';
+
+  logPerformance('initial update start');
+  unpause(); // this also calls update
+  logPerformance('initial update done');
+
   return true; // success
 }
 
-var AUTOPAUSESECONDS = 3000; // for autopauseinterval
-var USEAUTOPAUSE = true; // pause after LogicEmu was open in a browser tab for a long time (AUTOPAUSESECONDS seconds)
 
-var autoupdateinterval = null; // for AUTOUPDATE 2 and 3
-var timerinterval = null; // for the timer components
 var autopauseinterval = null; // I don't want browser to keep ticking in background when you forget about it in a tab
-
-if(AUTOUPDATE == 2 || AUTOUPDATE == 3) autoupdateinterval = setIntervalSafe(function(){ update(); }, AUTOSECONDS * 1000);
-
-timerinterval = util.setIntervalSafe(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
+var autopaused = false;
 
 if(USEAUTOPAUSE) setAutoPauseInterval();
 
@@ -11966,59 +12168,35 @@ function setAutoPauseInterval() {
   }, AUTOPAUSESECONDS * 1000);
 }
 
-function pause() {
-  autopaused = false;
-  if(autoupdateinterval) {
-    util.clearIntervalSafe(autoupdateinterval);
-    autoupdateinterval = null;
-  }
-  if(timerinterval) {
-    util.clearIntervalSafe(timerinterval);
-    timerinterval = null;
-  }
-  if(autopauseinterval) {
-    util.clearIntervalSafe(autopauseinterval);
-    autopauseinterval = null;
-  }
-  updatePauseButtonText();
-  updateTimeButtonBorders();
-}
+var paused = false;
 
-function pauseUpdateOnly() {
-  if(autoupdateinterval) {
-    util.clearIntervalSafe(autoupdateinterval);
-    autoupdateinterval = null;
+function pause() {
+  if(updateTimeoutId) {
+    util.clearTimeoutSafe(updateTimeoutId);
+    updateTimeoutId = null;
   }
+  autopaused = false;
+  paused = true;
+  updatePauseButtonText();
   updateTimeButtonBorders();
 }
 
 function unpause() {
   autopaused = false;
+  paused = false;
   highlightedcomponent = null;
-  if((AUTOUPDATE == 2 || AUTOUPDATE == 3) && !autoupdateinterval) {
-    autoupdateinterval = util.setIntervalSafe(function(){ update(); }, AUTOSECONDS * 1000);
-  }
-  if(!timerinterval)  timerinterval = util.setIntervalSafe(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
+
   if(USEAUTOPAUSE && !autopauseinterval) {
     setAutoPauseInterval();
-    updatePauseButtonText();
-  }
-  updateTimeButtonBorders();
-}
-
-function updateRunningState() {
-  unpause(); // Required e.g. when switching from combinational to other modes [TODO: remove need for this so that mode switching allows remaining paused if user paused]
-  if((AUTOUPDATE != 2 && AUTOUPDATE != 3) && autoupdateinterval) {
-    // we're pausing, but however we still want the timer interval to run
-    if(!timerinterval) timerinterval = setIntervalSafe(function(){ toggleTimers(); }, TIMERSECONDS * 1000);
-    clearIntervalSafe(autoupdateinterval);
-    autoupdateinterval = null;
   }
   updatePauseButtonText();
+  updateTimeButtonBorders();
+  update(); // unpause must call update, becuase update starts the timing look again (especially relevant if there are timers)
 }
 
-
-
+function isPaused() {
+  return paused;
+}
 
 var changeDropdownElements = [];
 
@@ -12050,7 +12228,7 @@ registerChangeDropdownElement('c');
 registerChangeDropdownElement('C');
 registerChangeDropdownElement(TYPE_DELAY);
 registerChangeDropdownElement(TYPE_RANDOM);
-registerChangeDropdownElement('rem_inputs');
+//registerChangeDropdownElement('rem_inputs');
 
 
 

@@ -6233,7 +6233,7 @@ registerCircuit('8-bit divider effect', `
             . ^mm   .    . ^mm   .    . ^mm   .    . ^mm   .    . ^mm   .    . ^mm   .    . ^mm   .    . ^mm   .
             ... .....    ... .....    ... .....    ... .....    ... .....    ... .....    ... .....    ... .........s"a128"
             .            .            .            .            .            .            .            .
-            s            s            s            s            s            s            r80          S
+            s            s            s            s            s            s            r120         S
            "b128         b64          b32          b16          b8           b4           b2           b1"
 
 
