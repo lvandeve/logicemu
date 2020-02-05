@@ -138,7 +138,8 @@ s...... l
        >
 s...... l
 
-0"LEDs can also come in various different colors (using numeric digits)"
+0"LEDs can also come in various different colors (using numeric digits in the"
+0"source code, but the numbers will be invisible below)"
 
 
 s.............>l0

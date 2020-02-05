@@ -9199,7 +9199,7 @@ function update() {
   } else {
     timerticks++;
   }
-  console.log(timerticks);
+  //console.log(timerticks);
 }
 
 // must be called after (or at the end of) parseCells
@@ -11777,7 +11777,9 @@ function initDivs() {
   getNewRenderer().globalInit();
 
   // y in opposite order: reason: fonts usually have attachments at the bottom, not the top. And sometimes the bottom attachment spills over into the cell below. If the cell below has a background color, it would come on top of the font, clipping it. Doing bottom to to porder makes higher cells be on top of lower cells, fixing that.
-  for(var y = h - 1; y >= 0; y--) {
+  //for(var y = h - 1; y >= 0; y--) {
+  // However, doing y in opposite order confuses the browser about the direction paragraphs of text are going, so do it in the regular order anyway. The above mentioned clipping issues appear fixed now, if not, use different solution than rendering in opposite order.
+  for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
       world[y][x].initDiv(x, y);
     }

@@ -3582,7 +3582,7 @@ registerCircuit('Conway\'s game of life galaxy', `
 
    "tick" g    "autotick"
     p##-->o<-----###
-    ###         2r##<d<C
+    ###         3r##<d<C
     ###          ### 4
 
 
@@ -3822,7 +3822,7 @@ registerCircuit('Conway\'s game of life ship', `
 
    "tick" g    "autotick"
     ###-->o<-----###
-    #p#         1r##<d<C
+    #p#         3r##<d<C
     ###          ### 4
 
 
@@ -3945,8 +3945,8 @@ registerCircuit('Langtons Ant', `
 0"Langton's Ant"
 
 0"This circuit is without clock, and only works in 'electron' mode, not in"
-0"'fast' mode. Make this clocked with global wire to make it work in"
-0"'fast' mode."
+0"'immediate' mode. Make this clocked with global wire to make it work in"
+0"'immediate' mode."
 
 0"MODE:electron"
 
