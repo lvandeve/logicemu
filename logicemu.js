@@ -471,7 +471,6 @@ var LogicEmuUtils = (function() {
   };
   result.averageColor = averageColor;
 
-
   return result;
 }());
 
@@ -481,6 +480,277 @@ var util = LogicEmuUtils;
 var bind = util.bind;
 var makeDiv = util.makeDiv;
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+// Mathematics for the "ALU" component
+// Mostly integer math. If LogicEmuMath.supportbigint is true, functions require type BigInt as input and output, else regular JS numbers.
+var LogicEmuMath = (function() {
+  // exported functions/fields are assigned to result which will be returned by this self invoking anonymous function expression
+  var result = {};
+
+  var supportbigint = !!window.BigInt;
+  result.supportbigint = supportbigint;
+
+  // Make integer of the relevant type: BigInt if supported, JS number otherwise.
+  // Most of the math here will use BigInt if available, JS number otherwise.
+  // If JS supports BigInt, then, between JS number and BigInt:
+  // - the following operators work the same (but support larger values for bigInt): almost all, including +, %, <=, <<, &, **, etc...
+  // - the following operators work differently: / becomes integer division
+  // - the following things are not supported, resulting in an exception: mixing JS nubmer with BigInt for any operation except comparisons; using Math.#### functions on BigInt.
+  var B = supportbigint ? window.BigInt : function(i) { return i; };
+  result.B = B;
+
+  // the notation 0n, 1n, 3n, ... cannot be used, because if browser doesn't support BigInt,
+  // it'll give parsing error on decimal number ending with n.
+  var n_1 = B(-1); result.n_1 = n_1;
+  var n0 = B(0); result.n0 = n0;
+  var n1 = B(1); result.n1 = n1;
+  var n2 = B(2); result.n2 = n2;
+  var n4 = B(4); result.n4 = n4;
+  var n10 = B(10); result.n10 = n10;
+  var n15 = B(15); result.n15 = n15;
+
+  var gcd = function(a, b) {
+    if(a < 0) a = -a;
+    if(b < 0) b = -b;
+    for(;;) {
+      if(b == 0) return a;
+      var o = a % b;
+      a = b;
+      b = o;
+    }
+  };
+  result.gcd = gcd;
+
+
+  // error cases: returns 0 if result would be infinity
+  var truncdiv = function(a, b) {
+    if(b == 0) return n0;
+    if(supportbigint) return a / b;
+    var result = a / b;
+    return (result < 0) ? Math.ceil(result) : Math.floor(result);
+  };
+  result.truncdiv = truncdiv;
+
+  // error cases: returns 0 if result would be infinity
+  var floordiv = function(a, b) {
+    if(b == 0) return n0;
+    if(!supportbigint) return Math.floor(a / b);
+    var result = a / b;
+    if((a < 0) != (b < 0)) {
+      var m = result * b;
+      if(m != a) result--;
+    }
+    return result;
+  };
+  result.floordiv = floordiv;
+
+  // a modulo b, matching floored division (not matching truncated division, like the % operation does)
+  var mod = function(a, b) {
+    var negb = (b < 0);
+    if(negb) b = -b;
+    var nega = (a < 0);
+    if(nega) a = -a;
+    a %= b;
+    if(nega) { a = (b - a) % b; } // not the most optimal implementation, but made to easily work for both Number and BigInt
+    if(negb) a = -a;
+    return a;
+  };
+  result.mod = mod;
+
+  // Computes integer power (a**b) modulo m.
+  // Handles error cases as follows:
+  // Returns 0 if the output would be infinity (instead of throwing error) which happens if b < 0 and a == 0.
+  // Returns 0 if m is <= 0
+  // Returns 1 for the case of 0**0.
+  var modpow = function(a, b, m) {
+    if(m == 1) return n0; // anything modulo 1 is 0.
+    if(m <= 0) return n0; // error
+    // integer power
+    if(b < 0) {
+      if(a == 0) {
+        return n0; // actually infinity, but user must handle this as error case outside if desired
+      } else if(a == 1) {
+        return n1;
+      } else if(a == -1) {
+        return (b & n1) ? n_1 : n1;
+      } else {
+        return n0; // integer power result: truncation of the small value is 0.
+      }
+    } else if(b == 0) {
+      return n1;
+    } else {
+      var neg = a < 0;
+      if(neg) a = -a;
+      var r = n1;
+      var pot = ((m & (m - n1)) == 0); // power of two, so can use faster mask instead of modulo division
+      if(pot) {
+        var mask = m - n1;
+        a &= mask;
+        while(b > 0) {
+          if(b & n1) r = ((r * a) & mask);
+          b >>= n1;
+          a = ((a * a) & mask);
+        }
+      } else {
+        r = n1;
+        a %= m;
+        while(b > 0) {
+          if(b & n1) r = ((r * a) % m);
+          b >>= n1;
+          a = ((a * a) % m);
+        }
+      }
+      if(neg && (b & n1)) {
+        r = -r;
+      }
+      return r;
+    }
+  };
+  result.modpow = modpow;
+
+  // integer modular inverse 1 / a modulo b
+  // error cases: if a is 0 or m <= 0, returns 0
+  var modinv = function(a, b) {
+    if(a == 0 || m == 0) {
+      return n0;
+    } else {
+      var r = n0;
+      var b0 = b;
+      var x = n1, y = n0;
+      for(;;) {
+        if(a == 1) { r = x; break; }
+        if(a == 0) { r = n0; break; }
+        var d = b / a;
+        if(!supportbigint) d = Math.floor(d);
+        var m = b - d * a; // modulo (matching floored division)
+        y -= x * d;
+        b = m;
+
+        if(b == 1) { r = y; break; }
+        if(b == 0) { r = n0; break; }
+        d = a / b;
+        if(!supportbigint) d = Math.floor(d);
+        m = a - d * b; // modulo (matching floored division)
+        x -= y * d;
+        a = m;
+      }
+      if(r < 0) r += b0;
+      return r;
+    }
+  };
+  result.modinv = modinv;
+
+
+  // integer log2
+  // error cases: returns 0 if a <= 0
+  var log2 = function(a) {
+    if(a <= 1) return n0;
+    var r = n0;
+    while(a > 0) {
+      r++;
+      a >>= n1;
+    }
+    return r - n1;
+  };
+  result.log2 = log2;
+
+  // integer sqrt
+  // error cases: returns 0 if a < 0
+  var sqrt = function(a) {
+    if(a <= 0) return n0;
+    var r = n0;
+    var s = n2;
+    var as = a >> s;
+    while(as != 0) {
+      s += n2;
+      as = a >> s;
+    }
+    while(s >= 0) {
+      r <<= n1;
+      var c2 = r + n1;
+      if(c2 * c2 <= (a >> s)) {
+        r = c2;
+      }
+      s -= n2;
+    }
+    return r;
+  };
+  result.sqrt = sqrt;
+
+
+
+  // factorial of a modulo b. returns array of [result, overflow]
+  // overflow means the real (non-modulo) result is larger than b, or error condition
+  // error cases:
+  // - returns 0 and sets overflow if a < 0
+  // - returns 0 and sets overflow if b <= 0
+  // if opt_nooverflow is true, will not treat output larger than b as overflow (but still use the overflow flag for error conditions)
+  // NOTE: can be slow for a > 4096 especially if b only has large prime factors
+  var factorial = function(a, b, opt_nooverflow) {
+    if(a < 0) return [n0, true];
+    if(b <= 0) return [n0, true];
+
+    var pot = ((b & (b - n1)) == 0); // power of two, so can use faster mask instead of modulo division
+
+    // if a/2 is larger than amount of output bits,
+    // then we know that all visible output bits will be 0, due to the amount of
+    // factors '2' in the result. So no need to compute then, plus also
+    // indicate overflow
+    if(pot && a > log2(b) * n2) return [n0, true && !opt_nooverflow];
+    // if a is larger than b, then it's guaranteed that the modulo value itself
+    // is a factor and we know the output modulo b will be 0.
+    if(a >= b) return [n0, true && !opt_nooverflow];
+
+    var r = n1;
+    var overflow = false;
+
+    if(pot) {
+      var mask = b - n1;
+      for(var i = n2; i <= a; i++) {
+        r *= i;
+        if(r > mask) {
+          if(!opt_nooverflow) overflow = true;
+          r &= mask;
+          if(r == 0) break;
+        }
+      }
+    } else {
+      if(a >= b) {
+        // result is guaranteed to be 0, since the modulo itself will be
+        // contained in the factors when a >= b. So no need to compute.
+        r = n0;
+      } else {
+        for(var i = n2; i <= a; i++) {
+          r *= i;
+          if(r > b) {
+            if(!opt_nooverflow) overflow = true;
+            r = mod(r, b);
+            // once the modulo operation made the result 0, which can easily happen as soon
+            // as we passed all the prime factors of b, we can stop since the result is
+            // guaranteed to stay 0.
+            if(r == 0) break;
+          }
+        }
+      }
+    }
+
+    return [r, overflow];
+  };
+  result.factorial = factorial;
+
+
+  return result;
+}());
+
+
+var math = LogicEmuMath;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -538,8 +808,6 @@ var numticks = 0;
 
 // num ticks from the viewpoint of timer (includes ticks that were never rendered or computed)
 var timerticks = 0;
-
-var supportbigint = !!window.BigInt;
 
 // tile size
 var tw = 9;
@@ -2486,18 +2754,6 @@ function Mux() {
   };
 }
 
-// a modulo b, matching floored division (not matching truncated division, like the % operation does)
-function mod(a, b) {
-  var negb = (b < 0);
-  if(negb) b = -b;
-  var nega = (a < 0);
-  if(nega) a = -a;
-  a %= b;
-  if(nega) { a = (b - a) % b; } // not the most optimal implementation, but made to easily work for both Number and BigInt
-  if(negb) a = -a;
-  return a;
-}
-
 // Arithmetic Logic Unit ('U')
 function Alu() {
   this.master = null;
@@ -2669,90 +2925,43 @@ function Alu() {
 
     for(var i = 0; i < this.output.length; i++) this.output[i] = 0;
 
-    var usebigint = supportbigint;
-    // the notation 0n, 1n, 3n, ... cannot be used, because if browser doesn't support BigInt, it'll give parsing error on decimal number ending with n.
-    // so use the BigInt construction function instead and name a few common values;
-    var n_1 = -1, n0 = 0, n1 = 1, n2 = 2, n4 = 4, n10 = 10, n15 = 15;
-    if(usebigint) {
-      n_1 = BigInt(-1);
-      n0 = BigInt(0);
-      n1 = BigInt(1);
-      n2 = BigInt(2);
-      n4 = BigInt(4);
-      n10 = BigInt(10);
-      n15 = BigInt(15);
-    }
-
-    var a, b, c;
     var op = this.opindex;
 
     var signed = this.signed;
     if(op < 16) signed = false;
     if(op == 34 || op == 35) signed = true;
 
-    if(usebigint) {
-      a = n0;
-      for(var i = 0; i < this.numa; i++) {
-        var j = i + this.numb + this.numc;
-        if(inputs[j]) a ^= (n1 << BigInt(i));
-      }
+    var a = math.n0;
+    for(var i = 0; i < this.numa; i++) {
+      var j = i + this.numb + this.numc;
+      if(inputs[j]) a ^= (math.n1 << math.B(i));
+    }
 
-      b = n0;
-      for(var i = 0; i < this.numb; i++) {
-        var j = i + this.numc;
-        if(inputs[j]) b ^= (n1 << BigInt(i));
-      }
+    var b = math.n0;
+    for(var i = 0; i < this.numb; i++) {
+      var j = i + this.numc;
+      if(inputs[j]) b ^= (math.n1 << math.B(i));
+    }
 
-      c = n0;
-      for(var i = 0; i < this.numc; i++) {
-        var j = i;
-        if(inputs[j]) c ^= (n1 << BigInt(i));
-      }
+    var c = math.n0;
+    for(var i = 0; i < this.numc; i++) {
+      var j = i;
+      if(inputs[j]) c ^= (math.n1 << math.B(i));
+    }
 
-      if(signed) {
-        var na = BigInt(this.numa);
-        var nb = BigInt(this.numb);
-        var nc = BigInt(this.numb);
-        var maska = ((n1 << na) - n1);
-        var maskb = ((n1 << nb) - n1);
-        var maskc = ((n1 << nc) - n1);
-        var maxa = (n1 << (na - n1)) - n1;
-        var maxb = (n1 << (nb - n1)) - n1;
-        var maxc = (n1 << (nc - n1)) - n1;
-        if(a > maxa) a = (a - maska - n1);
-        if(b > maxb) b = (b - maskb - n1);
-        if(c > maxc) c = (c - maskc - n1);
-      }
-    } else {
-      a = 0;
-      for(var i = 0; i < this.numa; i++) {
-        var j = i + this.numb + this.numc;
-        if(inputs[j]) a ^= (1 << i);
-      }
-
-      b = 0;
-      for(var i = 0; i < this.numb; i++) {
-        var j = i + this.numc;
-        if(inputs[j]) b ^= (1 << i);
-      }
-
-      c = 0;
-      for(var i = 0; i < this.numc; i++) {
-        var j = i;
-        if(inputs[j]) c ^= (1 << i);
-      }
-
-      if(signed) {
-        var maska = ((1 << this.numa) - 1);
-        var maskb = ((1 << this.numb) - 1);
-        var maskc = ((1 << this.numc) - 1);
-        var maxa = (1 << (this.numa - 1)) - 1;
-        var maxb = (1 << (this.numb - 1)) - 1;
-        var maxc = (1 << (this.numc - 1)) - 1;
-        if(a > maxa) a = (a - maska - 1);
-        if(b > maxb) b = (b - maskb - 1);
-        if(c > maxc) c = (c - maskc - 1);
-      }
+    if(signed) {
+      var na = math.B(this.numa);
+      var nb = math.B(this.numb);
+      var nc = math.B(this.numb);
+      var maska = ((math.n1 << na) - math.n1);
+      var maskb = ((math.n1 << nb) - math.n1);
+      var maskc = ((math.n1 << nc) - math.n1);
+      var maxa = (math.n1 << (na - math.n1)) - math.n1;
+      var maxb = (math.n1 << (nb - math.n1)) - math.n1;
+      var maxc = (math.n1 << (nc - math.n1)) - math.n1;
+      if(a > maxa) a = (a - maska - math.n1);
+      if(b > maxb) b = (b - maskb - math.n1);
+      if(c > maxc) c = (c - maskc - math.n1);
     }
 
     // for the 16 bitwise logic operators, make the input bitsizes equal to the output bitsize,
@@ -2763,9 +2972,9 @@ function Alu() {
       var n;
       if(this.numa > 0) {
         n = 0;
-        var a2 = n0;
+        var a2 = math.n0;
         while(n < this.numo) {
-          a2 |= usebigint ? (a << BigInt(n)) : (a << n);
+          a2 |= math.supportbigint ? (a << BigInt(n)) : (a << n);
           n += this.numa;
         }
         a = a2;
@@ -2773,9 +2982,9 @@ function Alu() {
 
       if(this.numb > 0) {
         n = 0;
-        var b2 = n0;
+        var b2 = math.n0;
         while(n < this.numo) {
-          b2 |= usebigint ? (b << BigInt(n)) : (b << n);
+          b2 |= math.supportbigint ? (b << BigInt(n)) : (b << n);
           n += this.numb;
         }
         b = b2;
@@ -2785,23 +2994,12 @@ function Alu() {
     var miscin = 0;
     if(this.nummiscin) miscin = inputs[this.numa + this.numb + this.numc];
 
-    var o = n0; // output
-
-    var gcd = function(a, b) {
-      if(a < 0) a = -a;
-      if(b < 0) b = -b;
-      for(;;) {
-        if(b == 0) return a;
-        var o = a % b;
-        a = b;
-        b = o;
-      }
-    };
+    var o = math.n0; // output
 
 
     var overflow = false;
     if(op == 0) {
-      o = n0;
+      o = math.n0;
     } else if(op == 1) {
       o = a & b;
     } else if(op == 2) {
@@ -2832,8 +3030,8 @@ function Alu() {
       o = ~(a & b);
     } else if(op == 15) {
       // all ones
-      if(usebigint) {
-        o = n1 << BigInt(this.numo);
+      if(math.supportbigint) {
+        o = math.n1 << BigInt(this.numo);
         o = ~o;
       } else {
         o = 0x7fffffff;
@@ -2842,26 +3040,26 @@ function Alu() {
       // equals
       if(this.numc) {
         if(c == 0) overflow = true;
-        else o = (mod(a - b, c) == 0) ? n1 : n0;
+        else o = (math.mod(a - b, c) == 0) ? math.n1 : math.n0;
       } else {
-        o = (a == b) ? n1 : n0;
+        o = (a == b) ? math.n1 : math.n0;
       }
     } else if(op == 17) {
-      o = (a < b) ? n1 : n0;
+      o = (a < b) ? math.n1 : math.n0;
     } else if(op == 18) {
-      o = (a <= b) ? n1 : n0;
+      o = (a <= b) ? math.n1 : math.n0;
     } else if(op == 19) {
       // not equals
       if(this.numc) {
         if(c == 0) overflow = true;
-        else o = (mod(a - b, c) != 0) ? n1 : n0;
+        else o = (math.mod(a - b, c) != 0) ? math.n1 : math.n0;
       } else {
-        o = (a != b) ? n1 : n0;
+        o = (a != b) ? math.n1 : math.n0;
       }
     } else if(op == 20) {
-      o = (a >= b) ? n1 : n0;
+      o = (a >= b) ? math.n1 : math.n0;
     } else if(op == 21) {
-      o = (a > b) ? n1 : n0;
+      o = (a > b) ? math.n1 : math.n0;
     } else if(op == 22) {
       o = (a < b) ? a : b;
     } else if(op == 23) {
@@ -2873,9 +3071,9 @@ function Alu() {
       if(this.numc) {
         if(c == 0) {
           overflow = true;
-          o = n0;
+          o = math.n0;
         } else {
-          o = mod(o, c);
+          o = math.mod(o, c);
         }
       }
     } else if(op == 25) {
@@ -2885,9 +3083,9 @@ function Alu() {
       if(this.numc) {
         if(c == 0) {
           overflow = true;
-          o = n0;
+          o = math.n0;
         } else {
-          o = mod(o, c);
+          o = math.mod(o, c);
         }
       }
     } else if(op == 26) {
@@ -2896,32 +3094,19 @@ function Alu() {
       if(this.numc) {
         if(c == 0) {
           overflow = true;
-          o = n0;
+          o = math.n0;
         } else {
-          o = mod(o, c);
+          o = math.mod(o, c);
         }
       }
     } else if(op == 27) {
       // truncating division (rounds towards zero)
-      if(b == 0) {
-        o = n0;
+      if(b == 0 || (this.numc && c == 0)) {
+        o = math.n0;
         overflow = true;
       } else {
-        if(usebigint) {
-          o = a / b;
-        } else {
-          o = a / b;
-          if(o < 0) o = Math.ceil(o);
-          else o = Math.floor(o);
-        }
-      }
-      if(this.numc && !overflow) {
-        if(c == 0) {
-          overflow = true;
-          o = n0;
-        } else {
-          o = mod(o, c);
-        }
+        o = math.truncdiv(a, b);
+        if(this.numc) o = math.mod(o, c);
       }
     } else if(op == 28) {
       // remainder of truncating division
@@ -2931,40 +3116,25 @@ function Alu() {
         o = a % b;
       }
     } else if(op == 29) {
-      // op==29: floor division (rounds towards -Infinity)
-      if(b == 0) {
-        o = n0;
+      // floor division (rounds towards -Infinity)
+      if(b == 0 || (this.numc && c == 0)) {
+        o = math.n0;
         overflow = true;
       } else {
-        if(usebigint) {
-          o = a / b;
-          if((a < 0) != (b < 0)) {
-            var m = o * b;
-            if(m != a) o--;
-          }
-        } else {
-          o = Math.floor(a / b);
-        }
-      }
-      if(this.numc && !overflow) {
-        if(c == 0) {
-          overflow = true;
-          o = n0;
-        } else {
-          o = mod(o, c);
-        }
+        o = math.floordiv(a, b);
+        if(this.numc) o = math.mod(o, c);
       }
     } else if(op == 30) {
       if(b == 0) {
         overflow = true;
       } else {
-        o = mod(a, b);
+        o = math.mod(a, b);
       }
     } else if(op == 32) {
-      o = a + n1;
+      o = a + math.n1;
       if(miscin) o++;
     } else if(op == 33) {
-      o = a - n1;
+      o = a - math.n1;
       if(miscin) o--;
     } else if(op == 34) {
       o = -a;
@@ -2975,49 +3145,49 @@ function Alu() {
         // copysign
         o = a;
         if((b < 0) != (a < 0)) o = -a;
-        if(b == 0) o = n0;
+        if(b == 0) o = math.n0;
       } else {
         // sign
-        o = (a == 0) ? n0 : ((a > 0) ? n1 : n_1);
+        o = (a == 0) ? math.n0 : ((a > 0) ? math.n1 : math.n_1);
       }
     } else if(op == 38) {
       // binary to bcd
       var neg = a < 0;
       if(neg) a = -a;
-      var s = n0;
+      var s = math.n0;
       while(a > 0) {
-        var m = a % n10;
+        var m = a % math.n10;
         o |= (m << s);
-        s += n4;
-        a = usebigint ? (a / n10) : Math.floor(a / 10);
+        s += math.n4;
+        a = math.supportbigint ? (a / math.n10) : Math.floor(a / 10);
       }
-      if(neg) s |= (n1 << s);
+      if(neg) s |= (math.n1 << s);
     } else if(op == 39) {
       // bcd to binary
       var neg = a < 0;
       if(neg) a = -a;
-      var s = n1;
+      var s = math.n1;
       while(a > 0) {
-        var m = a & n15;
+        var m = a & math.n15;
         o += (m * s);
-        s *= n10;
-        a >>= n4;
+        s *= math.n10;
+        a >>= math.n4;
       }
-      if(neg) s |= (n1 << s);
+      if(neg) s |= (math.n1 << s);
     } else if(op == 40) {
       o = a << b;
     } else if(op == 41) {
       o = a >> b;
     } else if(op == 42) {
       // left rotating shift
-      if(usebigint) {
+      if(math.supportbigint) {
         o = (a << b) | (a >> (BigInt(this.numa) - b));
       } else {
         o = (a << b) | (a >> (this.numa - b));
       }
     } else if(op == 43) {
       // right rotating shift
-      if(usebigint) {
+      if(math.supportbigint) {
         o = (a >> b) | (a << (BigInt(this.numa) - b));
       } else {
         o = (a >> b) | (a << (this.numa - b));
@@ -3026,17 +3196,17 @@ function Alu() {
       // mirror bits
       for(var i = 0; i < this.numo; i++) {
         var j = this.numo - i - 1;
-        var ni = usebigint ? BigInt(i) : i;
-        var nj = usebigint ? BigInt(j) : j;
+        var ni = math.supportbigint ? BigInt(i) : i;
+        var nj = math.supportbigint ? BigInt(j) : j;
         o |= ((a >> ni) << nj);
       }
     } else if(op == 45) {
       // popcount
-      o = n0;
+      o = math.n0;
       if(a >= 0) {
         while(a > 0) {
-          if(a & n1) o++;
-          a >>= n1;
+          if(a & math.n1) o++;
+          a >>= math.n1;
         }
       } else {
         overflow = true; // popcount not supported for negative numbers. TODO: support it, use twos complement notation (will do same as unsigned popcount operation then)
@@ -3045,190 +3215,81 @@ function Alu() {
       // count leading zeroes
       for(var i = 0; i < this.numa; i++) {
         var j = this.numa - i - 1;
-        var nj = usebigint ? BigInt(j) : j;
-        if((a >> nj) & n1) break;
+        var nj = math.supportbigint ? BigInt(j) : j;
+        if((a >> nj) & math.n1) break;
         o++;
       }
       if(a == 0) overflow = true; // some usages may want to special case this
     } else if(op == 47) {
       // count trailing zeroes
       for(var i = 0; i < this.numa; i++) {
-        var ni = usebigint ? BigInt(i) : i;
-        if((a >> ni) & n1) break;
+        var ni = math.supportbigint ? BigInt(i) : i;
+        if((a >> ni) & math.n1) break;
         o++;
       }
       if(a == 0) overflow = true; // some usages may want to special case this
     } else if(op == 48) {
-      // integer power
-      if(b < 0) {
-        if(a == 0) {
-          o = n0;
-          overflow = true;
-        } else if(a == 1) {
-          o = n1;
-        } else if(a == -1) {
-          o = (b & n1) ? n_1 : n_1;
-        } else {
-          o = n0;
-        }
-      } else if(b == 0) {
-        o = n1;
+      if((b < 0 && a == 0) || (this.numc && c == 0)) {
+        overflow = true;
+        o = math.n0;
       } else {
-        var neg = a < 0;
-        if(neg) a = -a;
-        if(this.numc) {
-          // use modpow with the third input as the modulo: a useful operation
-          // in case integer power modulo e.g. a prime is desired
-          if(c <= 0) {
-            overflow = true;
-          } else {
-            o = n1;
-            var a2 = a % c;
-            while(b > 0) {
-              if(b & n1) o = ((o * a2) % c);
-              b >>= n1;
-              a2 = ((a2 * a2) % c);
-            }
-          }
-        } else {
-          // use modpow (power modulo the max output value) to get accurate
-          // values
-          var mask = usebigint ? ((n1 << BigInt(this.numo)) - n1) : ((1 << this.numo) - 1);
-          o = n1;
-          var a2 = a & mask;
-          while(b > 0) {
-            if(b & n1) o = ((o * a2) & mask);
-            b >>= n1;
-            a2 = ((a2 * a2) & mask);
-          }
-        }
-        if(neg && (b & n1)) {
-          o = -o;
-        }
+        var m = this.numc ? c : ((math.n1 << math.B(this.numo)) - math.n1);
+        o = math.modpow(a, b, m);
       }
     } else if(op == 52) {
-      o = gcd(a, b);
+      o = math.gcd(a, b);
     } else if(op == 53) {
-      o = gcd(a, b);
+      o = math.gcd(a, b);
       if(o != 0) o = a * b / o;
       else overflow = true;
     } else if(op == 56) {
       // modular inverse, modulo 2^outputbits if 1-input op, module b if 2-input op
-      if(this.numb == 0) b = usebigint ? (n1 << BigInt(this.numo)) : (1 << this.numo);
+      if(this.numb == 0) b = (math.n1 << math.B(this.numo));
       if(a == 0 || b == 0) {
         overflow = true;
       } else {
-        var b0 = b;
-        var x = n1, y = n0;
-        for(;;) {
-          if(a == 1) { o = x; break; }
-          if(a == 0) { o = n0; break; }
-          var d = b / a;
-          if(!usebigint) d = Math.floor(d);
-          var m = b - d * a; // modulo (matching floored division)
-          y -= x * d;
-          b = m;
-
-          if(b == 1) { o = y; break; }
-          if(b == 0) { o = n0; break; }
-          d = a / b;
-          if(!usebigint) d = Math.floor(d);
-          m = a - d * b; // modulo (matching floored division)
-          x -= y * d;
-          a = m;
-        }
-        if(o < 0) o = b0 + o;
+        o = math.modinv(a, b);
       }
     } else if(op == 57) {
       // integer log2
-      o = n0;
+      o = math.n0;
       if(a <= 0) {
         overflow = true;
       } else {
-        o--;
-        while(a > 0) {
-          o++;
-          a >>= n1;
-        }
+        o = math.log2(a);
       }
     } else if(op == 58) {
       // integer sqrt
-      o = n0;
+      o = math.n0;
       if(a < 0) {
         overflow = true;
       } else {
-        var s = n2;
-        var as = a >> s;
-        while(as != 0) {
-          s += n2;
-          as = a >> s;
-        }
-        while(s >= 0) {
-          o <<= n1;
-          var c2 = o + n1;
-          if(c2 * c2 <= (a >> s)) {
-            o = c2;
-          }
-          s -= n2;
-        }
+        o = math.log2(a);
       }
     } else if(op == 59) {
       // factorial. Limited to a size to keep it reasonable.
       // modulo b if a second input is present.
-
-      // if a/2 is larger than amount of output bits (and we're not doing modulo b),
-      // then we know that all visible output bits will be 0, due to the amount of
-      // factors '2' in the result. So no need to compute then, plus also
-      // indicate overflow
-      var allzeroes = !this.numb && (a > this.numo * 2);
-      if(a < 0 || a > 4096 || allzeroes) {
+      if(a > 16384) {
         overflow = true;
       } else {
-        o = n1;
-        if(this.numb) {
-          if(b == 0) {
-            overflow = true;
-          } else {
-            if(a >= b) {
-              // result is guaranteed to be 0, since the modulo itself will be
-              // contained in the factors when a >= b. So no need to compute.
-            } else {
-              for(var i = n2; i <= a; i++) {
-                o *= i;
-                o = mod(o, b);
-                // once the modulo operation made the result 0, which can easily happen as soon
-                // as we passed all the prime factors of b, we can stop since the result is
-                // guaranteed to stay 0.
-                if(o == 0) break;
-                // note: overflow flag not used for this since when using the second modulo
-                // input, it's deliberate.
-              }
-            }
-          }
-        } else {
-          var mask = usebigint ? ((n1 << BigInt(this.numo)) - n1) : ((1 << this.numo) - 1);
-          for(var i = n2; i <= a; i++) {
-            o *= i;
-            if(o >= mask) {
-              overflow = true;
-              o &= mask;
-              if(o == 0) break;
-            }
-          }
-        }
+        if(this.numb == 0) b = (math.n1 << math.B(this.numo));
+        var f = math.factorial(a, b, (this.numb != 0));
+        o = f[0];
+        overflow = f[1];
       }
     } else if(op == 60) {
+      // sine, with full input period scaled in the full integer range, and scaled output to fit full output integer range
       // TODO: support signed
       var f = Number(a) * Math.PI * 2.0 / ((1 << this.numa) - 0);
       f = Math.sin(f);
       f = (f + 1.0) / 2.0; // make in range 0..1 instead of -1..1
       o = Math.floor(f * (Math.pow(2, this.numo) - 1));
-      if(usebigint) o = BigInt(o);
+      if(math.supportbigint) o = BigInt(o);
     } else {
-      o = n0;
+      o = math.n0;
     }
 
-    if(usebigint) {
+    if(math.supportbigint) {
       if(o < 0) {
         if(o < BigInt.asIntN(this.numo, o)) overflow = true;
       } else {
@@ -3236,8 +3297,8 @@ function Alu() {
       }
       o = BigInt.asUintN(this.numo, o);
       for(var i = 0; i < this.numo; i++) {
-        if(o & n1) this.output[i] = 1;
-        o >>= n1;
+        if(o & math.n1) this.output[i] = 1;
+        o >>= math.n1;
       }
       if((overflow) && this.nummiscout) this.output[this.numo] = 1; // overflow. In case of add, this can serve as carry if you have exactly 1 output too short.
     } else {
@@ -3300,6 +3361,7 @@ function Alu() {
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
+        c.isalutext = true;
         //if(c.circuitsymbol != 'U') continue; // only numbers next to U count, not next to extenders
         // due to the parsing, a multidigit number will show up as lower single digits here and there.
         if(c.number > found) {
@@ -3342,6 +3404,7 @@ function Alu() {
         var y = labely;
         var c = world[y][x];
         c.labelsymbol = opname[i];
+        c.isalutext = true;
       }
     } else {
       // try vertical
@@ -3366,6 +3429,7 @@ function Alu() {
           var y = labely + i + 1;
           var c = world[y][x];
           c.labelsymbol = opname[i];
+          c.isalutext = true;
         }
       }
     }
@@ -3706,12 +3770,6 @@ function VTE() {
   // Assumes the component has already updated all inputs according to the UPDATE_ALGORITHM and gotten the input values from it
   // Inputs are MSB to LSB
   this.update = function(inputs) {
-
-    var n0 = supportbigint ? BigInt(0) : 0;
-    var n1 = supportbigint ? BigInt(1) : 1;
-    var n2 = supportbigint ? BigInt(2) : 2;
-
-
     if(this.counter) {
       var x = this.x1 - this.x0 - 1;
       var y = this.y1 - this.y0 - 1;
@@ -3740,12 +3798,12 @@ function VTE() {
       return;
     }
     if(this.decimaldisplay) {
-      var index = n0;
-      var mul = n1;
+      var index = math.n0;
+      var mul = math.n1;
       for(var i = 0; i < this.numinputs; i++) {
-        var ip = supportbigint ? BigInt(inputs[i]) : inputs[i];
+        var ip = math.supportbigint ? BigInt(inputs[i]) : inputs[i];
         index += ip * mul;
-        mul *= n2;
+        mul *= math.n2;
       }
       var x = this.x1 - this.x0 - 1;
       var y = this.y1 - this.y0 - 1;
@@ -3767,13 +3825,13 @@ function VTE() {
     }
     if(this.decimalinput) {
       var s = '';
-      var x = n0;
-      var y = n0;
+      var x = math.n0;
+      var y = math.n0;
       for(var i = 0; i < this.numoutputs; i++) {
         var c = this.text[y][x];
         s += c;
         x++;
-        if(x >= this.x1 - this.x0) { x = n0; y++; }
+        if(x >= this.x1 - this.x0) { x = math.n0; y++; }
       }
       s = s.trim();
 
@@ -3787,11 +3845,11 @@ function VTE() {
         }
       }
 
-      var index = n0;
+      var index = math.n0;
       for(;;) {
         if(s.length == 0) break;
         var hex = s[0] == '0' && (s[1] == 'x' || s[1] == 'X');
-        if(supportbigint) {
+        if(math.supportbigint) {
           // BigInt throws exception if string contains invalid characters so extract a valid number part.
           if(hex) {
             s = s.match(/..[0-9a-fA-F]+/);
@@ -3807,8 +3865,8 @@ function VTE() {
           if(hex) index = parseInt(s);
           else index = parseInt(s, 10);
         }
-        var ni = supportbigint ? BigInt(this.numoutputs) : this.numoutputs;
-        var maxval = (n1 << ni) - n1;
+        var ni = math.supportbigint ? BigInt(this.numoutputs) : this.numoutputs;
+        var maxval = (math.n1 << ni) - math.n1;
         if(index <= maxval) break;
 
         // typed number too high, remove last character typed
@@ -3816,12 +3874,12 @@ function VTE() {
         s = s.substr(0, s.length - 1);
       }
 
-      var mul = n1;
+      var mul = math.n1;
       for(var i = 0; i < this.numoutputs; i++) {
         var bit = ((index & mul) ? 1 : 0);
         if(index < 0 && (1 << i) > -index) bit = 1; // also supports negative numbers with twos complement
         this.output[i] = bit;
-        mul *= n2;
+        mul *= math.n2;
       }
       return;
     }
@@ -6061,6 +6119,7 @@ function Cell() {
   this.antennay = -1; // vertical matching antenna, if any
   this.drawchip = false; // TODO: this feature is now ignored! stop setting this field and remove it. -- when drawing the 'i' of a chip in canvas mode, only do it if this is true, it indicates a good looking "core" cell for it (next to number, ...)
   this.isvte = false; // for drawing
+  this.isalutext = false; // for drawing. This makes the cell always display as "on". This is done for the text labels on an ALU with the op name, because otherwise the op name is harder to read (contrast), and also changes color per character depending on whether there happen to be individual outputs there, which is undesired.
   this.clusterindex = -1; // for components connected together with extenders '#'
 
   this.renderer = null;
@@ -6084,6 +6143,10 @@ function Cell() {
       // with buses, some digits light up in confusing ways, so
       // disable them altogether
       value = false;
+    }
+
+    if(this.isalutext) {
+      value = true;
     }
 
     if(this.isvte) {
