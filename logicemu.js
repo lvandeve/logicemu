@@ -512,7 +512,11 @@ var LogicEmuMath = (function() {
   var n0 = B(0); result.n0 = n0;
   var n1 = B(1); result.n1 = n1;
   var n2 = B(2); result.n2 = n2;
+  var n3 = B(3); result.n3 = n3;
   var n4 = B(4); result.n4 = n4;
+  var n5 = B(5); result.n5 = n5;
+  var n6 = B(6); result.n6 = n6;
+  var n7 = B(7); result.n7 = n7;
   var n10 = B(10); result.n10 = n10;
   var n15 = B(15); result.n15 = n15;
 
@@ -551,6 +555,13 @@ var LogicEmuMath = (function() {
   };
   result.floordiv = floordiv;
 
+  // only for positive integers, so slightly faster due to less checks.
+  var intdiv = function(a, b) {
+    if(b == 0) return n0;
+    if(!supportbigint) return Math.floor(a / b);
+    return a / b;
+  };
+
   // a modulo b, matching floored division (not matching truncated division, like the % operation does)
   var mod = function(a, b) {
     var negb = (b < 0);
@@ -563,6 +574,36 @@ var LogicEmuMath = (function() {
     return a;
   };
   result.mod = mod;
+
+  // in case BigInt is not supported, this function helps to support shifting up to 2**53 instead of just up to 2**31
+  var rshift = supportbigint ? function(n) { return n >> n1; } : function(n) { return Math.floor(n / 2); };
+
+  // returns (a + b) % c, taking overflow into account (in JS, overflow means reaching a part in the floating point representation where it can no longer distinguish 1)
+  var modadd = supportbigint ?
+      function(a, b, c) { return (a + b) % c; } :
+      function(a, b, c) {
+    if (a + b < 9007199254740992) return (a + b) % c;
+    if(a + b > c) {
+      return (a - c + b) % c;
+    }
+    // This assumes that c < 4503599627370496 or a + b doesn't overflow
+    return ((a % c) + (b % c)) % c;
+  };
+
+  // returns (a * b) % c, taking overflow into account
+  var modmul = supportbigint ?
+      function(a, b, c) { return (a * b) % c; } :
+      function(a, b, c) {
+    if(a * b < 9007199254740992) return (a * b) % c;
+    var x = 0;
+    var y = a % c;
+    while(b > 0) {
+      if(b & 1) x = modadd(x, y, c);
+      y = modadd(y, y, c);
+      b = Math.floor(b / 2);
+    }
+    return x % c;
+  };
 
   // Computes integer power (a**b) modulo m.
   // Handles error cases as follows:
@@ -595,16 +636,16 @@ var LogicEmuMath = (function() {
         a &= mask;
         while(b > 0) {
           if(b & n1) r = ((r * a) & mask);
-          b >>= n1;
+          b = rshift(b);
           a = ((a * a) & mask);
         }
       } else {
         r = n1;
         a %= m;
         while(b > 0) {
-          if(b & n1) r = ((r * a) % m);
-          b >>= n1;
-          a = ((a * a) % m);
+          if(b & n1) r = modmul(r, a, m);
+          b = rshift(b);
+          a = modmul(a, a, m);
         }
       }
       if(neg && (b & n1)) {
@@ -614,6 +655,60 @@ var LogicEmuMath = (function() {
     }
   };
   result.modpow = modpow;
+
+
+  // returns floored integer log b of a (e.g. b = 2 gives log2)
+  // that is, returns largest integer k such that b**k <= a
+  // error cases: returns 0 if a <= 0 or b <= 1
+  var intlog = function(a, b) {
+    if(b <= 1) return n0;
+    if(a <= 1) return n0;
+    if(a == b) return n1;
+    var r = n0;
+    while(a > 0) {
+      r++;
+      a = intdiv(a, b);
+    }
+    return r - n1;
+  };
+  result.intlog = intlog;
+
+
+  // computes floored integer root b of a (e.g. b = 2 gives sqrt, b=3 gives cbrt)
+  // that is, computes largest integer k such that k**b <= a
+  // b must be positive integer
+  // returns array with [result, boolean error]
+  var introot = function(a, b) {
+    if(b <= 0) return [n0, true];
+    if(b == 1) return [a, false];
+    var neg = a < 0;
+    if(neg && !(b & n1)) return [n0, true];
+    if(neg) a = -a;
+
+    //if n is bigger than log2(a), the result is smaller than 2
+    var l = log2(a);
+    if(l == 0) return [n0, true];
+    if(b > l) return [neg ? n_1 : n1, false];
+
+    var low = n0;
+    // high must be higher than the solution (not equal), otherwise the comparisons below don't work correctly.
+    // estimate for higher bound: exact non-integer solution of a ^ (1 / b) is 2 ** (log2(a) / b)
+    // integer approximation: ensure to use ceil of log2(a)/b to have higher upper bound, and add 1 to be sure it's higher.
+    // ceil of log2(a) is l + 1, and ceil of (l + 1) / b is intdiv(l + b + 1 - 1, b)
+    var high = (n2 ** intdiv(l + b, b)) + n1;
+    var r;
+    for (;;) {
+      var r = (low + high) >> n1;
+      var rr = r ** b;
+      if(rr == a) return [neg ? -r : r, false];
+      else if(rr < a) low = r;
+      else high = r;
+      if(high <= low + n1) {
+        return [neg ? -low : low, false];
+      }
+    }
+  };
+  result.introot = introot;
 
   // integer modular inverse 1 / a modulo b
   // error cases: if a is 0 or m <= 0, returns 0
@@ -745,10 +840,151 @@ var LogicEmuMath = (function() {
   };
   result.factorial = factorial;
 
+  // return array of [isprime, error]
+  var isprime = function(n) {
+    if(n < 2) return [false, false];
+    if((n & n1) == 0) return [(n == 2) ? true : false, false];
+    if((n % n3) == 0) return [(n == 3) ? true : false, false];
+    if((n % n5) == 0) return [(n == 5) ? true : false, false];
+    if((n % n7) == 0) return [(n == 7) ? true : false, false];
+    if(!supportbigint && n > 9007199254740991) return [false, true];
+    if(supportbigint && n.toString(16).length > 180) return [false, true]; // too slow for running inside LogicEmu components
+
+    if(n < 1500000) {
+      if(supportbigint) n = Number(n); // no need for BigInt for this part
+      var s = Math.ceil(Math.sqrt(n)) + 6;
+      p = Math.floor(7 / 6) * 6;
+      while(p < s) {
+        if(n % (p - 1) == 0 || n % (p + 1) == 0) return [false, false];
+        p += 6;
+      }
+      return [true, false];
+    } else {
+      // Miller-Rabin
+      var base;
+      if(n < 1373653) base = [2, 3];
+      else if(n < 9080191) base = [31, 73];
+      else if(n < 4759123141) base = [2, 7, 61];
+      else if(n < 1122004669633) base = [2, 13, 23, 1662803];
+      else if(n < 2152302898747) base = [2, 3, 5, 7, 11];
+      else if(n < 3474749660383) base = [2, 3, 5, 7, 11, 13];
+      else if(n < 341550071728321) base = [2, 3, 5, 7, 11, 13, 17];
+      else if(n < 3770579582154547) base = [2, 2570940, 880937, 610386380, 4130785767];
+      else base = [2, 325, 9375, 28178, 450775, 9780504, 1795265022]; //valid up to >2^64
+      for(var i = 0; i < base.length; i++) base[i] = B(base[i]);
+
+      var d = rshift(n);
+      var s = n1;
+      while(!(d & n1)) {
+        d = rshift(d);
+        ++s;
+      }
+
+      var witness = function(n, s, d, a) {
+        var x = modpow(a, d, n);
+        var y;
+        while(s) {
+          y = modmul(x, x, n);
+          if(y == n1 && x != n1 && x != n - n1) return [false, false];
+          x = y;
+          s--;
+        }
+        return y == 1;
+      };
+
+      for(var i = 0; i < base.length; i++) {
+        if(!witness(n, s, d, base[i])) return [false, false];
+      }
+      return [true, false];
+    }
+  };
+  result.isprime = isprime;
+
+  // returns -1 if error
+  var nextprime = function(n) {
+    if(n < 2) return n2;
+    if(n < 3) return n3;
+    if(!supportbigint && n >= 9007199254740881) return n_1;
+    if(supportbigint && n.toString(16).length > 180) return n_1; // too slow for running inside LogicEmu components
+
+    var m = n % n6;
+    var step = n2;
+    if(m == 0 || m == 5) {
+      n += (m == 0 ? n1 : n2);
+      step = n4;
+    } else {
+      n += (n5 - m);
+    }
+    for(;;) {
+      var p = isprime(n);
+      if(p[1]) return n_1; // error
+      if(p[0]) return n;
+      n += step;
+      step ^= n6; //swap step between 2 and 4
+    }
+  };
+  result.nextprime = nextprime;
+
+  // returns -1 if error
+  var prevprime = function(n) {
+    if(n <= 2) return n_1; // there is no lower prime
+    if(n <= 3) return n2;
+    if(n <= 5) return n3;
+    if(n <= 7) return n5;
+    if(!supportbigint && n >= 9007199254740881) return n_1; // not supported if no BigInt
+    if(supportbigint && n.toString(16).length > 180) return n_1; // too slow for running inside LogicEmu components
+
+    var m = n % n6;
+    var step = n2;
+    if(m == 0 || m == 1) {
+      n -= (m + n1);
+      step = n4;
+    } else {
+      n -= (m - n1);
+    }
+    for(;;) {
+      var p = isprime(n);
+      if(p[1]) return n_1; // error
+      if(p[0]) return n;
+      n -= step;
+      step ^= n6; //swap step between 2 and 4
+    }
+  };
+  result.prevprime = prevprime;
+
+  // returns the highest possible exponent if the number is a perfect power (>= 2), or 0 if not.
+  // e.g. if n is 8, returns 3 because 2^3 is 8, if n is 10 returns 0.
+  var perfectpow = function(n) {
+    if(n <= 3) return n0;
+    var l2 = log2(n);
+    for(var i = l2; i >= 2; i--) {
+      var s = introot(n, i)[0];
+
+      if(s ** i == n) return i;
+    }
+
+    return n0;
+  };
+  result.perfectpow = perfectpow;
+
+  var binomtoobig = supportbigint ? (n1 << B(65536)) : 9007199254740992;
+
+  var binomial = function(n, k) {
+    if(k > n) return n0;
+    if(n == k || k == 0) return n1;
+    if(k * n2 > n) k = n - k;
+    var r = n - k + n1;
+    for(var i = n2; i <= k; i++) {
+      r *= (n - k + i);
+      r /= i;
+      if(r > binomtoobig) return n0; // bail out
+    }
+    return r;
+  };
+  result.binomial = binomial;
 
   return result;
 }());
-
 
 var math = LogicEmuMath;
 
@@ -2812,12 +3048,12 @@ function Alu() {
         case 13: return 'impb';
         case 14: return 'nand';
         case 15: return 'ones';
-        case 16: return 'eq';
-        case 17: return 'lt';
-        case 18: return 'lte';
-        case 19: return 'neq';
-        case 20: return 'gte';
-        case 21: return 'gt';
+        case 16: return this.numb ? 'eq' : 'eq0';
+        case 17: return this.numb ? 'lt' : 'lt0';
+        case 18: return this.numb ? 'lte' : 'lte0';
+        case 19: return this.numb ? 'neq' : 'neq0';
+        case 20: return this.numb ? 'gte' : 'gte0';
+        case 21: return this.numb ? 'gt' : 'gt0';
         case 22: return 'min';
         case 23: return 'max';
         case 24: return 'add';
@@ -2831,27 +3067,33 @@ function Alu() {
         case 33: return 'dec';
         case 34: return 'neg';
         case 35: return 'abs';
-        case 36: return 'sign';
-        case 38: return '2bcd';
-        case 39: return 'bcd2';
+        case 36: return this.numb ? 'csgn' : 'sign';
         case 40: return 'lsh';
         case 41: return 'rsh';
         case 42: return 'rlsh';
         case 43: return 'rrsh';
         case 44: return 'mirr';
-        case 45: return 'popc';
-        case 46: return 'clz';
-        case 47: return 'ctz';
-        case 48: return 'pow';
-        //case 49: return 'log';
-        //case 50: return 'root';
-        case 52: return 'gcd';
-        case 53: return 'lcm';
+        case 48: return this.numc ? 'powm' : 'pow';
+        case 49: return this.numb ? 'log' : 'log2';
+        case 50: return this.numb ? 'root' : 'sqrt';
         case 56: return 'minv';
-        case 57: return 'log2';
-        case 58: return 'sqrt';
+        case 57: return 'gcd';
+        case 58: return 'lcm';
         case 59: return 'fact';
-        case 60: return 'sin';
+        case 60: return 'binm';
+        case 61: return 'ppow';
+        case 64: return 'prim';
+        case 65: return 'npr';
+        case 66: return 'ppr';
+        case 72: return 'clz';
+        case 73: return 'ctz';
+        case 74: return 'popc';
+        case 78: return '2bcd';
+        case 79: return 'bcd2';
+        case 80: return 'sin';
+        case 81: return 'asin';
+        //case 82: return 'ln';
+        //case 83: return 'exp';
         default: return 'unk';
     }
   };
@@ -2874,12 +3116,12 @@ function Alu() {
         case 13: return 'a imply b';
         case 14: return 'bitnand';
         case 15: return 'all ones';
-        case 16: return this.numc ? 'equals modulo third input' : 'equals';
-        case 17: return 'lesser than';
-        case 18: return 'lesser than or equals';
-        case 19: return this.numc ? 'not equals modulo third input' : 'not equals';
-        case 20: return 'greater than or equals';
-        case 21: return 'greater than';
+        case 16: return this.numc ? 'equals modulo third input' : (this.numb ? 'equals' : 'equals 0');
+        case 17: return (this.numb ? 'lesser than' : 'lesser than 0');
+        case 18: return (this.numb ? 'lesser than or equals' : 'lesser than or equals 0');
+        case 19: return this.numc ? 'not equals modulo third input' : (this.numb ? 'not equals' : 'not equal to 0');
+        case 20: return (this.numb ? 'greater than or equals' : 'greater than or equals 0');
+        case 21: return (this.numb ? 'greater than' : 'greater than 0');
         case 22: return 'minimum';
         case 23: return 'maximum';
         case 24: return this.numc ? 'add modulo third input' : 'add';
@@ -2894,26 +3136,33 @@ function Alu() {
         case 34: return 'negate';
         case 35: return 'absolute value';
         case 36: return this.numb ? 'copysign' : 'sign';
-        case 38: return 'binary to bcd (binary coded decimal)';
-        case 39: return 'bcd to binary (bcd = binary coded decimal)';
         case 40: return 'left shift';
         case 41: return 'right shift';
         case 42: return 'rotating left shift';
         case 43: return 'rotating right shift';
         case 44: return 'mirror bits';
-        case 45: return 'popcount';
-        case 46: return 'count leading zeros';
-        case 47: return 'count trailing zeros';
         case 48: return this.numc ? 'integer power modulo third input' : 'integer power';
-        //case 49: return 'integer log';
-        //case 50: return 'integer root';
-        case 52: return 'greatest common divider';
-        case 53: return 'least common multiple';
-        case 56: return this.numb ? 'modular inverse (modulo output size)' : 'modular inverse';
-        case 57: return 'integer base-2 logarithm';
-        case 58: return 'integer square root';
         case 59: return this.numb ? 'factorial modulo second input' : 'factorial';
-        case 60: return 'sine (scaled)';
+        case 60: return 'binomial coefficient';
+        case 61: return 'perfect power (if so, outputs exponent)';
+        case 49: return this.numb ? 'integer log' : 'log2';
+        case 50: return this.numb ? 'integer root' : 'sqrt';
+        case 56: return this.numb ? 'modular inverse (modulo output size)' : 'modular inverse';
+        case 57: return 'greatest common divider';
+        case 58: return 'least common multiple';
+        case 59: return 'factorial';
+        case 64: return 'is prime';
+        case 65: return 'next prime';
+        case 66: return 'previous prime';
+        case 72: return 'count leading zeros';
+        case 73: return 'count trailing zeros';
+        case 74: return 'popcount';
+        case 78: return 'binary to bcd (binary coded decimal)';
+        case 79: return 'bcd to binary (bcd = binary coded decimal)';
+        case 80: return 'sine (scaled)';
+        case 81: return 'arcsine (scaled)';
+        //case 82: return 'ln (scaled)';
+        //case 83: return 'exp (scaled)';
         default: return 'unknown';
     }
   };
@@ -3150,36 +3399,15 @@ function Alu() {
         // sign
         o = (a == 0) ? math.n0 : ((a > 0) ? math.n1 : math.n_1);
       }
-    } else if(op == 38) {
-      // binary to bcd
-      var neg = a < 0;
-      if(neg) a = -a;
-      var s = math.n0;
-      while(a > 0) {
-        var m = a % math.n10;
-        o |= (m << s);
-        s += math.n4;
-        a = math.supportbigint ? (a / math.n10) : Math.floor(a / 10);
-      }
-      if(neg) s |= (math.n1 << s);
-    } else if(op == 39) {
-      // bcd to binary
-      var neg = a < 0;
-      if(neg) a = -a;
-      var s = math.n1;
-      while(a > 0) {
-        var m = a & math.n15;
-        o += (m * s);
-        s *= math.n10;
-        a >>= math.n4;
-      }
-      if(neg) s |= (math.n1 << s);
     } else if(op == 40) {
+      if(!this.numb) b = math.n1;
       o = a << b;
     } else if(op == 41) {
+      if(!this.numb) b = math.n1;
       o = a >> b;
     } else if(op == 42) {
       // left rotating shift
+      if(!this.numb) b = math.n1;
       if(math.supportbigint) {
         o = (a << b) | (a >> (BigInt(this.numa) - b));
       } else {
@@ -3187,6 +3415,7 @@ function Alu() {
       }
     } else if(op == 43) {
       // right rotating shift
+      if(!this.numb) b = math.n1;
       if(math.supportbigint) {
         o = (a >> b) | (a << (BigInt(this.numa) - b));
       } else {
@@ -3200,34 +3429,6 @@ function Alu() {
         var nj = math.supportbigint ? BigInt(j) : j;
         o |= ((a >> ni) << nj);
       }
-    } else if(op == 45) {
-      // popcount
-      o = math.n0;
-      if(a >= 0) {
-        while(a > 0) {
-          if(a & math.n1) o++;
-          a >>= math.n1;
-        }
-      } else {
-        overflow = true; // popcount not supported for negative numbers. TODO: support it, use twos complement notation (will do same as unsigned popcount operation then)
-      }
-    } else if(op == 46) {
-      // count leading zeroes
-      for(var i = 0; i < this.numa; i++) {
-        var j = this.numa - i - 1;
-        var nj = math.supportbigint ? BigInt(j) : j;
-        if((a >> nj) & math.n1) break;
-        o++;
-      }
-      if(a == 0) overflow = true; // some usages may want to special case this
-    } else if(op == 47) {
-      // count trailing zeroes
-      for(var i = 0; i < this.numa; i++) {
-        var ni = math.supportbigint ? BigInt(i) : i;
-        if((a >> ni) & math.n1) break;
-        o++;
-      }
-      if(a == 0) overflow = true; // some usages may want to special case this
     } else if(op == 48) {
       if((b < 0 && a == 0) || (this.numc && c == 0)) {
         overflow = true;
@@ -3236,12 +3437,37 @@ function Alu() {
         var m = this.numc ? c : ((math.n1 << math.B(this.numo)) - math.n1);
         o = math.modpow(a, b, m);
       }
-    } else if(op == 52) {
-      o = math.gcd(a, b);
-    } else if(op == 53) {
-      o = math.gcd(a, b);
-      if(o != 0) o = a * b / o;
-      else overflow = true;
+    } else if(op == 49) {
+      if(this.numb > 0) {
+        o = math.n0;
+        if(a <= 0) {
+          overflow = true;
+        } else {
+          o = math.intlog(a, b);
+        }
+      } else {
+        // integer log2
+        o = math.n0;
+        if(a <= 0) {
+          overflow = true;
+        } else {
+          o = math.log2(a);
+        }
+      }
+    } else if(op == 50) {
+      if(this.numb > 0) {
+        var l = math.introot(a, b);
+        o = l[0];
+        if(l[1]) overflow = true; // error condition
+      } else {
+        // integer sqrt
+        o = math.n0;
+        if(a < 0) {
+          overflow = true;
+        } else {
+          o = math.log2(a);
+        }
+      }
     } else if(op == 56) {
       // modular inverse, modulo 2^outputbits if 1-input op, module b if 2-input op
       if(this.numb == 0) b = (math.n1 << math.B(this.numo));
@@ -3251,21 +3477,11 @@ function Alu() {
         o = math.modinv(a, b);
       }
     } else if(op == 57) {
-      // integer log2
-      o = math.n0;
-      if(a <= 0) {
-        overflow = true;
-      } else {
-        o = math.log2(a);
-      }
+      o = math.gcd(a, b);
     } else if(op == 58) {
-      // integer sqrt
-      o = math.n0;
-      if(a < 0) {
-        overflow = true;
-      } else {
-        o = math.log2(a);
-      }
+      o = math.gcd(a, b);
+      if(o != 0) o = a * b / o;
+      else overflow = true;
     } else if(op == 59) {
       // factorial. Limited to a size to keep it reasonable.
       // modulo b if a second input is present.
@@ -3278,13 +3494,101 @@ function Alu() {
         overflow = f[1];
       }
     } else if(op == 60) {
+      o = math.binomial(a, b);
+      if(o == 0) overflow = true;
+    } else if(op == 61) {
+      o = math.perfectpow(a);
+    } else if(op == 64) {
+      p = math.isprime(a, b);
+      if(p[1]) {
+        overflow = true;
+      } else {
+        o = p[0] ? math.n1 : math.n0;
+      }
+    } else if(op == 65) {
+      p = math.nextprime(a, b);
+      if(p == -1) {
+        overflow = true;
+      } else {
+        o = p;
+      }
+    } else if(op == 66) {
+      p = math.prevprime(a, b);
+      if(p == -1) {
+        overflow = true;
+      } else {
+        o = p;
+      }
+    } else if(op == 72) {
+      // count leading zeroes (clz)
+      for(var i = 0; i < this.numa; i++) {
+        var j = this.numa - i - 1;
+        var nj = math.supportbigint ? BigInt(j) : j;
+        if((a >> nj) & math.n1) break;
+        o++;
+      }
+      if(a == 0) overflow = true; // some usages may want to special case this
+    } else if(op == 73) {
+      // count trailing zeroes (ctz)
+      for(var i = 0; i < this.numa; i++) {
+        var ni = math.supportbigint ? BigInt(i) : i;
+        if((a >> ni) & math.n1) break;
+        o++;
+      }
+      if(a == 0) overflow = true; // some usages may want to special case this
+    } else if(op == 74) {
+      // popcount
+      o = math.n0;
+      if(a >= 0) {
+        while(a > 0) {
+          if(a & math.n1) o++;
+          a >>= math.n1;
+        }
+      } else {
+        overflow = true; // popcount not supported for negative numbers. TODO: support it, use twos complement notation (will do same as unsigned popcount operation then)
+      }
+    } else if(op == 78) {
+      // binary to bcd
+      var neg = a < 0;
+      if(neg) a = -a;
+      var s = math.n0;
+      while(a > 0) {
+        var m = a % math.n10;
+        o |= (m << s);
+        s += math.n4;
+        a = math.supportbigint ? (a / math.n10) : Math.floor(a / 10);
+      }
+      if(neg) s |= (math.n1 << s);
+    } else if(op == 79) {
+      // bcd to binary
+      var neg = a < 0;
+      if(neg) a = -a;
+      var s = math.n1;
+      while(a > 0) {
+        var m = a & math.n15;
+        o += (m * s);
+        s *= math.n10;
+        a >>= math.n4;
+      }
+      if(neg) s |= (math.n1 << s);
+    } else if(op == 80) {
       // sine, with full input period scaled in the full integer range, and scaled output to fit full output integer range
-      // TODO: support signed
+      if(signed) a += (math.n1 << math.B(this.numa - 1));
       var f = Number(a) * Math.PI * 2.0 / ((1 << this.numa) - 0);
       f = Math.sin(f);
       f = (f + 1.0) / 2.0; // make in range 0..1 instead of -1..1
       o = Math.floor(f * (Math.pow(2, this.numo) - 1));
       if(math.supportbigint) o = BigInt(o);
+      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+    } else if(op == 81) {
+      // arcsine, with full input scaled in the full integer range, and scaled output period to fit full output integer range
+      if(signed) a += (math.n1 << math.B(this.numa - 1));
+      var f = Number(a) * 2.0 / ((1 << this.numa) - (signed ? 0 : 1)) - 1.0;
+      f = Math.asin(f);
+      f = f / (Math.PI) + 0.5; // make in range 0..1
+      o = Math.floor(f * (Math.pow(2, this.numo) - (signed ? 0 : 1)));
+      o = math.B(o);
+      if(signed) o -= (math.n1 << math.B(this.numo - 1));
     } else {
       o = math.n0;
     }
@@ -3367,69 +3671,11 @@ function Alu() {
         if(c.number > found) {
           //if(found > 0 && c.number != found) { this.setError('ambiguous: multiple different numbers'); return false; }
           this.opindex = c.number;
-          if(c.number > 64) {
-            this.opindex -= 64;
+          if(c.number >= 128) {
+            this.opindex -= 128;
             this.signed = true;
           }
           found = c.number;
-        }
-      }
-    }
-
-    // make label with operation name
-    // find a suitable location
-    var opname = this.getOpShortName();
-    var len = opname.length;
-    var labelok = false;
-    var labelx = -1;
-    var labely = -1;
-    for(var y = y0; y < y1; y++) {
-      var count = 0;
-      for(var x = x0; x < x1; x++) {
-        var c = world[y][x];
-        if(c.metasymbol == '#') count++;
-        else count = 0;
-        if(count == len + 1 || (count == len && x - len + 1 == x0)) {
-          labelok = true;
-          labelx = x - len + 1;
-          labely = y;
-          break;
-        }
-      }
-      if(labelok) break;
-    }
-    if(labelok) {
-      for(var i = 0; i < len; i++) {
-        var x = labelx + i;
-        var y = labely;
-        var c = world[y][x];
-        c.labelsymbol = opname[i];
-        c.isalutext = true;
-      }
-    } else {
-      // try vertical
-      for(var x = x0; x < x1; x++) {
-        var count = 0;
-        for(var y = y0; y < y1; y++) {
-          var c = world[y][x];
-          if(c.metasymbol == '#') count++;
-          else count = 0;
-          if(count == len + 1) {
-            labelok = true;
-            labelx = x;
-            labely = y - len;
-            break;
-          }
-        }
-        if(labelok) break;
-      }
-      if(labelok) {
-        for(var i = 0; i < len; i++) {
-          var x = labelx;
-          var y = labely + i + 1;
-          var c = world[y][x];
-          c.labelsymbol = opname[i];
-          c.isalutext = true;
         }
       }
     }
@@ -3715,6 +3961,65 @@ function Alu() {
     this.output.length = this.numo + this.nummiscout;
 
     this.sortIO(io);
+
+
+    // make label with operation name
+    // find a suitable location
+    var opname = this.getOpShortName();
+    var len = opname.length;
+    var labelok = false;
+    var labelx = -1;
+    var labely = -1;
+    for(var y = y0; y < y1; y++) {
+      var count = 0;
+      for(var x = x0; x < x1; x++) {
+        var c = world[y][x];
+        if(c.metasymbol == '#') count++;
+        else count = 0;
+        if(count == len + 1 || (count == len && x - len + 1 == x0)) {
+          labelok = true;
+          labelx = x - len + 1;
+          labely = y;
+          break;
+        }
+      }
+      if(labelok) break;
+    }
+    if(labelok) {
+      for(var i = 0; i < len; i++) {
+        var x = labelx + i;
+        var y = labely;
+        var c = world[y][x];
+        c.labelsymbol = opname[i];
+        c.isalutext = true;
+      }
+    } else {
+      // try vertical
+      for(var x = x0; x < x1; x++) {
+        var count = 0;
+        for(var y = y0; y < y1; y++) {
+          var c = world[y][x];
+          if(c.metasymbol == '#') count++;
+          else count = 0;
+          if(count == len + 1) {
+            labelok = true;
+            labelx = x;
+            labely = y - len;
+            break;
+          }
+        }
+        if(labelok) break;
+      }
+      if(labelok) {
+        for(var i = 0; i < len; i++) {
+          var x = labelx;
+          var y = labely + i + 1;
+          var c = world[y][x];
+          c.labelsymbol = opname[i];
+          c.isalutext = true;
+        }
+      }
+    }
 
     return true;
   };
@@ -6358,7 +6663,7 @@ function Cell() {
         if(alu) {
           var numinputs = (alu.numc ? 3 : (alu.numb ? 2 : 1));
           var op = alu.getOpLongName();
-          title = 'ALU (arithmetic logic unit): op: "' + op + '",  opindex: ' + alu.opindex + ', signed: ' + alu.signed + ', num inputs: ' + numinputs;
+          title = 'ALU (arithmetic logic unit): op: "' + op + '"' + (alu.signed ? ' (signed)' : '') + ',  opindex: ' + alu.opindex + ', num inputs: ' + numinputs;
         } else {
           title = 'ALU (but has error)';
         }

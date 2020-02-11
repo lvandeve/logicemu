@@ -2748,19 +2748,32 @@ SsssssS3"ASCII code in to screen"
 
 0"The numeric code tells the operation. Without number, it has operation 0."
 
-0"The operations are (the first 16 operate bitwise. Not all numbers used.):"
-0"0:zero, 1:and, 2:nimply b, 3:a, 4:nimply a, 5:b, 6:xor, 7:or,"
-0"8:nor, 9:xnor, 10:not b, 11:imply a, 12:not a, 13:imply b, 14:nand, 15:ones,"
-0"16:==, 17:<, 18:<=, 19:!=, 20:>=, 21:>, 22:min, 23:max,"
-0"24:add, 25:sub, 26:mul, 27:div, 28:remainder, 28:floored div, 29:modulo,"
-0"32:incr, 33:decr, 34:negate, 35:abs, 36:sign, 38:binary to BCD, 39:BCD to binary"
-0"40:lshift, 41:rshift, 42:rot lshift, 43:rot rshift,"
-0"44:mirror, 45:popcount, 46:count leading zeroes, 47:count trailing zeroes,"
-0"48:power, 52:gcd, 53:lcm,"
-0"56:modular inverse, 57:log2, 58:sqrt, 59:factorial, 60:sine"
+0"The operations are (note that not all numbers are used for an operation):"
 
-0"Adding 64 to the number makes the operation signed, e.g. operation 27 is"
-0"division, and operation 91 is signed division. Signed operations use twos"
+0"* bitwise operators:"
+ 0"0:zero, 1:and, 2:nimply b, 3:a, 4:nimply a, 5:b, 6:xor, 7:or,"
+ 0"8:nor, 9:xnor, 10:not b, 11:imply a, 12:not a, 13:imply b, 14:nand, 15:ones"
+0"* comparisons:"
+ 0"16:==, 17:<, 18:<=, 19:!=, 20:>=, 21:>, 22:min, 23:max"
+0"* elementary 2-input operators:"
+ 0"24:add, 25:sub, 26:mul, 27:div, 28:remainder, 28:floored div, 29:modulo"
+0"* elementary 1-input operators (sign also supports optional 2-input):"
+ 0"32:incr, 33:decr, 34:negate, 35:abs, 36:sign/copysign"
+0"* shift and permutation operations:"
+ 0"40:lshift, 41:rshift, 42:rot lshift, 43:rot rshift, 44:mirror bits"
+0"* higher operations (NOTE: some differ in type with 1 or 2 inputs):"
+ 0"48:power, 49:log2/integer log, 50:sqrt/integer root"
+0"* number theory ops (in addition, pow/mul/add with 3 inputs work modular):"
+ 0"56:modular inverse, 57:gcd, 58:lcm, 59:factorial, 60:binomial, 61:perfectpow"
+ 0"64:isprime, 65:nextprime, 66:prevprime"
+0"* bit ops"
+ 0"72:count leading zeroes (clz), 73:count trailing zeroes (ctz),74:popcount"
+ 0"78:binary to BCD, 79:BCD to binary"
+0"* transcendental functions (inputs/outputs scaled to make period/range match int range):"
+ 0"80:sine, 81:arcsine"
+
+0"Adding 128 to the number makes the operation signed, e.g. operation 27 is"
+0"division, and operation 155 is signed division. Signed operations use twos"
 0"complements"
 
 0"single-input operators such as abs or popcount will use operand A and ignore"
@@ -4621,11 +4634,25 @@ registerCircuit('ALU with 1-input operation, no side bits (U)', `
    ^^^^^^^^
    llllllll
    ^^^^^^^^
-   U45#####
+   U74#####
    ^^^^^^^^
    T#######
    ^^^^^^^^
    ssssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('ALU with 2-input operation, signed (U)', `
+
+            T#######
+            ^^^^^^^^
+            llllllll
+            ^^^^^^^^
+ l<U152#############<s
+   ^^^^^^^^ ^^^^^^^^
+   T####### T#######
+   ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss
 
 `, 'component' + componentid++);
 
@@ -6167,6 +6194,541 @@ l<--s0"There should be no space between this comment and the switch"
 0"INSERT:link:unexisting"
 
 `, 'drawtest');
+
+
+registerCircuit('All supported ALU ops (2-input)', `
+
+0"This lists all possible ALU ops, with 2 inputs attached, even for operators"
+0"that don't exist or normally take 1 input."
+
+   T### T###
+   ^^^^ ^^^^
+   3210 7654
+   gggg gggg
+   ssss ssss
+  "8421 8421"
+  "   A    B"
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U0#######<s l<U1#######<s l<U2#######<s l<U3#######<s l<U4#######<s l<U5#######<s l<U6#######<s l<U7#######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U8#######<s l<U9#######<s l<U10######<s l<U11######<s l<U12######<s l<U13######<s l<U14######<s l<U15######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U16######<s l<U17######<s l<U18######<s l<U19######<s l<U20######<s l<U21######<s l<U22######<s l<U23######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U24######<s l<U25######<s l<U26######<s l<U27######<s l<U28######<s l<U29######<s l<U30######<s l<U31######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U32######<s l<U33######<s l<U34######<s l<U35######<s l<U36######<s l<U37######<s l<U38######<s l<U39######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U40######<s l<U41######<s l<U42######<s l<U43######<s l<U44######<s l<U45######<s l<U46######<s l<U47######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U48######<s l<U49######<s l<U50######<s l<U51######<s l<U52######<s l<U53######<s l<U54######<s l<U55######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U56######<s l<U57######<s l<U58######<s l<U59######<s l<U60######<s l<U61######<s l<U62######<s l<U63######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U64######<s l<U65######<s l<U66######<s l<U67######<s l<U68######<s l<U69######<s l<U70######<s l<U71######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U72######<s l<U73######<s l<U74######<s l<U75######<s l<U76######<s l<U77######<s l<U78######<s l<U79######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U80######<s l<U81######<s l<U82######<s l<U83######<s l<U84######<s l<U85######<s l<U86######<s l<U87######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+`, 'aluall2');
+
+
+
+registerCircuit('All supported ALU ops (1-input)', `
+
+0"This lists all possible ALU ops, with 1 input attached, even for operators"
+0"that don't exist or normally take 2+ inputs."
+
+   T###
+   ^^^^
+   3210
+   gggg
+   ssss
+  "8421"
+  "   A"
+
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U0##<s l<U1##<s l<U2##<s l<U3##<s l<U4##<s l<U5##<s l<U6##<s l<U7##<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U8##<s l<U9##<s l<U10#<s l<U11#<s l<U12#<s l<U13#<s l<U14#<s l<U15#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U16#<s l<U17#<s l<U18#<s l<U19#<s l<U20#<s l<U21#<s l<U22#<s l<U23#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U24#<s l<U25#<s l<U26#<s l<U27#<s l<U28#<s l<U29#<s l<U30#<s l<U31#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U32#<s l<U33#<s l<U34#<s l<U35#<s l<U36#<s l<U37#<s l<U38#<s l<U39#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U40#<s l<U41#<s l<U42#<s l<U43#<s l<U44#<s l<U45#<s l<U46#<s l<U47#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U48#<s l<U49#<s l<U50#<s l<U51#<s l<U52#<s l<U53#<s l<U54#<s l<U55#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U56#<s l<U57#<s l<U58#<s l<U59#<s l<U60#<s l<U61#<s l<U62#<s l<U63#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U64#<s l<U65#<s l<U66#<s l<U67#<s l<U68#<s l<U69#<s l<U70#<s l<U71#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U72#<s l<U73#<s l<U74#<s l<U75#<s l<U76#<s l<U77#<s l<U78#<s l<U79#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U80#<s l<U81#<s l<U82#<s l<U83#<s l<U84#<s l<U85#<s l<U86#<s l<U87#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+`, 'aluall1');
+
+
+
+registerCircuit('All supported ALU ops (2-input signed)', `
+
+0"This lists all possible signed ALU ops, with 2 inputs attached, even for"
+0"operators that don't exist or normally take 1 input."
+
+   T### T###
+   ^^^^ ^^^^
+   3210 7654
+   gggg gggg
+   ssss ssss
+  "8421 8421"
+  "   A    B"
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U128#####<s l<U129#####<s l<U130#####<s l<U131#####<s l<U132#####<s l<U133#####<s l<U134#####<s l<U135#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U136#####<s l<U137#####<s l<U138#####<s l<U139#####<s l<U140#####<s l<U141#####<s l<U142#####<s l<U143#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U144#####<s l<U145#####<s l<U146#####<s l<U147#####<s l<U148#####<s l<U149#####<s l<U150#####<s l<U151#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U152#####<s l<U153#####<s l<U154#####<s l<U155#####<s l<U156#####<s l<U157#####<s l<U158#####<s l<U159#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U160#####<s l<U161#####<s l<U162#####<s l<U163#####<s l<U164#####<s l<U165#####<s l<U166#####<s l<U167#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U168#####<s l<U169#####<s l<U170#####<s l<U171#####<s l<U172#####<s l<U173#####<s l<U174#####<s l<U175#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U176#####<s l<U177#####<s l<U178#####<s l<U179#####<s l<U180#####<s l<U181#####<s l<U182#####<s l<U183#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U184#####<s l<U185#####<s l<U186#####<s l<U187#####<s l<U188#####<s l<U189#####<s l<U190#####<s l<U191#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U192#####<s l<U193#####<s l<U194#####<s l<U195#####<s l<U196#####<s l<U197#####<s l<U198#####<s l<U199#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U200#####<s l<U201#####<s l<U202#####<s l<U203#####<s l<U204#####<s l<U205#####<s l<U206#####<s l<U207#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U208#####<s l<U209#####<s l<U210#####<s l<U211#####<s l<U212#####<s l<U213#####<s l<U214#####<s l<U215#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+`, 'aluall2s');
+
+
+
+
+registerCircuit('All supported ALU ops (1-input, signed)', `
+
+0"This lists all possible signed ALU ops, with 1 input attached, even for operators"
+0"that don't exist or normally take 2+ inputs."
+
+   T###
+   ^^^^
+   3210
+   gggg
+   ssss
+  "8421"
+  "   A"
+
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U128<s l<U129<s l<U130<s l<U131<s l<U132<s l<U133<s l<U134<s l<U135<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U136<s l<U137<s l<U138<s l<U139<s l<U140<s l<U141<s l<U142<s l<U143<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U144<s l<U145<s l<U146<s l<U147<s l<U148<s l<U149<s l<U150<s l<U151<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U152<s l<U153<s l<U154<s l<U155<s l<U156<s l<U157<s l<U158<s l<U159<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U160<s l<U161<s l<U162<s l<U163<s l<U164<s l<U165<s l<U166<s l<U167<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U168<s l<U169<s l<U170<s l<U171<s l<U172<s l<U173<s l<U174<s l<U175<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U176<s l<U177<s l<U178<s l<U179<s l<U180<s l<U181<s l<U182<s l<U183<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U184<s l<U185<s l<U186<s l<U187<s l<U188<s l<U189<s l<U190<s l<U191<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U192<s l<U193<s l<U194<s l<U195<s l<U196<s l<U197<s l<U198<s l<U199<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U200<s l<U201<s l<U202<s l<U203<s l<U204<s l<U205<s l<U206<s l<U207<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U208<s l<U209<s l<U210<s l<U211<s l<U212<s l<U213<s l<U214<s l<U215<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+`, 'aluall1s');
+
 
 registerTitle('Front Page');
 
