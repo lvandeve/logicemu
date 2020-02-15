@@ -900,12 +900,14 @@ var LogicEmuMath = (function() {
   };
   result.isprime = isprime;
 
+  // returns smallest prime that is >= n
   // returns -1 if error
   var nextprime = function(n) {
-    if(n < 2) return n2;
-    if(n < 3) return n3;
+    if(n <= 2) return n2;
+    if(n <= 3) return n3;
     if(!supportbigint && n >= 9007199254740881) return n_1;
     if(supportbigint && n.toString(16).length > 180) return n_1; // too slow for running inside LogicEmu components
+    if(isprime(n)[0]) return n;
 
     var m = n % n6;
     var step = n2;
@@ -925,14 +927,16 @@ var LogicEmuMath = (function() {
   };
   result.nextprime = nextprime;
 
+  // returns largest prime that is <= n
   // returns -1 if error
   var prevprime = function(n) {
-    if(n <= 2) return n_1; // there is no lower prime
-    if(n <= 3) return n2;
-    if(n <= 5) return n3;
-    if(n <= 7) return n5;
-    if(!supportbigint && n >= 9007199254740881) return n_1; // not supported if no BigInt
+    if(n < 2) return n_1; // there is no lower prime
+    if(n < 3) return n2;
+    if(n < 5) return n3;
+    if(n < 7) return n5;
+    if(!supportbigint && n > 9007199254740881) return n_1; // not supported if no BigInt
     if(supportbigint && n.toString(16).length > 180) return n_1; // too slow for running inside LogicEmu components
+    if(isprime(n)[0]) return n;
 
     var m = n % n6;
     var step = n2;
@@ -952,10 +956,10 @@ var LogicEmuMath = (function() {
   };
   result.prevprime = prevprime;
 
-  // returns the highest possible exponent if the number is a perfect power (>= 2), or 0 if not.
-  // e.g. if n is 8, returns 3 because 2^3 is 8, if n is 10 returns 0.
+  // returns the highest possible exponent if the number is a perfect power (>= 2), or 1 if not.
+  // e.g. if n is 8, returns 3 because 2^3 is 8, if n is 10 returns 1.
   var perfectpow = function(n) {
-    if(n <= 3) return n0;
+    if(n <= 3) return n1;
     var l2 = log2(n);
     for(var i = l2; i >= 2; i--) {
       var s = introot(n, i)[0];
@@ -963,7 +967,7 @@ var LogicEmuMath = (function() {
       if(s ** i == n) return i;
     }
 
-    return n0;
+    return n1;
   };
   result.perfectpow = perfectpow;
 

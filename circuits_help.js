@@ -2758,7 +2758,7 @@ SsssssS3"ASCII code in to screen"
 0"* elementary 2-input operators:"
  0"24:add, 25:sub, 26:mul, 27:div, 28:remainder, 28:floored div, 29:modulo"
 0"* elementary 1-input operators (sign also supports optional 2-input):"
- 0"32:incr, 33:decr, 34:negate, 35:abs, 36:sign/copysign"
+ 0"32:increment, 33:decrement, 34:negate, 35:abs, 36:sign/copysign"
 0"* shift and permutation operations:"
  0"40:lshift, 41:rshift, 42:rot lshift, 43:rot rshift, 44:mirror bits"
 0"* higher operations (NOTE: some differ in type with 1 or 2 inputs):"
@@ -5322,7 +5322,7 @@ s>#--------->l
 
   .---------]l
 s>U---------]l
-s>3---------]l
+s>7---------]l
 S>9---------]l
 s>#--------->l
 s>#---------]l
