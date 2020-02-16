@@ -7101,7 +7101,13 @@ function RendererText() {
             // span background exactly match the size of the field, and, have the text stay perfectly inside of it.
             // Assigning the backgroundColor to div0 gives it the wrong width for styles 3, 4, 5.
             // All of this is browser dependent too.
+            // The following combination appears to work to solve 5 problems: no vertical gaps, no hidden underscores,
+            // correctly centered/right when wanted, background color only for the width of the text, and no too high
+            // span0b that partially overlaps logic gates on next line.
             span0b.style.backgroundColor = bgcolor;
+            span0b.style.fontSize = th + 'px';
+            span0b.style.display = 'inline-block'; // required to be able to override height
+            span0b.style.height = th + 'px';
           }
           //span0.style.zIndex = '1';
           textel = span0;

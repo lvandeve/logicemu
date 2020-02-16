@@ -1455,6 +1455,70 @@ registerCircuit('Flip-flops Conversions', `
 `, 'flip_flop_convert');
 
 
+registerCircuit('Latch Conversions', `
+
+0"This circuit is similar to the previous circuit, 'Flip-flops Conversions', but with latches instead."
+
+0"E = 'enable', turned on by default for each latch below."
+
+
+3"set-dominant SR latch IC"
+
+"S"s-.>j-->l"Q"   "S"s->i-->l"Q"
+     w #                #
+"R"s>a>k          "R"s->#
+       #                #
+"E"S-->yI         "E"S->#
+
+
+
+  "from"1     1"D"                1"T"                1"SR"            1"JK"
+"to"1
+     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+     @                   @                   @                 @               @
+     @                   @        ...        @ "D"s--.->i-->l  @ "D"s-.>j-->l  @
+     @                   @        v .        @       .  #      @      . #      @
+" D"1@ "D"s---->d---->l  @ "D"s-->e>t---->l  @       .-]#      @      .]k      @
+     @          #        @          #        @          #      @        #      @
+     @ "E"S---->y        @ "E"S---->y        @ "E"S---->#      @ "E"S-->y      @
+     @                   @                   @                 @               @
+     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+     @                   @                   @                 @               @
+     @        ...        @                   @        .....    @               @
+     @        v .        @                   @        v   .    @               @
+" T"1@ "T"s-->e>d---->l  @ "T"s---->t---->l  @ "T"s-.>e>i-.>l  @ "T"s-.>j-->l  @
+     @          #        @          #        @        . #      @      . #      @
+     @ "E"S---->y        @ "E"S---->y        @        .]#      @      .>k      @
+     @                   @                   @          #      @        #      @
+     @                   @                   @ "E"S---->#      @ "E"S-->y      @
+     @                   @                   @                 @               @
+     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+     @                   @                   @                 @               @
+     @        .......    @        .......    @                 @               @
+     @        .     .    @        .     .    @ "S"s---->i-->l  @ "S"s-.>j-->l  @
+     @ "S"s---+-.   .    @ "S"s-.-+>a[...    @          #      @      w #      @
+"SR"1@        v v   .    @      w v v   .    @ "R"s---->#      @ "R"s>a>k      @
+     @ "R"s--]a>o>d-.>l  @ "R"s>a>a>o>t-.>l  @          #      @        #      @
+     @            #      @            #      @ "E"S---->#      @ "E"S-->y      @
+     @ "E"S------>y      @ "E"S------>y      @                 @               @
+     @                   @                   @                 @               @
+     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+     @                   @                   @                 @               @
+     @        .......    @        .......    @        .....    @               @
+     @        .     .    @        .     .    @        w   .    @ "J"s-->j-->l  @
+     @ "J"s---+>a[...    @ "J"s---+>a[...    @ "J"s-->a>i-.>l  @        #      @
+"JK"1@        v v   .    @        v v   .    @          #      @ "K"s-->k      @
+     @ "K"s--]a>o>d-.>l  @ "K"s-->a>o>t-.>l  @ "K"s---->#      @        #      @
+     @            #      @            #      @          #      @ "E"S-->y      @
+     @ "E"S------>y      @ "E"S------>y      @ "E"S---->#      @               @
+     @                   @                   @                 @               @
+     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
+
+`, 'latch_convert');
+
 
 
 registerTitle('Displays');
@@ -4272,8 +4336,8 @@ registerCircuit('16-bit carry lookahead adder', `
         a### a a# a## a### ||     a a# a## a### ||     a a# a## ||     a a# ||     a
         v    v v  v   v    ||     v v  v   v    ||     v v  v   ||     v v  ||     v
         o    o#########    ||     o#########    ||     o#####   ||     o##  ||     o
-2"pg"l<-.    . "not c16"   ||     . "c12"       ||     . "c8"   ||     ."c4"||     .
-2"gg"l<------. "but gg"    ||     .             ||     .        ||     .    ||     .
+2"pg"l<-.    .  "gg"       ||     . "c12"       ||     . "c8"   ||     ."c4"||     .
+2"gg"l<------.             ||     .             ||     .        ||     .    ||     .
                            ||     .             ||     .        ||     .    ||     .
                            ||llll .             ||llll .        ||llll .    ||llll .
                            ||^^^^ v             ||^^^^ v        ||^^^^ v    ||^^^^ v
@@ -4303,8 +4367,8 @@ registerCircuit('16-bit carry lookahead adder', `
     "pg"  a###   a a# a## a###    . . a a# a## a### . . a a# a## . . a a# . . a
   "gg"l   v      v v  v   v       . . v v  v   v    . . v v  v   . . v v  . . v
     l ^   o      o#########       . . o#########    . . o#####   . . o##  . . o
-    ^ .---.      . "not c4"       . . ."c3"         . . ."c2"    . . ."c1". . .
-    .------------. "but gg"       . . .             . . .        . . .    . . .
+    ^ .---.      .  "gg"          . . ."c3"         . . ."c2"    . . ."c1". . .
+    .------------.                . . .             . . .        . . .    . . .
                                   . . .             . . .        . . .    . . .
                                   . . .             . . .        . . .    . . .
                                   . . . l           . . . l      . . . l  . . . l
@@ -5170,7 +5234,7 @@ registerCircuit('4-bit CPU', `
   . . .>#######i32 # = = = ===3210=7654==================0321==32107654=====7654==3210==
   . . . ^^^^       # = = = =    "adder"             "shift"     "logic"           vvvv
   . ..+>####illlli # = = = =                                                      O###
-  .-+-+>#"r3"^^^^#<b<3 = = =     "ALU #nputs"                                     v
+  .-+-+>#"r3"^^^^#<b<3 = = =     "ALU inputs"                                     v
   . . .>#######i32 # = = = =======3210====7654                                    lg20 "zero"
   . . . ^^^^       # = = = =      ||||    ||||
   . ..+>####illlli # = = = =   "A"llll    llll"B"
@@ -5184,10 +5248,10 @@ registerCircuit('4-bit CPU', `
   . ..+>####illlli # = = = =         M########<a<g14
   .-+-+>#"r6"^^^^#<b = = = =         ^^^^ ^^^^
   . . .>#######i32 # = ==+=+=========3210 3210======
-  . . . ^^^^       # =   = =          "B #mm"      =
+  . . . ^^^^       # =   = =        "B immediate"4 =
   . ..+>####illlli # =   = =                       =
   .---+>#"r7"^^^^#<b ====+=+=========3210          =
-      .>#######i32 #     = =         ||||"A #nd"   =
+      .>#######i32 #     = =         ||||"A indir"3=
       . ^^^^       #     = =         M########[g15 =
       g ||||       #     = =         ^^^^ ^^^^     =
       1 ||||"user" #     = ==========3210 3210===============3210
@@ -5364,7 +5428,7 @@ registerCircuit('4-bit CPU', `
 
 "A few example programs:"
 
-"empty template"
+0"empty template"
 
 "bbbb#bbbb#bbbb#bbbb"
 "bbbb#bbbb#bbbb#bbbb"
@@ -5383,7 +5447,7 @@ registerCircuit('4-bit CPU', `
 "bbbb#bbbb#bbbb#bbbb"
 "bbbb#bbbb#bbbb#bbbb"
 
-"multiplies r8 with r9 and stores result in r7"
+0"multiplies r8 with r9 and stores result in r7"
 
 "bbbb#Bbbb#bbbb#bbbb" 0"copy r8 to r0"
 "bbbb#BbbB#bbbb#bbbB" 0"copy r9 to r1"

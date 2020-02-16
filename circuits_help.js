@@ -6425,6 +6425,12 @@ l<--s0"There should be no space between this comment and the switch"
 3"      "
 3"      "
 
+0"The following text's background should not overlap the and gate:"
+
+   3"text"
+a##########
+^         ^
+s         s
 
 0"# Comment Styling"
 
