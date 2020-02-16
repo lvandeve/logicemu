@@ -7061,29 +7061,49 @@ function RendererText() {
           this.div0.style.width = '' + (tw * (w - cell.x)) + 'px';
         } else {
           // this span is there so that we can have the background color only over the text, not whitespace parts left or right
-          var span0 = util.makeElement('span', this.div0);
+          var span0b = util.makeElement('span', this.div0);
+          var span0 = util.makeElement('span', span0b);
           span0.innerText = symbol;
           span0.style.color = fgcolor;
-          // don't do the bgcolor for standard non-monospace text, that one is distinguishable enough from circuit elements
-          if(cell.commentstyle != 2) span0.style.backgroundColor = bgcolor;
           span0.style.whiteSpace = 'pre';
           //span0.style.fontSize = th + 'px';
           if(cell.commentstyle == 1) {
-            span0.style.fontSize = Math.floor(tw * 0.9) + 'px'; // avoids background overlapping parts of font issues
+            span0.style.fontSize = Math.floor(tw * 0.8) + 'px'; // avoids background overlapping parts of font issues. Test this with underscore characters in font style 3 of 4 (multiple lines), with different zoom letters, to ensure the _ does not disappear behind the background of the next line
           } else {
             // a bit bigger, because otherwise formatted text tends to be too much smaller compared to circuits, give it a bit more readability
             span0.style.fontSize = Math.floor(tw * 1.1) + 'px';
             if(tw < 16) span0.style.letterSpacing = '0.5px'; // this might make it slightly more readable if zoomed out a lot
           }
           span0.style.height = th + 'px';
-          span0.style.lineHeight = th + 'px';
           span0.style.verticalAlign = 'top'; // make the span really go where I want it, not shifted slightly down
+          //span0.style.lineHeight = th + 'px';
           this.div0.style.width = '' + (tw * cell.commentlength2) + 'px';
           //this.div0.style.border = '1px solid red'; // debug comment divs
           if(align == 0) this.div0.style.textAlign = 'left';
           else if(align == 1) this.div0.style.textAlign = 'center';
           else if(align == 2) this.div0.style.textAlign = 'right';
 
+          // don't do the bgcolor for standard non-monospace text, that one is distinguishable enough from circuit elements
+          if(cell.commentstyle != 2) {
+            // There is some carefuly trickery going on here to ensure that the following renders fine:
+            // 3"______"
+            // 3"      "
+            // 3"      "
+            // 3"aaaaaa"
+            // That is, the balance between: not having the underscores disappear under the background of
+            // the next line, and, not having a gap without background between the two spaces.
+            // The combination of having a spearate span0 and span0b and the fontSize of 0.8 appear to fix this.
+            // Issues that are preventing easier fixes are:
+            // The fact that text width is not easy to measure in HTML.
+            // Using offsetWidth of clientWidth do not work here because those only work for visible elements.
+            // Using zIndex does not work between elements of this and next line.
+            // Rendering from bottom to top instead of top to bottom ruins text selection. HTML does not allow good control over having the
+            // span background exactly match the size of the field, and, have the text stay perfectly inside of it.
+            // Assigning the backgroundColor to div0 gives it the wrong width for styles 3, 4, 5.
+            // All of this is browser dependent too.
+            span0b.style.backgroundColor = bgcolor;
+          }
+          //span0.style.zIndex = '1';
           textel = span0;
         }
       } else {

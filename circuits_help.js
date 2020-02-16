@@ -6401,6 +6401,31 @@ l<--s0"There should be no space between this comment and the switch"
 "The hidden number 3 should NOT make the LED green."3l<--s
 
 
+0"Multiline text with background and underscores: check that you can see the"
+0"underscores, and they don't disappear beneath the next line (there must be"
+0"multiple lines of underscores visible, not just the bottom)."
+0"Must be checked at different zoom levels."
+0"NOTE: ensure to choose color scheme where background color of preformatted"
+0"text is different than main background."
+
+3"______"
+3"______"
+3"______"
+3"______"
+
+
+0"Multiline text with spaces and background: check that the background is not"
+0"striped due to gaps."
+0"Must be checked at different zoom levels."
+0"NOTE: ensure to choose color scheme where background color of preformatted"
+0"text is different than main background."
+
+3"      "
+3"      "
+3"      "
+3"      "
+
+
 0"# Comment Styling"
 
 "full width"
