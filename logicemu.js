@@ -1152,7 +1152,8 @@ var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x'
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
                 '#':true, '=':true, 'i':true, 'T':true, 'D':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
                 'z':true, 'Z':true, '?':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true};
-var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
+var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true, '$':true};
+var puredigitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
 var defsubs = {}; // key is number of the sub (but those are not consecutive like in an array, e.g. one could make a I555 and the index would be 555)
 var callsubs = [];
@@ -5285,9 +5286,9 @@ function Component() {
   // location of cell of this component to which inputting >, v, ... is attached (for typical components with only 1 cell, this is usually all the same core cell coordinates)
   this.inputs_x2 = [];
   this.inputs_y2 = [];
-  this.number = -1;
-  this.defsubindex = -2;
-  this.callsubindex = -2;
+  this.number = -1; // meanings: -1: no number present, >=0: number with that value present
+  this.defsubindex = -2; // meanings: -2: no defsubindex, -1: defsubindex without number, >= 0: defsubindex wiht number
+  this.callsubindex = -2; // meanings: see defsubindex
   this.callsub = null;
   this.rgbcolor = 0; // index in array of 16 RGB LED colors
   this.issub = false; // is a component copied for a sub
@@ -6448,11 +6449,13 @@ function Cell() {
       value = rom.selected[index]; // show which line is selected
     }
 
-    if(digitmap[this.displaysymbol]/*this.circuitsymbol == '='*/) {
+    // Note: it looks like now they light up as expected, and it's nicer if the bus and global wire do show the numbers lighted up, so
+    // no longer setting value to false unlike what the comment inside the next commented out code says.
+    /*if(digitmap[this.displaysymbol]) {
       // with buses, some digits light up in confusing ways, so
       // disable them altogether
       value = false;
-    }
+    }*/
 
     if(this.isalutext) {
       value = true;
@@ -6578,7 +6581,11 @@ function Cell() {
       if(tc == 'Q') title = 'flipflop inverted output and async reset (or inverted pulse if standalone)';
       if(tc == 'z') title = 'tristate buffer, inputs to same z ANDed, multiple z to wire high when any z high (like OR but read on). Allowed to have multiple output to the same wire, but should be used as one-hot (max 1 high to wire, rest must be low) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
       if(tc == 'Z') title = 'tristate buffer, inputs to same Z ORed, multiple Z to wire low when any Z low (like AND but read on). Allowed to have multiple output to the same wire, but should be used as one-cold (max 1 low to wire, rest must be high) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
-      if(tc == 'g') title = 'global (backplane) wire, connects to all other g with matching (or matching absense of) number';
+      if(tc == 'g') {
+        if(this.displaysymbol == '$') title = 'global (backplane) connection automatically numbered with $, unique code: ' + this.number + ', connects to global wires with matching code';
+        else if(digitmap[this.displaysymbol]) title = 'global (backplane) wire numbered connection ' + this.number + ', connects to global wires with matching number';
+        else title = 'global (backplane) wire, connects to all other g with matching (or matching absense of) number';
+      }
       if(tc == '(') title = 'backplane wire that connects to one matching connector to the right ("antenna")';
       if(tc == ')') title = 'backplane wire that connects to one matching connector to the left ("antenna")';
       if(tc == 'n') title = 'backplane wire that connects to one matching connector to below ("antenna")';
@@ -6607,7 +6614,11 @@ function Cell() {
           }
         }
       }
-      if(tc == '=') title = 'bus (wire bundle)';
+      if(tc == '=') {
+        if(this.displaysymbol == '$') title = 'bus (wire bundle) connection automatically numbered with $, unique code: ' + this.number + ', connects to matching codes on this bus';
+        else if(digitmap[this.displaysymbol]) title = 'bus (wire bundle) numbered connection ' + this.number + ', connects to matching numbers on this bus';
+        else title = 'bus (wire bundle)';
+      }
       if(tc == 'M' || tc == '#M') {
         title = 'mux';
         var master = this.components[0].master;
@@ -6751,7 +6762,7 @@ function Cell() {
         console.log('===================');
         var w = world[y][x];
         var s = 'x: ' + x + ', y: ' + y + ', circuitsymbol: ' + w.circuitsymbol + ', metasymbol: ' + w.metasymbol + ', displaysymbol: ' + w.displaysymbol + ' | clusterindex: ' + w.clusterindex;
-        if(w.number >= -2) s += ', number: ' + w.number + ', numbertype: ' + w.numbertype;
+        s += ', number: ' + w.number + ', numbertype: ' + w.numbertype;
         console.log(s);
         if(w.antennax != -1 || w.antennay != -1) console.log('antennax: ' + w.antennax + ', antennay: ' + w.antennay);
         for(var i = 0; i < w.components.length; i++) {
@@ -9634,7 +9645,7 @@ function parseNumbers() {
         if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
         if(world[y2][x2].comment) continue; // comments metasymbol can be number for the aligned strings...
         var c2 = world[y2][x2].metasymbol;
-        if(digitmap[c2]) {
+        if(puredigitmap[c2]) {
           dirs.push(i);
         }
       }
@@ -9651,7 +9662,7 @@ function parseNumbers() {
           y2 += dy;
           if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) break;
           var c2 = world[y2][x2].metasymbol;
-          if(digitmap[c2]) {
+          if(puredigitmap[c2]) {
             if(dir == 0 || dir == 3) {
               // make numbers always left-to-right or top-to-bottom
               value += mul * parseInt(c2);
@@ -9669,7 +9680,7 @@ function parseNumbers() {
           world[y][x].number = -1;
           break; // multiple numbers with different values not supported
         }
-        world[y][x].number = value;
+        if(c != '$') world[y][x].number = value;
       }
     }
   }
@@ -9684,7 +9695,7 @@ function parseNumbers() {
       for(;;) {
         if(x2 >= w) break;
         var c2 = world[y2][x2].metasymbol;
-        if(digitmap[c2]) {
+        if(puredigitmap[c2]) {
           value *= 10;
           value += parseInt(c2);
         } else {
@@ -9713,7 +9724,7 @@ function parseNumbers() {
       for(;;) {
         if(y2 >= h) break;
         var c2 = world[y2][x2].metasymbol;
-        if(digitmap[c2]) {
+        if(puredigitmap[c2]) {
           value *= 10;
           value += parseInt(c2);
         } else {
@@ -9730,35 +9741,107 @@ function parseNumbers() {
     }
   }
 
-
+  // .numberv and .numberh to number
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
       if(world[y][x].skipparsing) continue;
-      if(digitmap[world[y][x].metasymbol]) {
+      if(puredigitmap[world[y][x].metasymbol]) {
         world[y][x].number = Math.max(world[y][x].numberh, world[y][x].numberv);
       }
     }
   }
 
-
+  // hide or change number display or behavior for some components
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
       if(world[y][x].skipparsing) continue;
       if(world[y][x].numbertype == NUMBER_LED) {
-        if(digitmap[world[y][x].metasymbol]) {
+        if(puredigitmap[world[y][x].metasymbol]) {
           world[y][x].displaysymbol = ' '; // don't render the numbers next to LEDs, the LED color shows the effect
           // other numbers, such as IC numbers, bus and global wire indices, or timer durations, are not removed but should be shown.
         }
+      }
+      if(world[y][x].numbertype == NUMBER_ALU && puredigitmap[world[y][x].metasymbol]) {
+        world[y][x].circuitsymbol = '#'; // a later pass will turn them into '#'
       }
     }
   }
 
 
+
+  // '$' number extenders for bus and global wire
+  // TODO: this implementation does not specify various corner cases, it is designed only to work with horizontal or vertical streaks like 4$$$$$,
+  // and then only with core digits 0 to 9. Other behaviour and shapes should be treated as errors, or well-specified, instead of ignored like is done now.
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
-      if(world[y][x].skipparsing) continue;
-      if(world[y][x].numbertype == NUMBER_ALU && digitmap[world[y][x].metasymbol]) {
-        world[y][x].circuitsymbol = '#'; // a later pass will turn them into '#'
+      var c = world[y][x].metasymbol;
+      if(c == '$') {
+        if(world[y][x].number != -1) continue;
+        var vertical = true;
+        if(x > 0 && digitmap[world[y][x - 1].metasymbol]) vertical = false;
+        if(x + 1 < line1[y] && digitmap[world[y][x + 1].metasymbol]) vertical = false;
+
+        var number2 = 1;
+        var range = 4096;
+
+        if(vertical) {
+          var y1 = y + 1;
+          while(y1 < h && x < line1[y1] && world[y1][x].metasymbol == '$') y1++;
+          var top = true;
+
+
+          if(y > 0 && x < line1[y - 1] && puredigitmap[world[y - 1][x].metasymbol]) {
+            //number2 = 2 + parseInt(world[y - 1][x].metasymbol);
+            number2 = 2 + world[y - 1][x].number;
+          } else if(y1 < h && x < line1[y1] && puredigitmap[world[y1][x].metasymbol]) {
+            //number2 = 2 + parseInt(world[y1][x].metasymbol);
+            number2 = 2 + world[y1][x].number;
+            top = false;
+          }
+          var base = -number2 * range;
+          for(var y2 = y; y2 < y1; y2++) {
+            var dist = top ? (y2 - y) : (y1 - y2 - 1);
+            world[y2][x].number = base - dist;
+            //world[y2][x].numberv = world[y2][x].number;
+            //world[y2][x].numberh = world[y2][x].number;
+          }
+        } else {
+          var x1 = x + 1;
+          while(x1 < line1[y] && world[y][x1].metasymbol == '$') x1++;
+          var left = true;
+
+          if(x > 0 && puredigitmap[world[y][x - 1].metasymbol]) {
+            //number2 = 2 + parseInt(world[y][x - 1].metasymbol);
+            number2 = 2 + world[y][x - 1].number;
+          } else if(x1 < line1[y] && puredigitmap[world[y][x1].metasymbol]) {
+            //number2 = 2 + parseInt(world[y][x1].metasymbol);
+            number2 = 2 + world[y][x1].number;
+            left = false;
+          }
+          var base = -number2 * range;
+          var x0 = x;
+          for(x = x0; x < x1; x++) {
+            var dist = left ? (x - x0) : (x1 - x - 1);
+            world[y][x].number = base - dist;
+            //world[y][x].numberv = world[y][x].number;
+            //world[y][x].numberh = world[y][x].number;
+          }
+        }
+      }
+    }
+  }
+  // spread the $ numbers, too, to neighbors (this is important for global wire g; buses = already work without doing this)
+  // NOTE: any effects on anything other than bus = and global wire g is unspecified behavior. TODO: limit such effects
+  for(var y = 0; y < h; y++) {
+    for(var x = line0[y]; x < line1[y]; x++) {
+      var c = world[y][x].metasymbol;
+      if(c == '$' && world[y][x].number != -1) {
+        for(var i = 0; i < 4; i++) {
+          var x2 = x + ((i == 1) ? 1 : ((i == 3) ? -1 : 0));
+          var y2 = y + ((i == 0) ? -1 : ((i == 2) ? 1 : 0));
+          if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
+          if(world[y2][x2].number == -1) world[y2][x2].number = world[y][x].number;
+        }
       }
     }
   }
@@ -11148,8 +11231,8 @@ function parseComponents() {
               // For y's, we do not use the regular connection rules. But instead rules for how y-groups are connected, which are different than components!
               // a numbered y is only connected to y, it's not even connected to wires
               // an unnumbered y is connected to wires and extends its group that way
-              if(c == '=' && number >= 0) continue;
-              if(c2 == '=' && number2 >= 0) continue;
+              if(c == '=' && number != -1) continue;
+              if(c2 == '=' && number2 != -1) continue;
               if(!connected(c, c2, ce, ce2, i, z, z2)) continue;
               var fromdir = (i <= 3) ? ((i + 2) & 3) : (4 + ((i - 2) & 3));
               if(!connected(c2, c, ce2, ce, fromdir, z2, z)) continue;
@@ -11180,7 +11263,7 @@ function parseComponents() {
           world[y][x].bus = bus;
           var number = world[y][x].number;
             // unnumbered wire connections are not independent signals but bus itself, so skip
-          if(number >= 0) {
+          if(number != -1) {
             if(!bus.connections[number]) bus.connections[number] = [];
             bus.connections[number].push([x, y, z]);
           }
@@ -11434,10 +11517,10 @@ function parseComponents() {
 
           if(type == TYPE_NULL && (c == '#')) type = TYPE_UNKNOWN_DEVICE;
           if(type == TYPE_NULL && specialextendmap[c]) type = TYPE_UNKNOWN_DEVICE;
-          if(world[y][x].number >= 0 && devicemaparea[c]) {
+          if(world[y][x].number != -1 && devicemaparea[c]) {
             // TODO: check if the above if really needs devicemaparea instead of just devicemap,
             // because numbers currently don't interact with # anyway (for e.g. chip, led, ...)
-            if(number >= 0 && world[y][x].number != number) {
+            if(number != -1 && world[y][x].number != number) {
               errormessage = 'multiple numbers to same component not supported';
               console.log(errormessage);
               error = true;

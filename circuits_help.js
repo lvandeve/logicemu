@@ -1004,6 +1004,24 @@ s---g1         0g----->l
 
                 g----->l
 
+0"Dollar signs ($) in buses and global wires indicate automatic numbering,"
+0"each next $ in a series represents a unique next numbered connection, and"
+0"each consecutive non-interrupted series of $ (possibly with a number to"
+0"be a different group) is its own bundle."
+
+
+                            llll
+              llll llll     ^^^^
+              ^^^^ ^^^^     ||||
+              |||| ||||     5$$$
+              $$$$ 0$$$     gggg
+=======================
+$$$$ 0$$$                   gggg
+|||| ||||                   5$$$
+ssss ssss                   ||||
+                            ssss
+
+
 
 0"Antennas are another form of 'backplane' wires, connected to the"
 0"corresponding 'dish' they're aimed at. Calling them 'antennas' or 'wireless'"
@@ -3173,8 +3191,162 @@ s--(  )-->l
 0"Below follow some more new parts that allow packing wires and devices even"
 0"closer, however they may make circuits ugly and unreadable."
 
-0"SUGGESTION: avoid using the parts and behaviors below unless absolutely"
-0"necessary for compactness"
+
+
+3"NEW PART: automatic numbering for bus and global wire"
+3"$: automatic numbering"
+
+0"Instead of manually giving each connection of a bus (or a bundle of global wires)
+0"a unique number, you can use $ to automatically number:"
+
+
+0"Without automatic numbering:"
+
+              llllllllllll
+              ^^^^^^^^^^^^
+              ||||||||||||
+              012345678901
+              000000000011
+==========================
+000000000011
+012345678901
+||||||||||||
+ssssssssssss
+
+0"With automatic numbering:"
+
+              llllllllllll
+              ^^^^^^^^^^^^
+              ||||||||||||
+              0$$$$$$$$$$$
+==========================
+0$$$$$$$$$$$
+||||||||||||
+ssssssssssss
+
+0"Global wires example:"
+
+llllllllllll
+^^^^^^^^^^^^
+||||||||||||
+4$$$$$$$$$$$
+
+4$$$$$$$$$$$
+||||||||||||
+ssssssssssss
+
+0"The automatic numbering creates different groups for different starting digits:"
+
+              llll llll
+              ^^^^ ^^^^
+              |||| ||||
+              0$$$ 1$$$
+=======================
+0$$$ 1$$$
+|||| ||||
+ssss ssss
+
+0"The connections with '$' don't just increment from the starting digit, they"
+0"have unique codes that don't collide with existing numbers. E.g. the $ next"
+0"to the '0' does not have value '1' but some unique hidden value that matches"
+0"the other '$' next to '0'"
+
+0"The $ connection's value is based on the distance from the digit, allowing"
+0"mirroring bits like this:"
+
+lllllllllllllll
+^^^^^^^^^^^^^^^
+|||||||||||||||
+$$$$$$$$$$$$$$0
+===============
+0$$$$$$$$$$$$$$
+|||||||||||||||
+sssssssssssssss
+
+0"They work vertically as well:"
+
+
+          lllll
+          ^^^^^
+          |||||
+          0$$$$
+          =====
+            =
+            =
+s---0=      =       =0-->l
+s---$=      =       =$-->l
+s---$================$-->l
+s---$=      =       =$-->l
+s---$=      =       =$-->l
+            =
+            =
+          =====
+          0$$$$
+          |||||
+          vvvvv
+          lllll
+
+0"If there is no digit present, they form another unique group, different from group 0."
+0"Since there is no digit to indicate beginning or end of these, left and top always"
+0"match (no mirroring possible with these):"
+
+              llll llll
+              ^^^^ ^^^^
+              |||| ||||
+              0$$$ $$$$
+=======================
+0$$$ $$$$
+|||| ||||
+ssss ssss
+
+
+0"Using numbers larger than 9 as starting value can be done as follows, e.g."
+0"for value 105 here:"
+
+
+              llll
+              ^^^^
+              ||||
+              1$$$
+              0===
+    ===1======5===
+    ===0
+    $$$5
+    ||||
+    Ssss
+
+
+0"The number itself will match numbers without $, and groups of different size"
+0"but same number will still match:"
+
+llll ll  l
+^^^^ ^^  ^
+|||| ||  |
+7$$$ 7$  7
+==========
+7$$$
+||||
+ssss
+
+0"NOTE: the automatic numbering only works for consecutive connections that"
+0"touch each other, no gaps in between. Each gap restarts the count and would"
+0"also disconnect a group of $ from the intended number. If you need inputs"
+0"or outputs of the bus to be more spread around, you have to resort to"
+0"individual numbers without $. An $ can never match any regular number."
+
+
+0"Only such consecutive horizontal and vertical groups, for global wires or"
+0"buses, with no digit or a single number, work. Other shapes, mixing multiple"
+0"numbers or using '$' for other devices (timer timings, ...) do not work,"
+0"doing this may result in unspecified behavior. As an example, the numeric"
+0"values of $ will be arbitrarily computed numbers that could be very large"
+0"or could be negative (their only feature is being unique and distinct from"
+0"actual real numbers entered with digits, the actual value does not matter),"
+0"so they cannot work for timer values. And the computation is done either"
+0"horizontally or vertically, if both are possible due to a non-linear shape,"
+0"it's not specified which direction it will choose."
+
+
 
 3"NEW PART: Non-interacting wire corner"
 3",: non-interacting wire corner"
@@ -4665,13 +4837,13 @@ s---3=              =1-->l
 s---4=              =0-->l
 `, 'component' + componentid++);
 
-registerCircuit('Backplane (g)', `
+registerCircuit('Backplane global wire (g)', `
   s----g
 
           g--->l
 `, 'component' + componentid++);
 
-registerCircuit('Backplane Numbered (g)', `
+registerCircuit('Backplane global wire Numbered (g)', `
   s----g2
 
          3g--->l
@@ -4679,6 +4851,25 @@ registerCircuit('Backplane Numbered (g)', `
   s----g3
 
          2g--->l
+`, 'component' + componentid++);
+
+registerCircuit('Bus with auto numbering ($)', `
+
+s---0=              =0-->l
+s---$=              =$-->l
+s---$================$-->l
+s---$=              =$-->l
+s---$=              =$-->l
+`, 'component' + componentid++);
+
+registerCircuit('Backplane global wires auto numbering ($)', `
+
+s---g0        0g-->l
+s---g$        $g-->l
+s---g$        $g-->l
+s---g$        $g-->l
+s---g$        $g-->l
+
 `, 'component' + componentid++);
 
 registerCircuit('Backplane Antenna ((u)n)', `
@@ -5336,6 +5527,10 @@ S>e--------->l
 s>#
 s>#
 
+S>e---------]l
+S>#
+s>#
+
 S>e--------->l
 S>#
 S>#
@@ -5346,7 +5541,68 @@ s>#
 
 S>h---------]l
 S>#
+s>#
+
+S>h---------]l
 S>#
+S>#
+
+
+
+
+S-321=====$-]l
+s-$=======$-]l
+S-$=======$->l
+S-$=======$->l
+s-$=======$-]l
+s-$=====321->l
+  =========
+  ======321->l
+  ========$-]l
+  ========$->l
+
+
+S-0=======1->l
+s-$=======$->l
+S-$=======$->l
+S-$=======$-]l
+   =======
+S-$=======$->l
+   =======
+s-$=======0->l
+S-$=======$-]l
+S-$=======$->l
+S-1=======$->l
+
+
+   .-------->l
+   |.-------]l
+   ||.------>l
+   |||.----->l
+   7$$$
+   ========
+   = $$$7
+S-7= |||.--->l
+s-$= ||.----]l
+S-$= |.----->l
+S-$= .------>l
+
+
+S-g321   $g-]l
+s-g$     $g-]l
+S-g$     $g->l
+S-g$     $g->l
+s-g$     $g-]l
+s-g$   321g->l
+
+
+S-7g     g$-]l
+s-$g     g$-]l
+S-$g     g$->l
+S-$g     g$->l
+s-$g     g$-]l
+s-$g     g7->l
+
 
 0"# Off"
 
