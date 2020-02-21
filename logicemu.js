@@ -508,7 +508,6 @@ var LogicEmuMath = (function() {
 
   // the notation 0n, 1n, 3n, ... cannot be used, because if browser doesn't support BigInt,
   // it'll give parsing error on decimal number ending with n.
-  var n_1 = B(-1); result.n_1 = n_1;
   var n0 = B(0); result.n0 = n0;
   var n1 = B(1); result.n1 = n1;
   var n2 = B(2); result.n2 = n2;
@@ -518,7 +517,10 @@ var LogicEmuMath = (function() {
   var n6 = B(6); result.n6 = n6;
   var n7 = B(7); result.n7 = n7;
   var n10 = B(10); result.n10 = n10;
+  var n11 = B(11); result.n11 = n11;
+  var n13 = B(13); result.n13 = n13;
   var n15 = B(15); result.n15 = n15;
+  var n17 = B(17); result.n17 = n17;
 
   var gcd = function(a, b) {
     if(a < 0) a = -a;
@@ -531,6 +533,13 @@ var LogicEmuMath = (function() {
     }
   };
   result.gcd = gcd;
+
+  var lcm = function(a, b) {
+    var g = gcd(a, b);
+    if(g == 0) return n0;
+    return intdiv(a, g) * b;
+  };
+  result.lcm = lcm;
 
 
   // error cases: returns 0 if result would be infinity
@@ -580,27 +589,27 @@ var LogicEmuMath = (function() {
 
   // returns (a + b) % c, taking overflow into account (in JS, overflow means reaching a part in the floating point representation where it can no longer distinguish 1)
   var modadd = supportbigint ?
-      function(a, b, c) { return (a + b) % c; } :
+      function(a, b, c) { return mod(a + b, c); } :
       function(a, b, c) {
-    if (a + b < 9007199254740992) return (a + b) % c;
+    if (a + b < 9007199254740992) return mod(a + b, c);
     if(a + b > c) {
-      return (a - c + b) % c;
+      return mod(a - c + b, c);
     }
     // This assumes that c < 4503599627370496 or a + b doesn't overflow
-    return ((a % c) + (b % c)) % c;
+    return mod(mod(a, c) + mod(b, c), c);
   };
 
   // returns (a * b) % c, taking overflow into account
   var modmul = supportbigint ?
-      function(a, b, c) { return (a * b) % c; } :
+      function(a, b, c) { return mod(a * b, c); } :
       function(a, b, c) {
-    if(a * b < 9007199254740992) return (a * b) % c;
+    if(a * b < 9007199254740992) return mod(a * b, c);
     var x = 0;
-    var y = a % c;
+    var y = mod(a, c);
     while(b > 0) {
       if(b & 1) x = modadd(x, y, c);
       y = modadd(y, y, c);
-      b = Math.floor(b / 2);
+      b = rshift(b);
     }
     return x % c;
   };
@@ -620,7 +629,7 @@ var LogicEmuMath = (function() {
       } else if(a == 1) {
         return n1;
       } else if(a == -1) {
-        return (b & n1) ? n_1 : n1;
+        return (b & n1) ? -n1 : n1;
       } else {
         return n0; // integer power result: truncation of the small value is 0.
       }
@@ -688,7 +697,7 @@ var LogicEmuMath = (function() {
     //if n is bigger than log2(a), the result is smaller than 2
     var l = log2(a);
     if(l == 0) return [n0, true];
-    if(b > l) return [neg ? n_1 : n1, false];
+    if(b > l) return [neg ? -n1 : n1, false];
 
     var low = n0;
     // high must be higher than the solution (not equal), otherwise the comparisons below don't work correctly.
@@ -716,22 +725,21 @@ var LogicEmuMath = (function() {
     if(a == 0 || m == 0) {
       return n0;
     } else {
+      a = mod(a, b);
       var r = n0;
       var b0 = b;
       var x = n1, y = n0;
       for(;;) {
         if(a == 1) { r = x; break; }
         if(a == 0) { r = n0; break; }
-        var d = b / a;
-        if(!supportbigint) d = Math.floor(d);
+        var d = intdiv(b, a);
         var m = b - d * a; // modulo (matching floored division)
         y -= x * d;
         b = m;
 
         if(b == 1) { r = y; break; }
         if(b == 0) { r = n0; break; }
-        d = a / b;
-        if(!supportbigint) d = Math.floor(d);
+        d = intdiv(a, b);
         m = a - d * b; // modulo (matching floored division)
         x -= y * d;
         a = m;
@@ -905,8 +913,8 @@ var LogicEmuMath = (function() {
   var nextprime = function(n) {
     if(n <= 2) return n2;
     if(n <= 3) return n3;
-    if(!supportbigint && n >= 9007199254740881) return n_1;
-    if(supportbigint && n.toString(16).length > 180) return n_1; // too slow for running inside LogicEmu components
+    if(!supportbigint && n >= 9007199254740881) return -n1;
+    if(supportbigint && n.toString(16).length > 180) return -n1; // too slow for running inside LogicEmu components
     if(isprime(n)[0]) return n;
 
     var m = n % n6;
@@ -919,7 +927,7 @@ var LogicEmuMath = (function() {
     }
     for(;;) {
       var p = isprime(n);
-      if(p[1]) return n_1; // error
+      if(p[1]) return -n1; // error
       if(p[0]) return n;
       n += step;
       step ^= n6; //swap step between 2 and 4
@@ -930,12 +938,12 @@ var LogicEmuMath = (function() {
   // returns largest prime that is <= n
   // returns -1 if error
   var prevprime = function(n) {
-    if(n < 2) return n_1; // there is no lower prime
+    if(n < 2) return -n1; // there is no lower prime
     if(n < 3) return n2;
     if(n < 5) return n3;
     if(n < 7) return n5;
-    if(!supportbigint && n > 9007199254740881) return n_1; // not supported if no BigInt
-    if(supportbigint && n.toString(16).length > 180) return n_1; // too slow for running inside LogicEmu components
+    if(!supportbigint && n > 9007199254740881) return -n1; // not supported if no BigInt
+    if(supportbigint && n.toString(16).length > 180) return -n1; // too slow for running inside LogicEmu components
     if(isprime(n)[0]) return n;
 
     var m = n % n6;
@@ -948,13 +956,14 @@ var LogicEmuMath = (function() {
     }
     for(;;) {
       var p = isprime(n);
-      if(p[1]) return n_1; // error
+      if(p[1]) return -n1; // error
       if(p[0]) return n;
       n -= step;
       step ^= n6; //swap step between 2 and 4
     }
   };
   result.prevprime = prevprime;
+
 
   // returns the highest possible exponent if the number is a perfect power (>= 2), or 1 if not.
   // e.g. if n is 8, returns 3 because 2^3 is 8, if n is 10 returns 1.
@@ -970,6 +979,307 @@ var LogicEmuMath = (function() {
     return n1;
   };
   result.perfectpow = perfectpow;
+
+
+  var pollard_rho = function(n, c) {
+    var count = 0;
+    // limit amount of iterations, to avoid slow components in logicemu.
+    // the limit is chosen such that a product of two 32-bit primes can still
+    // usually be factorized but the total runtime will not take more than a
+    // fraction of a second. For lager numbers, the max iteration count is
+    // severely reduced because the gcd's take longer in that case.
+    var limit = 70000;
+    if(n > (2 ** 65)) limit = 1000;
+    for(;;) {
+      var x = n2;
+      var y = n2;
+      var d = n1;
+
+      while(d == 1) {
+        if(count++ > limit) return n0;
+        // Turtle
+        x = (x * x + c) % n;
+        // Hare
+        y = (y * y + c) % n;
+        y = (y * y + c) % n;
+        d = gcd(x - y, n);
+      }
+
+      if(d == n) {
+        c++;
+        continue;
+      }
+      return d;
+    }
+  };
+
+  var firstprimes = [n2, n3, n5, n7, n11, n13, n17];
+
+  // returns smallest prime factor of n, or 0 if factorizing it takes too long.
+  // can usually find the product of two 32-bit primes in time.
+  // NOTE: factorization is most difficult when n is a product of two different large primes
+  var smallestfactor = function(n) {
+    if(n < 0) return -n1;
+    if(n == 0) return n0;
+    if(n == 1) return n1;
+    for(var i = 0; i < firstprimes.length; i++) {
+      if(n % firstprimes[i] == 0) return firstprimes[i];
+    }
+
+    var p = perfectpow(n);
+    if(p > n1) return smallestfactor(introot(n, p)[0]);
+
+    p = isprime(n);
+    if(p[1]) return n0; // error
+    if(p[0]) return n; // prime
+
+    var r = pollard_rho(n, n1);
+    if(r == n || r == 1) return r;
+
+    // recursively factor to ensure getting the smallest factor
+    var r0 = smallestfactor(r);
+    var r1 = smallestfactor(intdiv(n, r));
+    return (r0 < r1) ? r0 : r1;
+  };
+  result.smallestfactor = smallestfactor;
+
+  // returns all prime factors of n
+  var factorize = function(n) {
+    if(n == 0 || n == 1) return [n];
+    var result = [];
+    if(n < 0) {
+      if(n == -1) return [-n1];
+      result = factorize(-n);
+      if(result.length == 0) return []; // error
+      result.unshift(-n1);
+      return result;
+    }
+    for(var i = 0; i < firstprimes.length; i++) {
+      while(!(n % firstprimes[i])) {
+        result.push(firstprimes[i]);
+        n = intdiv(n, firstprimes[i]);
+      }
+    }
+
+    if(n == 1) return result;
+
+    var p = perfectpow(n);
+    if(p > n1) {
+      var f = factorize(introot(n, p)[0]);
+      for(var i = 0; i < f.length; i++) {
+        for(var j = n0; j < p; j++) {
+          result.push(f[i]);
+        }
+      }
+      return result;
+    }
+
+    p = isprime(n);
+    if(p[1]) return []; // error
+    if(p[0]) {
+      result.push(n); // prime
+      return result;
+    }
+
+    var r = pollard_rho(n, n1);
+    if(r == 0) return []; // too slow, error
+
+    // recursively factor, each side could have more factors
+    var r0 = factorize(r);
+    if(r0.length == 0) return []; // error
+    var r1 = factorize(intdiv(n, r));
+    if(r1.length == 0) return []; // error
+    for(var i = 0; i < r0.length; i++) result.push(r0[i]);
+    for(var i = 0; i < r1.length; i++) result.push(r1[i]);
+    result.sort(function(a, b) {
+      return a < b ? -1 : (a > b ? 1 : 0);
+    });
+    return result;
+  };
+  result.factorize = factorize;
+
+  var factorize2 = function(n) {
+    var f = factorize(n);
+    var result = [];
+    for(var i = 0; i < f.length; i++) {
+      var p = f[i];
+      var e = n1; // exponent of identical primes
+      while(i + 1 < f.length && f[i + 1] == p) {
+        e++;
+        i++;
+      }
+      result.push([p, e]);
+    }
+    return result;
+  };
+
+  var allfactors = function(n) {
+    var f = factorize2(n);
+    if(f.length == 0) return [];
+
+    var result = [n1];
+    for(var i = 0; i < f.length; i++) {
+      var len2 = result.length;
+      var p = f[i][0];
+      var e = f[i][1];
+      for(var j = 0; j < e; j++) {
+        for(var k = 0; k < len2; k++) {
+          result.push(result[k] * p);
+        }
+        p *= f[i][0];
+      }
+    }
+    return result;
+  };
+  result.allfactors = allfactors;
+
+  // returns smallest positive integer r such that a**r = 1 (mod m)
+  // this is a special case of discrete log, where b == 1, but computed in a different way
+  // TODO: doesn't work for 10007n, 1000000000000000000000007n. Answer should be: 1000000000000000000000006n
+  // probable reason: must use not just prime factors, but all unique factors (including non prime ones, but no need to repeat same ones), for f2 at least (for f prime factors is ok)
+  var multiplicativeorder = function(a, m) {
+    if(gcd(a, m) != 1) return n0;
+    a = mod(a, m);
+    var f = factorize2(m);
+    if(f.length == 0) return -n1; // error, too difficult
+    var result = n0;
+    for(var i = 0; i < f.length; i++) {
+      var p = f[i][0];
+      var e = f[i][1];
+      var m2 = p ** e;
+      var t = intdiv(m2, p) * (p - n1);
+      var f2 = allfactors(t);
+      for(var j = 0; j < f2.length; j++) {
+        if(modpow(a, f2[j], m2) == 1) {
+          if(!result) result = n1;
+          result = lcm(result, f2[j]);
+          break;
+        }
+      }
+    }
+    return result;
+  };
+  result.multiplicativeorder = multiplicativeorder;
+
+  // baby-step-giant-step algorithm for discrete log
+  var bsgs = function(a, b, m) {
+    var n = sqrt(m) + n1;
+    var limit = 70000; // limit amount of iterations, to not make logicemu components too slow to compute
+
+    var o = {};
+    var e = modpow(a, n, m);
+    var an = e;
+    for(var i = n1; i <= n; i++) {
+      if(i > limit) break;
+      var k = e.toString(16);  // JS object keys are strings, by default BigInt converts to decimal string which is much slower.
+      if(!o[k]) o[k] = i; // prefer smaller values as result
+      e = modmul(e, an, m);
+    }
+    e = n1;
+    var result = n0;
+    for(var i = n0; i < n; i++) {
+      if(i > limit) {
+        if(!result) return -n1;
+        break;
+      }
+      var c = modmul(e, b, m);
+      var v = o[c.toString(16)];
+      if(v != undefined) {
+        var r = v * n - i;
+        if(result == 0 || r < result) {
+          result = r; // continue instead of immediately returning: try to find smaller result
+        }
+      }
+      e = modmul(e, a, m);
+    }
+    return result;
+  };
+
+
+  // computes r such that a**r = b (mod m).
+  // This problem is of similar computational difficulty as integer factorization.
+  // If b is 1, computes multiplicative order: r such that a**r = 1 (mod m)
+  // Returns 0 if it's known there is no result, -1 if it failed to compute (took too long)
+  var discretelog = function(a, b, m) {
+    if(m <= 0)  return -n1;
+    var r = (b == 1) ? multiplicativeorder(a, m) : bsgs(a, b, m);
+
+    var test = modpow(a, r, m);
+    var test2 = mod(b, m);
+
+    if(r <= 0) return r;
+    if(test != test2) {
+      return -n1;
+    }
+    return r;
+  };
+  result.discretelog = discretelog;
+
+  // Euler's totient function: counts amount of positive integers <= n that are relatively prime to n
+  var totient = function(n) {
+    if(n == 0 || n == 1) return n;
+    var f = factorize2(n);
+    if(f.length == []) return -n1; // error
+    var r = n;
+    for(var i = 0; i < f.length; i++) {
+      r -= r / f[i][0];
+    }
+    return r;
+  };
+  result.totient = totient;
+
+  var legendre  = function(n, p) {
+    return modpow(n, (p - n1) >> n1, p);
+  };
+
+  // Tonelli–Shanks algorithm for quadratic residue (square root of n modulo p). p must be prime.
+  var ressol = function(n, p) {
+    if(p == 2) return n0;
+    if (p < 2) return -n1; // error
+    n = mod(n, p);
+    var q = p - n1;
+    var s = n0;
+    while((q & n1) == 0) {
+      q >>= n1;
+      s++;
+    }
+    if(s == 1) {
+      var r = modpow(n, (p + n1) >> n2, p);
+      if(mod(r * r, p) != n) return n0;
+      return r;
+    }
+
+    var nr = n1; // find a non-residue
+    for(;;) {
+      nr++;
+      if(legendre(nr, p) > 1) break; // if legendre symbol is -1
+    }
+
+    var c = modpow(nr, q, p);
+    var r = modpow(n, (q + n1) >> n1, p);
+    var t = modpow(n, q, p);
+    var m = s;
+    while(t != 1) {
+      var tmp = t;
+      var i = n0;
+      while(tmp != 1) {
+        tmp = (tmp * tmp) % p;;
+        i++;
+        if(i == m) return n0;
+      }
+      var b = modpow(c, modpow(n2, m - i - n1, p - n1), p);
+      tmp = (b * b) % p;
+      r = (r * b) % p;
+      t = (t * tmp) % p;;
+      c = tmp;
+      m = i;
+    }
+
+    if ((r * r)% p != n) return n0;
+    return r;
+  };
+  result.ressol = ressol;
+
 
   var binomtoobig = supportbigint ? (n1 << B(65536)) : 9007199254740992;
 
@@ -3084,21 +3394,25 @@ function Alu() {
         case 56: return 'minv';
         case 57: return 'gcd';
         case 58: return 'lcm';
-        case 59: return 'fact';
+        case 59: return 'fact'; // factorial
         case 60: return 'binm';
         case 61: return 'ppow';
         case 64: return 'prim';
         case 65: return 'npr';
         case 66: return 'ppr';
+        case 67: return 'fctr'; // factorize
+        case 68: return this.numc ? 'dlog' : 'mulo';
+        case 69: return 'qres';
+        case 70: return 'etot';
         case 72: return 'clz';
         case 73: return 'ctz';
         case 74: return 'popc';
         case 78: return '2bcd';
         case 79: return 'bcd2';
         case 80: return 'sin';
-        case 81: return 'asin';
-        //case 82: return 'ln';
-        //case 83: return 'exp';
+        case 81: return this.numb? 'atn2' : 'asin';
+        case 82: return 'ln';
+        case 83: return 'exp';
         default: return 'unk';
     }
   };
@@ -3159,15 +3473,19 @@ function Alu() {
         case 64: return 'is prime';
         case 65: return 'next prime';
         case 66: return 'previous prime';
+        case 67: return 'integer factorization';
+        case 68: return this.numc ? 'discrete logarithm' : 'multiplicative order';
+        case 69: return 'quadratic residue modulo prime (ressol)';
+        case 70: return 'euler\'s totient function';
         case 72: return 'count leading zeros';
         case 73: return 'count trailing zeros';
         case 74: return 'popcount';
         case 78: return 'binary to bcd (binary coded decimal)';
         case 79: return 'bcd to binary (bcd = binary coded decimal)';
         case 80: return 'sine (scaled)';
-        case 81: return 'arcsine (scaled)';
-        //case 82: return 'ln (scaled)';
-        //case 83: return 'exp (scaled)';
+        case 81: return this.numb ? 'atan2' : 'arcsine (scaled)';
+        case 82: return 'ln (input scaled to 1..e)';
+        case 83: return 'exp (input scaled to 0..1)';
         default: return 'unknown';
     }
   };
@@ -3402,7 +3720,7 @@ function Alu() {
         if(b == 0) o = math.n0;
       } else {
         // sign
-        o = (a == 0) ? math.n0 : ((a > 0) ? math.n1 : math.n_1);
+        o = (a == 0) ? math.n0 : ((a > 0) ? math.n1 : -math.n1);
       }
     } else if(op == 40) {
       if(!this.numb) b = math.n1;
@@ -3511,19 +3829,43 @@ function Alu() {
         o = p[0] ? math.n1 : math.n0;
       }
     } else if(op == 65) {
-      p = math.nextprime(a, b);
+      var p = math.nextprime(a, b);
       if(p == -1) {
         overflow = true;
       } else {
         o = p;
       }
     } else if(op == 66) {
-      p = math.prevprime(a, b);
+      var p = math.prevprime(a, b);
       if(p == -1) {
         overflow = true;
       } else {
         o = p;
       }
+    } else if(op == 67) {
+      o = math.smallestfactor(a);
+      if(o == 0 && a != 0) {
+        // failed to find a factor
+        overflow = true;
+      }
+    } else if(op == 68) {
+      if(this.numc) {
+        o = math.discretelog(a, b, c);
+      } else {
+        o = math.multiplicativeorder(a, b);
+      }
+      if(o == -1) {
+        o = math.n0;
+        overflow = true;
+      }
+    } else if(op == 69) {
+      o = math.ressol(a, b);
+      if(o == -1) {
+        o = math.n0;
+        overflow = true;
+      }
+    } else if(op == 70) {
+      o = math.totient(a);
     } else if(op == 72) {
       // count leading zeroes (clz)
       for(var i = 0; i < this.numa; i++) {
@@ -3586,13 +3928,44 @@ function Alu() {
       if(math.supportbigint) o = BigInt(o);
       if(signed) o -= (math.n1 << math.B(this.numo - 1));
     } else if(op == 81) {
-      // arcsine, with full input scaled in the full integer range, and scaled output period to fit full output integer range
+      if(this.numb) {
+        // atan2
+        // range 0..1 if unsigned, -1..1 if signed
+        var a2 = Number(a) / (1 << (this.numa - (signed ? 1 : 0)));
+        var b2 = Number(b) / (1 << (this.numb - (signed ? 1 : 0)));
+        var f = Math.atan2(a2, b2);
+        // if signed, f has range -pi to pi, map to -1..1. if unsigned it has range 0 to pi/2,  map it to range 0..1
+        if(signed) f = f / Math.PI;
+        else f = f / (Math.PI / 2);
+        o = Math.floor(f * (Math.pow(2, this.numo - (signed ? 1 : 0)) - 1));
+        o = math.B(o);
+        if(!a && !b) overflow = true;
+      } else {
+        // arcsine, with full input scaled in the full integer range, and scaled output period to fit full output integer range
+        if(signed) a += (math.n1 << math.B(this.numa - 1));
+        var f = Number(a) * 2.0 / ((1 << this.numa) - (signed ? 0 : 1)) - 1.0;
+        f = Math.asin(f);
+        f = f / (Math.PI) + 0.5; // make in range 0..1
+        o = Math.floor(f * (Math.pow(2, this.numo) - (signed ? 0 : 1)));
+        o = math.B(o);
+        if(signed) o -= (math.n1 << math.B(this.numo - 1));
+      }
+    } else if(op == 82) {
+      // ln, with input scaled from 1 to e, so output is scaled from 0 to 1
       if(signed) a += (math.n1 << math.B(this.numa - 1));
-      var f = Number(a) * 2.0 / ((1 << this.numa) - (signed ? 0 : 1)) - 1.0;
-      f = Math.asin(f);
-      f = f / (Math.PI) + 0.5; // make in range 0..1
-      o = Math.floor(f * (Math.pow(2, this.numo) - (signed ? 0 : 1)));
-      o = math.B(o);
+      var f = 1 + Number(a) * (Math.E - 1) / ((1 << this.numa) - 0);
+      f = Math.log(f);
+      o = Math.floor(f * (Math.pow(2, this.numo) - 1));
+      if(math.supportbigint) o = BigInt(o);
+      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+    } else if(op == 83) {
+      // exp, with input scaled from 0 to 1, so output scaled from 1 to e
+      if(signed) a += (math.n1 << math.B(this.numa - 1));
+      var f = Number(a) / ((1 << this.numa) - 0);
+      f = Math.exp(f);
+      f = (f - 1) / (Math.E - 1); // make in range 0..1
+      o = Math.floor(f * (Math.pow(2, this.numo) - 1));
+      if(math.supportbigint) o = BigInt(o);
       if(signed) o -= (math.n1 << math.B(this.numo - 1));
     } else {
       o = math.n0;
@@ -4176,7 +4549,7 @@ function VTE() {
           else index = parseInt(s, 10);
         }
         var ni = math.supportbigint ? BigInt(this.numoutputs) : this.numoutputs;
-        var maxval = (math.n1 << ni) - math.n1;
+        var maxval = (ni == 31) ? math.B(2147483647) : ((math.n1 << ni) - math.n1);
         if(index <= maxval) break;
 
         // typed number too high, remove last character typed
