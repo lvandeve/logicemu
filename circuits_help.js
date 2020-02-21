@@ -514,6 +514,25 @@ s-.>d]a->l   s..>c..>l
 
 
 
+0"A Jukebox 'J' acts like a speaker, producing a tone of a given frequency."
+0"NOTE: this only works if your browser supports Web Audio. If not supported,"
+0"the J's will still indicate when they're enabled."
+
+p-->J349
+  p------>J369
+p-->J391
+  p------>415
+p-->J440
+p-->J466
+  p------>J493
+p-->J523
+  p------>J554
+p-->J587
+  p------>J622
+p-->J659
+p-->J698
+
+
 0"An RGB LED 'D' takes a red, green and blue input:"
 
 8"R"s--->D<---s"B"6
@@ -2522,6 +2541,74 @@ s s s s s s s s        r r r r r r r r r r r
 0"remain visible and have different styling than normal comments (matching the"
 0"color of circuits rather than comments)."
 
+
+
+
+
+3"NEW PART: JUKEBOX"
+3"J: jukebox (speaker)"
+
+0"A Jukebox 'J' acts like a speaker, producing a tone of a given frequency."
+0"NOTE: this only works if your browser supports Web Audio. If not supported,"
+0"the J's will still indicate when they're enabled."
+
+p-->J349
+  p------>J369
+p-->J391
+  p------>415
+p-->J440
+p-->J466
+  p------>J493
+p-->J523
+  p------>J554
+p-->J587
+  p------>J622
+p-->J659
+p-->J698
+
+0"Values from 20 to 20000 hertz are supported, though not all may be audible"
+0"through your speakers."
+
+p-->J20
+
+p-->J50
+
+p-->J100
+
+p-->J200
+
+p-->J400
+
+p-->J1000
+
+p-->J2000
+
+p-->J4000
+
+p-->J8000
+
+p-->J12000
+
+p-->J15000
+
+p-->J20000
+
+
+0"Playing two sounds with slightly different frequencies at the same time may create a beat effect:"
+
+s-->J440
+
+s-->J441
+
+
+0"By default the audio is a sine wave. Adding 100000 to the frequency value produces a square save:"
+
+s-->J100440
+
+s-->J000440
+
+
+
 3"NEW PART: DOT MATRIX, RGB LED"
 3"D: dot matrix screen, RGB LED"
 
@@ -3799,6 +3886,7 @@ registerCircuit('ASCII symbol summary', `
 
 3"D: dot matrix screen, RGB LED"
 3"rR: real-time timer"
+3"J: jukebox (speaker for audio/music)"
 3"?: random bit generator"
 
 3"bB: ROM/RAM bits"
