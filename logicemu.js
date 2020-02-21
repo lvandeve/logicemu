@@ -1401,6 +1401,7 @@ var TYPE_DOTMATRIX = TYPE_index++;
 var TYPE_TRISTATE = TYPE_index++;
 var TYPE_TRISTATE_INV = TYPE_index++;
 var TYPE_RANDOM = TYPE_index++;
+var TYPE_JUKEBOX = TYPE_index++;
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
 // number types (higher value = higher priority) [numbertype number priority number order numbers priority numbers order]
@@ -1436,13 +1437,14 @@ typesymbols[TYPE_ONEHOT] = 'h'; typesymbols[TYPE_NONEHOT] = 'H';
 typesymbols[TYPE_CONSTANT_OFF] = 'f'; typesymbols[TYPE_CONSTANT_ON] = 'F';
 typesymbols[TYPE_FLIPFLOP] = 'c'; typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd';
 typesymbols[TYPE_TRISTATE] = 'z'; typesymbols[TYPE_TRISTATE_INV] = 'Z';
+typesymbols[TYPE_JUKEBOX] = 'J';
 
 
 // all devices except flipflop, those are treated differently because multiple different cells of its type can form one component
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'h':true, 'H':true, 'f':true, 'F':true,
                  's':true, 'S':true, 'l':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
-                 'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true, '?':true};
+                 'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true, '?':true, 'J':true};
 var specialextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true}; // special extenders for large devices (not all of those are used yet)
 // devicemap as well as # (with extends devices)
 var devicemaparea = util.mergeMaps(devicemap, specialextendmap); devicemaparea['#'] = true;
@@ -1461,7 +1463,7 @@ var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x'
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true, 'U':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
                 '#':true, '=':true, 'i':true, 'T':true, 'D':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
-                'z':true, 'Z':true, '?':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true};
+                'z':true, 'Z':true, '?':true, 'J':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true, '$':true};
 var puredigitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
@@ -5629,6 +5631,13 @@ function Bus() {
 
 var highlightedcomponent = null;
 
+var audioContext = null;
+
+var createAudioContext = function() {
+  if(audioContext) audioContext.close();
+  audioContext = new(window.AudioContext || window.webkitAudioContext)();
+};
+
 function Component() {
   this.value = false;
   this.prevvalue = false; // used for the slow algorithms, plus also for flipflops (to support shift registers with D flipflops made from counters...)
@@ -5788,6 +5797,8 @@ function Component() {
       return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_RANDOM) {
       return (Math.random() < 0.5);
+    } else if(this.type == TYPE_JUKEBOX) {
+      return numon > 0;
     }
     return false;
   };
@@ -6119,6 +6130,36 @@ function Component() {
       this.value = this.getNewValue(numon, numoff);
     } else if(this.type == TYPE_TRISTATE || this.type == TYPE_TRISTATE_INV) {
       this.value = this.tristate.update();
+    } else if(this.type == TYPE_JUKEBOX) {
+      this.value = this.getNewValue(numon, numoff);
+      if(this.value && !this.prevvalue) {
+        if(audioContext) {
+          if(this.oscillator) this.oscillator.stop();
+          var freq = this.number;
+          var shape = 0;
+          if(this.number > 100000) {
+            var shape = Math.floor(freq / 100000);
+            freq %= 100000;
+            if(shape > 1) shape = 0;
+          }
+          if(freq < 20 || freq > 20000) freq = 440; // default
+          this.oscillator = audioContext.createOscillator();
+          this.oscillator.type = shape == 0 ? 'sine' : 'square';
+          var volume = audioContext.createGain();
+          volume.connect(audioContext.destination);
+          // with higher volume than 0.3, a sine wave sounds quite non-sine like, as if it gets clipped
+          // let's keep the sounds pleasand to use and not make the volume too high
+          // the square wave sounds even louder so make that one even softer
+          volume.gain.value = shape == 0 ? 0.2 : 0.1;
+          this.oscillator.frequency.value = freq;
+          this.oscillator.connect(volume);
+          this.oscillator.start();
+        }
+      }
+      if(!this.value && this.oscillator) {
+        this.oscillator.stop();
+        this.oscillator = null;
+      }
     } else {
       // regular gate, not flip-flop
       this.value = this.getNewValue(numon, numoff);
@@ -6921,6 +6962,7 @@ function Cell() {
       if(tc == 'r' || tc == 'R') title = 'timer (click to freeze/unfreeze)';
       if(tc == 'l') title = 'LED';
       if(tc == '?') title = 'random generator';
+      if(tc == 'J') title = 'jukebox (speaker, for music)';
       if(tc == 'a') title = 'AND gate';
       if(tc == 'A') title = 'NAND gate';
       if(tc == 'o') title = 'OR gate';
@@ -11441,6 +11483,7 @@ function resetForParse() {
   numticks = -1; // -1 because the first implicit tick after parse should not be counted
   timerticks = -1;
   showingLinkIds = false;
+  createAudioContext();
 }
 
 // 3D version, for wire crossings etc...
@@ -11884,6 +11927,7 @@ function parseComponents() {
             if(c == 'z') type2 = TYPE_TRISTATE;
             if(c == 'Z') type2 = TYPE_TRISTATE_INV;
             if(c == '?') type2 = TYPE_RANDOM;
+            if(c == 'J') type2 = TYPE_JUKEBOX;
             if(ffmap[c] || c == '#c') type2 = TYPE_FLIPFLOP;
 
             if(type != TYPE_NULL && type != TYPE_UNKNOWN_DEVICE) {
