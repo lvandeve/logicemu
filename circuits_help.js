@@ -482,6 +482,12 @@ s-->y
 s-->Q-->l
 s-->y
 
+0"A pulse duration can be made longer with a number:"
+
+    1
+    0
+s-->q-->l
+
 0"Note that the pulse can also be made with a delay and an AND gate instead,"
 0"or with a c looping back to itself, the single q is just a shortcut:"
 
@@ -2247,7 +2253,14 @@ s-->q-->l
 
 s-->Q-->l
 
-0"Can be combined with enable input, but if adding any other flip-flop parts"
+
+0"A pulse duration can be made longer with a number:"
+
+    1
+    0
+s-->q-->l
+
+0"A pulse can be combined with enable input, but if adding any other flip-flop parts"
 0"it'll behave as the flip-flops explained above instead."
 
 s-->q-->l
@@ -4600,6 +4613,32 @@ registerCircuit('Delay gate (d)', `
 s-->d-->l
 `, 'component' + componentid++);
 
+registerCircuit('Delay gate with time (d)', `
+    1
+    0
+s-->d-->l
+`, 'component' + componentid++);
+
+registerCircuit('Pulse gate (q)', `
+s-->q-->l
+`, 'component' + componentid++);
+
+registerCircuit('Pulse gate with time (q)', `
+    1
+    0
+s-->q-->l
+`, 'component' + componentid++);
+
+registerCircuit('Inverted pulse gate (Q)', `
+s-->Q-->l
+`, 'component' + componentid++);
+
+registerCircuit('Inverted pulse gate with time (Q)', `
+    1
+    0
+s-->Q-->l
+`, 'component' + componentid++);
+
 registerCircuit('D flip-flop (d)', `
  s-->d-->l
      #
@@ -6149,6 +6188,15 @@ s---.>c-->l
 s-->q-->l       s-->q-->l
                 s-->y-->l
 
+
+
+0"Gives longer duration pulse:"
+
+    1               1
+    0               0
+s-->q-->l       s-->q-->l
+                s-->y-->l
+
 0"Gives brief negative pulse on positive clock edge (with y, only when enabled):"
 
 s-->Q-->l       s-->Q-->l
@@ -6475,6 +6523,35 @@ S--X-   S--X-     S--Xl    X   S--Xl  S--X-  S--Xl   S--X-  S--X-  S--Xl  S--Xl 
 s-->a-->l
     #
 s-->o
+
+0"# Audio"
+
+
+
+0"The following sound should sound somewhat piano-like. At least there should"
+0"be a sharp immediate start, and a smooth gradual decrease in volume. Test this"
+0"in different web browsers."
+
+
+
+
+                              3
+                              4
+                              9
+    B#b#b#b#b#b#b#b#b#b#b#b#b>J
+    b#B#b#b#b#b#b#b#b#b#b#b#b>#
+    b#b#B#b#b#b#b#b#b#b#b#b#b>#
+    b#b#b#B#B#b#b#b#b#b#b#b#b>#
+    b#b#b#b#b#B#B#b#b#b#b#b#b>#
+    b#b#b#b#b#b#b#B#B#b#b#b#b>#
+    b#b#b#b#b#b#b#b#b#B#B#B#b>#
+    b#b#b#b#b#b#b#b#b#b#b#b#B>#
+    ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
+.>q>d>d>d>d>d>d>d>d>d>d>d>d>d
+. 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+.
+p#
+##
 
 
 0"# Comment Alignment"

@@ -59,6 +59,8 @@ document.body.onmouseup = function(e) {
   global_changed_something = true;
 };
 
+document.body.ontouchend = document.body.onmouseup;
+
 
 var edit = undefined;
 var NEWEDIT = false;

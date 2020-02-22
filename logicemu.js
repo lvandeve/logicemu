@@ -5456,6 +5456,8 @@ function JukeBox() {
   this.shape = 0;
   this.basevolume = 0.2;
 
+  this.prevvol = 0;
+
   this.stop = function() {
     if(this.oscillator) {
       this.oscillator.stop();
@@ -5470,8 +5472,7 @@ function JukeBox() {
 
     var volume = audioContext.createGain();
     volume.connect(audioContext.destination);
-    volume.gain.value = 0.0;//this.basevolume;
-    //volume.gain.setValueAtTime(0, audioContext.currentTime);
+    volume.gain.value = 0.0;
     this.volume = volume;
 
 
@@ -5499,24 +5500,28 @@ function JukeBox() {
       mul <<= 1;
     }
     var vol = value / ((1 << inputs.length) - 1);
-    vol *= this.basevolume;
+    var outvol = vol * this.basevolume;
 
     if(value != this.prevvalue && supportsAudio) {
       if(!value) {
         this.stop();
+        this.prevvol = 0;
       } else {
         this.ensureStarted();
         var gain = this.volume.gain;
-        if(this.prevvalue) {
+        var diff = Math.abs(vol - this.prevvol);
+        if(this.prevvalue && diff < 0.3) {
           // go slightly gradual instead of immediately changing volume
-          gain.setValueAtTime(gain.value, audioContext.currentTime);
-          gain.linearRampToValueAtTime(vol, audioContext.currentTime + 0.3);
+          var currentvalue = gain.value; // not all browsers support reading this...
+          if(currentvalue) gain.setValueAtTime(currentvalue, audioContext.currentTime);
+          gain.linearRampToValueAtTime(outvol, audioContext.currentTime + 0.1);
         } else {
           // if no previous value, go immediate anyway, to not give the feeling of delayed response then
-          gain.value = vol;
+          gain.setValueAtTime(outvol, audioContext.currentTime);
         }
       }
       this.prevvalue = value;
+      this.prevvol = vol;
     }
   };
 
@@ -6320,8 +6325,20 @@ function Component() {
 
         if((ff.numq == 1 || ff.numQ == 1) && (ff.numff == ff.numq + ff.numy || ff.numff == ff.numQ + ff.numy)) {
           // lone q, or lone Q, behaves as "pulse" instead
-          // since Q inverts output, it behaves the opposite way to this rule.
-          ff.value = !ffdisable && (num_misc_pos_edge & 1);
+          // since Q inverts output, it behaves the opposite way to this rule without needing any extra code here.
+          var number = this.number;
+          var value = !ffdisable && (num_misc_pos_edge & 1);
+          if(number > 1) {
+            if(value) {
+              this.qcount = number + 1;
+            }
+            this.prevqvalue = value;
+            if(this.qcount) this.qcount--;
+            ff.value = (this.qcount > 0);
+            if(this.qcount > 0) this.changed = true;
+          } else {
+            ff.value = value;
+          }
         } else if((ff.numj == 1 || ff.numk == 1) && ff.numff == 1) {
           // lone j, or lone k, behave as "once state changed, stay that way"
           // lone k will output 1 initially and then become 0 forever once activated, and the opposite for j.
@@ -7673,6 +7690,8 @@ function RendererText() {
       e.preventDefault();
       return false;*/
     };
+
+    worldDiv.ontouchstart = worldDiv.onmousedown;
   };
 
   this.cleanup = function() {
@@ -7684,10 +7703,12 @@ function RendererText() {
   this.init = function(cell, x, y, clickfun) {
     this.div0 = makeDiv(x * tw, y * th, tw, th, worldDiv);
     this.div0.onmousedown = clickfun;
+    this.div0.ontouchstart = clickfun;
 
     if(cell.circuitsymbol != '"') {
       this.div1 = makeDiv(x * tw, y * th, tw, th, worldDiv);
       this.div1.onmousedown = clickfun;
+      this.div1.ontouchstart = clickfun;
     }
 
     var c = cell.circuitsymbol;
@@ -7828,6 +7849,7 @@ function RendererText() {
 
       // allow text selection of those
       this.div0.onmousedown = null;
+      this.div0.ontouchstart = null;
     } else if(symbol == 'toc') {
       setTocHTML(cell.circuitextra, cell.toclink, this.div0);
     } else {
@@ -9013,6 +9035,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         // still need to make 1 div anyway (at least not 2) for the click function
         this.text0 = makeDiv(x * tw, y * th, tw, th, worldDiv);
         this.text0.onmousedown = clickfun;
+        this.text0.ontouchstart = clickfun;
       }
     }
   };

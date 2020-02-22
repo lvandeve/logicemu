@@ -4365,6 +4365,58 @@ T################################################################# T############
 
 
 
+registerTitle('Music');
+
+
+registerCircuit('Piano', `
+
+0"This implements a piano-like sound"
+
+
+          3   3   4   4   5   5   6   6
+          4   9   4   6   2   8   5   9
+          9   1   0   6   3   7   9   8
+        #>J #>J #>J #>J #>J #>J #>J #>J
+        #># #># #># #># #># #># #># #>#
+        #># #># #># #># #># #># #># #>#
+        #># #># #># #># #># #># #># #>#
+        #># #># #># #># #># #># #># #>#
+        #># #># #># #># #># #># #># #>#
+        #># #># #># #># #># #># #># #>#
+        i># i># i># i># i># i># i># i>#
+        ^   ^   ^   ^   ^   ^   ^   ^
+1"chord".   .   .   .   .   .   .   .
+    p..>o   . .>o   . .>o   .   .   .
+      . ^   . . ^   . . ^   .   .   .
+      ..+...+...+...+.. .   .   .   .
+        .   .   .   .   .   .   .   .
+        .   .   .   .   .   .   .   .
+        p## p## p## p## p## p## p## p##
+        ### ### ### ### ### ### ### ###
+        ### ### ### ### ### ### ### ###
+
+
+
+0"The IC implements the volume envelope for the keys:"
+
+    B#b#b#b#b#b#b#b#b#b#b#b#b>l
+    b#B#b#b#b#b#b#b#b#b#b#b#b>l
+    b#b#B#b#b#b#b#b#b#b#b#b#b>l
+    b#b#b#B#B#b#b#b#b#b#b#b#b>l
+    b#b#b#b#b#B#B#b#b#b#b#b#b>l
+    b#b#b#b#b#b#b#B#B#b#b#b#b>l
+    b#b#b#b#b#b#b#b#b#B#B#B#b>l
+    b#b#b#b#b#b#b#b#b#b#b#b#B>l
+    ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ I
+.>q>d>d>d>d>d>d>d>d>d>d>d>d>d
+. 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+s
+
+
+`, 'piano');
+
+
+
 registerTitle('Large');
 
 
