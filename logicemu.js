@@ -1401,7 +1401,7 @@ var TYPE_DOTMATRIX = TYPE_index++;
 var TYPE_TRISTATE = TYPE_index++;
 var TYPE_TRISTATE_INV = TYPE_index++;
 var TYPE_RANDOM = TYPE_index++;
-var TYPE_JUKEBOX = TYPE_index++;
+var TYPE_JUKEBOX = TYPE_index++; // music, speaker, sound, audio
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
 // number types (higher value = higher priority) [numbertype number priority number order numbers priority numbers order]
@@ -1690,6 +1690,7 @@ function CallSub(id) {
       component.rom = null; // handled further
       component.mux = null; // handled further
       component.vte = null; // handled further
+      component.jukebox = null; // handled further
       component.alu = null; // handled further
       component.ff = null; // handled further
       component.rom_out_pos = v.rom_out_pos;
@@ -1838,6 +1839,19 @@ function CallSub(id) {
       if(v.dotmatrix) {
         // Do nothing, don't copy the dotmatrix: it's an output-only
         // component, and is invisible inside IC's, so has no effect
+      }
+      if(v.jukebox) {
+        var jukebox = new JukeBox();
+        component.jukebox = jukebox;
+        jukebox.x0 = v.jukebox.x0;
+        jukebox.y0 = v.jukebox.y0;
+        jukebox.x1 = v.jukebox.x1;
+        jukebox.y1 = v.jukebox.y1;
+        jukebox.master = component;
+        jukebox.frequency = v.jukebox.frequency;
+        jukebox.shape = v.jukebox.shape;
+        jukebox.basevolume = v.jukebox.basevolume;
+        jukebox.numinputs = v.jukebox.numinputs;
       }
 
       if(v.type == TYPE_SWITCH_OFF || v.type == TYPE_SWITCH_ON) {
@@ -5045,7 +5059,6 @@ function VTE() {
 }
 
 
-// has no outputs, so no master needed
 function DotMatrix() {
   this.x0 = 0;
   this.y0 = 0;
@@ -5163,7 +5176,7 @@ function DotMatrix() {
   // returns true if ok, false if error
   this.init1 = function(component) {
     // unlike other large components, the master component is the only single
-    // component here, since this component has only inputs, and  multiple
+    // component here, since this component has only inputs, and multiple
     // components is only needed if multiple different output values must be
     // supported.
     this.master = component;
@@ -5401,6 +5414,288 @@ function DotMatrix() {
 
 
 
+var supportsAudio = !!(window.AudioContext || window.webkitAudioContext);
+var audioContext = null;
+var whiteNoiseBuffer = null;
+
+var ensureAudioContext = function() {
+  if(audioContext) return;
+  if(!supportsAudio) return;
+
+  audioContext = new(window.AudioContext || window.webkitAudioContext)();
+
+  var num = 2 * audioContext.sampleRate;
+  whiteNoiseBuffer = audioContext.createBuffer(1, num, audioContext.sampleRate);
+  data = whiteNoiseBuffer.getChannelData(0);
+  for (var i = 0; i < num; i++) {
+    data[i] = Math.random();
+  }
+};
+
+var stopAudioContext = function() {
+  if(audioContext) audioContext.close();
+  audioContext = null;
+};
+
+// Sound, speaker, music, audio
+// has same single output everywhere, so no master needed
+function JukeBox() {
+  this.x0 = 0;
+  this.y0 = 0;
+  this.x1 = 0;
+  this.y1 = 0;
+  this.numinputs = -1;
+
+  // shape of web audio connections: oscillator --> volume --> audioContext
+  this.volume = null;
+  this.oscillator = null;
+
+  this.prevvalue = -1;
+
+  this.frequency = 0;
+  this.shape = 0;
+  this.basevolume = 0.2;
+
+  this.stop = function() {
+    if(this.oscillator) {
+      this.oscillator.stop();
+      this.oscillator = null;
+    }
+  };
+
+  this.ensureStarted = function() {
+    if(!supportsAudio) return; // audio not supported by browser
+    if(this.oscillator) return;
+    ensureAudioContext();
+
+    var volume = audioContext.createGain();
+    volume.connect(audioContext.destination);
+    volume.gain.value = 0.0;//this.basevolume;
+    //volume.gain.setValueAtTime(0, audioContext.currentTime);
+    this.volume = volume;
+
+
+    if(this.shape == 5) {
+      this.oscillator = audioContext.createBufferSource();
+      this.oscillator.buffer = whiteNoiseBuffer;
+      this.oscillator.loop = true;
+    } else {
+      this.oscillator = audioContext.createOscillator();
+      this.oscillator.type = this.shape == 0 ? 'sine' : (this.shape == 2 ? 'square' : (this.shape == 3 ? 'triangle' : 'sawtooth'));
+      this.oscillator.frequency.value = this.frequency;
+    }
+
+    this.oscillator.connect(volume);
+    this.oscillator.start();
+  };
+
+
+  this.update = function(inputs) {
+    //var value = inputs[0] ? 1 : 0;
+    var value = 0;
+    var mul = 1;
+    for(var i = 0; i < inputs.length; i++) {
+      value += inputs[i] * mul;
+      mul <<= 1;
+    }
+    var vol = value / ((1 << inputs.length) - 1);
+    vol *= this.basevolume;
+
+    if(value != this.prevvalue && supportsAudio) {
+      if(!value) {
+        this.stop();
+      } else {
+        this.ensureStarted();
+        var gain = this.volume.gain;
+        if(this.prevvalue) {
+          // go slightly gradual instead of immediately changing volume
+          gain.setValueAtTime(gain.value, audioContext.currentTime);
+          gain.linearRampToValueAtTime(vol, audioContext.currentTime + 0.3);
+        } else {
+          // if no previous value, go immediate anyway, to not give the feeling of delayed response then
+          gain.value = vol;
+        }
+      }
+      this.prevvalue = value;
+    }
+  };
+
+
+  this.getShapeName = function() {
+    if(this.shape < 2) return 'sine';
+    if(this.shape == 2) return 'square';
+    if(this.shape == 3) return 'triangle';
+    if(this.shape == 4) return 'sawtooth';
+    if(this.shape == 5) return 'white noise';
+    return 'unknown';
+  };
+
+
+  this.initDefault = function(component) {
+    this.frequency = 440;
+    this.shape = 0;
+    this.basevolume = 0.2;
+    this.master = component;
+  };
+
+  // init before inputs are resolved
+  // returns true if ok, false if error
+  this.init1 = function(component) {
+    // unlike other large components, the master component is the only single
+    // component here, since there's only one output value, and multiple
+    // components is only needed if multiple different output values must be
+    // supported.
+    this.master = component;
+    var x0 = w, x1 = 0, y0 = h, y1 = 0;
+    for(var i = 0; i < component.cells.length; i++) {
+      var x = component.cells[i][0];
+      var y = component.cells[i][1];
+      x0 = Math.min(x, x0);
+      x1 = Math.max(x, x1);
+      y0 = Math.min(y, y0);
+      y1 = Math.max(y, y1);
+    }
+    x1++;
+    y1++;
+    this.x0 = x0;
+    this.y0 = y0;
+    this.x1 = x1;
+    this.y1 = y1;
+    this.w = this.x1 - this.x0;
+    this.h = this.y1 - this.y0;
+    component.jukebox = this;
+
+
+
+    var freq = component.number;
+    var shape = 0;
+    if(component.number > 20000) {
+      var shape = Math.floor(freq / 10000);
+      freq %= 10000;
+      if(shape > 5) shape = 0;
+    }
+    if(freq < 20 || freq > 20000) freq = 440; // default
+    this.frequency = freq;
+    this.shape = shape;
+
+    // with higher volume than 0.3, a sine wave sounds quite non-sine like, as if it gets clipped
+    // let's keep the sounds pleasand to use and not make the volume too high
+    // the square wave sounds even louder so make that one even softer
+    this.basevolume = (shape == 0 || shape == 3) ? 0.2 : 0.1;
+
+    return true;
+  };
+
+
+  /*
+  given the array returned by getIO2,
+  returns object of {
+    volume [heading, dir, num, lsbpos]: side with volume input
+  }
+  with
+  heading: wind direction of side with this inputs/outputs (NESW), or -1 if not present
+  dir: heading & 1: 0=horizontal, 1=vertical
+  num: amount
+  lsbpos: is lsbpos for this left or right (not relevant for everything)
+  }
+  returns null on error.
+  */
+  this.getDirs = function(io) {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
+    // io format: [[[niv], nic], [[eiv], eic], [[siv], sic], [[wiv], wic],[[nov], noc], [[eov], eoc], [[sov], soc], [[wov], woc]];
+
+    var numinputs = 0;
+    var volumeheading = -1;
+
+    for(var i = 0; i < 4; i++) {
+      if(io[i][1] != 0) {
+        if(volumeheading != -1) { this.setError('only one side may have inputs'); return null; }
+        volumeheading = i;
+        numinputs += io[i][1];
+        break;
+      }
+    }
+
+    var lsbpos = (volumeheading >= 2) ? 1 : 0;
+    var volume = [volumeheading, volumeheading & 1, numinputs, lsbpos];
+
+    var result = {'volume':volume};
+    return result;
+  };
+
+  /*Sorts inputs from getDirs*/
+  this.sortIO = function(dirs) {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
+    var getDir = function(x, y) {
+      if(y < y0) return 0;
+      if(x >= x1) return 1;
+      if(y >= y1) return 2;
+      if(x < x0) return 3;
+      return -1;
+    };
+
+    //sort inputs from lsb to msb, then the write input
+    var array = [];
+    for(var i = 0; i < this.master.inputs.length; i++) array[i] = i;
+    var self = this;
+
+    var heading = dirs.volume[0];
+    var lsbpos = dirs.volume[3]; // 0: left or top, 1: right or bottom. Where the LSB of address input bits is.
+    array = array.sort(function(a, b) {
+      var xa = self.master.inputs_x[a];
+      var ya = self.master.inputs_y[a];
+      var xb = self.master.inputs_x[b];
+      var yb = self.master.inputs_y[b];
+      var da = getDir(xa, ya);
+      var db = getDir(xb, yb);
+      if(da != db) return da > db ? 1 : -1; // this never happens, only 1 side has inputs
+      if(((da & 1) == 0) && lsbpos) return xb - xa;
+      if(((da & 1) == 0)) return xa - xb;
+      if(lsbpos) return yb - ya;
+      return ya - yb;
+    });
+
+
+    newOrder(this.master.inputs, array);
+    newOrder(this.master.inputs_negated, array);
+    newOrder(this.master.inputs_x, array);
+    newOrder(this.master.inputs_y, array);
+    newOrder(this.master.inputs_x2, array);
+    newOrder(this.master.inputs_y2, array);
+  };
+
+  this.init2 = function() {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+    var w = x1 - x0;
+    var h = y1 - y0;
+
+    if(!this.master) return false;
+
+    var io = getIO2(x0, y0, x1, y1, this.master);
+    if(!io) { this.setError('getIO failed'); return false; }
+
+    var dirs = this.getDirs(io);
+    if(!dirs) { this.setError('getDirs failed'); return false; }
+
+    this.sortIO(dirs);
+
+    return true;
+  };
+}
+
+
+
 
 function countFFComponents(array) {
   var o = {};
@@ -5631,13 +5926,6 @@ function Bus() {
 
 var highlightedcomponent = null;
 
-var audioContext = null;
-
-var createAudioContext = function() {
-  if(audioContext) audioContext.close();
-  audioContext = new(window.AudioContext || window.webkitAudioContext)();
-};
-
 function Component() {
   this.value = false;
   this.prevvalue = false; // used for the slow algorithms, plus also for flipflops (to support shift registers with D flipflops made from counters...)
@@ -5858,7 +6146,7 @@ function Component() {
     var numq1 = 0;
     var numQ1 = 0;
     var numy1 = 0;
-    var rom_inputs = []; // only filled in if this is ROMe
+    var rom_inputs = []; // only filled in if this is a large device, like ROM, ...
     var num_misc_pos_edge = 0;
 
     if(UPDATE_ALGORITHM == 3 && this.ff_cycle && this.ff_cycle_time > 5 && this.type != TYPE_FLIPFLOP && Math.random() < TWIDDLE_PROBABILITY) {
@@ -5957,7 +6245,7 @@ function Component() {
         if(!value2 && prevvalue2) numc_neg_edge++;
       }
 
-      if(this.type == TYPE_ROM || this.type == TYPE_MUX || this.type == TYPE_ALU || this.type == TYPE_VTE || this.type == TYPE_DOTMATRIX) {
+      if(this.type == TYPE_ROM || this.type == TYPE_MUX || this.type == TYPE_ALU || this.type == TYPE_VTE || this.type == TYPE_DOTMATRIX || this.type == TYPE_JUKEBOX) {
         rom_inputs[i] = value2;
       }
     }
@@ -5990,6 +6278,11 @@ function Component() {
       if(this.dotmatrix) {
         this.dotmatrix.update(rom_inputs);
       }
+    } else if(this.type == TYPE_JUKEBOX) {
+      if(this.jukebox) {
+        this.jukebox.update(rom_inputs);
+      }
+      this.value = this.getNewValue(numon, numoff);
     } else if(this.type == TYPE_IC) {
       // a component of this type in theory should do nothing and not be connected with anything, it's just
       this.value = false;
@@ -6130,36 +6423,6 @@ function Component() {
       this.value = this.getNewValue(numon, numoff);
     } else if(this.type == TYPE_TRISTATE || this.type == TYPE_TRISTATE_INV) {
       this.value = this.tristate.update();
-    } else if(this.type == TYPE_JUKEBOX) {
-      this.value = this.getNewValue(numon, numoff);
-      if(this.value && !this.prevvalue) {
-        if(audioContext) {
-          if(this.oscillator) this.oscillator.stop();
-          var freq = this.number;
-          var shape = 0;
-          if(this.number > 100000) {
-            var shape = Math.floor(freq / 100000);
-            freq %= 100000;
-            if(shape > 1) shape = 0;
-          }
-          if(freq < 20 || freq > 20000) freq = 440; // default
-          this.oscillator = audioContext.createOscillator();
-          this.oscillator.type = shape == 0 ? 'sine' : 'square';
-          var volume = audioContext.createGain();
-          volume.connect(audioContext.destination);
-          // with higher volume than 0.3, a sine wave sounds quite non-sine like, as if it gets clipped
-          // let's keep the sounds pleasand to use and not make the volume too high
-          // the square wave sounds even louder so make that one even softer
-          volume.gain.value = shape == 0 ? 0.2 : 0.1;
-          this.oscillator.frequency.value = freq;
-          this.oscillator.connect(volume);
-          this.oscillator.start();
-        }
-      }
-      if(!this.value && this.oscillator) {
-        this.oscillator.stop();
-        this.oscillator = null;
-      }
     } else {
       // regular gate, not flip-flop
       this.value = this.getNewValue(numon, numoff);
@@ -6187,6 +6450,7 @@ function Component() {
     }
     // for TYPE_ROM, just do default behavior, it already toggles bit
     if(e.ctrlKey && this.type != TYPE_ROM && !changeMode) {
+      if(this.jukebox) this.jukebox.stop();
       var didsomething = true;
       if(e.shiftKey) {
         if(this.altType) {
@@ -6270,6 +6534,7 @@ function Component() {
       var value = this.value;
       var type = changeMode;
       var symbol = typesymbols[type];
+      if(this.jukebox) this.jukebox.stop();
       /*if(changeMode == 'rem_inputs') {
         this.inputs = [];
         changeMode = null;
@@ -6293,6 +6558,12 @@ function Component() {
       }
       if(type == TYPE_RANDOM) {
         value = Math.random() < 0.5;
+      }
+      if(type == TYPE_JUKEBOX) {
+        if(!this.jukebox) {
+          this.jukebox = new JukeBox();
+          this.jukebox.initDefault(this);
+        }
       }
       if(!e.ctrlKey && !e.shiftKey) changeMode = null;
       // Do not support changing large devices, it breaks them irreversably during this circuit run
@@ -6962,7 +7233,16 @@ function Cell() {
       if(tc == 'r' || tc == 'R') title = 'timer (click to freeze/unfreeze)';
       if(tc == 'l') title = 'LED';
       if(tc == '?') title = 'random generator';
-      if(tc == 'J') title = 'jukebox (speaker, for music)';
+      if(tc == 'J') {
+        title = 'jukebox (speaker, for music)';
+        if(this.components[0]) {
+          var jukebox = this.components[0].jukebox;
+          if(jukebox) {
+            title += '. Frequency: ' + jukebox.frequency + ' Hz';
+            title += '. Shape: ' + jukebox.getShapeName();
+          }
+        }
+      }
       if(tc == 'a') title = 'AND gate';
       if(tc == 'A') title = 'NAND gate';
       if(tc == 'o') title = 'OR gate';
@@ -8750,8 +9030,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     drawer.ty = this.ty;
 
     if(this.init2done) {
-      this.ctx0.clearRect(0, 0, tw, th);
-      this.ctx1.clearRect(0, 0, tw, th);
+      // TODO: this clears the TOP LEFT square of the screen, not the current one, check why this was needed again, if at all
+      //this.ctx0.clearRect(0, 0, tw, th);
+      //this.ctx1.clearRect(0, 0, tw, th);
     }
     this.init2done = true;
 
@@ -11483,7 +11764,7 @@ function resetForParse() {
   numticks = -1; // -1 because the first implicit tick after parse should not be counted
   timerticks = -1;
   showingLinkIds = false;
-  createAudioContext();
+  stopAudioContext();
 }
 
 // 3D version, for wire crossings etc...
@@ -12068,6 +12349,10 @@ function parseComponents() {
             var dot = new DotMatrix();
             dot.init1(component);
           }
+          if(type == TYPE_JUKEBOX) {
+            var jukebox = new JukeBox();
+            jukebox.init1(component);
+          }
 
           for(var i = 0; i < array.length; i++) {
             var x = array[i][0];
@@ -12474,6 +12759,12 @@ function parseComponents() {
         component.markError(component.dotmatrix.errormessage);
       }
     }
+    if(component.jukebox) {
+      if(!component.jukebox.error && !component.jukebox.init2()) component.jukebox.error = true;
+      if(component.jukebox.error) {
+        component.markError(component.jukebox.errormessage);
+      }
+    }
     if(component.type == TYPE_TRISTATE || component.type == TYPE_TRISTATE_INV) {
       component.tristate = new TriState();
       component.tristate.init(component);
@@ -12508,6 +12799,9 @@ function parseComponents() {
     }
     if(component.type == TYPE_DOTMATRIX && component.dotmatrix.error) {
       component.markError(component.dotmatrix.errormessage);
+    }
+    if(component.type == TYPE_JUKEBOX && component.jukebox.error) {
+      component.markError(component.jukebox.errormessage);
     }
   }
 
@@ -13112,6 +13406,7 @@ registerChangeDropdownElement(TYPE_CONSTANT_ON);
 registerChangeDropdownElement('c');
 registerChangeDropdownElement('C');
 registerChangeDropdownElement(TYPE_DELAY);
+registerChangeDropdownElement(TYPE_JUKEBOX);
 registerChangeDropdownElement(TYPE_RANDOM);
 //registerChangeDropdownElement('rem_inputs');
 

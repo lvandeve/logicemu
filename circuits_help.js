@@ -515,8 +515,11 @@ s-.>d]a->l   s..>c..>l
 
 
 0"A Jukebox 'J' acts like a speaker, producing a tone of a given frequency."
-0"NOTE: this only works if your browser supports Web Audio. If not supported,"
-0"the J's will still indicate when they're enabled."
+
+0"NOTE: this only works if your browser supports Web Audio. The browser may"
+0"also require interaction with the page, by clicking something, before audio"
+0"can play."
+0"If not supported, the J's will still indicate when they're enabled."
 
 p-->J349
   p------>J369
@@ -531,6 +534,30 @@ p-->J587
   p------>J622
 p-->J659
 p-->J698
+
+
+0"Values above 20000 indicate different audio wave shapes:"
+
+p-->J00440 0"sine"
+
+p-->J10440 0"high frequency sine"
+
+p-->J20440 0"square"
+
+p-->J30440 0"triangle"
+
+p-->J40440 0"sawtooth"
+
+p-->J50000 0"white noise"
+
+
+0"Multiple inputs control the volume in binary:"
+
+  J###440
+  ^^^^
+  ||||
+  ssss
+ "8421"
 
 
 0"An RGB LED 'D' takes a red, green and blue input:"
@@ -2549,8 +2576,11 @@ s s s s s s s s        r r r r r r r r r r r
 3"J: jukebox (speaker)"
 
 0"A Jukebox 'J' acts like a speaker, producing a tone of a given frequency."
-0"NOTE: this only works if your browser supports Web Audio. If not supported,"
-0"the J's will still indicate when they're enabled."
+
+0"NOTE: this only works if your browser supports Web Audio. The browser may"
+0"also require interaction with the page, by clicking something, before audio"
+0"can play."
+0"If not supported, the J's will still indicate when they're enabled."
 
 p-->J349
   p------>J369
@@ -2601,12 +2631,29 @@ s-->J440
 s-->J441
 
 
-0"By default the audio is a sine wave. Adding 100000 to the frequency value produces a square save:"
+0"By default the audio is a sine wave. Adding increments of 10000 allows other wave shapes, all from"
+0"20-9999 Hz (only sine supports up to 20000 Hz):"
 
-s-->J100440
+p-->J00440 0"sine"
 
-s-->J000440
+p-->J10440 0"high frequency sine"
 
+p-->J20440 0"square"
+
+p-->J30440 0"triangle"
+
+p-->J40440 0"sawtooth"
+
+p-->J50000 0"white noise"
+
+
+0"Multiple inputs control the volume in binary:"
+
+  J###440
+  ^^^^
+  ||||
+  ssss
+ "8421"
 
 
 3"NEW PART: DOT MATRIX, RGB LED"
@@ -4422,6 +4469,17 @@ registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
       ^^^^^^^^
       ssSssSss
 
+`, 'component' + componentid++);
+
+registerCircuit('Jukebox (audio speaker) (J)', `
+ s-->J440
+`, 'component' + componentid++);
+
+registerCircuit('Jukebox (audio speaker) with volume (J)', `
+ s-->J800
+ s-->#
+ s-->#
+ s-->#
 `, 'component' + componentid++);
 
 registerCircuit('Wire Split (.)', `
@@ -6258,6 +6316,14 @@ s-->e             s-->#i#             s-->kQ-->l    s-->#-->l
   R->O>l      s>#        s->BbB       s>########           T#######
   s->?>l      s>#        s->bBb         ^^^^^^^^           ^^^^^^^^
                                         ssSssSss           ssssssss
+
+
+s-->J-->l
+
+s-->J-->l
+s-->#
+s-->#
+s-->#800
 
 
 0"# Wire Shapes"
