@@ -2716,7 +2716,7 @@ s.>D<.s    D##
            sss
 
 0"The BGRI inputs are blue, green, red and intensity. Not all must be present,"
-0"any of 1, 2, 3 or 4 color bits are possible and each amount has a different"
+0"any of 0, 1, 2, 3 or 4 color bits are possible and each amount has a different"
 0"color palette. If there are 3 inputs, each pixel represents an RGB LED."
 
 
@@ -2732,6 +2732,14 @@ s.>D<.s    D##
     s>########
       ^^^^^^^^
       ssSssSss
+
+0"The following color schemes are available:"
+0"- 4 color bits: RGBI, 16 colors palette"
+0"- 3 color bits: RGB, 8 colors palette"
+0"- 2 color bits: RG, 4 colors palette: black, red, green, yellow"
+0"- 1 color bits: 2 colors palette: white/black"
+0"- 0 color bits: oscilloscope: green, fades out over time (time based on amount of"
+0"dots drawn, fill and line based addressing not supported in case of oscilloscope)"
 
 
 3"NEW PART: Mux"
@@ -4502,6 +4510,20 @@ registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
 
 `, 'component' + componentid++);
 
+registerCircuit('Dot Matrix Screen, As Oscilloscope (D)', `
+      D#######<p"dot"
+      ########
+      ########
+      ########
+      ########
+    s>########
+    s>########
+    s>########
+           ^^^
+           sss
+
+`, 'component' + componentid++);
+
 registerCircuit('Jukebox (audio speaker) (J)', `
  s-->J440
 `, 'component' + componentid++);
@@ -4511,6 +4533,15 @@ registerCircuit('Jukebox (audio speaker) with volume (J)', `
  s-->#
  s-->#
  s-->#
+`, 'component' + componentid++);
+
+registerCircuit('Jukebox (audio speaker) with multiple controls (J)', `
+
+  J#####################2000
+  ^^^      ^^^^    ^^^^
+  |||      ||||    ||||
+  sss      sSss    ssss
+
 `, 'component' + componentid++);
 
 registerCircuit('Wire Split (.)', `

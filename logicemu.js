@@ -5073,6 +5073,7 @@ function DotMatrix() {
   this.numx = -1;
   this.numy = -1;
   this.numc = -1; // num bits to control color
+  this.nummisc = -1; // set and fill bit (for RGB led, should be 0, for oscilloscope, should be 1, for dotmatrix, should be 2)
 
   this.direct = false; // if true, the x/y addresses are direct, not binary addresses, and multiple dots could be set at the same time
 
@@ -5084,6 +5085,9 @@ function DotMatrix() {
   this.errormessage = '';
 
   this.array = [];
+  this.oarray = []; // only used if oscilloscope.
+  this.oarray2 = []; // only used if oscilloscope.
+  this.opointer = 0; // ringbuffer into oscilloscope array
 
   this.master = null;
 
@@ -5097,15 +5101,19 @@ function DotMatrix() {
   this.update = function(inputs) {
     if(this.error) return;
     var led = this.rgbled;
+    var oscilloscope = (this.numc == 0);
     var index = 0;
     var mul = 1;
     var dot = !led && inputs[0]; // place a single pixel
     var fill = led || inputs[1]; // fill all pixels
     var color = 0;
-    var c0 = led ? 0 : 2;
+    var c0 = this.nummisc;
 
     // Choose from palette depending on amount of color input wires.
-    if(this.numc == 1) {
+    if(this.numc == 0) {
+      // oscilloscope
+      color = 34;
+    } else if(this.numc == 1) {
       color = 0 + inputs[c0];
     } else if(this.numc == 2) {
       var value = inputs[c0] + 2 * inputs[c0 + 1];
@@ -5129,23 +5137,53 @@ function DotMatrix() {
           }
         }
       }
+    } else if(oscilloscope) {
+      var prevdot = this.prevdot;
+      this.prevdot = dot;
+      if(!prevdot && dot) {
+        var x = 0;
+        for(var i = 0; i < this.numx; i++) {
+          var v = inputs[this.nummisc + this.numc + i];
+          x += (v << i);
+        }
+        var y = 0;
+        for(var i = 0; i < this.numy; i++) {
+          var v = inputs[this.nummisc + this.numc + this.numx + i];
+          y += (v << i);
+        }
+
+        var op, ox, oy;
+
+        op = (this.opointer + Math.floor(3 * this.oarray.length / 4)) % this.oarray.length;
+        ox = this.oarray[op][0];
+        oy = this.oarray[op][1];
+        if(ox >= 0 && oy >= 0 && oy < this.h && ox < this.w && this.oarray2[oy][ox] == op) this.array[oy][ox] = 33;
+
+        op = (this.opointer + Math.floor(2 * this.oarray.length / 4)) % this.oarray.length;
+        ox = this.oarray[op][0];
+        oy = this.oarray[op][1];
+        if(ox >= 0 && oy >= 0 && oy < this.h && ox < this.w && this.oarray2[oy][ox] == op) this.array[oy][ox] = 32;
+
+        op = (this.opointer + Math.floor(this.oarray.length / 4)) % this.oarray.length;
+        ox = this.oarray[op][0];
+        oy = this.oarray[op][1];
+        if(ox >= 0 && oy >= 0 && oy < this.h && ox < this.w && this.oarray2[oy][ox] == op) this.array[oy][ox] = 31;
+
+        op = this.opointer;
+        ox = this.oarray[op][0];
+        oy = this.oarray[op][1];
+        if(ox >= 0 && oy >= 0 && oy < this.h && ox < this.w && this.oarray2[oy][ox] == op) this.array[oy][ox] = 30;
+
+        this.oarray[this.opointer] = [x, y];
+        this.oarray2[y][x] = this.opointer;
+        this.opointer = (this.opointer + 1) % this.oarray.length;
+
+        if(y < this.h && x < this.w) this.array[y][x] = color;
+      }
     } else {
       // for direct
       var xarray = [];
       var yarray = [];
-
-      var x = 0;
-      for(var i = 0; i < this.numx; i++) {
-        var v = inputs[2 + this.numc + i];
-        x += (v << i);
-        if(v) xarray.push(i);
-      }
-      var y = 0;
-      for(var i = 0; i < this.numy; i++) {
-        var v = inputs[2 + this.numc + this.numx + i];
-        y += (v << i);
-        if(v) yarray.push(i);
-      }
 
       var prevdot = this.prevdot;
       this.prevdot = dot;
@@ -5159,6 +5197,19 @@ function DotMatrix() {
           }
         }
       } else if(!prevdot && dot) {
+        var x = 0;
+        for(var i = 0; i < this.numx; i++) {
+          var v = inputs[this.nummisc + this.numc + i];
+          x += (v << i);
+          if(v) xarray.push(i);
+        }
+        var y = 0;
+        for(var i = 0; i < this.numy; i++) {
+          var v = inputs[this.nummisc + this.numc + this.numx + i];
+          y += (v << i);
+          if(v) yarray.push(i);
+        }
+
         if(this.direct) {
           for(var j = 0; j < yarray.length; j++) {
             for(var i = 0; i < xarray.length; i++) {
@@ -5387,9 +5438,14 @@ function DotMatrix() {
 
     this.rgbled = dirs.rgbled;
 
+    this.nummisc = 2;
+    if(this.rgbled) this.nummisc = 0;
+    else if(dirs.misc[2] == 1) this.nummisc = 1;
+
     // num color bits
-    this.numc = this.rgbled ? dirs.empty[1] : (dirs.misc[2] - 2);
-    if(this.numc < 1 || this.numc > 4) { this.setError('not enough or too much misc inputs, need 3-6'); return false; }
+    this.numc = this.rgbled ? dirs.empty[1] : (dirs.misc[2] - this.nummisc);
+    //if(this.numc < 1 || this.numc > 4) { this.setError('not enough or too much misc inputs, need 3-6'); return false; }
+    if(this.numc > 4) { this.setError('too much misc inputs, need 3-6'); return false; }
     this.numx = this.rgbled ? 0 : dirs.x[2];
     this.numy = this.rgbled ? 0 : dirs.y[2];
 
@@ -5408,6 +5464,23 @@ function DotMatrix() {
       this.array[y] = [];
       for(var x = 0; x < w; x++) {
         this.array[y][x] = 0;
+      }
+    }
+
+    this.oarray = [];
+    this.oarray2 = [];
+    this.opointer = 0;
+    if(this.numc == 0) {
+      // oscilloscope:: old dots go off
+      var numo = Math.max(this.x1 - this.x0, this.y1 - this.y0) * 4;
+      for(var i = 0; i < numo; i++) {
+        this.oarray[i] = [-1, -1];
+      }
+      for(var y = 0; y < h; y++) {
+        this.oarray2[y] = [];
+        for(var x = 0; x < w; x++) {
+          this.oarray2[y][x] = 0;
+        }
       }
     }
 
@@ -6903,10 +6976,11 @@ function setColorScheme(index) {
 
 
   rgb_led_bg_colors = [
-      '#111', '#eee', // 2 colors. Slightly different values instead of #000 #fff to be subtly visible against white/black main background
-      '#111', '#0f0', '#f00', '#ff0', // 4 colors
-      '#111', '#00f', '#0f0', '#0ff', '#f00', '#f0f', '#ff0', '#fff', // 8 colors
-      '#111', '#00a', '#0a0', '#0aa', '#a00', '#a0a', '#a50', '#aaa', '#555', '#55f', '#5f5', '#5ff', '#f55', '#f5f', '#ff5', '#fff' // 16 colors
+      '#111', '#eee', // 0-1: 2 colors. Slightly different values instead of #000 #fff to be subtly visible against white/black main background
+      '#111', '#0f0', '#f00', '#ff0', // 2-6: 4 colors
+      '#111', '#00f', '#0f0', '#0ff', '#f00', '#f0f', '#ff0', '#fff', // 6-13: 8 colors
+      '#111', '#00a', '#0a0', '#0aa', '#a00', '#a0a', '#a50', '#aaa', '#555', '#55f', '#5f5', '#5ff', '#f55', '#f5f', '#ff5', '#fff', // 14-29: 16 colors
+      '#111', '#141', '#181', '#1c1', '#1f1', // 30-34: oscilloscope colors
   ];
   rgb_led_fg_colors = [];
   for(var i = 0; i < rgb_led_bg_colors.length; i++) {
@@ -7135,8 +7209,8 @@ function setColorScheme(index) {
     // for monochrome RGB led: hidden in main background if off, same color as wire if on (for its bg color; its letter G has opposite color)
     rgb_led_bg_colors = [];
     rgb_led_fg_colors = [];
-    for(var i = 0; i < 30; i++) {
-      if(i == 0 || i == 2 || i == 6 || i == 14) {
+    for(var i = 0; i < 35; i++) {
+      if(i == 0 || i == 2 || i == 6 || i == 14 || i == 30) {
         rgb_led_bg_colors[i] = BGCOLOR;
         rgb_led_fg_colors[i] = ONCOLOR;
       } else {

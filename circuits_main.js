@@ -4205,7 +4205,7 @@ registerCircuit('Integer Factorization', `
                                 ====================================================================
                                 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$                                    =
                                 |||||||||||||||||||||||||||||||                                    =
-                                T############################## 0"remaining factors"               =
+                                T############################## 0"remaining factor(s)"             =
                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                    =
 U27############################################################                                    =
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                    =
@@ -6041,7 +6041,7 @@ registerCircuit('integer power', `
 
 registerCircuit('Lissajous', `
 
-0"This circuit draws a Lissajous curve on the dot matrix screen. This is done"
+0"This circuit draws a Lissajous curve on the oscilloscope. This is done"
 0"with two mathematical sine operators, one running at double the frequency"
 0"as the other, and using them as X and Y coordinates for the pixel placement"
 0"on the screen."
@@ -6050,7 +6050,7 @@ registerCircuit('Lissajous', `
 
 0"The curve is very pixelated because the resolution of the sine results"
 0"is very low, and so is the screen resolution. A timer activates everything"
-0"automatically, and a random color is chosen for each pixel drawn."
+0"automatically."
 
 0"The frequency halving for one of the sines happens at the bottom, where"
 0"there is a counter: one sine receives a higher shifted wires from the counter"
@@ -6061,9 +6061,9 @@ registerCircuit('Lissajous', `
 
                                                  1
       D###############################<--g      gr###
-      ################################<p"fill"   ####
       ################################           ####
       ################################           ####
+      ################################           ####
       ################################
       ################################
       ################################
@@ -6085,12 +6085,12 @@ registerCircuit('Lissajous', `
       ################################
       ################################
       ################################
-      ################################ a#####
-      ################################ v mmmm
-   9g>################################<o<.+++-?<g"R"
-   8g>################################<---.++-?<g"G"
-   7g>################################<----.+-?<g"B"
-   6g>################################<-----.-?<g"B"
+      ################################
+      ################################
+   9g>################################
+   8g>################################
+   7g>################################
+   6g>################################
    5g>################################
            ^^^^^
            ggggg
