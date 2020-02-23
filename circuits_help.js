@@ -542,19 +542,17 @@ p-->J659
 p-->J698
 
 
-0"Values above 20000 indicate different audio wave shapes:"
+0"Values above 100000 indicate different audio wave shapes:"
 
-p-->J00440 0"sine"
+p-->J000440 0"sine"
 
-p-->J10440 0"high frequency sine"
+p-->J100440 0"square"
 
-p-->J20440 0"square"
+p-->J200440 0"triangle"
 
-p-->J30440 0"triangle"
+p-->J300440 0"sawtooth"
 
-p-->J40440 0"sawtooth"
-
-p-->J50000 0"white noise"
+p-->J40000 0"white noise"
 
 
 0"Multiple inputs control the volume in binary:"
@@ -564,6 +562,18 @@ p-->J50000 0"white noise"
   ||||
   ssss
  "8421"
+
+
+0"Multiple input groups control different properties. The number now is the"
+0"maximum frequency. Both freq and vol must have a non-zero value to hear"
+0"anything."
+
+  J#####################2000
+  ^^^      ^^^^    ^^^^
+  |||      ||||    ||||
+  sss      sSss    ssss
+1"shape" 1"freq"  1"vol"
+
 
 
 0"An RGB LED 'D' takes a red, green and blue input:"
@@ -2639,25 +2649,22 @@ p-->J20000
 
 0"Playing two sounds with slightly different frequencies at the same time may create a beat effect:"
 
-s-->J440
+  .>J440
+p..
+  .>J441
 
-s-->J441
 
+0"By default the audio is a sine wave. Adding increments of 100000 allows other wave shapes:"
 
-0"By default the audio is a sine wave. Adding increments of 10000 allows other wave shapes, all from"
-0"20-9999 Hz (only sine supports up to 20000 Hz):"
+p-->J000440 0"sine"
 
-p-->J00440 0"sine"
+p-->J100440 0"square"
 
-p-->J10440 0"high frequency sine"
+p-->J200440 0"triangle"
 
-p-->J20440 0"square"
+p-->J300440 0"sawtooth"
 
-p-->J30440 0"triangle"
-
-p-->J40440 0"sawtooth"
-
-p-->J50000 0"white noise"
+p-->J400000 0"white noise"
 
 
 0"Multiple inputs control the volume in binary:"
@@ -2667,6 +2674,17 @@ p-->J50000 0"white noise"
   ||||
   ssss
  "8421"
+
+
+0"Multiple input groups control different properties. The number now is the"
+0"maximum frequency. Both freq and vol must have a non-zero value to hear"
+0"anything."
+
+  J#####################2000
+  ^^^      ^^^^    ^^^^
+  |||      ||||    ||||
+  sss      sSss    ssss
+1"shape" 1"freq"  1"vol"
 
 
 3"NEW PART: DOT MATRIX, RGB LED"

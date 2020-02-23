@@ -1847,11 +1847,14 @@ function CallSub(id) {
         jukebox.y0 = v.jukebox.y0;
         jukebox.x1 = v.jukebox.x1;
         jukebox.y1 = v.jukebox.y1;
-        jukebox.master = component;
-        jukebox.frequency = v.jukebox.frequency;
-        jukebox.shape = v.jukebox.shape;
+        jukebox.numvolinputs = v.jukebox.numvolinputs;
+        jukebox.numfreqinputs = v.jukebox.numfreqinputs;
+        jukebox.numshapeinputs = v.jukebox.numshapeinputs;
+        jukebox.basefrequency = v.jukebox.basefrequency;
+        jukebox.baseshape = v.jukebox.baseshape;
         jukebox.basevolume = v.jukebox.basevolume;
-        jukebox.numinputs = v.jukebox.numinputs;
+        jukebox.error = v.jukebox.error;
+        jukebox.errormessage = v.jukebox.errormessage;
       }
 
       if(v.type == TYPE_SWITCH_OFF || v.type == TYPE_SWITCH_ON) {
@@ -4081,7 +4084,7 @@ function Alu() {
 
 
   /*
-  given the array returned by getIO3,
+  given the array returned by getIO,
   returns object of {
     a [heading, lsbpos, num]: input A's heading, and lsbpos
     b [heading, lsbpos, num]: input B's heading, and lsbpos (or heading -1 and num 0 if none)
@@ -5419,7 +5422,10 @@ var audioContext = null;
 var whiteNoiseBuffer = null;
 
 var ensureAudioContext = function() {
-  if(audioContext) return;
+  if(audioContext) {
+    if(audioContext.state == 'suspended') audioContext.resume();
+    return;
+  }
   if(!supportsAudio) return;
 
   audioContext = new(window.AudioContext || window.webkitAudioContext)();
@@ -5432,9 +5438,15 @@ var ensureAudioContext = function() {
   }
 };
 
+// also removes all nodes
 var stopAudioContext = function() {
   if(audioContext) audioContext.close();
   audioContext = null;
+};
+
+// just pauses it for now, but if resumed, existing nodes will still be playing
+var suspendAudioContext = function() {
+  if(audioContext) audioContext.suspend();
 };
 
 // Sound, speaker, music, audio
@@ -5444,19 +5456,36 @@ function JukeBox() {
   this.y0 = 0;
   this.x1 = 0;
   this.y1 = 0;
-  this.numinputs = -1;
+  this.numvolinputs = 0;
+  this.numfreqinputs = 0;
+  this.numshapeinputs = 0;
 
   // shape of web audio connections: oscillator --> volume --> audioContext
   this.volume = null;
   this.oscillator = null;
 
-  this.prevvalue = -1;
+  this.prevvolvalue = -1;
+  this.prevfreqvalue = -1;
+  this.prevshapevalue = -1;
 
-  this.frequency = 0;
-  this.shape = 0;
+  this.basefrequency = 0;
+  this.baseshape = 0;
   this.basevolume = 0.2;
 
   this.prevvol = 0;
+  this.currentvol = -1;
+  this.prevfreq = 0;
+  this.currentfreq = -1;
+  this.prevshape = -1;
+  this.currentshape = -1;
+
+  this.error = false;
+  this.errormessage = '';
+
+  this.setError = function(text) {
+    this.error = true;
+    if(!this.errormessage) this.errormessage = text;
+  };
 
   this.stop = function() {
     if(this.oscillator) {
@@ -5465,52 +5494,113 @@ function JukeBox() {
     }
   };
 
+  // frequency to use to play right now, depends on whether it's dynamic or static
+  this.getPlayFreq = function() {
+    if(this.currentfreq >= 0) return this.currentfreq;
+    if(!this.basefrequency) return 440;
+    return this.basefrequency;
+  };
+
+  // get middle frequency for dynamic frequency
+  // since base frequency is never higher than 10000, the total range is never higher than 20000
+  this.getHighFreq = function() {
+    if(!this.basefrequency) return 20000;
+    return this.basefrequency;
+  };
+
   this.ensureStarted = function() {
     if(!supportsAudio) return; // audio not supported by browser
-    if(this.oscillator) return;
     ensureAudioContext();
+    if(this.oscillator) return;
 
     var volume = audioContext.createGain();
     volume.connect(audioContext.destination);
     volume.gain.value = 0.0;
     this.volume = volume;
 
+    /*var biquadFilter = audioContext.createBiquadFilter();
+    biquadFilter.type = 'lowpass'
+    biquadFilter.frequency.setValueAtTime(this.getPlayFreq(), audioContext.currentTime);
+    biquadFilter.connect(volume);*/
+    //this.oscillator.connect(biquadFilter);
 
-    if(this.shape == 5) {
-      this.oscillator = audioContext.createBufferSource();
-      this.oscillator.buffer = whiteNoiseBuffer;
-      this.oscillator.loop = true;
-    } else {
-      this.oscillator = audioContext.createOscillator();
-      this.oscillator.type = this.shape == 0 ? 'sine' : (this.shape == 2 ? 'square' : (this.shape == 3 ? 'triangle' : 'sawtooth'));
-      this.oscillator.frequency.value = this.frequency;
-    }
-
-    this.oscillator.connect(volume);
-    this.oscillator.start();
+    var shape = this.getCurrentShape();
+    this.setShape(shape);
   };
 
 
   this.update = function(inputs) {
-    //var value = inputs[0] ? 1 : 0;
-    var value = 0;
-    var mul = 1;
-    for(var i = 0; i < inputs.length; i++) {
-      value += inputs[i] * mul;
-      mul <<= 1;
-    }
-    var vol = value / ((1 << inputs.length) - 1);
-    var outvol = vol * this.basevolume;
+    if(!supportsAudio) return;
 
-    if(value != this.prevvalue && supportsAudio) {
-      if(!value) {
+    //var value = inputs[0] ? 1 : 0;
+    var volvalue = 0;
+    for(var i = 0; i < this.numvolinputs; i++) {
+      volvalue += (inputs[i] << i);
+    }
+    var vol = volvalue / ((1 << this.numvolinputs) - 1);
+    var outvol = vol * this.basevolume * this.getVolumeMul();
+
+    var freqvalue = 0;
+    for(var i = 0; i < this.numfreqinputs; i++) {
+      var j = i + this.numvolinputs;
+      freqvalue += (inputs[j] << i);
+    }
+    var freq = this.numfreqinputs ? (this.getHighFreq() * freqvalue / ((1 << this.numfreqinputs) - 1)) : this.basefrequency;
+
+    var shapevalue = 0;
+    for(var i = 0; i < this.numshapeinputs; i++) {
+      var j = i + this.numvolinputs + this.numfreqinputs;
+      shapevalue += (inputs[j] << i);
+    }
+    var shape = this.numshapeinputs ? shapevalue : this.baseshape;
+
+    if(freqvalue != this.prevfreqvalue && this.numfreqinputs) {
+      this.currentfreq = freq;
+      if(this.oscillator && this.oscillator.frequency) {
+        if(!freqvalue) {
+          this.oscillator.frequency.setValueAtTime(0, audioContext.currentTime);
+          // do a ramp to 0 too: this ensures if any earlier ramp to non-0 was going on, this overrides it
+          this.oscillator.frequency.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+          // TODO: instead, stop completely if freq is 0. But that requires changes elsewhere as well. Maybe wrap this whole thing in a separate class to deal with all the sound/frequency/shape combinations and when to play and when not
+        } else {
+          // Don't set this at all, it depends on browser what this does.
+          //var currentvalue = this.oscillator.frequency.value; // not all browsers support reading this...
+          //if(currentvalue) this.oscillator.frequency.setValueAtTime(currentvalue, audioContext.currentTime);
+          this.oscillator.frequency.linearRampToValueAtTime(freq, audioContext.currentTime + 0.1);
+        }
+      }
+      //this.oscillator.frequency.value = freq;
+      this.prevfreqvalue = freqvalue;
+      this.prevfreq = freq;
+
+      if(audioContext && audioContext.state == 'suspended') audioContext.resume();
+    }
+
+
+    if(shapevalue != this.prevshapevalue && this.numshapeinputs) {
+      this.currentshape = shape;
+
+      if(this.oscillator) {
+        this.setShape(shape);
+      }
+
+      //this.oscillator.frequency.value = freq;
+      this.prevshapevalue = shapevalue;
+      this.prevshape = shape;
+
+      if(audioContext && audioContext.state == 'suspended') audioContext.resume();
+    }
+
+    if(volvalue != this.prevvolvalue) {
+      this.currentvol = vol;
+      if(!volvalue) {
         this.stop();
         this.prevvol = 0;
       } else {
         this.ensureStarted();
         var gain = this.volume.gain;
         var diff = Math.abs(vol - this.prevvol);
-        if(this.prevvalue && diff < 0.3) {
+        if(this.prevvolvalue && diff < 0.3) {
           // go slightly gradual instead of immediately changing volume
           var currentvalue = gain.value; // not all browsers support reading this...
           if(currentvalue) gain.setValueAtTime(currentvalue, audioContext.currentTime);
@@ -5520,25 +5610,70 @@ function JukeBox() {
           gain.setValueAtTime(outvol, audioContext.currentTime);
         }
       }
-      this.prevvalue = value;
+      this.prevvolvalue = volvalue;
       this.prevvol = vol;
     }
   };
 
 
   this.getShapeName = function() {
-    if(this.shape < 2) return 'sine';
-    if(this.shape == 2) return 'square';
-    if(this.shape == 3) return 'triangle';
-    if(this.shape == 4) return 'sawtooth';
-    if(this.shape == 5) return 'white noise';
+    if(this.baseshape == 0) return 'sine';
+    if(this.baseshape == 1) return 'square';
+    if(this.baseshape == 2) return 'triangle';
+    if(this.baseshape == 3) return 'sawtooth';
+    if(this.baseshape == 4) return 'white noise';
     return 'unknown';
+  };
+
+  this.getVolumeMul = function(opt_shape) {
+    // with higher volume than 0.3, a sine wave sounds quite non-sine like, as if it gets clipped
+    // let's keep the sounds pleasant to use and not make the volume too high
+    // the square wave sounds even louder so make that one even softer
+    var shape = opt_shape == undefined ? this.getCurrentShape() : opt_shape;
+    if(shape == 0 || shape == 2) return 0.2;
+    return 0.1;
+  };
+
+  this.getPlayVolume = function(opt_shape) {
+    if(this.currentvol >= 0) return this.currentvol * this.getVolumeMul(opt_shape) * this.basevolume;
+    else return this.getVolumeMul(opt_shape) * this.basevolume;
+  };
+
+  this.getCurrentShape = function() {
+    if(this.currentshape == -1) return this.baseshape;
+    return this.currentshape;
+  };
+
+  this.setShape = function(shape) {
+    if(this.oscillator && shape == this.prevshape) return;
+    this.stop();
+    if(shape == 4) {
+      this.oscillator = audioContext.createBufferSource();
+      this.oscillator.buffer = whiteNoiseBuffer;
+      this.oscillator.loop = true;
+    } else {
+      this.oscillator = audioContext.createOscillator();
+      this.oscillator.frequency.setValueAtTime(this.getPlayFreq(), audioContext.currentTime);
+      if(shape == 1) {
+        this.oscillator.type = 'square';
+      } else if(shape == 2) {
+        this.oscillator.type = 'triangle';
+      } else if(shape == 3) {
+        this.oscillator.type = 'sawtooth';
+      } else {
+        this.oscillator.type = 'sine';
+      }
+    }
+    this.oscillator.connect(this.volume);
+    this.oscillator.start();
+    this.prevshape = shape;
+    if(this.volume) this.volume.gain.setValueAtTime(this.getPlayVolume(shape), audioContext.currentTime);
   };
 
 
   this.initDefault = function(component) {
-    this.frequency = 440;
-    this.shape = 0;
+    this.basefrequency = 440;
+    this.baseshape = 0;
     this.basevolume = 0.2;
     this.master = component;
   };
@@ -5574,34 +5709,33 @@ function JukeBox() {
 
     var freq = component.number;
     var shape = 0;
-    if(component.number > 20000) {
-      var shape = Math.floor(freq / 10000);
-      freq %= 10000;
-      if(shape > 5) shape = 0;
+    if(component.number >= 100000) {
+      var shape = Math.floor(freq / 100000);
+      freq %= 100000;
+      if(shape > 4) shape = 0;
     }
-    if(freq < 20 || freq > 20000) freq = 440; // default
-    this.frequency = freq;
-    this.shape = shape;
+    if(freq < 20) freq = 0;
+    if(freq > 20000) freq = 20000;
+    this.basefrequency = freq;
+    this.baseshape = shape;
 
-    // with higher volume than 0.3, a sine wave sounds quite non-sine like, as if it gets clipped
-    // let's keep the sounds pleasand to use and not make the volume too high
-    // the square wave sounds even louder so make that one even softer
-    this.basevolume = (shape == 0 || shape == 3) ? 0.2 : 0.1;
+    this.basevolume = 1.0;
 
     return true;
   };
 
 
+
   /*
-  given the array returned by getIO2,
+  given the array returned by getIO,
   returns object of {
-    volume [heading, dir, num, lsbpos]: side with volume input
+    volume [heading, lsbpos, num]
+    frequency [heading, lsbpos, num]
   }
   with
-  heading: wind direction of side with this inputs/outputs (NESW), or -1 if not present
-  dir: heading & 1: 0=horizontal, 1=vertical
-  num: amount
-  lsbpos: is lsbpos for this left or right (not relevant for everything)
+  heading: wind direction of side with this inputs/outputs (NESW), for input is where it comes from, for output is where it goes to, or -1 if not present
+  lsbpos: is lsbpos for this left or right, value is 0:left/top, 1:right/bottom
+  num: the amount
   }
   returns null on error.
   */
@@ -5611,24 +5745,51 @@ function JukeBox() {
     var x1 = this.x1;
     var y1 = this.y1;
 
-    // io format: [[[niv], nic], [[eiv], eic], [[siv], sic], [[wiv], wic],[[nov], noc], [[eov], eoc], [[sov], soc], [[wov], woc]];
+    var volume = [-1, -1, 0];
+    var frequency = [-1, -1, 0];
+    var shape = [-1, -1, 0];
 
-    var numinputs = 0;
-    var volumeheading = -1;
+    var inputside = -1;
+    var arr = [];
 
     for(var i = 0; i < 4; i++) {
-      if(io[i][1] != 0) {
-        if(volumeheading != -1) { this.setError('only one side may have inputs'); return null; }
-        volumeheading = i;
-        numinputs += io[i][1];
-        break;
+      var arri = io[1 + i * 2];
+      if(arri.length > 0) {
+        if(inputside != -1) { this.setError('can only have one input side'); return null; }
+        inputside = i;
+        arr = arri;
       }
     }
 
-    var lsbpos = (volumeheading >= 2) ? 1 : 0;
-    var volume = [volumeheading, volumeheading & 1, numinputs, lsbpos];
+    var lsbpos = (inputside >= 2) ? 1 : 0;
 
-    var result = {'volume':volume};
+    if(arr.length == 1) {
+      volume[0] = inputside;
+      volume[1] = lsbpos;
+      volume[2] = arr[0][1];
+    } else if(arr.length == 2) {
+      volume[0] = inputside;
+      volume[1] = lsbpos;
+      volume[2] = arr[0][1];
+      frequency[0] = inputside;
+      frequency[1] = lsbpos;
+      frequency[2] = arr[1][1];
+    } else if(arr.length == 3) {
+      volume[0] = inputside;
+      volume[1] = lsbpos;
+      volume[2] = arr[0][1];
+      frequency[0] = inputside;
+      frequency[1] = lsbpos;
+      frequency[2] = arr[1][1];
+      shape[0] = inputside;
+      shape[1] = lsbpos;
+      shape[2] = arr[2][1];
+    } else {
+      if(arr.length > 2) { this.setError('too many input groups'); return null; }
+    }
+
+    var result = {'volume': volume, 'frequency': frequency, 'shape': shape};
+
     return result;
   };
 
@@ -5653,7 +5814,7 @@ function JukeBox() {
     var self = this;
 
     var heading = dirs.volume[0];
-    var lsbpos = dirs.volume[3]; // 0: left or top, 1: right or bottom. Where the LSB of address input bits is.
+    var lsbpos = dirs.volume[1]; // 0: left or top, 1: right or bottom. Where the LSB of address input bits is.
     array = array.sort(function(a, b) {
       var xa = self.master.inputs_x[a];
       var ya = self.master.inputs_y[a];
@@ -5687,11 +5848,15 @@ function JukeBox() {
 
     if(!this.master) return false;
 
-    var io = getIO2(x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, this.master);
     if(!io) { this.setError('getIO failed'); return false; }
 
     var dirs = this.getDirs(io);
     if(!dirs) { this.setError('getDirs failed'); return false; }
+
+    this.numvolinputs = dirs.volume[2];
+    this.numfreqinputs = dirs.frequency[2];
+    this.numshapeinputs = dirs.shape[2];
 
     this.sortIO(dirs);
 
@@ -7691,7 +7856,7 @@ function RendererText() {
       return false;*/
     };
 
-    worldDiv.ontouchstart = worldDiv.onmousedown;
+    //worldDiv.ontouchstart = worldDiv.onmousedown;
   };
 
   this.cleanup = function() {
@@ -7703,12 +7868,12 @@ function RendererText() {
   this.init = function(cell, x, y, clickfun) {
     this.div0 = makeDiv(x * tw, y * th, tw, th, worldDiv);
     this.div0.onmousedown = clickfun;
-    this.div0.ontouchstart = clickfun;
+    //this.div0.ontouchstart = clickfun;
 
     if(cell.circuitsymbol != '"') {
       this.div1 = makeDiv(x * tw, y * th, tw, th, worldDiv);
       this.div1.onmousedown = clickfun;
-      this.div1.ontouchstart = clickfun;
+      //this.div1.ontouchstart = clickfun;
     }
 
     var c = cell.circuitsymbol;
@@ -7849,7 +8014,7 @@ function RendererText() {
 
       // allow text selection of those
       this.div0.onmousedown = null;
-      this.div0.ontouchstart = null;
+      //this.div0.ontouchstart = null;
     } else if(symbol == 'toc') {
       setTocHTML(cell.circuitextra, cell.toclink, this.div0);
     } else {
@@ -9035,7 +9200,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         // still need to make 1 div anyway (at least not 2) for the click function
         this.text0 = makeDiv(x * tw, y * th, tw, th, worldDiv);
         this.text0.onmousedown = clickfun;
-        this.text0.ontouchstart = clickfun;
+        //this.text0.ontouchstart = clickfun;
       }
     }
   };
@@ -13362,6 +13527,7 @@ if(USEAUTOPAUSE) setAutoPauseInterval();
 
 function setAutoPauseInterval() {
   autopauseinterval = util.setIntervalSafe(function(){
+    suspendAudioContext();
     pause();
     autopaused = true;
   }, AUTOPAUSESECONDS * 1000);

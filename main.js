@@ -59,7 +59,7 @@ document.body.onmouseup = function(e) {
   global_changed_something = true;
 };
 
-document.body.ontouchend = document.body.onmouseup;
+//document.body.ontouchend = document.body.onmouseup;
 
 
 var edit = undefined;
@@ -302,6 +302,7 @@ function createMenuUI() {
       unpause();
     } else {
       pause();
+      suspendAudioContext();
     }
     updateTimeButtonBorders();
   };

@@ -4408,12 +4408,15 @@ registerCircuit('Piano', `
     b#b#b#b#b#b#b#b#b#B#B#B#b>l
     b#b#b#b#b#b#b#b#b#b#b#b#B>l
     ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ I
-.>q>d>d>d>d>d>d>d>d>d>d>d>d>d
-. 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+...>q>d>d>d>d>d>d>d>d>d>d>d>d
+.   2 2 2 2 2 2 2 2 2 2 2 2 2
 s
 
 
 `, 'piano');
+
+
+
 
 
 
