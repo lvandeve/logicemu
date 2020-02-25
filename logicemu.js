@@ -3436,6 +3436,7 @@ function Alu() {
         case 82: return 'ln';
         case 83: return 'exp';
         case 88: return 'date';
+        case 89: return 'time';
         default: return 'unk';
     }
   };
@@ -3510,6 +3511,7 @@ function Alu() {
         case 82: return 'ln (input scaled to 1..e)';
         case 83: return 'exp (input scaled to 0..1)';
         case 88: return 'time/date: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year. Needs input change to update.';
+        case 89: return 'time in seconds since unix epoch. Needs input change to update.';
         default: return 'unknown';
     }
   };
@@ -4003,6 +4005,14 @@ function Alu() {
         o = math.B(seconds) + math.B(minutes << 6) + math.B(hours << 12) + math.B(day << 17) + math.B(month << 22);
         var y = math.B(year) * math.B(1 << 26);
         o += y;
+      } else {
+        o = this.prevo;
+      }
+      this.preva = a;
+      this.prevo = o;
+    } else if(op == 89) {
+      if(!this.prevo || ((a & math.n1) && !(this.preva & math.n1))) {
+        o = math.B(Math.floor((+new Date()) / 1000));
       } else {
         o = this.prevo;
       }
