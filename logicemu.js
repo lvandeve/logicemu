@@ -1091,9 +1091,7 @@ var LogicEmuMath = (function() {
     if(r1.length == 0) return []; // error
     for(var i = 0; i < r0.length; i++) result.push(r0[i]);
     for(var i = 0; i < r1.length; i++) result.push(r1[i]);
-    result.sort(function(a, b) {
-      return a < b ? -1 : (a > b ? 1 : 0);
-    });
+    result.sort(function(a, b) { return a < b ? -1 : (a > b ? 1 : 0); });
     return result;
   };
   result.factorize = factorize;
@@ -1112,6 +1110,7 @@ var LogicEmuMath = (function() {
     }
     return result;
   };
+  result.factorize2 = factorize2;
 
   var allfactors = function(n) {
     var f = factorize2(n);
@@ -1129,6 +1128,7 @@ var LogicEmuMath = (function() {
         p *= f[i][0];
       }
     }
+    result.sort(function(a, b) { return a < b ? -1 : (a > b ? 1 : 0); });
     return result;
   };
   result.allfactors = allfactors;
@@ -5105,7 +5105,7 @@ function DotMatrix() {
     var index = 0;
     var mul = 1;
     var dot = !led && inputs[0]; // place a single pixel
-    var fill = led || inputs[1]; // fill all pixels
+    var fill = this.nummisc >= 2 && (led || inputs[1]); // fill all pixels
     var color = 0;
     var c0 = this.nummisc;
 
@@ -5140,7 +5140,19 @@ function DotMatrix() {
     } else if(oscilloscope) {
       var prevdot = this.prevdot;
       this.prevdot = dot;
-      if(!prevdot && dot) {
+      var prevfill = this.prevfill;
+      this.prevfill = fill;
+
+      if(!prevfill && fill) {
+        // clear
+        for(var y = 0; y < this.h; y++) {
+          for(var x = 0; x < this.w; x++) {
+            this.array[y][x] = 0;
+            this.oarray2[y][x] = -1;
+          }
+        }
+        for(var i = 0; i < this.oarray.length; i++) this.oarray[i] = -1;
+      } else if(!prevdot && dot) {
         var x = 0;
         for(var i = 0; i < this.numx; i++) {
           var v = inputs[this.nummisc + this.numc + i];
@@ -6980,7 +6992,7 @@ function setColorScheme(index) {
       '#111', '#0f0', '#f00', '#ff0', // 2-6: 4 colors
       '#111', '#00f', '#0f0', '#0ff', '#f00', '#f0f', '#ff0', '#fff', // 6-13: 8 colors
       '#111', '#00a', '#0a0', '#0aa', '#a00', '#a0a', '#a50', '#aaa', '#555', '#55f', '#5f5', '#5ff', '#f55', '#f5f', '#ff5', '#fff', // 14-29: 16 colors
-      '#111', '#141', '#181', '#1c1', '#1f1', // 30-34: oscilloscope colors
+      '#111a11', '#151', '#181', '#1c1', '#1f1', // 30-34: oscilloscope colors
   ];
   rgb_led_fg_colors = [];
   for(var i = 0; i < rgb_led_bg_colors.length; i++) {

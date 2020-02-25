@@ -2739,7 +2739,7 @@ s.>D<.s    D##
 0"- 2 color bits: RG, 4 colors palette: black, red, green, yellow"
 0"- 1 color bits: 2 colors palette: white/black"
 0"- 0 color bits: oscilloscope: green, fades out over time (time based on amount of"
-0"dots drawn, fill and line based addressing not supported in case of oscilloscope)"
+0"dots drawn, line based addressing not supported in case of oscilloscope, 'fill' instead clears)"
 
 
 3"NEW PART: Mux"
@@ -4513,6 +4513,20 @@ registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
 registerCircuit('Dot Matrix Screen, As Oscilloscope (D)', `
       D#######<p"dot"
       ########
+      ########
+      ########
+      ########
+    s>########
+    s>########
+    s>########
+           ^^^
+           sss
+
+`, 'component' + componentid++);
+
+registerCircuit('Dot Matrix Screen, As Oscilloscope With Clear (D)', `
+      D#######<p"dot"
+      ########<p"clear"
       ########
       ########
       ########
