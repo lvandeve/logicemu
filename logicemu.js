@@ -3435,8 +3435,8 @@ function Alu() {
         case 81: return this.numb? 'atn2' : 'asin';
         case 82: return 'ln';
         case 83: return 'exp';
-        case 88: return 'date';
-        case 89: return 'time';
+        case 88: return 'time';
+        case 89: return 'date';
         default: return 'unk';
     }
   };
@@ -3510,8 +3510,8 @@ function Alu() {
         case 81: return this.numb ? 'atan2' : 'arcsine (scaled)';
         case 82: return 'ln (input scaled to 1..e)';
         case 83: return 'exp (input scaled to 0..1)';
-        case 88: return 'time/date: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year. Needs input change to update.';
-        case 89: return 'time in seconds since unix epoch. Needs input change to update.';
+        case 88: return 'time in seconds since unix epoch. Needs input change to update.';
+        case 89: return 'convert unix epoch to Y-M-S h:m:s: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
         default: return 'unknown';
     }
   };
@@ -3995,29 +3995,23 @@ function Alu() {
       if(signed) o -= (math.n1 << math.B(this.numo - 1));
     } else if(op == 88) {
       if(!this.prevo || ((a & math.n1) && !(this.preva & math.n1))) {
-        var date = new Date();
-        var seconds = date.getSeconds();
-        var minutes = date.getMinutes();
-        var hours = date.getHours();
-        var day = date.getDate();
-        var month = date.getMonth() + 1;
-        var year = date.getYear() + 1900;
-        o = math.B(seconds) + math.B(minutes << 6) + math.B(hours << 12) + math.B(day << 17) + math.B(month << 22);
-        var y = math.B(year) * math.B(1 << 26);
-        o += y;
-      } else {
-        o = this.prevo;
-      }
-      this.preva = a;
-      this.prevo = o;
-    } else if(op == 89) {
-      if(!this.prevo || ((a & math.n1) && !(this.preva & math.n1))) {
         o = math.B(Math.floor((+new Date()) / 1000));
       } else {
         o = this.prevo;
       }
       this.preva = a;
       this.prevo = o;
+    } else if(op == 89) {
+      var date = new Date(Number(a) * 1000);
+      var seconds = date.getSeconds();
+      var minutes = date.getMinutes();
+      var hours = date.getHours();
+      var day = date.getDate();
+      var month = date.getMonth() + 1;
+      var year = date.getYear() + 1900;
+      o = math.B(seconds) + math.B(minutes << 6) + math.B(hours << 12) + math.B(day << 17) + math.B(month << 22);
+      var y = math.B(year) * math.B(1 << 26);
+      o += y;
     } else {
       o = math.n0;
     }
