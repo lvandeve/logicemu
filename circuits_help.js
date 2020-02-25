@@ -2964,6 +2964,8 @@ SsssssS3"ASCII code in to screen"
  0"78:binary to BCD, 79:BCD to binary"
 0"* transcendental functions (inputs/outputs scaled to make period/range match int range):"
  0"80:sine, 81:arcsine/atan2, 82: ln, 83: exp"
+0"* time related:"
+ 0"88:current date/time"
 
 0"Adding 128 to the number makes the operation signed, e.g. operation 27 is"
 0"division, and operation 155 is signed division. Signed operations use twos"
