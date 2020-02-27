@@ -3437,6 +3437,7 @@ function Alu() {
         case 83: return 'exp';
         case 88: return 'time';
         case 89: return 'date';
+        case 90: return 'unix';
         default: return 'unk';
     }
   };
@@ -3510,8 +3511,9 @@ function Alu() {
         case 81: return this.numb ? 'atan2' : 'arcsine (scaled)';
         case 82: return 'ln (input scaled to 1..e)';
         case 83: return 'exp (input scaled to 0..1)';
-        case 88: return 'time in seconds since unix epoch. Needs input change to update.';
+        case 88: return 'time in seconds since unix epoch. Needs positive edge input bit change to update.';
         case 89: return 'convert unix epoch to Y-M-S h:m:s: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
+        case 90: return 'Y-M-S h:m:s to unix epoch: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
         default: return 'unknown';
     }
   };
@@ -3528,6 +3530,7 @@ function Alu() {
     var signed = this.signed;
     if(op < 16) signed = false;
     if(op == 34 || op == 35) signed = true;
+    if(op == 90) signed = false;
 
     var a = math.n0;
     for(var i = 0; i < this.numa; i++) {
@@ -3560,6 +3563,17 @@ function Alu() {
       if(a > maxa) a = (a - maska - math.n1);
       if(b > maxb) b = (b - maskb - math.n1);
       if(c > maxc) c = (c - maskc - math.n1);
+    }
+
+    // without bigint, normally up to 31 bits are supported, for a few ops supporting up to 53 is essential, such as the date format input
+    if(op == 90 && !math.supportbigint) {
+      a = math.n0;
+      var shift = math.n1;
+      for(var i = 0; i < this.numa; i++) {
+        var j = i + this.numb + this.numc;
+        if(inputs[j]) a += shift;
+        shift *= math.n2;
+      }
     }
 
     // for the 16 bitwise logic operators, make the input bitsizes equal to the output bitsize,
@@ -3995,7 +4009,15 @@ function Alu() {
       if(signed) o -= (math.n1 << math.B(this.numo - 1));
     } else if(op == 88) {
       if(!this.prevo || ((a & math.n1) && !(this.preva & math.n1))) {
-        o = math.B(Math.floor((+new Date()) / 1000));
+        var date = new Date();
+        var seconds = Math.floor(date.getTime() / 1000);
+        // JS returns the unix time in UTC. However, in logicemu use the local timezone instead:
+        // we could base everything on UTC and take users' timezone into account, but we can't know for
+        // sure if their system is set up correctly. Keep it simple, just use local time. This does mean
+        // that the unix time here does not perfectly fullfill the definition of "seconds since 1970-1-1 UTC",
+        // it's seconds since 1970-1-1 in local timezone instead.
+        seconds -= date.getTimezoneOffset() * 60;
+        o = math.B(seconds);
       } else {
         o = this.prevo;
       }
@@ -4003,15 +4025,33 @@ function Alu() {
       this.prevo = o;
     } else if(op == 89) {
       var date = new Date(Number(a) * 1000);
-      var seconds = date.getSeconds();
-      var minutes = date.getMinutes();
-      var hours = date.getHours();
-      var day = date.getDate();
-      var month = date.getMonth() + 1;
-      var year = date.getYear() + 1900;
+      // Using the UTC methods makes the math independent of the location.
+      var seconds = date.getUTCSeconds();
+      var minutes = date.getUTCMinutes();
+      var hours = date.getUTCHours();
+      var day = date.getUTCDate();
+      var month = date.getUTCMonth() + 1;
+      var year = date.getUTCFullYear();
       o = math.B(seconds) + math.B(minutes << 6) + math.B(hours << 12) + math.B(day << 17) + math.B(month << 22);
       var y = math.B(year) * math.B(1 << 26);
       o += y;
+    } else if(op == 90) {
+      var seconds = Number(a & math.B(63));
+      var minutes = Number((a >> math.B(6) & math.B(63)));
+      var hours = Number((a >> math.B(12) & math.B(31)));
+      var day = Number((a >> math.B(17) & math.B(31)));
+      var month = Number((a >> math.B(22) & math.B(15)));
+      var year = math.supportbigint ? Number(a >> math.B(26)) : Math.floor(Number(a) / (1 << 26));
+      //var date = new Date(year, month - 1, day, hours, minutes, seconds);
+      var date = new Date();
+      date.setUTCFullYear(year);
+      date.setUTCMonth(month - 1);
+      date.setUTCDate(day);
+      date.setUTCHours(hours);
+      date.setUTCMinutes(minutes);
+      date.setUTCSeconds(seconds);
+      var unix = Math.floor(+date / 1000);
+      o = math.B(unix);
     } else {
       o = math.n0;
     }
@@ -4029,11 +4069,19 @@ function Alu() {
       }
       if((overflow) && this.nummiscout) this.output[this.numo] = 1; // overflow. In case of add, this can serve as carry if you have exactly 1 output too short.
     } else {
-      if(o > 0x7fffffff) overflow = true;
-      o &= 0x7fffffff; // JS supports max 31-bit int. This masking does the right thing for both the signed and unsigned case.
-      for(var i = 0; i < this.numo; i++) {
-        this.output[i] = (o & 1);
-        o >>= 1;
+      if(op != 89) {
+        if(o > 0x7fffffff) overflow = true;
+        o &= 0x7fffffff; // JS supports max 31-bit int. This masking does the right thing for both the signed and unsigned case.
+        for(var i = 0; i < this.numo; i++) {
+          this.output[i] = (o & 1);
+          o >>= 1;
+        }
+      } else {
+        // for a few rare exceptions, the op supports more than 31 bits, up to 53. Essential for the date representation to have enough year bits.
+        for(var i = 0; i < this.numo; i++) {
+          this.output[i] = (o & 1);
+          o = Math.floor(o / 2);
+        }
       }
       if((o != 0 || overflow) && this.nummiscout) this.output[this.numo] = 1; // overflow. In case of add, this can serve as carry if you have exactly 1 output too short.
     }

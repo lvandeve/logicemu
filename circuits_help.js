@@ -2965,7 +2965,7 @@ SsssssS3"ASCII code in to screen"
 0"* transcendental functions (inputs/outputs scaled to make period/range match int range):"
  0"80:sine, 81:arcsine/atan2, 82: ln, 83: exp"
 0"* time related:"
- 0"88:unix epoch time in seconds, 89:unix epoch to Y-M-D h:m:s"
+ 0"88:unix time in seconds, 89:unix time to Y-M-D h:m:s, 90: Y-M-D h:m:s to unix time"
 
 0"Adding 128 to the number makes the operation signed, e.g. operation 27 is"
 0"division, and operation 155 is signed division. Signed operations use twos"
@@ -6618,6 +6618,31 @@ s-->o
 p#
 ##
 
+0"# Time"
+
+0"The following should show unix time and time since loading of this circuit."
+0"That is, the U88 with fixed 0-input should constantly output the unix time"
+0"the circuit had when loaded. Everything is in seconds."
+
+0"unix time:"
+T###############################
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+||||||||||||||||||||||||||||||||
+U88#############################
+^
+r
+
+0"time since running start:"
+T###############################
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+||||||||||||||||||||||||||||||||
+U25##############################################################
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+|||||||||||||||||||||||||||||||| ||||||||||||||||||||||||||||||||
+U88############################# U88#############################
+^                                ^
+r                                f
+
 
 0"# Comment Alignment"
 
@@ -6906,6 +6931,16 @@ registerCircuit('All supported ALU ops (2-input)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U88######<s l<U89######<s l<U90######<s l<U91######<s l<U92######<s l<U93######<s l<U94######<s l<U95######<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
 `, 'aluall2');
 
 
@@ -7045,6 +7080,17 @@ registerCircuit('All supported ALU ops (1-input)', `
    gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
    3210     3210     3210     3210     3210     3210     3210     3210
 
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U88#<s l<U89#<s l<U90#<s l<U91#<s l<U92#<s l<U93#<s l<U94#<s l<U95#<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
 `, 'aluall1');
 
 
@@ -7168,6 +7214,16 @@ registerCircuit('All supported ALU ops (2-input signed)', `
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
  l<U208#####<s l<U209#####<s l<U210#####<s l<U211#####<s l<U212#####<s l<U213#####<s l<U214#####<s l<U215#####<s
+   ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
+   gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
+   3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
+
+
+        T###          T###          T###          T###          T###          T###          T###          T###
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+        llll          llll          llll          llll          llll          llll          llll          llll
+        ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
+ l<U216#####<s l<U217#####<s l<U218#####<s l<U219#####<s l<U220#####<s l<U221#####<s l<U222#####<s l<U223#####<s
    ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^     ^^^^ ^^^^
    gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg     gggg gggg
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
@@ -7308,6 +7364,17 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
  l<U208<s l<U209<s l<U210<s l<U211<s l<U212<s l<U213<s l<U214<s l<U215<s
+   ####     ####     ####     ####     ####     ####     ####     ####
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
+   3210     3210     3210     3210     3210     3210     3210     3210
+
+
+   T###     T###     T###     T###     T###     T###     T###     T###
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+   llll     llll     llll     llll     llll     llll     llll     llll
+   ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
+ l<U216<s l<U217<s l<U218<s l<U219<s l<U220<s l<U221<s l<U222<s l<U223<s
    ####     ####     ####     ####     ####     ####     ####     ####
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    gggg     gggg     gggg     gggg     gggg     gggg     gggg     gggg
