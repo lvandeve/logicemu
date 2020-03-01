@@ -5592,7 +5592,7 @@ var ensureAudioContext = function() {
   var num = 2 * audioContext.sampleRate;
   whiteNoiseBuffer = audioContext.createBuffer(1, num, audioContext.sampleRate);
   data = whiteNoiseBuffer.getChannelData(0);
-  for (var i = 0; i < num; i++) {
+  for(var i = 0; i < num; i++) {
     data[i] = Math.random();
   }
 };
@@ -5651,17 +5651,17 @@ function JukeBox() {
       this.oscillator.stop();
       this.oscillator = null;
     }
+    this.filter = null;
   };
 
   // frequency to use to play right now, depends on whether it's dynamic or static
-  this.getPlayFreq = function() {
+  this.getPlayFreq = function(opt_default) {
     if(this.currentfreq >= 0) return this.currentfreq;
-    if(!this.basefrequency) return 440;
+    if(!this.basefrequency) return (opt_default == undefined) ? 440 : opt_default;
     return this.basefrequency;
   };
 
-  // get middle frequency for dynamic frequency
-  // since base frequency is never higher than 10000, the total range is never higher than 20000
+  // get frequency for dynamic frequency
   this.getHighFreq = function() {
     if(!this.basefrequency) return 20000;
     return this.basefrequency;
@@ -5676,12 +5676,6 @@ function JukeBox() {
     volume.connect(audioContext.destination);
     volume.gain.value = 0.0;
     this.volume = volume;
-
-    /*var biquadFilter = audioContext.createBiquadFilter();
-    biquadFilter.type = 'lowpass'
-    biquadFilter.frequency.setValueAtTime(this.getPlayFreq(), audioContext.currentTime);
-    biquadFilter.connect(volume);*/
-    //this.oscillator.connect(biquadFilter);
 
     var shape = this.getCurrentShape();
     this.setShape(shape);
@@ -5715,17 +5709,20 @@ function JukeBox() {
 
     if(freqvalue != this.prevfreqvalue && this.numfreqinputs) {
       this.currentfreq = freq;
-      if(this.oscillator && this.oscillator.frequency) {
-        if(!freqvalue) {
-          this.oscillator.frequency.setValueAtTime(0, audioContext.currentTime);
-          // do a ramp to 0 too: this ensures if any earlier ramp to non-0 was going on, this overrides it
-          this.oscillator.frequency.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
-          // TODO: instead, stop completely if freq is 0. But that requires changes elsewhere as well. Maybe wrap this whole thing in a separate class to deal with all the sound/frequency/shape combinations and when to play and when not
-        } else {
-          // Don't set this at all, it depends on browser what this does.
-          //var currentvalue = this.oscillator.frequency.value; // not all browsers support reading this...
-          //if(currentvalue) this.oscillator.frequency.setValueAtTime(currentvalue, audioContext.currentTime);
-          this.oscillator.frequency.linearRampToValueAtTime(freq, audioContext.currentTime + 0.1);
+      if(this.oscillator) {
+        var fv = !!this.filter ? this.filter.frequency : this.oscillator.frequency;
+        if(fv) {
+          if(!freqvalue) {
+            fv.setValueAtTime(0, audioContext.currentTime);
+            // do a ramp to 0 too: this ensures if any earlier ramp to non-0 was going on, this overrides it
+            fv.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+            // TODO: instead, stop completely if freq is 0. But that requires changes elsewhere as well. Maybe wrap this whole thing in a separate class to deal with all the sound/frequency/shape combinations and when to play and when not
+          } else {
+            // Don't set this at all, it depends on browser what this does.
+            //var currentvalue = fv.value; // not all browsers support reading this...
+            //if(currentvalue) fv.setValueAtTime(currentvalue, audioContext.currentTime);
+            fv.linearRampToValueAtTime(freq, audioContext.currentTime + 0.1);
+          }
         }
       }
       //this.oscillator.frequency.value = freq;
@@ -5790,6 +5787,7 @@ function JukeBox() {
     // the square wave sounds even louder so make that one even softer
     var shape = opt_shape == undefined ? this.getCurrentShape() : opt_shape;
     if(shape == 0 || shape == 2) return 0.2;
+    if(shape == 4 && this.getPlayFreq(0) != 0) return 0.3;
     return 0.1;
   };
 
@@ -5810,6 +5808,15 @@ function JukeBox() {
       this.oscillator = audioContext.createBufferSource();
       this.oscillator.buffer = whiteNoiseBuffer;
       this.oscillator.loop = true;
+      if(this.getPlayFreq(0) == 0) {
+        this.oscillator.connect(this.volume);
+      } else {
+        this.filter = audioContext.createBiquadFilter();
+        this.filter.type = 'bandpass'
+        this.filter.frequency.setValueAtTime(this.getPlayFreq(), audioContext.currentTime);
+        this.filter.connect(this.volume);
+        this.oscillator.connect(this.filter);
+      }
     } else {
       this.oscillator = audioContext.createOscillator();
       this.oscillator.frequency.setValueAtTime(this.getPlayFreq(), audioContext.currentTime);
@@ -5822,8 +5829,8 @@ function JukeBox() {
       } else {
         this.oscillator.type = 'sine';
       }
+      this.oscillator.connect(this.volume);
     }
-    this.oscillator.connect(this.volume);
     this.oscillator.start();
     this.prevshape = shape;
     if(this.volume) this.volume.gain.setValueAtTime(this.getPlayVolume(shape), audioContext.currentTime);
