@@ -3486,15 +3486,14 @@ function Alu() {
         case 43: return 'rotating right shift';
         case 44: return 'mirror bits';
         case 48: return this.numc ? 'integer power modulo third input' : 'integer power';
-        case 59: return this.numb ? 'factorial modulo second input' : 'factorial';
-        case 60: return 'binomial coefficient';
-        case 61: return 'perfect power (if so, outputs exponent)';
         case 49: return this.numb ? 'integer log' : 'log2';
         case 50: return this.numb ? 'integer root' : 'sqrt';
         case 56: return this.numb ? 'modular inverse (modulo output size)' : 'modular inverse';
         case 57: return 'greatest common divider';
         case 58: return 'least common multiple';
-        case 59: return 'factorial';
+        case 59: return this.numb ? 'factorial modulo second input' : 'factorial';
+        case 60: return 'binomial coefficient';
+        case 61: return 'perfect power (if so, outputs exponent)';
         case 64: return 'is prime';
         case 65: return 'next prime';
         case 66: return 'previous prime';

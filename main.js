@@ -153,13 +153,15 @@ var rendererDropdown;
 var circuitNameEl;
 var circuitDropdownSpan;
 var editbutton;
+var changeDropdown;
+var statsButton;
+var dialogDiv;
 
 // functions created by createMenuUI
 var updatePauseButtonText;
 var updateModeButtonText;
 var updateTimeButtonBorders;
 var updateTicksDisplay;
-var changeDropdown;
 
 // smaller version of the menu rows shown when editing is active
 function createEditorMenuUI(cancelFun, finishFun) {
@@ -454,6 +456,78 @@ function createMenuUI() {
     var el = util.makeElement('option', changeDropdown).innerText = text;
   }
 
+  util.makeUISpacer(16, menuRow2El);
+  statsButton = util.makeUIElement('button', menuRow2El);
+  statsButton.innerText = 'stats';
+  statsButton.title = 'show circuit statistics and parameters';
+  statsButton.onclick = function() {
+    if(dialogDiv) return;
+    dialogDiv = util.makeAbsElement('div', 200, 200, 400, 400);
+    dialogDiv.style.backgroundColor = 'white';
+    dialogDiv.style.border = '1px solid black';
+    dialogDiv.style.zIndex = '100';
+    dialogDiv.style.padding = '10px';
+
+    var numVisibleComponents = 0;
+    var numComponents = 0;
+    var numOnComponents = 0;
+    var numOffComponents = 0;
+    var numComponentInputs = 0;
+    var numGates = 0;
+    var numCells = 0;
+    for(var i = 0; i < components.length; i++) {
+      var c = components[i];
+      var t = c.type;
+
+      if(t == TYPE_NULL || t == TYPE_LOOSE_WIRE_EXPLICIT || t == TYPE_LOOSE_WIRE_IMPLICIT || t == TYPE_UNKNOWN_DEVICE || t == TYPE_IC_PASSTHROUGH) {
+        continue;
+      }
+
+      numComponents++;
+
+      if(!c.master && !c.issub) {
+        numVisibleComponents++;
+      }
+
+      if(c.value) {
+        numOnComponents++;
+      } else {
+        numOffComponents++;
+      }
+
+      if(t == TYPE_AND || t == TYPE_NAND || t == TYPE_OR || t == TYPE_NOR || t == TYPE_XOR || t == TYPE_XNOR || t == TYPE_ONEHOT || t == TYPE_NONEHOT) {
+        numGates++;
+      }
+
+      numComponentInputs += c.inputs.length;
+    }
+    for(var y0 = 0; y0 < h; y0++) {
+      for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
+        var c0 = world[y0][x0].circuitsymbol;
+        if(c0 != ' ') numCells++;
+      }
+    }
+
+    var text = '';
+    text += 'world width: ' + w + '\n';
+    text += 'world height: ' + h + '\n';
+    text += 'num circuit cells: ' + numCells + '\n'; // not comments, isolators, ...
+    text += 'num components: ' + numComponents + '\n';
+    text += 'num non-hidden components: ' + numVisibleComponents + '\n'; // not in chip etc...
+    text += 'num on components: ' + numOnComponents + '\n';
+    text += 'num off components: ' + numOffComponents + '\n';
+    text += 'num standard logic gates: ' + numGates + '\n';
+    text += 'num component inputs: ' + numComponentInputs + '\n';
+    text += 'num defined ICs: ' + Object.keys(defsubs).length + '\n';
+    text += 'num IC usages: ' + callsubs.length + '\n';
+    text += 'num components (full): ' + components.length + '\n'; // includes components for internal workings, not relevant to the actual circuit
+    dialogDiv.innerText = text;
+    var hide = function() {
+      util.removeElement(dialogDiv);
+      dialogDiv = undefined;
+    };
+    util.makeInternalButton('ok', dialogDiv, (400 - 100), (400 - 35), hide);
+  };
 
   circuitDropdownSpan = util.makeElement('span', menuRow1El);
 
