@@ -4476,90 +4476,6 @@ registerCircuit('Colored LED (l)', `
  s-->l2
 `, 'component' + componentid++);
 
-registerCircuit('RGB LED (D)', `
- s-->D<--s
-     ^
-     |
-     |
-     s
-`, 'component' + componentid++);
-
-registerCircuit('Dot Matrix Screen, Binary Addressing (D)', `
-      D#######<p"dot"
-      ########<p"fill"
-      ########
-      ########<s"b"
-      ########<S"g"
-    s>########<s"r"
-    s>########
-    s>########
-           ^^^
-           sss
-
-`, 'component' + componentid++);
-
-registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
-    s>D#######<p"dot"
-    s>########<p"fill"
-    S>########
-    s>########<s"b"
-    s>########<S"g"
-    S>########<s"r"
-    s>########
-    s>########
-      ^^^^^^^^
-      ssSssSss
-
-`, 'component' + componentid++);
-
-registerCircuit('Dot Matrix Screen, As Oscilloscope (D)', `
-      D#######<p"dot"
-      ########
-      ########
-      ########
-      ########
-    s>########
-    s>########
-    s>########
-           ^^^
-           sss
-
-`, 'component' + componentid++);
-
-registerCircuit('Dot Matrix Screen, As Oscilloscope With Clear (D)', `
-      D#######<p"dot"
-      ########<p"clear"
-      ########
-      ########
-      ########
-    s>########
-    s>########
-    s>########
-           ^^^
-           sss
-
-`, 'component' + componentid++);
-
-registerCircuit('Jukebox (audio speaker) (J)', `
- s-->J440
-`, 'component' + componentid++);
-
-registerCircuit('Jukebox (audio speaker) with volume (J)', `
- s-->J800
- s-->#
- s-->#
- s-->#
-`, 'component' + componentid++);
-
-registerCircuit('Jukebox (audio speaker) with multiple controls (J)', `
-
-  J#####################2000
-  ^^^      ^^^^    ^^^^
-  |||      ||||    ||||
-  sss      sSss    ssss
-
-`, 'component' + componentid++);
-
 registerCircuit('Wire Split (.)', `
     l
     ^
@@ -4789,6 +4705,12 @@ registerCircuit('Terminal Counter With Reset (T)', `
      T######<p"reset"0
            ^
            p
+`, 'component' + componentid++);
+
+registerCircuit('Terminal 1-bit output (T)', `
+    T
+    ^
+    s
 `, 'component' + componentid++);
 
 
@@ -5078,6 +5000,90 @@ registerCircuit('ALU with 2-input operation, signed (U)', `
    T####### T#######
    ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('RGB LED (D)', `
+ s-->D<--s
+     ^
+     |
+     |
+     s
+`, 'component' + componentid++);
+
+registerCircuit('Dot Matrix Screen, Binary Addressing (D)', `
+      D#######<p"dot"
+      ########<p"fill"
+      ########
+      ########<s"b"
+      ########<S"g"
+    s>########<s"r"
+    s>########
+    s>########
+           ^^^
+           sss
+
+`, 'component' + componentid++);
+
+registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
+    s>D#######<p"dot"
+    s>########<p"fill"
+    S>########
+    s>########<s"b"
+    s>########<S"g"
+    S>########<s"r"
+    s>########
+    s>########
+      ^^^^^^^^
+      ssSssSss
+
+`, 'component' + componentid++);
+
+registerCircuit('Dot Matrix Screen, As Oscilloscope (D)', `
+      D#######<p"dot"
+      ########
+      ########
+      ########
+      ########
+    s>########
+    s>########
+    s>########
+           ^^^
+           sss
+
+`, 'component' + componentid++);
+
+registerCircuit('Dot Matrix Screen, As Oscilloscope With Clear (D)', `
+      D#######<p"dot"
+      ########<p"clear"
+      ########
+      ########
+      ########
+    s>########
+    s>########
+    s>########
+           ^^^
+           sss
+
+`, 'component' + componentid++);
+
+registerCircuit('Jukebox (audio speaker) (J)', `
+ s-->J440
+`, 'component' + componentid++);
+
+registerCircuit('Jukebox (audio speaker) with volume (J)', `
+ s-->J800
+ s-->#
+ s-->#
+ s-->#
+`, 'component' + componentid++);
+
+registerCircuit('Jukebox (audio speaker) with multiple controls (J)', `
+
+  J#####################2000
+  ^^^      ^^^^    ^^^^
+  |||      ||||    ||||
+  sss      sSss    ssss
 
 `, 'component' + componentid++);
 

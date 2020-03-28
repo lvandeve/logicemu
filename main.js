@@ -459,11 +459,12 @@ function createMenuUI() {
   util.makeUISpacer(16, menuRow2El);
   statsButton = util.makeUIElement('button', menuRow2El);
   statsButton.innerText = 'stats';
-  statsButton.title = 'show circuit statistics and parameters';
+  statsButton.title = 'show circuit statistics and parameters. The estimated num transistors assumes NMOS logic, gives exact value when only using basic 2-input logic gates (AND, NAND, XOR, ...), but will use some arbitrary large amount of transistors per big built-in device (ALU, terminal emulator, ...)';
   statsButton.onclick = function() {
     if(dialogDiv) return;
     dialogDiv = util.makeAbsElement('div', 200, 200, 400, 400);
     dialogDiv.style.backgroundColor = 'white';
+    dialogDiv.style.position = 'fixed';
     dialogDiv.style.border = '1px solid black';
     dialogDiv.style.zIndex = '100';
     dialogDiv.style.padding = '10px';
@@ -475,9 +476,11 @@ function createMenuUI() {
     var numComponentInputs = 0;
     var numGates = 0;
     var numCells = 0;
+    var numTransistors = 0;
     for(var i = 0; i < components.length; i++) {
       var c = components[i];
       var t = c.type;
+      var ni = c.inputs.length;
 
       if(t == TYPE_NULL || t == TYPE_LOOSE_WIRE_EXPLICIT || t == TYPE_LOOSE_WIRE_IMPLICIT || t == TYPE_UNKNOWN_DEVICE || t == TYPE_IC_PASSTHROUGH) {
         continue;
@@ -485,7 +488,7 @@ function createMenuUI() {
 
       numComponents++;
 
-      if(!c.master && !c.issub) {
+      if(!c.issub) {
         numVisibleComponents++;
       }
 
@@ -499,8 +502,106 @@ function createMenuUI() {
         numGates++;
       }
 
-      numComponentInputs += c.inputs.length;
+      numComponentInputs += ni;
+
+      // Any built-in device of some complexity, e.g. the terminal emulator or ALUs, are assumed to use a simple CPU of 4000 transistors for that.
+      var cpuTransistors = 4000;
+      var ffTransistors = 26; // num transistors of JK flip-flop with 13 NAND gates
+      var dffTransistors = 18; // num transistors of D ff or 1-input T ff
+      // to count flip-flops, VTE, ... that use multiple components internally only once, skip sub-components
+      var isSubComponent = c.master && (c.master != c);
+
+      // Estimate total amount of transitors, assuming NMOS
+      if(t == TYPE_AND || t == TYPE_NAND) {
+        numTransistors += (ni > 1) ? ((ni - 1) * 3) : 0;
+        if(t == TYPE_NAND && ni > 1) numTransistors--;
+        if(ni == 1) numTransistors++; // diode or invertor
+      } else if(t == TYPE_OR || t == TYPE_NOR) {
+        numTransistors += (ni > 1) ? ((ni - 1) * 3) : 0;
+        if(t == TYPE_NOR && ni > 1) numTransistors--;
+        if(ni == 1) numTransistors++; // diode or invertor
+      } else if(t == TYPE_XOR || t == TYPE_XNOR) {
+        // TODO: xor with more than 2 inputs may be possible with less than 6 per implicit XOR
+        numTransistors += (ni > 1) ? ((ni - 1) * 6) : 0;
+        if(t == TYPE_XNOR && ni > 1) numTransistors++;
+        if(ni == 1) numTransistors++; // diode or invertor
+      } else if(t == TYPE_ONEHOT || t == TYPE_NONEHOT) {
+        if(ni == 2) {
+          numTransistors += 6;
+        } else if(ni > 2) {
+          // This estimate assumes that with many inputs, you can add one more input to the onehot detector using 2 ORs and 1 AND (an OR to keep track of having any input on, the AND and OR to keep track of too many inputs on).
+          // The + 2 at the end is an AND with a negated input, which would be +4, but then assume the or series ends with NOR to reduce 2.
+          // TODO: this estimate is likely too high, there may be possibilities with less transistors per input.
+          numTransistors += 6 + (ni - 2) * 9 + 2;
+        }
+        if(ni == 1) numTransistors++; // diode or invertor
+      } else if (t == TYPE_TRISTATE || t == TYPE_TRISTATE_INV) {
+        // we could not count tristate buffers, since they represent direct connection to wires
+        // so below code, which would count it as and/or gates, commented out
+        //numTransistors += (ni > 1) ? ((ni - 1) * 3) : 0;
+        //if(t == TYPE_TRISTATE_INV && ni > 1) numTransistors--;
+        //if(ni == 1) numTransistors++; // diode or invertor
+      } else if(t == TYPE_COUNTER) {
+        // assume counter based on 1-input T flip-flop with 9 NAND gates (18 transistors)
+        numTransistors += dffTransistors;
+        if(ni > 1) numTransistors += 6 * (ni - 1); // assume one more xor gate per input, this may be underestimate since it's not just as simple as an extra XOR per input
+      } else if (t == TYPE_FLIPFLOP && !isSubComponent) {
+        // assume any flip-flop to be based on a NAND flip-flop with 13 NAND gates, no matter how many inputs
+        // TODO: more refined estimate
+        numTransistors += ffTransistors;
+      } else if(t == TYPE_RANDOM) {
+        // very arbitrary estimate, make random as expensive as full flip-flop, it is edge triggered and keeps state
+        if(ni > 0) numTransistors += ffTransistors;
+        if(ni > 1) numTransistors += 6 * (ni - 1); // assume one more xor gate per input, this may be underestimate since it's not just as simple as an extra XOR per input
+      } else if(t == TYPE_DELAY) {
+        if(ni > 0) {
+          // assume 1 D-flipflop of 9 NAND gates per delay amount
+          if(c.number <= 1) numTransistors += dffTransistors;
+          else numTransistors += dffTransistors * c.number;
+        }
+      } else if(t == TYPE_VTE && !isSubComponent) {
+        if(ni == 1 && c.vte && c.vte.numoutputs <= 0) {
+          // nothing, is 1-bit output
+        } else {
+          numTransistors += cpuTransistors;
+          numTransistors += ni * ffTransistors;
+        }
+      } else if(t == TYPE_ALU && !isSubComponent) {
+        numTransistors += cpuTransistors;
+        numTransistors += ni * ffTransistors;
+      } else if(t == TYPE_ROM && !isSubComponent && c.rom) {
+        var rom = c.rom;
+        var isrom = !(rom.decoder || rom.encoder || rom.priority || rom.ram);
+        var perbit = 0;
+        if(rom.ram || isrom) {
+          perbit = 1;
+          if(rom.ram) perbit = dffTransistors;
+          if(rom.array.length) {
+            numTransistors += rom.array.length * rom.array[0].length * perbit;
+          }
+        }
+        // handling of the encoding/decoding of inputs
+        // TODO: get better estimate of amount transistors per input for decoder/encoder/priority
+        if(!rom.onehot) {
+          numTransistors += ni * 32;
+        }
+      } else if(t == TYPE_MUX && !isSubComponent) {
+        // only an estimate
+        if(ni >= 3) numTransistors += (ni - 2) * 8; // 2-input MUX (+ selector) can be made from 4 NANDs = 8 transistors. All other input amounts = estimate.
+        if(ni  > 3) numTransistors += ni * 32;  // assume some encoding/decoding needed
+      } else if(t == TYPE_DOTMATRIX && !isSubComponent) {
+        // only an estimate
+        // <= 3 inputs is considered simple RGB LED so does not add transitors. > 3 inputs is considered dot matrix screen with complex circuitry inside.
+        if(ni > 3) {
+          numTransistors += cpuTransistors;
+          numTransistors += ni * ffTransistors;
+        }
+      }
+
+      // each inverted input adds one more transistor to the estimate
+      for(var j = 0; j < c.inputs_negated.length; j++) if(c.inputs_negated[j]) numTransistors++;
     }
+
     for(var y0 = 0; y0 < h; y0++) {
       for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
         var c0 = world[y0][x0].circuitsymbol;
@@ -512,6 +613,7 @@ function createMenuUI() {
     text += 'world width: ' + w + '\n';
     text += 'world height: ' + h + '\n';
     text += 'num circuit cells: ' + numCells + '\n'; // not comments, isolators, ...
+    text += 'estimated num transistors: ' + numTransistors + '\n'; // not exact for large components like built-in flip-flops, ALUs, ...
     text += 'num components: ' + numComponents + '\n';
     text += 'num non-hidden components: ' + numVisibleComponents + '\n'; // not in chip etc...
     text += 'num on components: ' + numOnComponents + '\n';
