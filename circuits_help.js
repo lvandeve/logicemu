@@ -4650,6 +4650,18 @@ registerCircuit('SR latch (qQ)', `
  s-->Q-->l
 `, 'component' + componentid++);
 
+registerCircuit('flip-flop with everything (cqQjkdty)', `
+ s-->q-->l
+ s-->Q-->l
+ s-->j-->l
+ s-->k-->l
+ s-->d-->l
+ s-->t-->l
+ s-->c-->l
+ s-->y-->l
+
+`, 'component' + componentid++);
+
 registerCircuit('Keyboard Terminal (T)', `
      lllllll
      ^^^^^^^

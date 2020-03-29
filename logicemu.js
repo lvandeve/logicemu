@@ -6061,7 +6061,7 @@ function countFFComponents(array) {
   return o;
 }
 
-// returns [type, value]
+// returns [type, value]. Returns what TYPE the component should have.
 function getFFType(array) {
   var num = countFFComponents(array);
 
