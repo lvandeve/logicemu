@@ -699,7 +699,9 @@ s..>#..>l
          ||||||||
          sSsssssS"binary"
 
-0"Place cursor in here with mouse, then type a number (letters don't work):"
+0"Place cursor in here with mouse, then type a number. Letters don't work,"
+0"but a minus sign, and prefix 0x for hex, work. Negative numbers will use"
+0"twos complement binary output."
 
          llllllll
          ^^^^^^^^
@@ -792,6 +794,22 @@ s..>#..>l
    ssssssss        s
   " ...8421        1"
   "       A        B"
+
+0"An ALU can also have an operation-select input. For example the following ALU"
+0"allows to select between add, sub, mul, div."
+
+
+           llllllll
+           ^^^^^^^^
+           ||||||||
+l<#################<s  0"carry in"
+  #################  :
+  #################<s10" 0=add, 1=sub, 2=mul, 3=div"
+  U24##############<s2
+  ^^^^^^^^ ^^^^^^^^  :
+  ssssssss ssssssss
+ " ...8421  ...8421"
+
 
 
 
@@ -2867,13 +2885,24 @@ SsssssS3"ASCII code in to screen"
 0"With only inputs and no read/out flags, it will instead show the binary input"
 0"in decimal."
 
-         T#######"decimal"6 T
-         ^^^^^^^^           ^
-         ||||||||           |
-         sSsssssS"binary"6  s
+         T#######3"decimal"0 T
+         ^^^^^^^^            ^
+         ||||||||            |
+         sSsssssS3"binary"0  s
+
+0"Place a 1 next to a decimal display terminal to show signed output (twos"
+0"complement)"
+
+        1T#######3"decimal, signed"0
+         ^^^^^^^^
+         ||||||||
+         Ssssssss3"binary, twos complement"0
 
 0"With only outputs and no read/out flags, it will instead convert typed"
 0"decimal value to binary, if the number parses as a valid decimal number."
+0"Place cursor in here with mouse, then type a number. Letters don't work,"
+0"but a minus sign, and prefix 0x for hex, work. Negative numbers will use"
+0"twos complement binary output."
 
          llllllll
          ^^^^^^^^
@@ -3031,6 +3060,32 @@ l<U48#######################<s
   T####### T####### T#######
   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
   ssssssss ssssssss ssSssSsS
+
+
+3"NEW BEHAVIOR: ALU with operation select"
+
+0"An ALU can also have an operation-select input. For example the following ALU"
+0"allows to select between add, sub, mul, div."
+
+
+           llllllll
+           ^^^^^^^^
+           ||||||||
+l<#################<s  0"carry in"
+  #################  :
+  #################<s10" 0=add, 1=sub, 2=mul, 3=div"
+  U24##############<s2
+  ^^^^^^^^ ^^^^^^^^  :
+  ssssssss ssssssss
+ " ...8421  ...8421"
+
+0"The operation-select input is optional and should be on the same side as"
+0"where the optional carry input can be located. It's possible to have both"
+0"carry and operation select, as in the example above. If this side has only"
+0"one input, then it's treated as carry if it has 1 bit, or as operation select"
+0"if it has multiple bits. The carry bit is on the LSB side of the operation"
+0"select and there must be a gap between the carry bit and op select bits."
+
 
 
 3"NEW PART: Random generator"
@@ -4705,6 +4760,20 @@ registerCircuit('Decimal Display Terminal With Passthrough (T)', `
      sssssss
 `, 'component' + componentid++);
 
+registerCircuit('Decimal Display Terminal, Signed (T)', `
+     T######1
+     ^^^^^^^
+     sssssss
+`, 'component' + componentid++);
+
+registerCircuit('Decimal Display Terminal With Passthrough, Signed (T)', `
+     lllllll
+     ^^^^^^^
+     T######1
+     ^^^^^^^
+     sssssss
+`, 'component' + componentid++);
+
 registerCircuit('Decimal Keyboard Terminal (T)', `
      lllllll
      ^^^^^^^
@@ -5014,6 +5083,30 @@ registerCircuit('ALU with 2-input operation, signed (U)', `
    ssssssss ssssssss
 
 `, 'component' + componentid++);
+
+
+
+
+
+
+registerCircuit('ALU with operation select (U)', `
+
+           llllllll
+           ^^^^^^^^
+           ||||||||
+l<#################<s
+  #################
+  #################<s
+  U24##############<s
+  ^^^^^^^^ ^^^^^^^^
+  ssssssss ssssssss
+
+`, 'component' + componentid++);
+
+
+
+
+
 
 registerCircuit('RGB LED (D)', `
  s-->D<--s
@@ -5793,6 +5886,32 @@ S>#--------->l
 S>#--------->l
   ^
   s
+
+     .------]l
+     |
+s>U###
+s>2###
+s>4###
+S>####
+  ####
+s>####------>l
+s>####------>l
+S>####------>l
+S>####------]l
+  ^^ ^
+  sS s
+
+s>U###
+s>2###
+s>4###
+S>####
+  ####
+s>####------>l
+s>####------>l
+S>####------>l
+S>####------]l
+  ^^
+  sS
 
 S>e--------->l
 s>#
@@ -7118,16 +7237,16 @@ registerCircuit('All supported ALU ops (2-input signed)', `
 0"This lists all possible signed ALU ops, with 2 inputs attached, even for"
 0"operators that don't exist or normally take 1 input."
 
-   T### T###
-   ^^^^ ^^^^
-   3210 7654
-   gggg gggg
-   ssss ssss
-  "8421 8421"
-  "   A    B"
+   T###1 T###1
+   ^^^^  ^^^^
+   3210  7654
+   gggg  gggg
+   ssss  ssss
+  "8421  8421"
+  "   A     B"
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7137,7 +7256,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7147,7 +7266,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7157,7 +7276,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7167,7 +7286,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7177,7 +7296,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7187,7 +7306,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7197,7 +7316,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7207,7 +7326,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7217,7 +7336,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7227,7 +7346,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7237,7 +7356,7 @@ registerCircuit('All supported ALU ops (2-input signed)', `
    3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654     3210 7654
 
 
-        T###          T###          T###          T###          T###          T###          T###          T###
+        T###1         T###1         T###1         T###1         T###1         T###1         T###1         T###
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
         llll          llll          llll          llll          llll          llll          llll          llll
         ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^          ^^^^
@@ -7267,7 +7386,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
 
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7278,7 +7397,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7289,7 +7408,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7300,7 +7419,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7311,7 +7430,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7322,7 +7441,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7333,7 +7452,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7344,7 +7463,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7355,7 +7474,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7366,7 +7485,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7377,7 +7496,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
@@ -7388,7 +7507,7 @@ registerCircuit('All supported ALU ops (1-input, signed)', `
    3210     3210     3210     3210     3210     3210     3210     3210
 
 
-   T###     T###     T###     T###     T###     T###     T###     T###
+   T###1    T###1    T###1    T###1    T###1    T###1    T###1    T###
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^
    llll     llll     llll     llll     llll     llll     llll     llll
    ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^     ^^^^

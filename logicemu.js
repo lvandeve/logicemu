@@ -1404,13 +1404,14 @@ var TYPE_RANDOM = TYPE_index++;
 var TYPE_JUKEBOX = TYPE_index++; // music, speaker, sound, audio
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
-// number types (higher value = higher priority) [numbertype number priority number order numbers priority numbers order]
+// number types (higher value = higher priority) [numbertype number_type number priority number order numbers priority numbers order]
 var NUMBER_index = 0;
 var NUMBER_NONE = NUMBER_index++;
 var NUMBER_LED = NUMBER_index++;
 var NUMBER_TIMER = NUMBER_index++;
 var NUMBER_ROM = NUMBER_index++;
 var NUMBER_ALU = NUMBER_index++;
+var NUMBER_VTE = NUMBER_index++;
 var NUMBER_ICCALL = NUMBER_index++;
 var NUMBER_ICDEF = NUMBER_index++;
 var NUMBER_GLOBAL = NUMBER_index++; // for global wire g
@@ -1773,6 +1774,7 @@ function CallSub(id) {
         vte.prevread = v.vte.prevread;
         vte.output = util.clone(v.vte.output);
         vte.decimaldisplay = v.vte.decimaldisplay;
+        vte.signeddisplay = v.vte.signeddisplay;
         vte.passthrough = v.vte.passthrough;
         vte.decimalinput = v.vte.decimalinput;
         vte.counter = v.vte.counter;
@@ -1807,6 +1809,9 @@ function CallSub(id) {
         alu.miscoutlsbpos = v.alu.miscoutlsbpos;
         alu.nummiscin = v.alu.nummiscin;
         alu.nummiscout = v.alu.nummiscout;
+        alu.selectdir = v.alu.selectdir;
+        alu.selectlsbpos = v.alu.selectlsbpos;
+        alu.numselect = v.alu.numselect;
         alu.output = util.clone(v.alu.output);
         alu.opindex = v.alu.opindex;
         alu.signed = v.alu.signed;
@@ -3352,6 +3357,11 @@ function Alu() {
   this.nummiscout = 0;
   this.miscinlsbpos = 0;
   this.miscoutlsbpos = 0;
+  // select operation
+  this.selectdir = -1;
+  this.selectlsbpos = 0;
+  this.numselect = 0;
+
   this.signed = false;
   this.opindex = 0;
   // not used by all ops
@@ -3367,8 +3377,8 @@ function Alu() {
   this.y1 = -1;
 
   // max 4 characters
-  this.getOpShortName = function() {
-    switch(this.opindex) {
+  this.getOpShortNameFor = function(opindex) {
+    switch(opindex) {
         case 0: return 'zero';
         case 1: return 'and';
         case 2: return 'nimb';
@@ -3442,8 +3452,12 @@ function Alu() {
     }
   };
 
-  this.getOpLongName = function() {
-    switch(this.opindex) {
+  this.getOpShortName = function() {
+    return this.getOpShortNameFor(this.opindex);
+  };
+
+  this.getOpLongNameFor = function(opindex) {
+    switch(opindex) {
         case 0: return 'zero';
         case 1: return 'bitand';
         case 2: return 'a nimply b';
@@ -3517,14 +3531,28 @@ function Alu() {
     }
   };
 
+  this.getOpLongName = function() {
+    return this.getOpLongNameFor(this.opindex);
+  };
+
 
   // first inputs are the data, last the select
   this.update = function(inputs) {
-    if(inputs.length != this.numa + this.numb + this.numc + this.nummiscin) return false;
+    if(inputs.length != this.numa + this.numb + this.numc + this.nummiscin + this.numselect) return false;
 
     for(var i = 0; i < this.output.length; i++) this.output[i] = 0;
 
     var op = this.opindex;
+
+    var selectbegin = this.numa + this.numb + this.numc + this.nummiscin;
+    var select = 0;
+    for(var i = 0; i < this.numselect; i++) {
+      if(inputs[selectbegin + i]) {
+        select += (1 << i);
+      }
+    }
+
+    op += select;
 
     var signed = this.signed;
     if(op < 16) signed = false;
@@ -4165,6 +4193,7 @@ function Alu() {
     o [heading, lsbpos, num]: output's heading, and lsbpos
     miscin [heading, num]: misc in side heading, num is 0 or 1 (heading -1 and num 0 if none)
     miscout [heading, num]: misc out side heading, num is 0 or 1 (heading -1 and num 0 if none)
+    select [heading, lsbpos, num]: select operation input side heading (heading -1 and num 0 if none)
   }
   with
   heading: wind direction of side with this inputs/outputs (NESW), for input is where it comes from, for output is where it goes to
@@ -4187,6 +4216,7 @@ function Alu() {
     var o = [-1, -1, 0];
     var miscin = [-1, 0];
     var miscout = [-1, 0];
+    var select = [-1, -1, 0];
 
     /*
     io has format: [array, ni, no, ei, eo, si, so, wi, wo]
@@ -4280,15 +4310,35 @@ function Alu() {
       if(i == outdir || i == indir || i == miscoutdir) continue;
       var arr = io[1 + i * 2];
       if(arr.length == 0) continue;
-      if(arr.length > 1) { this.setError('too many misc-input series on one side'); return null; }
       if(miscindir != -1) { this.setError('multiple misc in sides'); return null; }
-      if(arr[0][1] != 1) { this.setError('too many bits in misc output side'); return null; }
-      miscindir = i;
-      miscin[0] = miscindir;
-      miscin[1] = 1;
+      if(arr.length == 1) {
+        if(arr[0][1] == 1) {
+          miscindir = i;
+          miscin[0] = miscindir;
+          miscin[1] = 1;
+        } else {
+          selectdir = i;
+          select[0] = selectdir;
+          select[1] = (selectdir >= 2) ? 1 : 0;
+          select[2] = arr[0][1];
+        }
+      } else if(arr.length == 2) {
+        if(arr[0][1] != 1) { this.setError('misc in must have 1 bit'); return null; }
+        miscindir = i;
+        miscin[0] = miscindir;
+        miscin[1] = 1;
+        selectdir = i;
+        select[0] = selectdir;
+        select[1] = (selectdir >= 2) ? 1 : 0;
+        select[2] = arr[1][1];
+      } else {
+        this.setError('too many misc-input series on one side');
+        return null;
+      }
+      //if(arr[0][1] != 1) { this.setError('too many bits in misc input side'); return null; }
     }
 
-    var result = [a, b, c, o, miscin, miscout];
+    var result = [a, b, c, o, miscin, miscout, select];
 
     return result;
   };
@@ -4296,7 +4346,8 @@ function Alu() {
   /*
   Sorts as follows:
   -data inputs from lsb to msb
-  -select inputs from lsb to msb
+  -misc input bit (carry, ...)
+  -select operation inputs from lsb to msb
   The given dirs are headings (NESW)
   */
   this.sortIO = function(io) {
@@ -4330,7 +4381,8 @@ function Alu() {
         if(db == self.miscindir) return -1;
         throw 'impossible that it is not using at least one adir and one miscindir, given bdir is in center';
       }
-      var lsbpos = (da == self.adir) ? self.alsbpos : (da == self.bdir) ? self.blsbpos : self.miscinlsbpos;
+      // NOTE: this assumes alsbpos == blsbpos, miscinlsbpos == selectlsbpos and miscindir == selectdir
+      var lsbpos = (da == self.adir) ? self.alsbpos : (da == self.bdir) ? self.blsbpos : self.selectlsbpos;
       if(((da & 1) == 0) && lsbpos) return xb - xa;
       if(((da & 1) == 0)) return xa - xb;
       if(lsbpos) return yb - ya;
@@ -4420,6 +4472,8 @@ function Alu() {
     this.olsbpos = dirs[3][1];
     this.miscindir = dirs[4][0];
     this.miscoutdir = dirs[5][0];
+    this.selectdir = dirs[6][0];
+    this.selectlsbpos = dirs[6][1];
     this.output = []; // current ouput values (first data output(s), then the select passthrough)
     this.numa = dirs[0][2];
     this.numb = dirs[1][2];
@@ -4427,6 +4481,7 @@ function Alu() {
     this.numo = dirs[3][2];
     this.nummiscin = dirs[4][1];
     this.nummiscout = dirs[5][1];
+    this.numselect = dirs[6][2];
 
     this.output.length = this.numo + this.nummiscout;
 
@@ -4435,7 +4490,7 @@ function Alu() {
 
     // make label with operation name
     // find a suitable location
-    var opname = this.getOpShortName();
+    var opname = this.numselect ? 'ALU#' : this.getOpShortName();
     var len = opname.length;
     var labelok = false;
     var labelx = -1;
@@ -4514,6 +4569,7 @@ function VTE() {
   this.prevread = false;
   this.output = [0,0,0,0,0,0,0,0];
   this.decimaldisplay = false;
+  this.signeddisplay = false;
   this.passthrough = false; // whether it passes through the input (in case of decimal display)
   this.decimalinput = false;
   this.counter = false;
@@ -4582,6 +4638,11 @@ function VTE() {
       }
       var x = this.x1 - this.x0 - 1;
       var y = this.y1 - this.y0 - 1;
+      if(this.signeddisplay) {
+        var max = math.n1 << math.B(this.numinputs);
+        var half = math.n1 << (math.B(this.numinputs) - math.n1);
+        if(index >= half) index = -(max - index);
+      }
       var s = '' + index;
       for(var i = 0; i < this.numinputs; i++) {
         var c = (i < s.length) ? s[s.length - i - 1] : '';
@@ -4609,6 +4670,13 @@ function VTE() {
         if(x >= this.x1 - this.x0) { x = math.n0; y++; }
       }
       s = s.trim();
+
+      // If a negative number is entered, support it using twos complement
+      var neg = false;
+      if(s[0] == '-') {
+        neg = true;
+        s = s.substr(1);
+      }
 
       // avoid typing non-digit characters (exception for hex)
       if(s.length > 0) {
@@ -4649,6 +4717,7 @@ function VTE() {
         s = s.substr(0, s.length - 1);
       }
 
+      if(neg) index = ~index + math.n1;
       var mul = math.n1;
       for(var i = 0; i < this.numoutputs; i++) {
         var bit = ((index & mul) ? 1 : 0);
@@ -4846,6 +4915,9 @@ function VTE() {
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
+
+        if(c.number == 1) this.signeddisplay = true;
+
         if(!c.components[0]) {
           c.components[0] = this.master;
         } else {
@@ -7720,8 +7792,21 @@ function Cell() {
         var alu = master ? master.alu : this.components[0].alu;
         if(alu) {
           var numinputs = (alu.numc ? 3 : (alu.numb ? 2 : 1));
-          var op = alu.getOpLongName();
-          title = 'ALU (arithmetic logic unit): op: "' + op + '"' + (alu.signed ? ' (signed)' : '') + ',  opindex: ' + alu.opindex + ', num inputs: ' + numinputs;
+          if(alu.numselect) {
+            title = 'ALU (arithmetic logic unit), with custom selectable operation from the select input bits. First operation (matching select 0 and internal opindex ' +
+              alu.opindex + '): ' + alu.getOpLongName() + '. Select range: 0 - ' + ((1 << alu.numselect) - 1) + '. Selectable opindex range: ' + alu.opindex + ' - ' + (alu.opindex + ((1 << alu.numselect) - 1));
+              if(alu.numselect <= 4) {
+                title += '. All operations for each select value: ';
+                var num = 1 << alu.numselect;
+                for(var i = 0; i < num; i++) {
+                  if(i > 0) title += ', ';
+                  title += '' + i + ':' + alu.getOpShortNameFor(alu.opindex + i);
+                }
+              }
+          } else {
+            var op = alu.getOpLongName();
+            title = 'ALU (arithmetic logic unit): op: "' + op + '"' + (alu.signed ? ' (signed)' : '') + ',  opindex: ' + alu.opindex + ', num inputs: ' + numinputs;
+          }
         } else {
           title = 'ALU (but has error)';
         }
@@ -7741,6 +7826,7 @@ function Cell() {
             if(vte.decimaldisplay && !vte.counter) {
               title += ' (as decimal display)';
               if(vte.passthrough) title += ' (passes through the input to the output)';
+              if(vte.signeddisplay) title += ' (signed two\'s complement)';
             }
             if(vte.decimalinput && !vte.counter) {
               title += ' (as decimal input, click to put cursor here, and type decimal digits, or hex digits preceded with 0x).';
@@ -8336,24 +8422,27 @@ function RendererText() {
     For timer: a R without the changed background indicates the timer is on internally, but
     is not outputting it because it has inputs and none of those inputs are on.
     */
+    // Reading from .innerText turns out to be very slow in JavaScript (for the comparisons with 'R', 'r', etc...),
+    // even if there are just a few hundreds switches/timers/... in a large map, and for that reason, the separate
+    // fields look0 and look1 are used instead.
     if(type == TYPE_TIMER_ON || type == TYPE_TIMER_OFF) {
       var clocked = cell.components[0].clocked;
-      if(this.div0.innerText != 'R' && clocked) this.div0.innerText = 'R';
-      if(this.div0.innerText != 'r' && !clocked) this.div0.innerText = 'r';
+      if(clocked && this.look0 != 'R') this.div0.innerText = this.look0 = 'R';
+      if(!clocked && this.look0 != 'r') this.div0.innerText = this.look0 = 'r';
     }
     if(type == TYPE_SWITCH_ON || type == TYPE_SWITCH_OFF) {
       var user = (type == TYPE_SWITCH_ON);
-      if(this.div0.innerText != 'S' && user) this.div0.innerText = 'S';
-      if(this.div0.innerText != 's' && !user) this.div0.innerText = 's';
-      if(this.div1.innerText != 'S' && user) this.div1.innerText = 'S';
-      if(this.div1.innerText != 's' && !user) this.div1.innerText = 's';
+      if(user && this.look0 != 'S') this.div0.innerText = this.look0 = 'S';
+      if(!user && this.look0 != 's') this.div0.innerText = this.look0 = 's';
+      if(user && this.look1 != 'S') this.div1.innerText = this.look1 = 'S';
+      if(!user &&this.look1 != 's') this.div1.innerText = this.look1 = 's';
     }
     if(type == TYPE_PUSHBUTTON_ON || type == TYPE_PUSHBUTTON_OFF) {
       var user = (type == TYPE_PUSHBUTTON_ON);
-      if(this.div0.innerText != 'P' && user) this.div0.innerText = 'P';
-      if(this.div0.innerText != 'p' && !user) this.div0.innerText = 'p';
-      if(this.div1.innerText != 'P' && user) this.div1.innerText = 'P';
-      if(this.div1.innerText != 'p' && !user) this.div1.innerText = 'p';
+      if(user && this.look0 != 'P') this.div0.innerText = this.look0 = 'P';
+      if(!user && this.look0 != 'p') this.div0.innerText = this.look0 = 'p';
+      if(user && this.look1 != 'P') this.div1.innerText = this.look1 = 'P';
+      if(!user && this.look1 != 'p') this.div1.innerText = this.look1 = 'p';
     }
   };
 
@@ -10507,24 +10596,27 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
   this.setLook = function(cell, type) {
     /* see the RendererText setLook function for comment about styles and types */
+    // Reading from .innerText turns out to be very slow in JavaScript (for the comparisons with 'R', 'r', etc...),
+    // even if there are just a few hundreds switches/timers/... in a large map, and for that reason, the separate
+    // fields look0 and look1 are used instead.
     if(type == TYPE_TIMER_ON || type == TYPE_TIMER_OFF) {
       var clocked = cell.components[0].clocked;
-      if(this.text0.innerText != 'R' && clocked) this.text0.innerText = 'R';
-      if(this.text0.innerText != 'r' && !clocked) this.text0.innerText = 'r';
+      if(clocked && this.look0 != 'R') this.text0.innerText = this.look0 = 'R';
+      if(!clocked && this.look0 != 'r') this.text0.innerText = this.look0 = 'r';
     }
     if(type == TYPE_SWITCH_ON || type == TYPE_SWITCH_OFF) {
       var user = (type == TYPE_SWITCH_ON);
-      if(this.text0.innerText != 'S' && user) this.text0.innerText = 'S';
-      if(this.text0.innerText != 's' && !user) this.text0.innerText = 's';
-      if(this.text1.innerText != 'S' && user) this.text1.innerText = 'S';
-      if(this.text1.innerText != 's' && !user) this.text1.innerText = 's';
+      if(user && this.look0 != 'S') this.text0.innerText = this.look0 = 'S';
+      if(!user && this.look0 != 's') this.text0.innerText = this.look0 = 's';
+      if(user && this.look1 != 'S') this.text1.innerText = this.look1 = 'S';
+      if(!user && this.look1 != 's') this.text1.innerText = this.look1 = 's';
     }
     if(type == TYPE_PUSHBUTTON_ON || type == TYPE_PUSHBUTTON_OFF) {
       var user = (type == TYPE_PUSHBUTTON_ON);
-      if(this.text0.innerText != 'P' && user) this.text0.innerText = 'P';
-      if(this.text0.innerText != 'p' && !user) this.text0.innerText = 'p';
-      if(this.text1.innerText != 'P' && user) this.text1.innerText = 'P';
-      if(this.text1.innerText != 'p' && !user) this.text1.innerText = 'p';
+      if(user && this.look0 != 'P') this.text0.innerText = this.look0 = 'P';
+      if(!user && this.look0 != 'p') this.text0.innerText = this.look0 = 'p';
+      if(user && this.look1 != 'P') this.text1.innerText = this.look1 = 'P';
+      if(!user && this.look1 != 'p') this.text1.innerText = this.look1 = 'p';
     }
   };
 
@@ -10679,6 +10771,7 @@ function parseNumbers() {
       if (c == 'i') type = NUMBER_ICCALL;
       if (c == 'g') type = NUMBER_GLOBAL;
       if (c == 'U') type = NUMBER_ALU; // TODO: this is not yet working: NUMBER_ALU should trump NUMBER_LED, but it looks like it does not in practice, at least for multidigit number
+      if (c == 'T') type = NUMBER_VTE; // TODO: same problem as NUMBER_ALU: does not actually use the priority order at all, and in addition this number should work next to # too and this code here doesn't know when the # belongs to a T
       // todo: rom corner (is diagonal, currently not handled in this code...)
 
       if (type != NUMBER_NONE) {
