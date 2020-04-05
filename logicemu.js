@@ -1138,6 +1138,7 @@ var LogicEmuMath = (function() {
   // TODO: doesn't work for 10007n, 1000000000000000000000007n. Answer should be: 1000000000000000000000006n
   // probable reason: must use not just prime factors, but all unique factors (including non prime ones, but no need to repeat same ones), for f2 at least (for f prime factors is ok)
   var multiplicativeorder = function(a, m) {
+    if(m == 0) return -n1;
     if(gcd(a, m) != 1) return n0;
     a = mod(a, m);
     var f = factorize2(m);
@@ -1265,7 +1266,7 @@ var LogicEmuMath = (function() {
       while(tmp != 1) {
         tmp = (tmp * tmp) % p;;
         i++;
-        if(i == m) return n0;
+        if(i >= m) return n0;
       }
       var b = modpow(c, modpow(n2, m - i - n1, p - n1), p);
       tmp = (b * b) % p;
@@ -3659,7 +3660,7 @@ function Alu() {
       o = ~(a ^ b);
     } else if(op == 10) {
       o = ~b;
-    } else if(op == 22) {
+    } else if(op == 11) {
       o = a | ~b; // b imply a
     } else if(op == 12) {
       o = ~a;
