@@ -705,16 +705,24 @@ s..>#..>l
 
          llllllll
          ^^^^^^^^
-         T######
+         T#######
 
-0"With a single input, it acts as an up-counter. An optional reset an be added"
+0"With the following configurations, the terminal works instead as a decimal"
+0"counter, with optional features such as reset, down count, and set from data"
 
-         lllllll
-         ^^^^^^^
-         T######<p"reset"0
-               ^
-               p
+llllllll        llllllll          llllllll
+^^^^^^^^        ^^^^^^^^          ^^^^^^^^
+T#######<p0"up" T#######<p0"up"   T#######<p0"up"
+                ########<p0"reset"########<p0"reset"
+                                  ########<p0"down"
 
+llllllll        llllllll          llllllll
+^^^^^^^^        ^^^^^^^^          ^^^^^^^^
+T#######<p0"set"T#######<p0"up"   T#######<p0"up"
+^^^^^^^^        ########<p0"set"  ########<p0"set"
+ssssssss        ^^^^^^^^          ########<p0"down"
+                ssssssss          ^^^^^^^^
+                                  ssssssss
 
 0"A capital U forms an ALU (arithmetic logic unit) with built-in support for"
 0"various advanced mathematical operations. While these can be made from"
@@ -2908,19 +2916,23 @@ SsssssS3"ASCII code in to screen"
          ^^^^^^^^
          T#######
 
-0"With a single input, it acts as an up-counter. An optional reset an be added"
+0"With the following configurations, the terminal works instead as a decimal"
+0"counter, with optional features such as reset, down count, and set from data"
 
-         lllllll
-         ^^^^^^^
-         T######
-               ^
-               p
+llllllll        llllllll          llllllll
+^^^^^^^^        ^^^^^^^^          ^^^^^^^^
+T#######<p0"up" T#######<p0"up"   T#######<p0"up"
+                ########<p0"reset"########<p0"reset"
+                                  ########<p0"down"
 
-         lllllll
-         ^^^^^^^
-         T######<p"reset"0
-               ^
-               p
+llllllll        llllllll          llllllll
+^^^^^^^^        ^^^^^^^^          ^^^^^^^^
+T#######<p0"set"T#######<p0"up"   T#######<p0"up"
+^^^^^^^^        ########<p0"set"  ########<p0"set"
+ssssssss        ^^^^^^^^          ########<p0"down"
+                ssssssss          ^^^^^^^^
+                                  ssssssss
+
 
 3"NEW PART: ALU (Arithmetic Logic Unit)"
 3"U: ALU"
@@ -4717,7 +4729,7 @@ registerCircuit('flip-flop with everything (cqQjkdty)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Keyboard Terminal (T)', `
+registerCircuit('ASCII Keyboard Terminal (T)', `
      lllllll
      ^^^^^^^
      |||||||
@@ -4726,7 +4738,7 @@ registerCircuit('Keyboard Terminal (T)', `
      #######
 `, 'component' + componentid++);
 
-registerCircuit('ASCII Terminal Screen (T)', `
+registerCircuit('ASCII Screen Terminal (T)', `
      T######<p"read"
      #######
      #######
@@ -4734,13 +4746,13 @@ registerCircuit('ASCII Terminal Screen (T)', `
      Sssssss
 `, 'component' + componentid++);
 
-registerCircuit('Terminal With Both (T)', `
+registerCircuit('ASCII Terminal With Both (T)', `
 
                 lllllll
                 ^^^^^^^
                 |||||||
    2"output"p-->T######<--p0"read"
-       "EOF"l<--#######
+      2"EOF"l<--#######
                 ^^^^^^^
                 |||||||
                 sssssss
@@ -4752,16 +4764,23 @@ registerCircuit('Decimal Display Terminal (T)', `
      sssssss
 `, 'component' + componentid++);
 
-registerCircuit('Decimal Display Terminal With Passthrough (T)', `
-     lllllll
-     ^^^^^^^
-     T######
-     ^^^^^^^
-     sssssss
+registerCircuit('Terminal 1-bit output (T)', `
+    T
+    ^
+    s
 `, 'component' + componentid++);
 
 registerCircuit('Decimal Display Terminal, Signed (T)', `
      T######1
+     ^^^^^^^
+     sssssss
+    "s"
+`, 'component' + componentid++);
+
+registerCircuit('Decimal Display Terminal With Passthrough (T)', `
+     lllllll
+     ^^^^^^^
+     T######
      ^^^^^^^
      sssssss
 `, 'component' + componentid++);
@@ -4772,6 +4791,7 @@ registerCircuit('Decimal Display Terminal With Passthrough, Signed (T)', `
      T######1
      ^^^^^^^
      sssssss
+    "s"
 `, 'component' + componentid++);
 
 registerCircuit('Decimal Keyboard Terminal (T)', `
@@ -4780,18 +4800,67 @@ registerCircuit('Decimal Keyboard Terminal (T)', `
      T######
 `, 'component' + componentid++);
 
+registerCircuit('Terminal Counter (T)', `
+     lllllll
+     ^^^^^^^
+     T######<p
+
+`, 'component' + componentid++);
+
 registerCircuit('Terminal Counter With Reset (T)', `
      lllllll
      ^^^^^^^
-     T######<p"reset"0
-           ^
-           p
+     T######<p0"count"
+     #######<p0"reset"
+
 `, 'component' + componentid++);
 
-registerCircuit('Terminal 1-bit output (T)', `
-    T
-    ^
-    s
+registerCircuit('Terminal Counter With Up/Reset/Down (T)', `
+     lllllll
+     ^^^^^^^
+     T######<p0"up"
+     #######<p0"reset"
+     #######<p0"down"
+
+`, 'component' + componentid++);
+
+registerCircuit('Terminal Counter With Set (T)', `
+     lllllll
+     ^^^^^^^
+     T######<p0"count"
+     #######<p0"set"
+     ^^^^^^^
+     sssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Terminal Counter With Up/Set/Down (T)', `
+     lllllll
+     ^^^^^^^
+     T######<p0"up"
+     #######<p0"set"
+     #######<p0"down"
+     ^^^^^^^
+     sssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Terminal Decimal Memory Display (T)', `
+     lllllll
+     ^^^^^^^
+     T######<p0"set"
+     ^^^^^^^
+     sssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Terminal Decimal Memory Display, Signed (T)', `
+     lllllll
+     ^^^^^^^
+    1T######<p0"set"
+     ^^^^^^^
+     sssssss
+
 `, 'component' + componentid++);
 
 

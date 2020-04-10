@@ -696,7 +696,7 @@ function createMenuUI() {
 
   var importButton = util.makeUIElement('button', menuRow1El);
   importButton.innerText = 'import';
-  importButton.title = 'Import a circuit from its ASCII diagram copypasted from elsewhere. Paste it into the field that appears and use the buttons to import or cancel. To export or change a circuit instead, use the "edit" button, or create your own circuit in a text editor.';
+  importButton.title = 'Import a circuit from its ASCII diagram copypasted from elsewhere. Paste it into the field that appears and use the buttons to import or cancel. To export a circuit instead, use the "export" button (or "edit" to change it), or create your own circuit in a text editor (see the editing help).';
   importButton.onclick = function() {
     if(!editmode) {
       var fontsize = 10;
@@ -745,7 +745,7 @@ function createMenuUI() {
 
   var exportButton = util.makeUIElement('button', menuRow1El);
   exportButton.innerText = 'export';
-  exportButton.title = 'Export circuit ASCII diagram, to easily store it elsewhere or share.';
+  exportButton.title = 'Export circuit ASCII diagram, to easily store it elsewhere in text format or share. Note: an alternative but less good looking way is to share the URL, if it has a code (not if the circuit is too large; the actual circuit itself is encoded and compressed in the URL code, it is not stored anywhere)';
   exportButton.onclick = function() {
     if(!editmode) {
       var fontsize = 10;
@@ -868,10 +868,10 @@ function createMenuUI() {
 
     var forgetButton = util.makeUIElement('button', menuRow1El, 3);
     forgetButton.innerText = 'forget';
-    forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button' +
+    forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button ' +
                          'and also remove URL fragments (#id=... or #code=...), you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
-                         'if you want to keep your circuit, make sure you save it to disk first! That can be done by' +
-                         'copypasting it from the edit field into a text editor and saving to your disk, e.g. as a .txt file.';
+                         'if you want to keep your circuit, make sure you save it to disk first! That can be done by ' +
+                         'using the export button, or copypasting it from the edit field, into a text editor and saving to your disk, e.g. as a .txt file.';
     forgetButton.onclick = function() {
       util.setLocalStorage('', 'circuit_text');
       util.clearFragment();

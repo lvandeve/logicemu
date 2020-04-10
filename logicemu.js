@@ -1769,6 +1769,7 @@ function CallSub(id) {
         vte.text = util.clone(v.vte.text);
         vte.numinputs = v.vte.numinputs;
         vte.numoutputs = v.vte.numoutputs;
+        vte.numwrite = v.vte.numwrite;
         vte.cursorx = v.vte.cursorx;
         vte.cursory = v.vte.cursory;
         vte.prevwrite = v.vte.prevwrite;
@@ -1779,12 +1780,16 @@ function CallSub(id) {
         vte.passthrough = v.vte.passthrough;
         vte.decimalinput = v.vte.decimalinput;
         vte.counter = v.vte.counter;
+        vte.countersettable = v.vte.countersettable;
         vte.countervalue = v.vte.countervalue;
         vte.previnput = v.vte.previnput;
         vte.previnput2 = v.vte.previnput2;
+        vte.previnput3 = v.vte.previnput3;
         vte.allowstyping = v.vte.allowstyping;
         vte.keybuffer = util.clone(v.vte.keybuffer);
         vte.invisible = true;
+        vte.error = v.vte.error;
+        vte.errormessage = v.vte.errormessage;
       }
       if(v.alu) {
         var alu = new Alu();
@@ -4562,29 +4567,47 @@ function VTE() {
   this.x1 = 0;
   this.y1 = 0;
   this.text = null; // not as string but as 2D array of characters
-  this.numinputs = -1;
-  this.numoutputs = -1;
+  this.numinputs = 0; // num data inputs
+  this.numoutputs = -1; // num data outputs
+  this.numwrite = 0; // num write control bits
   this.cursorx = 0;
   this.cursory = 0;
   this.prevwrite = false;
   this.prevread = false;
   this.output = [0,0,0,0,0,0,0,0];
+
+  /*
+  The terminal has the following modes, depending on amount, sizes and locations of input and output groups:
+  -multibit output side, and a non-opposing side with 1 input bit and 1 output bit: ascii keyboard
+  -multibit input side and a non-opposing side with 1 input bit: ascii screen
+  -both above combined (4 sides used, multibit sides opposing): ascii keyboard + screen
+  -only a multibit output side: decimal keyboard
+  -only a multibit input side: decimal screen
+  -multibit input side and opposing multibit output side: decimal passthrough screen
+  -multibit output side and a non-opposing side with 1/2/3 input bit: counter with up/up,reset/up,reset,down
+  -multibit output side, opposing multibit input side, and side with 1/2/3 input bit: counter with set/up,set/up,set,down
+  */
   this.decimaldisplay = false;
   this.signeddisplay = false;
   this.passthrough = false; // whether it passes through the input (in case of decimal display)
   this.decimalinput = false;
   this.counter = false;
-  this.countervalue = 0;
+  this.countersettable = false; // if true, is counter with input bits and a 'set' option to reset it to that value
+  this.countervalue = math.n0;
+
+
   this.previnput = 0;
   this.previnput2 = 0;
+  this.previnput3 = 0;
   this.allowstyping = false;
   this.invisible = false; // if true, is invisible, due to being inside of a chip
   // hidden textarea used to handle typing in better way than pure keyboard events
   // a separate one per VTE because it must be positioned where the VTE is to avoid
   // undesired scrolling to wrong place when it gets focused
   this.textarea = undefined;
-
   this.keybuffer = [];
+  this.error = false;
+  this.errormessage = null;
 
   this.newline = function() {
     var w = this.x1 - this.x0;
@@ -4606,12 +4629,51 @@ function VTE() {
       var x = this.x1 - this.x0 - 1;
       var y = this.y1 - this.y0 - 1;
       var width = Math.max(this.x1 - this.x0, this.y1 - this.y0);
-      if(inputs[0] && !this.previnput) this.countervalue++;
-      this.previnput = inputs[0];
-      if(inputs.length > 1) {
-        if(inputs[1] && !this.previnput2) this.countervalue = 0;
-        this.previnput2 = inputs[1];
+      var do_up = false;
+      var do_down = false;
+      var do_set = false;
+      var do_reset = false;
+
+      if(inputs[this.numinputs + 0] && !this.previnput) {
+        if(this.countersettable && this.numwrite == 1) do_set = true;
+        else do_up = true;
       }
+      this.previnput = inputs[this.numinputs + 0];
+      if(this.numwrite > 1 && inputs[this.numinputs + 1] && !this.previnput2) {
+        if(this.countersettable) do_set = true;
+        else do_reset = true;
+      }
+      this.previnput2 = inputs[this.numinputs + 1];
+      if(this.numwrite > 2 && inputs[this.numinputs + 2] && !this.previnput3) {
+        do_down = true;
+      }
+      this.previnput3 = inputs[this.numinputs + 2];
+
+      if(do_set) {
+        var index = math.n0;
+        var mul = math.n1;
+        for(var i = 0; i < this.numinputs; i++) {
+          var ip = math.supportbigint ? BigInt(inputs[i]) : inputs[i];
+          index += ip * mul;
+          mul *= math.n2;
+        }
+        if(this.signeddisplay) {
+          var max = math.n1 << math.B(this.numinputs);
+          var half = math.n1 << (math.B(this.numinputs) - math.n1);
+          if(index >= half) index = -(max - index);
+        }
+        this.countervalue = index;
+      }
+      if(do_reset) {
+        this.countervalue = math.n0;
+      }
+      if(do_up) {
+        this.countervalue++;
+      }
+      if(do_down) {
+        this.countervalue--;
+      }
+
       var index = this.countervalue;
       var s = '' + index;
       for(var i = 0; i < width; i++) {
@@ -4622,10 +4684,10 @@ function VTE() {
         if(x < 0) { x = this.x1 - 1; y--; }
         if(y < 0) break;
       }
-      var mul = 1;
+      var mul = math.n1;
       for(var i = 0; i < this.numoutputs; i++) {
         this.output[i] = ((index & mul) ? 1 : 0);
-        mul *= 2;
+        mul *= math.n2;
       }
       return;
     }
@@ -4891,6 +4953,11 @@ function VTE() {
     render();
   };
 
+  this.setError = function(text) {
+    this.error = true;
+    if(!this.errormessage) this.errormessage = text;
+  };
+
   // init before inputs are resolved
   // returns true if ok, false if error
   this.init1 = function(x0, y0, x1, y1) {
@@ -4902,7 +4969,7 @@ function VTE() {
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
-        if(c.circuitsymbol != 'T' && c.circuitsymbol != '#T') return false;
+        if(c.circuitsymbol != 'T' && c.circuitsymbol != '#T') { this.setError('invalid char'); return false; }
         if(c.components[0]) {
           this.master = c.components[0];
           this.master_orig_x = x;
@@ -4912,7 +4979,7 @@ function VTE() {
       }
       if(this.master) break;
     }
-    if(!this.master) return false;
+    if(!this.master) { this.setError('no master found'); return false; }
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
@@ -4961,107 +5028,129 @@ function VTE() {
     var outdir = -1;
     var inheading = -1;
     var indir = -1;
-    var writeheading = -1;
+    var writeheading = -1; // the write control side has either 1 input bit (trigger write to screen) or multiple (for e.g. counters with multiple controls like up/reset/down)
     var writedir = -1;
-    var writeheading2 = -1;
-    var writedir2 = -1;
-    var readheading = -1;
+    var numwrite = 0;
+    var readheading = -1; // the read control side has exactly 1 input bit (trigger read from keyboard) and 1 output bit (EOF)
     var readdir = -1;
     // NOTE: by default, LSB pos is always on the right side when looking in the direction of the input/output arrows
     var ilsbpos = -1; // 0: left or top, 1: right or bottom.
     var olsbpos = -1;
 
+    // find IO direction. This is either identified by an output side with
+    // more than 1 bits, or if there are no output sides, an input side with
+    // more than 1 bits (in case of such output side, there exist configurations
+    // with multiple >1 bit input sides, so then only the output side identifies
+    // it). There can be both input and output IO, and then they will always be
+    // opposing sides. The remaining two sides can have misc/control bits.
+
+    // find IO direction through output.
     for(var i = 0; i < 4; i++) {
-      if(io[i][1] == 0 && io[i + 4][1] == 0) {
-        // nothing, that is ok
-      } else if(io[i + 4][1] > 1) {
-        if(outheading != -1) return null; // there may only be 1 valid candidate
-        if(io[i][1] > 0) return null; //error: there may not be inputs on the output side
+      if(io[i + 4][1] > 1) {
+        if(outheading != -1) { this.setError('too many output sides'); return null; }
+        if(io[i][1] > 0) { this.setError('input mixed with output side'); return null; }
         outheading = i;
         outdir = (i & 1);
         olsbpos = (i == 0 || i == 1) ? 1 : 0;
-      } else if(io[i][1] > 1) {
-        if(inheading != -1) return null; // there may only be 1 valid candidate
-        if(io[i + 4][1] > 0) return null; //error: there may not be outputs on the input side
+      }
+    }
+
+    // find IO direction in heading
+    for(var i = 0; i < 4; i++) {
+      if(outheading != -1 && i != ((outheading + 2) & 3)) continue; // if there is already an outheading, the inheading must be the opposite
+      if(io[i][1] > 1) {
+        if(inheading != -1) { this.setError('too many input sides'); return null; }
+        if(io[i + 4][1] > 0) { this.setError('output mixed with input side'); return null; }
         inheading = i;
         indir = (i & 1);
         ilsbpos = (i == 3 || i == 2) ? 1 : 0;
-      } else if(io[i][1] == 1 && io[i + 4][1] == 0) {
-        if(writeheading != -1 && writeheading2 != -1) return null; // there may only be max 2 valid candidates
-        if(writeheading != -1) {
-          writeheading2 = i;
-          writedir2 = (i & 1);
-          //ilsbpos = (i == 1 || i == 2) ? 1 : 0;
-        } else {
-          writeheading = i;
-          writedir = (i & 1);
-          //ilsbpos = (i == 1 || i == 2) ? 1 : 0;
+      }
+    }
+
+    // If no multibit input nor output, then special case of single 1-bit input
+    if(inheading == -1 && outheading == -1) {
+      for(var i = 0; i < 4; i++) {
+        if(io[i][1] >= 1) {
+          if(inheading != -1) { this.setError('too many input sides'); return null; }
+          if(io[i + 4][1] > 0) { this.setError('output mixed with input side'); return null; }
+          inheading = i;
+          indir = (i & 1);
+          ilsbpos = (i == 3 || i == 2) ? 1 : 0;
         }
+      }
+    }
+
+    if(inheading == -1 && outheading == -1) { this.setError('no input or output side found'); return null; }
+
+
+    var iodir = (outheading == -1) ? (inheading & 1) : (outheading & 1);
+
+    // find misc/control sides
+    for(var i = 0; i < 4; i++) {
+      if((i & 1) == iodir) continue; // the input/output sides can't have control/misc bits
+      if(io[i][1] == 0 && io[i + 4][1] == 0) {
+        // nothing, that is ok
+      } else if(io[i][1] >= 1 && io[i + 4][1] == 0) {
+        if(writeheading != -1) { this.setError('too many write control sides'); return null; };
+        writeheading = i;
+        writedir = (i & 1);
+        numwrite = io[i][1];
+        //ilsbpos = (i == 1 || i == 2) ? 1 : 0;
       } else  if(io[i][1] == 1 && io[i + 4][1] == 1) {
-        if(readheading != -1) return null; // there may only be 1 valid candidate
+        if(readheading != -1) { this.setError('too many read control sides'); return null; };
         // TODO: if the read output is on a side, that is, a cell that could also already be a bit output, return error too. Only 1 distinct output can be connected per cell.
         readheading = i;
         readdir = (i & 1);
         //olsbpos = (i == 1 || i == 2) ? 0 : 1; // here, MSB is at the indicator. So that it matches the input order which has indicator on the other side
       } else {
-        this.errormessage = 'ERROR: Unknown input/output count combination for VTE';
-        console.log(this.errormessage);
-        return null; // unknown input/output count combination
+        { this.setError('unknown input/output side combination for VTE'); return null; }
       }
     }
 
-    if(readheading == -1 && writeheading == -1 && outheading == -1 && inheading != -1 && writeheading2 == -1) {
+    if(readheading == -1 && writeheading == -1 && outheading == -1 && inheading != -1) {
+      // pure decimal display
       this.decimaldisplay = true;
-    } else if(readheading == -1 && writeheading == -1 && outheading != -1 && inheading != -1 && writeheading2 == -1) {
+    } else if(readheading == -1 && writeheading == -1 && outheading != -1 && inheading != -1) {
+      // decimal display with passthrough
       this.decimaldisplay = true;
       this.passthrough = true;
-    } else if(readheading == -1 && writeheading != -1 && outheading == -1 && inheading == -1 && writeheading2 == -1) {
-      inheading = writeheading;
-      indir = writedir;
-      ilsbpos = (inheading == 1 || inheading == 2) ? 1 : 0;
-      writeheading = writedir = -1;
-      this.decimaldisplay = true;
-    } else if(readheading == -1 && writeheading == -1 && outheading != -1 && inheading == -1 && writeheading2 == -1) {
+    } else if(readheading == -1 && writeheading == -1 && outheading != -1 && inheading == -1) {
+      // decimal keyboard
       this.decimalinput = true;
-    } else if(readheading == -1 && writeheading != -1 && outheading != -1 && inheading == -1 && ((writedir == outdir) || (writedir2 == outdir))) {
-      // the counter input must always be opposite side of the output. The optional reset on one of the sides.
+    } else if(outheading != -1 && inheading == -1 && readheading == -1 && writeheading != -1) {
+      // counter without input bits (not settable)
+      if(numwrite > 3) { this.setError('too many control bits for counter'); return null; }
       this.decimaldisplay = true;
       this.counter = true;
-      if(writeheading2 == -1) {
-        inheading = writeheading;
-        indir = writedir;
-        writeheading = -1;
-      } else {
-        if(writedir == outdir) {
-          inheading = writeheading;
-          indir = writedir;
-          writeheading = writeheading2;
-          writedir = writedir2;
-        } else {
-          inheading = writeheading2;
-          indir = writedir2;
-          writeheading = writeheading;
-          writedir = writedir;
-        }
-        ilsbpos = (inheading == 1 || inheading == 2) ? 1 : 0;
-        writeheading2 = -1;
-        writedir2 = -1;
-      }
       this.cursorx = this.cursory = -1;
+    } else if(outheading != -1 && inheading != -1 && readheading == -1 && writeheading != -1) {
+      // counter with input bits (settable)
+      if(numwrite > 3) { this.setError('too many control bits for counter'); return null; }
+      this.decimaldisplay = true;
+      this.counter = true;
+      this.countersettable = true;
+      this.cursorx = this.cursory = -1;
+      ilsbpos = (inheading == 1 || inheading == 2) ? 1 : 0;
+    } else if(outheading != -1 && readheading != -1 && inheading == -1 && writeheading == -1) {
+      // this means it's an ascii keyboard
+    } else if(outheading == -1 && readheading == -1 && inheading != -1 && writeheading != -1) {
+      // this means it's an ascii screen
+      if(numwrite > 1) { this.setError('too many write control bits for ascii screen'); return null; }
+    } else if(outheading != -1 && readheading != -1 && inheading != -1 && writeheading != -1) {
+      // this means it's an ascii screen+keyboard combination
+      if(numwrite > 1) { this.setError('too many write control bits for ascii screen'); return null; }
     } else {
-      if(writeheading2 != -1) return null; // only used for counter with reset
-      if(readheading == -1 && writeheading == -1) return null;
-      if((writeheading != -1) != (inheading != -1)) return null;
-      if((readheading != -1) != (outheading != -1)) return null;
+      this.setError('unknown input/output side combination for terminal, cannot determine if keyboard, screen, counter, ...');
+      return null;
     }
 
-    var rinput = (inheading == -1) ? [-1, -1, [], -1, -1] :
+    var rinput = (inheading == -1) ? [-1, -1, [], 0, -1] :
         [inheading, inheading & 1, io[inheading][0], io[inheading][1], ilsbpos];
-    var rwrite = (inheading == -1) ? [-1, -1, [], -1, -1] :
-        [writeheading, writedir, [], -1, ilsbpos];
-    var routput = (outheading == -1) ? [-1, -1, [], -1, -1] :
+    var rwrite = (writeheading == -1) ? [-1, -1, [], 0, -1] :
+        [writeheading, writedir, [], numwrite, ilsbpos];
+    var routput = (outheading == -1) ? [-1, -1, [], 0, -1] :
         [outheading, outdir, io[outheading + 4][0], io[outheading + 4][1], olsbpos];
-    var rread = (outheading == -1) ? [-1, -1, [], -1, -1] :
+    var rread = (outheading == -1) ? [-1, -1, [], 0, -1] :
         [readheading, readdir, [], -1, olsbpos];
 
     var result = {'input':rinput, 'write':rwrite, 'output':routput, 'read':rread };
@@ -5072,6 +5161,7 @@ function VTE() {
   Sorts inputs and outputs, as follows:
   -from lsb to msb
   -for inputs, the write input comes after that
+  TODO: the above statement might be incorrect, possibly msb and lsb are swapped. Also, other large components usually sort in order of control input bits first, then inputs from LSB to MSB. Change to that. Requires also changing how the update function reads the inputs.
   dirs is as returned by getDirs: {
     input [heading, dir, [iv], num, lsbpos]: input side
     write [heading, dir, [iv], num, lsbpos]: read/write input, also indicates LSB pos
@@ -5173,16 +5263,17 @@ function VTE() {
     var x1 = this.x1;
     var y1 = this.y1;
 
-    if(!this.master) return false;
+    if(!this.master) { this.setError('no master present'); return false; }
 
     var io = getIO2(x0, y0, x1, y1, this.master);
-    if(!io) return false;
+    if(!io) { this.setError('getting io failed'); return false; }
 
     var dirs = this.getDirs(io);
-    if(!dirs) return false;
+    if(!dirs) { this.setError('getting dirs failed'); return false; }
 
     this.numinputs = dirs.input[3];
     this.numoutputs = dirs.output[3];
+    this.numwrite = dirs.write[3];
     this.sortIO(dirs);
 
     this.allowstyping = true;
@@ -5228,7 +5319,7 @@ function DotMatrix() {
   this.prevcolor = -1;
 
   this.error = false;
-  this.errormessage = '';
+  this.errormessage = null;
 
   this.array = [];
   this.oarray = []; // only used if oscilloscope.
@@ -5711,7 +5802,7 @@ function JukeBox() {
   this.currentshape = -1;
 
   this.error = false;
-  this.errormessage = '';
+  this.errormessage = null;
 
   this.setError = function(text) {
     this.error = true;
@@ -7823,7 +7914,12 @@ function Cell() {
               if(vte.numinputs > 0) title += ' (with ascii input, shown on the screen if read)';
               if(vte.numoutputs > 0 && vte.numinputs > 0) title += ' (only outputs what was typed with keyboard using active cursor, not from the component inputs. The inputs are displayed as ascii on screen only.)';
             }
-            if(vte.counter) title += ' (as counter)';
+            if(vte.counter && !vte.countersettable && vte.numwrite == 1) title += ' (as counter)';
+            if(vte.counter && !vte.countersettable && vte.numwrite == 2) title += ' (as counter with reset)';
+            if(vte.counter && !vte.countersettable && vte.numwrite == 3) title += ' (as counter with up, reset, down. Screen can show signed (negative) values or values larger than the output bits support, but output bits will use twos complement and can be treated as unsigned if desired.)';
+            if(vte.counter && vte.countersettable && vte.numwrite == 1) title += ' (as decimal display memory)';
+            if(vte.counter && vte.countersettable && vte.numwrite == 2) title += ' (as counter with set)';
+            if(vte.counter && vte.countersettable && vte.numwrite == 3) title += ' (as counter with up, set, down. Screen can show signed (negative) values or values larger than the output bits support, but output bits will use twos complement and can be treated as unsigned if desired. Data input is treated as ' + (vte.signeddisplay ? 'twos complement signed' : 'unsigned') + '.)';
             if(vte.decimaldisplay && !vte.counter) {
               title += ' (as decimal display)';
               if(vte.passthrough) title += ' (passes through the input to the output)';
@@ -13173,8 +13269,7 @@ function parseComponents() {
         console.log('rom error with component ' + i);
       }
       if(component.rom.error) {
-        component.error = true;
-        component.errormessage = component.rom.errormessage;
+        component.markError(component.rom.errormessage);
       }
     }
     if(component.mux) {
@@ -13183,8 +13278,7 @@ function parseComponents() {
         console.log('mux error with component ' + i);
       }
       if(component.mux.error) {
-        component.error = true;
-        component.errormessage = component.mux.errormessage;
+        component.markError(component.mux.errormessage);
       }
     }
     if(component.alu) {
@@ -13193,13 +13287,14 @@ function parseComponents() {
         console.log('alu error with component ' + i);
       }
       if(component.alu.error) {
-        component.error = true;
-        component.errormessage = component.alu.errormessage;
+        component.markError(component.alu.errormessage);
       }
     }
     if(component.vte) {
       if(!component.vte.error && !component.vte.init2()) component.vte.error = true;
-      if(component.vte.error) component.error = true;
+      if(component.vte.error) {
+        component.markError(component.vte.errormessage);
+      }
     }
     if(component.dotmatrix) {
       if(!component.dotmatrix.error && !component.dotmatrix.init2()) component.dotmatrix.error = true;
@@ -13222,25 +13317,25 @@ function parseComponents() {
   for(var i = 0; i < components.length; i++) {
     var component = components[i];
     if(component.master && component.master.rom && component.master.rom.error) {
-      component.error = true;
+      component.markError(component.master.rom.errormessage);
     }
     if(component.type == TYPE_ROM && (!component.master && !component.rom)) {
       component.markError('is rom but has no master');
     }
     if(component.master && component.master.mux && component.master.mux.error) {
-      component.error = true;
+      component.markError(component.master.mux.errormessage);
     }
     if(component.type == TYPE_MUX && (!component.master && !component.mux)) {
       component.markError('is mux but has no master');
     }
     if(component.master && component.master.alu && component.master.alu.error) {
-      component.error = true;
+      component.markError(component.master.alu.errormessage);
     }
     if(component.type == TYPE_ALU && (!component.master && !component.alu)) {
       component.markError('is ALU but has no master');
     }
     if(component.master && component.master.vte && component.master.vte.error) {
-      component.error = true;
+      component.markError(component.master.vte.errormessage);
     }
     if(component.type == TYPE_VTE && (!component.master && !component.vte)) {
       component.markError('is vte but has no master');
