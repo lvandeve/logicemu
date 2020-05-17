@@ -220,6 +220,9 @@ function getStatsText() {
   var numOffComponents = 0;
   var numComponentInputs = 0;
   var numGates = 0;
+  var numGatesLarge = 0;
+  var numGatesOther = 0;
+  var numInvertedInputs = 0;
   var numCells = 0;
   var numTransistors = 0;
   var numTransistorsLarge = 0;
@@ -254,6 +257,9 @@ function getStatsText() {
     var cpuTransistors = 4000;
     var ffTransistors = 26; // num transistors of JK flip-flop with 13 NAND gates
     var dffTransistors = 18; // num transistors of D ff or 1-input T ff
+    var cpuGates = 2000;
+    var ffGates = 13;
+    var dffGates = 9;
     // to count flip-flops, VTE, ... that use multiple components internally only once, skip sub-components
     var isSubComponent = c.master && (c.master != c);
     // Estimate total amount of transitors, assuming NMOS
@@ -289,7 +295,11 @@ function getStatsText() {
     } else if(t == TYPE_COUNTER) {
       // assume counter based on 1-input T flip-flop with 9 NAND gates (18 transistors)
       numTransistors += dffTransistors;
-      if(ni > 1) numTransistors += 6 * (ni - 1); // assume one more xor gate per input, this may be underestimate since it's not just as simple as an extra XOR per input
+      numGatesOther += dffGates;
+      if(ni > 1) {
+        numTransistors += 6 * (ni - 1); // assume one more xor gate per input, this may be underestimate since it's not just as simple as an extra XOR per input
+        numGatesOther += (ni - 1);
+      }
     } else if (t == TYPE_FLIPFLOP && !isSubComponent && c.ff) {
       var ff = c.ff;
       var extrainputcost = 4; // somewhat arbitrary
@@ -297,34 +307,64 @@ function getStatsText() {
       if(ff.numc) {
         if(ff.numj || ff.numk) {
           numTransistors += ffTransistors;
-          if(totaldatainputs > 2) numTransistors += (totaldatainputs - 2) * extrainputcost;
+          numGatesOther += ffGates;
+          if(totaldatainputs > 2) {
+            numTransistors += (totaldatainputs - 2) * extrainputcost;
+            numGatesOther += (((totaldatainputs - 2) * extrainputcost) >> 1);
+          }
         } else if(ff.numd || ff.numt) {
           numTransistors += dffTransistors;
-          if(totaldatainputs > 1) numTransistors += (totaldatainputs - 1) * extrainputcost;
+          if(totaldatainputs > 1) {
+            numTransistors += (totaldatainputs - 1) * extrainputcost;
+            numGatesOther += (((totaldatainputs - 1) * extrainputcost) >> 1);
+          }
         } else {
           // Any other kind of inputs is treated as the most expensive type.
           numTransistors += ffTransistors;
-          if(totaldatainputs > 1) numTransistors += (totaldatainputs - 1) * extrainputcost;
+          if(totaldatainputs > 1) {
+            numTransistors += (totaldatainputs - 1) * extrainputcost;
+            numGatesOther += (((totaldatainputs - 1) * extrainputcost) >> 1);
+          }
         }
         numTransistors += ff.numy * extrainputcost;
+        numGatesOther += ((ff.numy * extrainputcost) >> 1);
       } else {
         numTransistors += 8; // jk, d and t latch can all be made with 4 NANDs
+        numGatesOther += 4;
         var expecteddatainputs = ((ff.numj || ff.numk) ? 2 : 1);
-        if(totaldatainputs > expecteddatainputs) numTransistors += (totaldatainputs - expecteddatainputs) * extrainputcost;
+        if(totaldatainputs > expecteddatainputs) {
+          numTransistors += (totaldatainputs - expecteddatainputs) * extrainputcost;
+          numGatesOther += (((totaldatainputs - expecteddatainputs) * extrainputcost) >> 1);
+        }
         var expectedy = ((ff.numj || ff.numk) ? 0 : 1);
-        if(ff.numy > expectedy) numTransistors += (ff.numy - expectedy) * extrainputcost;
+        if(ff.numy > expectedy) {
+          numTransistors += (ff.numy - expectedy) * extrainputcost;
+          numGatesOther += (((ff.numy - expectedy) * extrainputcost) >> 1 );
+        }
       }
     } else if(t == TYPE_TIMER_OFF || t == TYPE_TIMER_ON) {
       numTransistors += 2; // amount of transistors for blinking circuit
+      numGatesOther++;
     } else if(t == TYPE_RANDOM) {
       // very arbitrary estimate, make random as expensive as full flip-flop, it is edge triggered and keeps state
-      if(ni > 0) numTransistors += ffTransistors;
-      if(ni > 1) numTransistors += 6 * (ni - 1); // assume one more xor gate per input, this may be underestimate since it's not just as simple as an extra XOR per input
+      if(ni > 0) {
+        numTransistors += ffTransistors;
+        numGatesOther += ffGates;
+      }
+      if(ni > 1) {
+        numTransistors += 6 * (ni - 1); // assume one more xor gate per input, this may be underestimate since it's not just as simple as an extra XOR per input
+        numGatesOther += (ni - 1);
+      }
     } else if(t == TYPE_DELAY) {
       if(ni > 0) {
         // assume 1 D-flipflop of 9 NAND gates per delay amount
-        if(c.number <= 1) numTransistors += dffTransistors;
-        else numTransistors += dffTransistors * c.number;
+        if(c.number <= 1) {
+          numTransistors += dffTransistors;
+          numGatesOther += dffGates;
+        } else {
+          numTransistors += dffTransistors * c.number;
+          numGatesOther += dffGates * c.number;
+        }
       }
     } else if(t == TYPE_VTE && !isSubComponent) {
       if(ni == 1 && c.vte && c.vte.numoutputs <= 0) {
@@ -332,10 +372,14 @@ function getStatsText() {
       } else {
         numTransistorsLarge += cpuTransistors;
         numTransistorsLarge += ni * ffTransistors;
+        numGatesLarge += cpuGates;
+        numGatesLarge += ni * ffGates;
       }
     } else if(t == TYPE_ALU && !isSubComponent) {
       numTransistorsLarge += cpuTransistors;
       numTransistorsLarge += ni * ffTransistors;
+      numGatesLarge += cpuGates;
+      numGatesLarge += ni * ffGates;
     } else if(t == TYPE_ROM && !isSubComponent && c.rom) {
       var rom = c.rom;
       var isrom = !(rom.decoder || rom.encoder || rom.priority || rom.ram);
@@ -345,28 +389,43 @@ function getStatsText() {
         if(rom.ram) perbit = dffTransistors;
         if(rom.array.length) {
           numTransistorsLarge += rom.array.length * rom.array[0].length * perbit;
+          numGatesLarge += rom.array.length * rom.array[0].length * perbit;
         }
       }
       // handling of the encoding/decoding of inputs
       // TODO: get better estimate of amount transistors per input for decoder/encoder/priority
       if(!rom.onehot) {
         numTransistorsLarge += ni * 32;
+        numGatesLarge += ni * 16;
       }
     } else if(t == TYPE_MUX && !isSubComponent) {
       // only an estimate
-      if(ni >= 3) numTransistorsLarge += (ni - 2) * 8; // 2-input MUX (+ selector) can be made from 4 NANDs = 8 transistors. All other input amounts = estimate.
-      if(ni  > 3) numTransistorsLarge += ni * 32;  // assume some encoding/decoding needed
+      if(ni >= 3) {
+        numTransistorsLarge += (ni - 2) * 8; // 2-input MUX (+ selector) can be made from 4 NANDs = 8 transistors. All other input amounts = estimate.
+        numGatesLarge += (ni - 2) * 3; // for the gates, don't count 4 NANDs, but instead 2 ANDs (one with negated input, not counted as separate gate by the counting logic for all other gates either) and an OR
+      }
+      if(ni  > 3) {
+        numTransistorsLarge += ni * 32;  // assume some encoding/decoding needed
+        numGatesLarge += ni * 16;  // TODO: better estimate
+      }
     } else if(t == TYPE_DOTMATRIX && !isSubComponent) {
       // only an estimate
       // <= 3 inputs is considered simple RGB LED so does not add transitors. > 3 inputs is considered dot matrix screen with complex circuitry inside.
       if(ni > 3) {
         numTransistorsLarge += cpuTransistors;
         numTransistorsLarge += ni * ffTransistors;
+        numGatesLarge += cpuGates;
+        numGatesLarge += ni * ffGates;
       }
     }
 
     // each inverted input adds one more transistor to the estimate
-    for(var j = 0; j < c.inputs_negated.length; j++) if(c.inputs_negated[j]) numTransistors++;
+    for(var j = 0; j < c.inputs_negated.length; j++) {
+      if(c.inputs_negated[j]) {
+        numTransistors++;
+        numInvertedInputs++;
+      }
+    }
   }
 
   for(var y0 = 0; y0 < h; y0++) {
@@ -380,16 +439,24 @@ function getStatsText() {
   text += 'world width: ' + w + '\n';
   text += 'world height: ' + h + '\n';
   text += 'num circuit cells: ' + numCells + '\n'; // not comments, isolators, ...
+  text += '\n';
+  text += ' real-world stats\n';
   text += 'estimated num transistors: ' + (numTransistors + numTransistorsLarge) + '\n'; // not exact for large components like built-in flip-flops, ALUs, ...
   text += 'num transistors (excluding large devices): ' + numTransistors  + '\n';
+  text += 'estimated num logic gates: ' + (numGates + numGatesLarge + numGatesOther) + '\n'; // not exact for large components like built-in flip-flops, ALUs, ... Also, inverted inputs for logic gates are not counted as extra gates, and multi-input gates count as 1 gate.
+  text += 'num standard logic gates: ' + numGates + '\n';
+  text += 'num inverted inputs (extra NOT gates): ' + numInvertedInputs  + '\n';
+  text += '\n';
+  text += ' component stats\n';
   text += 'num components: ' + numComponents + '\n';
-  text += 'num non-hidden components: ' + numVisibleComponents + '\n'; // not in chip etc...
   text += 'num on components: ' + numOnComponents + '\n';
   text += 'num off components: ' + numOffComponents + '\n';
-  text += 'num standard logic gates: ' + numGates + '\n';
   text += 'num component inputs: ' + numComponentInputs + '\n';
   text += 'num defined ICs: ' + Object.keys(defsubs).length + '\n';
   text += 'num IC usages: ' + callsubs.length + '\n';
+  text += '\n';
+  text += ' other logicemu-related stats\n';
+  text += 'num non-hidden components: ' + numVisibleComponents + '\n'; // not in chip etc...
   text += 'num components (full): ' + components.length + '\n'; // includes components for internal workings, not relevant to the actual circuit
   return text;
 }
@@ -593,6 +660,7 @@ function createMenuUI() {
   util.makeElement('option', colorDropdown).innerText = 'candy';
   util.makeElement('option', colorDropdown).innerText = 'inverted';
   util.makeElement('option', colorDropdown).innerText = 'monochrome';
+  util.makeElement('option', colorDropdown).innerText = 'contrast';
   colorDropdown.selectedIndex = colorscheme;
 
   var zoomoutButton = util.makeUIElement('button', menuRow2El, 1);
@@ -644,7 +712,7 @@ function createMenuUI() {
   statsButton.title = 'show circuit statistics and parameters. The estimated num transistors assumes NMOS logic, gives exact value when only using basic 2-input logic gates (AND, NAND, XOR, ...), but will use some arbitrary large amount of transistors per big built-in device (ALU, terminal emulator, ...)';
   statsButton.onclick = function() {
     if(dialogDiv) return;
-    dialogDiv = util.makeAbsElement('div', 200, 200, 400, 400);
+    dialogDiv = util.makeAbsElement('div', 200, 200, 400, 500);
     dialogDiv.style.backgroundColor = 'white';
     dialogDiv.style.position = 'fixed';
     dialogDiv.style.border = '1px solid black';
@@ -658,7 +726,7 @@ function createMenuUI() {
       util.removeElement(dialogDiv);
       dialogDiv = undefined;
     };
-    util.makeInternalButton('ok', dialogDiv, (400 - 100), (400 - 35), hide);
+    util.makeInternalButton('ok', dialogDiv, (400 - 100), (500 - 30), hide);
   };
 
   circuitDropdownSpan = util.makeElement('span', menuRow1El);

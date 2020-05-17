@@ -1442,14 +1442,19 @@ typesymbols[TYPE_TRISTATE] = 'z'; typesymbols[TYPE_TRISTATE_INV] = 'Z';
 typesymbols[TYPE_JUKEBOX] = 'J';
 
 
-// all devices except flipflop, those are treated differently because multiple different cells of its type can form one component
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'h':true, 'H':true, 'f':true, 'F':true,
                  's':true, 'S':true, 'l':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
                  'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true, '?':true, 'J':true};
-var specialextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true}; // special extenders for large devices (not all of those are used yet)
+// all "large" devices with slightly different parsing rules, where different cells can be different types of inputs/outputs
+// the "start" cells allow starting the parsing there. The extra ones can only be used once having started from one of the others, e.g. 'c' can be standalone so should not be used as starting point
+var largedevicestartmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'y':true,
+                      'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'J':true};
+var largedevicemap = util.mergeMaps(devicemap, {'c':true, 'C':true});
+var largeextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true}; // special extenders for large devices (not all of those are used yet)
 // devicemap as well as # (with extends devices)
-var devicemaparea = util.mergeMaps(devicemap, specialextendmap); devicemaparea['#'] = true;
+var devicemaparea = util.mergeMaps(devicemap, largeextendmap); devicemaparea['#'] = true;
+var largemaparea = util.mergeMaps(largedevicemap, largeextendmap); devicemaparea['#'] = true;
 var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true};
 var rommap = {'b':true, 'B':true};
 var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true};
@@ -1465,7 +1470,7 @@ var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x'
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true, 'U':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
                 '#':true, '=':true, 'i':true, 'T':true, 'D':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
-                'z':true, 'Z':true, '?':true, 'J':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true};
+                'z':true, 'Z':true, '?':true, 'J':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true, '$':true};
 var puredigitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
@@ -3416,6 +3421,7 @@ function Alu() {
         case 28: return 'rem';
         case 29: return 'fdiv';
         case 30: return 'mod';
+        case 31: return 'clml';
         case 32: return 'inc';
         case 33: return 'dec';
         case 34: return 'neg';
@@ -3425,7 +3431,6 @@ function Alu() {
         case 41: return 'rsh';
         case 42: return 'rlsh';
         case 43: return 'rrsh';
-        case 44: return 'mirr';
         case 48: return this.numc ? 'powm' : 'pow';
         case 49: return this.numb ? 'log' : 'log2';
         case 50: return this.numb ? 'root' : 'sqrt';
@@ -3454,6 +3459,12 @@ function Alu() {
         case 88: return 'time';
         case 89: return 'date';
         case 90: return 'unix';
+        case 96: return 'mirr';
+        case 97: return 'scrm';
+        case 98: return 'shuf';
+        case 99: return 'ushf';
+        case 100: return 'grp';
+        case 101: return 'ugrp';
         default: return 'unk';
     }
   };
@@ -3495,6 +3506,7 @@ function Alu() {
         case 28: return 'remainder';
         case 29: return this.numc ? 'floor divide modulo third input' : 'floor divide';
         case 30: return 'modulo';
+        case 31: return 'carryless multiply';
         case 32: return 'increment';
         case 33: return 'decrement';
         case 34: return 'negate';
@@ -3504,7 +3516,6 @@ function Alu() {
         case 41: return 'right shift';
         case 42: return 'rotating left shift';
         case 43: return 'rotating right shift';
-        case 44: return 'mirror bits';
         case 48: return this.numc ? 'integer power modulo third input' : 'integer power';
         case 49: return this.numb ? 'integer log' : 'log2';
         case 50: return this.numb ? 'integer root' : 'sqrt';
@@ -3533,6 +3544,12 @@ function Alu() {
         case 88: return 'time in seconds since unix epoch. Needs positive edge input bit change to update.';
         case 89: return 'convert unix epoch to Y-M-S h:m:s: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
         case 90: return 'Y-M-S h:m:s to unix epoch: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
+        case 96: return 'mirror bits';
+        case 97: return 'scramble (mirror bit indices)';
+        case 98: return 'perfect shuffle bits';
+        case 99: return 'perfect unshuffle bits';
+        case 100: return 'group bits (GRP)';
+        case 101: return 'ungroup bits (UNGRP)';
         default: return 'unknown';
     }
   };
@@ -3775,6 +3792,14 @@ function Alu() {
       } else {
         o = math.mod(a, b);
       }
+    } else if(op == 31) {
+      // carryless multiply (like multiply, but layers are XORed instead of ADDed)
+      var s = a;
+      while(b != 0) {
+        if(b & math.n1) o ^= s;
+        b >>= math.n1;
+        s <<= math.n1;
+      }
     } else if(op == 32) {
       o = a + math.n1;
       if(miscin) o++;
@@ -3816,14 +3841,6 @@ function Alu() {
         o = (a >> b) | (a << (BigInt(this.numa) - b));
       } else {
         o = (a >> b) | (a << (this.numa - b));
-      }
-    } else if(op == 44) {
-      // mirror bits
-      for(var i = 0; i < this.numo; i++) {
-        var j = this.numo - i - 1;
-        var ni = math.supportbigint ? BigInt(i) : i;
-        var nj = math.supportbigint ? BigInt(j) : j;
-        o |= ((a >> ni) << nj);
       }
     } else if(op == 48) {
       if((b < 0 && a == 0) || (this.numc && c == 0)) {
@@ -4085,6 +4102,47 @@ function Alu() {
       date.setUTCSeconds(seconds);
       var unix = Math.floor(+date / 1000);
       o = math.B(unix);
+    } else if(op == 96) {
+      // mirror bits
+      for(var i = 0; i < this.numo; i++) {
+        var j = this.numo - i - 1;
+        var ni = math.supportbigint ? BigInt(i) : i;
+        var nj = math.supportbigint ? BigInt(j) : j;
+        o |= (((a >> ni) & math.n1) << nj);
+      }
+    } else if(op == 97) {
+      // "scramble" (mirror bit indices) (requires power of two bitsize to be a permutation)
+      for(var i = 0; i < this.numo; i++) {
+        // mirror bits of i and store result in j
+        var j = 0;
+        var l2 = 0;
+        while((1 << l2) < this.numo) l2++; // ceiling log2 of numo
+        for(var l = 0; l < l2; l++) {
+          j <<= 1;
+          j |= ((i >> l) & 1);
+        }
+        var ni = math.supportbigint ? BigInt(i) : i;
+        var nj = math.supportbigint ? BigInt(j) : j;
+        o |= (((a >> ni) & math.n1) << nj);
+      }
+    } else if(op == 98) {
+      // perfect shuffle bits
+      var mid = (this.numo >> 1);
+      for(var i = 0; i < this.numo; i++) {
+        var j = (i < mid) ? (i * 2) : ((i - mid) * 2 + 1);
+        var ni = math.supportbigint ? BigInt(i) : i;
+        var nj = math.supportbigint ? BigInt(j) : j;
+        o |= (((a >> ni) & math.n1) << nj);
+      }
+    } else if(op == 99) {
+      // perfect unshuffle bits
+      var mid = (this.numo >> 1);
+      for(var i = 0; i < this.numo; i++) {
+        var j = (i < mid) ? (i * 2) : ((i - mid) * 2 + 1);
+        var ni = math.supportbigint ? BigInt(i) : i;
+        var nj = math.supportbigint ? BigInt(j) : j;
+        o |= (((a >> nj) & math.n1) << ni);
+      }
     } else {
       o = math.n0;
     }
@@ -6969,7 +7027,8 @@ function Component() {
           this.altType = undefined;
         } else {
           this.altType = this.type;
-          this.type = TYPE_CONSTANT_OFF;
+          if(this.type == TYPE_SWITCH_ON) this.type = TYPE_CONSTANT_ON;
+          else this.type = TYPE_CONSTANT_OFF;
         }
       } else if(this.type == TYPE_PUSHBUTTON_OFF) {
         // do not change here. The mouseup event will do the change. All we
@@ -7497,6 +7556,22 @@ function setColorScheme(index) {
     // error BG color remains yellow to keep clearly indicating those
     ERRORFGCOLOROFF = 'black';
     ERRORFGCOLORON = 'black';
+  } else if(index == 8) { // contrast, also intended for unit testing (more distinct colors for on and off LEDs)
+    setColorScheme(2);
+    //led_off_fg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
+    //led_off_bg_colors = ['#0ff', '#08f', '#44f', '#f4f', '#ff4', '#6f4', '#077', '#111'];
+
+    BGCOLOR = '#888';
+    GATEBGCOLOR = '#987'; // '#b4b4b4';
+    var lefoffbg = '#000';
+    led_off_bg_colors = [lefoffbg, lefoffbg, lefoffbg, lefoffbg, lefoffbg, lefoffbg, lefoffbg, lefoffbg];
+    SWITCHOFF_BGCOLOR = '#000';
+
+    ONCOLOR = 'white';
+    OFFCOLOR = 'black';
+    TEXTFGCOLOR = '#000';
+    TEXTBGCOLOR = '#fff';
+    LINKCOLOR = '#22f';
   }
 
   TERMINALMIDCOLOR = util.averageColor(TERMINALFGCOLOR, TERMINALBGCOLOR);
@@ -8669,8 +8744,8 @@ function sameDevice(x, y, dir) {
     return !!ff1 && ff1 == ff2;
   }
   if(devicemap[c] && devicemap[c2]) return false;
-  if((c == '#' || specialextendmap[c]) && (devicemaparea[c2])) return true;
-  if((c2 == '#' || specialextendmap[c2]) && (devicemaparea[c])) return true;
+  if((c == '#' || largeextendmap[c]) && (devicemaparea[c2])) return true;
+  if((c2 == '#' || largeextendmap[c2]) && (devicemaparea[c])) return true;
 
   return false;
 }
@@ -9623,6 +9698,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       var ctx = (i == 0) ? this.ctx0 : this.ctx1;
       var canvas = (i == 0) ? this.canvas0 : this.canvas1;
       var textel = (i == 0) ? this.text0 : this.text1;
+      var currentColor = (i == 0) ? OFFCOLOR : ONCOLOR;
       var oppositeColor = (i == 0) ? ONCOLOR : OFFCOLOR;
 
       // for big devices like IC and FlipFlop with multiple possible output values, it's
@@ -10178,14 +10254,17 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
             if(i == 1) symbol = 'L';
           }
           if(virtualsymbol == 'B') {
-            // NOTE: this actually may make a loose B (not part of a component) invisible
-            // since setValue, that actually copies it to the canvas, is never called, and
-            // this makes the text color equal to the background color.
-            // That's actually more like an error (it has no component), and it would be
-            // not efficient to enforce drawing somehow, who ignored for now.
+            // invert the colors for on bits, to make them more distinguishable
             alreadybg = true;
-            drawer.fillBg_(ctx, textel.style.color);
-            textel.style.color = BGCOLOR;
+            drawer.fillBg_(ctx, currentColor);
+            textel.style.color = GATEBGCOLOR;
+            // NOTE: the background color may not show up for invalid lone B's,
+            // that are not part of a valid ROM. This is because setValue will
+            // not be called on them. However, this bug is ignored, no need
+            // to call setValue on them, that could be inefficient. The below
+            // commented out line also fixes it, but again, not necessary and
+            // could be inefficient.
+            //textel.style.backgroundColor = currentColor;
           }
         }
         if(devicemaparea[c]) {
@@ -10199,7 +10278,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
         }
         var okdraw = true;
-        if(c == '#' || specialextendmap[c]) {
+        if(c == '#' || largeextendmap[c]) {
           okdraw = false;
           if((c == '#i' || c == '#U') && digitmap[cell.metasymbol]) okdraw = true; // do still draw chip/ALU numbers
 
@@ -11717,15 +11796,12 @@ function toposort(graph) {
   return result;
 }
 
-// This parses the groups of subs (for TYPE_IC), all connected cells that are connected to a capital I
-function parseSubs() {
-  var used;
-  logPerformance('parseSubs begin');
+// This parses the groups of subs (for TYPE_IC, small i), all connected cells that are connected to a capital I
+function parseICCalls() {
 
-  var sub_tree = {};  // numbers as index. Actually it's not a tree but a DAG, since multiple things can have the same child. But it's also a tree because each shared child will actually become its own copy of all the involved components of it later on.
+  logPerformance('parseICCalls begin');
 
-  // pass 1: small i's
-  used = initUsed2();
+  var used = initUsed2();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
       if(used[y0][x0]) continue;
@@ -11783,11 +11859,9 @@ function parseSubs() {
         }
 
         // neighbors
-        for(var i = 0; i < 4; i++) { // N, E, S, W ; NE, SE, SW, NW
+        for(var i = 0; i < 4; i++) { // N, E, S, W
           var x2 = x + ((i == 1) ? 1 : ((i == 3) ? -1 : 0));
           var y2 = y + ((i == 0) ? -1 : ((i == 2) ? 1 : 0));
-          /*var x2 = x + ((i == 1 || i == 4 || i == 5) ? 1 : ((i == 3 || i == 6 || i == 7) ? -1 : 0));
-          var y2 = y + ((i == 0 || i == 4 || i == 7) ? -1 : ((i == 2 || i == 5 || i == 6) ? 1 : 0));*/
           if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
           if(used[y2][x2]) continue;
           var c2 = world[y2][x2].circuitsymbol;
@@ -11823,11 +11897,18 @@ function parseSubs() {
       }
     }
   }
+  logPerformance('parseICCalls done');
+  return true;
+}
 
-  logPerformance('parseSubs pass 2 begin');
+// IC templates: the capital I's
+// must be called after parseICCalls
+function parseICTemplates() {
+  var sub_tree = {};  // numbers as index. Actually it's not a tree but a DAG, since multiple things can have the same child. But it's also a tree because each shared child will actually become its own copy of all the involved components of it later on.
 
-  // pass 2: capital I's
-  used = initUsed2();
+  logPerformance('parseICTemplates begin');
+
+  var used = initUsed2();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
       if(used[y0][x0]) continue;
@@ -11839,7 +11920,6 @@ function parseSubs() {
       var array = [];
 
       var subindex = -2; // >= -1 means actual sub
-      var globalwire = false;
       var error = false;
 
       var called = {};
@@ -11858,7 +11938,7 @@ function parseSubs() {
 
         if(c == 'I') {
           if(subindex >= -1) {
-            console.log('parse error: multiple connected subs ' + subindex + ' ' + world[y][x].number);
+            console.log('parse error: multiple connected IC templates ' + subindex + ' ' + world[y][x].number);
             error = true;
           }
           subindex = world[y][x].number;
@@ -11876,10 +11956,6 @@ function parseSubs() {
 
         if(c == 'i' || cc == '#i') {
           called[world[y][x].callsubindex] = true;
-        }
-
-        if(c == 'g') {
-          globalwire = true;
         }
 
         // neighbors
@@ -11901,13 +11977,8 @@ function parseSubs() {
         }
 
         if(sub_tree[subindex]) {
-          console.log('error: multiple subs with same id: ' + subindex);
+          console.log('error: multiple IC templates with same id: ' + subindex);
           error = true; //multiple sub with same number defined
-        }
-        if(globalwire) {
-          //console.log('error: global wire in subdef');
-          //error = true; // global wires in sub componetns not supported
-          // TODO! global wire out must still be forbidden!!!
         }
 
         sub_tree[subindex] = called;
@@ -11947,7 +12018,7 @@ function parseSubs() {
     //return false; // return false if cycle, otherwise we would have an infinite loop
   }
 
-  logPerformance('parseSubs done');
+  logPerformance('parseICTemplates done');
   return true;
 }
 
@@ -12148,9 +12219,9 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   // Multi-part devices like flip-flop should not have their individual cells connected,
   // they are initially all their own device (to be able to handle multiple inputs), so
   // don't let device extenders extend those here yet.
-  if(devicemap[c] && specialextendmap[c2]) return false;
-  if(devicemap[c2] && specialextendmap[c]) return false;
-  if(specialextendmap[c] && specialextendmap[c2]) return false;
+  if(devicemap[c] && largeextendmap[c2]) return false;
+  if(devicemap[c2] && largeextendmap[c]) return false;
+  if(largeextendmap[c] && largeextendmap[c2]) return false;
 
   if(!knownmap[c2]) return false; // it's an isolator
 
@@ -12440,6 +12511,46 @@ function mergeComponents(component, oldcomponent) {
   oldcomponent.index = -1;
 }
 
+
+// UNUSED: WORK IN PROGRESS
+// constructor
+function LargeDevice() {
+  // array of all cell coordinates included in this large device (only device main area itself, not output wires etc...)
+  this.array = [];
+};
+
+// UNUSED: WORK IN PROGRESS
+// returns if two cells connect for forming the area of a large device (such as flip-flops, T and L, but not simple devices like a, s and l) (excluding wires, but only the letters and # extenders)
+// for reference, the involved symbols are: jkdtqQcCybBMUiTDJ#
+function largeDeviceConnected(c, c2) { // largeConnected connectedLarge
+  // device extender connects with anything, and could even connect to a non-large device, which must be returned. This may result in the # being not part of a large device (but it must be checked anyway) or an error where different large/small devices are connected to the same series of #'s (which must be handled outside of this function)
+  // note how devicemaparea, not just largemaparea, is used here
+  if(c == '#' && devicemaparea[c2]) return;
+  if(c2 == '#' && devicemaparea[c]) return;
+  if(!largemaparea[c] || !largemaparea[c2]) return false;
+
+  // exception of further below rules for the ROM bits which must be able to touch and form any bit pattern with b and B
+  if((c == 'b' || c == 'B') && (c2 == 'b' || c2 == 'B')) return true;
+
+  if(c == c2) return false; // two identical letters will not interact, that allows making separate large devices (as well as c's which can also be small device) still touch
+
+  // exception of further below rules for c and C: clock gates never interact even when of the different types (large and small)
+  if((c == 'c' || c == 'C') && (c2 == 'c' || c2 == 'C')) return false;
+
+  // if they are from uniquely distinct device types, they do not interact. E.g. a J and a L are completely different devices so don't interact. But a j and a k would interact since they can be part of one device with mixed letters, the flip-flop. And y (the enable input) can be part of almost anything so always interacts.
+  var c_unique = (c == 'J' || c == 'i' || c == 'T' || c == 'b' || c == 'B' || c == 'M' || c == 'U' || c == 'D');
+  var c2_unique = (c2 == 'J' || c2 == 'i' || c2 == 'T' || c2 == 'b' || c2 == 'B' || c2 == 'M' || c2 == 'U' || c2 == 'D');
+  if(c_unique && c2_unique) return false;
+  // some mix of symbols, e.g. y connecting to a T, forming the enable input of the T
+  // note that a few nonsensical combinations can happen here anyway, e.g. a j with a D, but for simplicity of rules (e.g. treat almost all symbols involved in flip-flops the same) those will connect, but should result in error (handled elsewhere)
+  
+  // TODO: some devices (IC, MUX) should also include numbers.
+
+  return true;
+}
+
+
+
 // create the components after the cells have been parsed (note: is not really parsing anymore, but a post-processing step of it)
 function parseComponents() {
   var used;
@@ -12455,7 +12566,7 @@ function parseComponents() {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
       if(used[y0][x0][0]) continue;
 
-      // don't do all this parsing if it's not a junction in the first place
+      // don't do all this parsing if it's not a bus in the first place
       if(world[y0][x0].circuitsymbol != '=') continue;
 
       var stack = [[x0, y0, 0]];
@@ -12539,22 +12650,19 @@ function parseComponents() {
     }
   }
 
-
-
-
-  // PASS 1: big device and extension ('#') clusters
+  // PASS 1: large devices and extension ('#') clusters
   var clusterindex = 0;
-  used = initUsed3();
+  used = initUsed2();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
-      if(used[y0][x0][0]) continue;
+      if(used[y0][x0]) continue;
       var c0 = world[y0][x0].circuitsymbol;
       if(c0 == '#') continue;
       if(!devicemap[c0]) continue;
-      if(c0 == 'i') continue; // this one is currently handled in parseSubs instead
+      if(c0 == 'i') continue; // this one is currently handled in parseICCalls instead
 
-      var stack = [[x0, y0, 0]];
-      used[y0][x0][0] = true;
+      var stack = [[x0, y0]];
+      used[y0][x0] = true;
       var rom = false;
       var mux = false;
       var alu = false;
@@ -12571,11 +12679,10 @@ function parseComponents() {
       else if(c0 == 'U') alu = true;
       else other = true;
 
-      while (stack.length) {
+      while(stack.length) {
         var s = stack.pop();
         var x = s[0];
         var y = s[1];
-        var z = s[2];
         if(x < 0 || x >= w || y < 0 || y >= h) continue;
         var c = world[y][x].circuitsymbol;
         var ce = world[y][x].circuitextra;
@@ -12583,22 +12690,17 @@ function parseComponents() {
         array.push(s);
 
         // neighbors
-        for(var i = 0; i < 8; i++) { // N, E, S, W ; NE, SE, SW, NW
-          var x2 = x + ((i == 1 || i == 4 || i == 5) ? 1 : ((i == 3 || i == 6 || i == 7) ? -1 : 0));
-          var y2 = y + ((i == 0 || i == 4 || i == 7) ? -1 : ((i == 2 || i == 5 || i == 6) ? 1 : 0));
+        for(var i = 0; i < 4; i++) { // N, E, S, W
+          var x2 = x + ((i == 1) ? 1 : ((i == 3) ? -1 : 0));
+          var y2 = y + ((i == 0) ? -1 : ((i == 2) ? 1 : 0));
           if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
+          if(used[y2][x2]) continue;
+
           var c2 = world[y2][x2].circuitsymbol;
           var ce2 = world[y2][x2].circuitextra;
 
-          /*if(ff && i >= 4) continue;
-          if(rom && i >= 4) continue;
-          if(mux && i >= 4) continue;
-          if(alu && i >= 4) continue;
-          if(vte && i >= 4) continue;*/
-          if(i >= 4) continue;
+          //if(!largeDeviceConnected(c, c2)) continue; // WORK IN PROGRESS
 
-          var z2 = getZ2(c, c2, ce, ce2, i, z); // z coordinate for the neighbor
-          if(used[y2][x2][z2]) continue;
 
           // don't allow any flip-flop parts of the same type to touch, only different types will mix together to form one bigger component
           // this also ensures standalone d's (delay) or c's (clock) don't interact with each other
@@ -12630,22 +12732,18 @@ function parseComponents() {
             }
           }
 
-          stack.push([x2, y2, z2]);
-          used[y2][x2][z2] = true;
+          stack.push([x2, y2]);
+          used[y2][x2] = true;
         }
 
         if(mux || alu) {
           var x2 = x;
           var y2 = y;
-          var z2 = (z == 0) ? 1 : 0;
-          if(!used[y2][x2][z2]) {
-            stack.push([x2, y2, z2]);
-            used[y2][x2][z2] = true;
+          if(!used[y2][x2]) {
+            stack.push([x2, y2]);
+            used[y2][x2] = true;
           }
         }
-
-        handleBackPlaneConnections(used, stack, x, y, z);
-        handleJunctionConnections(used, stack, x, y);
       }
 
       for(var i = 0; i < array.length; i++) {
@@ -12724,7 +12822,7 @@ function parseComponents() {
 
           array.push(s);
 
-          if(devicemap[c] || specialextendmap[c]) {
+          if(devicemap[c] || largeextendmap[c]) {
             var type2 = TYPE_NULL;
             if(c == 's') type2 = TYPE_SWITCH_OFF;
             if(c == 'S') type2 = TYPE_SWITCH_ON;
@@ -12784,7 +12882,7 @@ function parseComponents() {
           if(c == 'toc') type = TYPE_TOC;
 
           if(type == TYPE_NULL && (c == '#')) type = TYPE_UNKNOWN_DEVICE;
-          if(type == TYPE_NULL && specialextendmap[c]) type = TYPE_UNKNOWN_DEVICE;
+          if(type == TYPE_NULL && largeextendmap[c]) type = TYPE_UNKNOWN_DEVICE;
           if(world[y][x].number != -1 && devicemaparea[c]) {
             // TODO: check if the above if really needs devicemaparea instead of just devicemap,
             // because numbers currently don't interact with # anyway (for e.g. chip, led, ...)
@@ -12918,7 +13016,7 @@ function parseComponents() {
       if(used[y0][x0][0]) continue;
       var c0 = world[y0][x0].circuitsymbol;
       //if(c0 == '#') continue; // this is so that we will NOT start parsing with a symbol of which we do not know what component it is. Start with b or B for example so we know it's ROM and correctly handle # extending it (otherwise bug if top row is #)
-      if(c0 == '#' || specialextendmap[c0]) continue;
+      if(c0 == '#' || largeextendmap[c0]) continue;
 
       var stack = [[x0, y0, 0]];
       used[y0][x0][0] = true;
@@ -13774,12 +13872,12 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   parseBackplanes();
   logPerformance('parseBackplanes done');
 
-  if(!parseSubs()) return false;
-
   logPerformance('convertJunctionNumbers begin');
   convertJunctionNumbers();
   logPerformance('convertJunctionNumbers done');
 
+  if(!parseICCalls()) return false;
+  if(!parseICTemplates()) return false;
 
   if(!parseComponents()) return false;
 
@@ -13840,7 +13938,9 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   // circuits tend to be higher than wider ("articles"), and for reading it's
   // easier to not span the width of the entire screen, but have some more
   // vertical text available instead.
-  if(docwidth2 > docheight2 && fity > fitx * 0.75) docwidth2 = docheight2;
+  // do this only if h is large enough compared to w, because for a less vertical
+  // circuit (less article-like), this is undesired instead.
+  if(docwidth2 > docheight2 && fity > fitx * 0.75 && h > 3 * w) docwidth2 = docheight2;
   tw = Math.floor(docwidth2 / (fitx + 2));
   th = Math.floor(docheight2 / (fity + 2));
   //t = Math.max(tw, th);

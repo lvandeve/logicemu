@@ -1268,14 +1268,14 @@ s>BBBb
 0"How visible the hightlight is depends on the chosen color scheme."
 
 
-c>a------------------. .->l
-c-X--------,,--------+-+->l
-c-+-----. .+. .----. .-+->l
-c-+-----+-++--.  .-+---+->l
-c-+-----+-,,-----+-+---+->l
-c-+---. .--------+-+---.->l
-c-+-. .----------+-+----->l
-c-. .------------. .----->l
+f>a------------------. .->l
+f-X--------,,--------+-+->l
+f-+-----. .+. .----. .-+->l
+f-+-----+-++--.  .-+---+->l
+f-+-----+-,,-----+-+---+->l
+f-+---. .--------+-+---.->l
+f-+-. .----------+-+----->l
+f-. .------------. .----->l
 
 0"Control+Click on something will change it to an inverted type (e.g. AND to"
 0"NAND, or default-off pushbutton to default-on pushbutton)."
@@ -1284,7 +1284,7 @@ p-->a-->e-->o-->l
 
 c-->l
 
-s-->c-->l
+f-->c-->l
 
 s-->z-->l
 
@@ -1292,6 +1292,9 @@ s-->z-->l
 0"toggle back to the original type the next time you ctrl+shift+click it."
 0"This allows to temporarily disable inputs or devices when testing something"
 0"out."
+0"Exception: on switches of type S will become an on constant instead (you can"
+0"get off constant by first switching off the switch, or ctrl+clicking the"
+0"constant after the fact). This allows to freeze switches."
 
 r-->l
 
@@ -1299,7 +1302,7 @@ P-->l
 
     l
     ^
-s-->e<--s
+s-->e<--S
 
 0"# User Interface"
 
@@ -2988,11 +2991,11 @@ ssssssss        ^^^^^^^^          ########<p0"down"
 0"* comparisons:"
  0"16:==, 17:<, 18:<=, 19:!=, 20:>=, 21:>, 22:min, 23:max"
 0"* elementary 2-input operators:"
- 0"24:add, 25:sub, 26:mul, 27:div, 28:remainder, 28:floored div, 29:modulo"
+ 0"24:add, 25:sub, 26:mul, 27:div, 28:remainder, 28:floored div, 29:modulo, 30:clmul"
 0"* elementary 1-input operators (sign also supports optional 2-input):"
  0"32:increment, 33:decrement, 34:negate, 35:abs, 36:sign/copysign"
-0"* shift and permutation operations:"
- 0"40:lshift, 41:rshift, 42:rot lshift, 43:rot rshift, 44:mirror bits"
+0"* shift operations:"
+ 0"40:lshift, 41:rshift, 42:rot lshift, 43:rot rshift"
 0"* higher operations (NOTE: some differ in type with 1 or 2 inputs):"
  0"48:power, 49:log2/integer log, 50:sqrt/integer root"
 0"* number theory ops (in addition, pow/mul/add with 3 inputs work modular):"
@@ -3007,6 +3010,8 @@ ssssssss        ^^^^^^^^          ########<p0"down"
  0"80:sine, 81:arcsine/atan2, 82: ln, 83: exp"
 0"* time related:"
  0"88:unix time in seconds, 89:unix time to Y-M-D h:m:s, 90: Y-M-D h:m:s to unix time"
+0"* bit permutation operations:"
+ 0"96:mirror bits, 97:scramble bits, 98:perfect shuffle, 99:perfect unshuffle"
 
 0"Adding 128 to the number makes the operation signed, e.g. operation 27 is"
 0"division, and operation 155 is signed division. Signed operations use twos"
@@ -5437,10 +5442,13 @@ registerCircuit('Unit Test', `
 0"This is a unit test. It's for testing and development. It's included under"
 0"'help' because it shows expected behavior of some edge cases."
 
-0"Note: also try: applyTransform(4), applyTransform(2)"
+0"Note: also try in browser console: applyTransform(4), applyTransform(2)"
 
-0"Note: also test the map 'game of life ship' and enable autotick, and"
-0"'langton's ant' in electron mode. Also try '4 math functions with decimal'"
+0"Note: also try following maps, as they use a lot of components:"
+0"* game of life ship: check the ship works and wraps around with autotick"
+0"* langton's ant"
+0"* 4 math functions with decimal"
+0"* Lissajous: should automatically get lissajous shape over time"
 
 0"# On"
 
@@ -5600,13 +5608,13 @@ f--]a-------]l
 f---w
 f--]a------->l
 
-1Rw
+3Rw
   e--------->l
-1R^
+3R^
 
-1rv
+3rv
   e--------->l
-1R^
+3R^
 
 f->A->q----->l
 f---->Q
@@ -6114,9 +6122,9 @@ F-----------V
 
 F----------.
             Vl
-1Rw
+3Rw
   E--------->l
-1R^
+3R^
 
 s---->R----->l
 

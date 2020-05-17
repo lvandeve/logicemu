@@ -6265,9 +6265,8 @@ registerCircuit('Lissajous', `
       543210   654321
       ===============
       6543210
+      T######<--g
       T######<p"reset counter"
-            ^
-            g
 
 `, 'lissajous');
 
