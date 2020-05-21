@@ -660,7 +660,7 @@ function createMenuUI() {
   util.makeElement('option', colorDropdown).innerText = 'candy';
   util.makeElement('option', colorDropdown).innerText = 'inverted';
   util.makeElement('option', colorDropdown).innerText = 'monochrome';
-  util.makeElement('option', colorDropdown).innerText = 'contrast';
+  util.makeElement('option', colorDropdown).innerText = 'invmono';
   colorDropdown.selectedIndex = colorscheme;
 
   var zoomoutButton = util.makeUIElement('button', menuRow2El, 1);

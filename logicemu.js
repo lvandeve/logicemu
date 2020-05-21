@@ -1454,7 +1454,7 @@ var largedevicemap = util.mergeMaps(devicemap, {'c':true, 'C':true});
 var largeextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true}; // special extenders for large devices (not all of those are used yet)
 // devicemap as well as # (with extends devices)
 var devicemaparea = util.mergeMaps(devicemap, largeextendmap); devicemaparea['#'] = true;
-var largemaparea = util.mergeMaps(largedevicemap, largeextendmap); devicemaparea['#'] = true;
+var largemaparea = util.mergeMaps(largedevicemap, largeextendmap);
 var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true};
 var rommap = {'b':true, 'B':true};
 var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true};
@@ -1528,10 +1528,10 @@ function DefSub() {
         else if(x > 0 && world[y][x - 1].circuitsymbol == '>') dir = 1;
         else if(y > 0 && world[y - 1][x].circuitsymbol == 'v') dir = 2;
         else if(x + 1 < w && world[y][x + 1].circuitsymbol == '<') dir = 3;
-        else if(x + 1 < w && y > 0 && world[y - 1][x + 1].circuitsymbol == 'X') dir = 4;
-        else if(x + 1 < w && y + 1 < h && world[y + 1][x + 1].circuitsymbol == 'X') dir = 5;
-        else if(x > 0 && y + 1 < h && world[y + 1][x - 1].circuitsymbol == 'X') dir = 6;
-        else if(x > 0 && y > 0 && world[y - 1][x - 1].circuitsymbol == 'X') dir = 7;
+        else if(x + 1 < w && y > 0 && world[y - 1][x + 1].circuitsymbol == 'X') dir = 6;
+        else if(x + 1 < w && y + 1 < h && world[y + 1][x + 1].circuitsymbol == 'X') dir = 7;
+        else if(x > 0 && y + 1 < h && world[y + 1][x - 1].circuitsymbol == 'X') dir = 4;
+        else if(x > 0 && y > 0 && world[y - 1][x - 1].circuitsymbol == 'X') dir = 5;
         else if(x + 1 < w && y > 0 && world[y - 1][x + 1].circuitextra == 2 && (world[y - 1][x + 1].circuitsymbol == 'v' || world[y - 1][x + 1].circuitsymbol == '<')) dir = 4;
         else if(x + 1 < w && y + 1 < h && world[y + 1][x + 1].circuitextra == 2 && (world[y + 1][x + 1].circuitsymbol == '<' || world[y + 1][x + 1].circuitsymbol == '^')) dir = 5;
         else if(x > 0 && y + 1 < h && world[y + 1][x - 1].circuitextra == 2 && (world[y + 1][x - 1].circuitsymbol == '^' || world[y + 1][x - 1].circuitsymbol == '>')) dir = 6;
@@ -1605,10 +1605,12 @@ function DefSub() {
       if(a[1] > b[1]) return 1;
       // for same direction, sort left to right, top to bottom, right to left,
       // bottom to top, depending on dir
+      // the sort order for the different directions is rotation invariant, to support rotated chips
+      // the sort order must match that of CallSub's sort order
       if(a[1] == 0) return a[2] - b[2];
-      if(a[1] == 1) return b[3] - a[3];
+      if(a[1] == 1) return a[3] - b[3];
       if(a[1] == 2) return b[2] - a[2];
-      if(a[1] == 3) return a[3] - b[3];
+      if(a[1] == 3) return b[3] - a[3];
       if(a[1] == 4) return (a[2] + a[3]) - (b[2] + b[3]);
       if(a[1] == 5) return (a[2] - a[3]) - (b[2] - b[3]);
       if(a[1] == 6) return (b[2] + b[3]) - (a[2] + a[3]);
@@ -1919,6 +1921,7 @@ function CallSub(id) {
 
     for(var i = 0; i < this.cells.length; i++) {
       var cell = world[this.cells[i][1]][this.cells[i][0]];
+      // note: j is the z index of the cell, which is used for the direction in the case of ICs
       for(var j = 0; j < cell.components.length; j++) {
         var component = cell.components[j];
         if(parent && component) {
@@ -1965,9 +1968,8 @@ function CallSub(id) {
     if(!this.copyComponents(parent)) { this.markError('copyComponents failed'); return false; }
 
     var dirdiff = 0;
-    if(this.chipdir >= 0) {
-      dirdiff = (this.defsub.chipdir - this.chipdir) & 3;
-    }
+    // chipdir -1 means same as template.
+    if(this.chipdir >= 0) dirdiff = ((this.defsub.chipdir - this.chipdir) & 3);
 
     var sortfun = function(a, b) {
       if(a[1] != b[1]) {
@@ -1977,10 +1979,12 @@ function CallSub(id) {
         if(avdir < bvdir) return -1;
         if(avdir > bvdir) return 1;
       }
+      // the sort order for the different directions is rotation invariant, to support rotated chips
+      // the sort order must match that of DefSub's sort order
       if(a[1] == 0) return a[2] - b[2];
-      if(a[1] == 1) return b[3] - a[3];
+      if(a[1] == 1) return a[3] - b[3];
       if(a[1] == 2) return b[2] - a[2];
-      if(a[1] == 3) return a[3] - b[3];
+      if(a[1] == 3) return b[3] - a[3];
       if(a[1] == 4) return (a[2] + a[3]) - (b[2] + b[3]);
       if(a[1] == 5) return (a[2] - a[3]) - (b[2] - b[3]);
       if(a[1] == 6) return (b[2] + b[3]) - (a[2] + a[3]);
@@ -3434,6 +3438,8 @@ function Alu() {
         case 48: return this.numc ? 'powm' : 'pow';
         case 49: return this.numb ? 'log' : 'log2';
         case 50: return this.numb ? 'root' : 'sqrt';
+        case 54: return '2bcd';
+        case 55: return 'bcd2';
         case 56: return 'minv';
         case 57: return 'gcd';
         case 58: return 'lcm';
@@ -3450,8 +3456,8 @@ function Alu() {
         case 72: return 'clz';
         case 73: return 'ctz';
         case 74: return 'popc';
-        case 78: return '2bcd';
-        case 79: return 'bcd2';
+        case 76: return 'pext';
+        case 77: return 'pdep';
         case 80: return 'sin';
         case 81: return this.numb? 'atn2' : 'asin';
         case 82: return 'ln';
@@ -3460,7 +3466,7 @@ function Alu() {
         case 89: return 'date';
         case 90: return 'unix';
         case 96: return 'mirr';
-        case 97: return 'scrm';
+        case 97: return 'btrv';
         case 98: return 'shuf';
         case 99: return 'ushf';
         case 100: return 'grp';
@@ -3519,6 +3525,8 @@ function Alu() {
         case 48: return this.numc ? 'integer power modulo third input' : 'integer power';
         case 49: return this.numb ? 'integer log' : 'log2';
         case 50: return this.numb ? 'integer root' : 'sqrt';
+        case 54: return 'binary to bcd (binary coded decimal)';
+        case 55: return 'bcd to binary (bcd = binary coded decimal)';
         case 56: return this.numb ? 'modular inverse (modulo output size)' : 'modular inverse';
         case 57: return 'greatest common divider';
         case 58: return 'least common multiple';
@@ -3535,8 +3543,8 @@ function Alu() {
         case 72: return 'count leading zeros';
         case 73: return 'count trailing zeros';
         case 74: return 'popcount';
-        case 78: return 'binary to bcd (binary coded decimal)';
-        case 79: return 'bcd to binary (bcd = binary coded decimal)';
+        case 76: return 'parallel bit extract (PEXT): select input bits with mask, extract to continguous low order bits of result';
+        case 77: return 'parallel bit deposit (PDEP): select output bits with mask, deposit contiguious low order bits of input there';
         case 80: return 'sine (scaled)';
         case 81: return this.numb ? 'atan2' : 'arcsine (scaled)';
         case 82: return 'ln (input scaled to 1..e)';
@@ -3545,11 +3553,11 @@ function Alu() {
         case 89: return 'convert unix epoch to Y-M-S h:m:s: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
         case 90: return 'Y-M-S h:m:s to unix epoch: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
         case 96: return 'mirror bits';
-        case 97: return 'scramble (mirror bit indices)';
+        case 97: return 'bit reversal (mirror bit indices)';
         case 98: return 'perfect shuffle bits';
         case 99: return 'perfect unshuffle bits';
-        case 100: return 'group bits (GRP)';
-        case 101: return 'ungroup bits (UNGRP)';
+        case 100: return 'group bits (GRP): select input bits with mask, bits matching mask one go to low order bits of result, others to high order bits of result';
+        case 101: return 'ungroup bits (UNGRP): select output bits with mask, deposit contiguous low order bits of input to output positions where mask is one, remaining input bits to where mask is zero';
         default: return 'unknown';
     }
   };
@@ -3795,7 +3803,8 @@ function Alu() {
     } else if(op == 31) {
       // carryless multiply (like multiply, but layers are XORed instead of ADDed)
       var s = a;
-      while(b != 0) {
+      // BigInt does not support >>> and negative values would cause infinite loop, but neg value goes towards -1 so check that value too
+      while(b != 0 && b != -1) {
         if(b & math.n1) o ^= s;
         b >>= math.n1;
         s <<= math.n1;
@@ -3881,6 +3890,30 @@ function Alu() {
           o = math.log2(a);
         }
       }
+    } else if(op == 54) {
+      // binary to bcd
+      var neg = a < 0;
+      if(neg) a = -a;
+      var s = math.n0;
+      while(a > 0) {
+        var m = a % math.n10;
+        o |= (m << s);
+        s += math.n4;
+        a = math.supportbigint ? (a / math.n10) : Math.floor(a / 10);
+      }
+      if(neg) s |= (math.n1 << s);
+    } else if(op == 55) {
+      // bcd to binary
+      var neg = a < 0;
+      if(neg) a = -a;
+      var s = math.n1;
+      while(a > 0) {
+        var m = a & math.n15;
+        o += (m * s);
+        s *= math.n10;
+        a >>= math.n4;
+      }
+      if(neg) s |= (math.n1 << s);
     } else if(op == 56) {
       // modular inverse, modulo 2^outputbits if 1-input op, module b if 2-input op
       if(this.numb == 0) b = (math.n1 << math.B(this.numo));
@@ -3984,30 +4017,27 @@ function Alu() {
       } else {
         overflow = true; // popcount not supported for negative numbers. TODO: support it, use twos complement notation (will do same as unsigned popcount operation then)
       }
-    } else if(op == 78) {
-      // binary to bcd
-      var neg = a < 0;
-      if(neg) a = -a;
+    } else if(op == 76) {
+      // PEXT bits. NOTE: very similar to GRP, but not a permutation so positioned under bit ops instead
+      var n = Math.max(Math.max(this.numa, this.numb), this.numo);
       var s = math.n0;
-      while(a > 0) {
-        var m = a % math.n10;
-        o |= (m << s);
-        s += math.n4;
-        a = math.supportbigint ? (a / math.n10) : Math.floor(a / 10);
+      for(var i = math.n0; i < n; i++) {
+        var bit = (a >> i) & math.n1;
+        if((b >> i) & math.n1) {
+          o |= (bit << s);
+          s++;
+        }
       }
-      if(neg) s |= (math.n1 << s);
-    } else if(op == 79) {
-      // bcd to binary
-      var neg = a < 0;
-      if(neg) a = -a;
-      var s = math.n1;
-      while(a > 0) {
-        var m = a & math.n15;
-        o += (m * s);
-        s *= math.n10;
-        a >>= math.n4;
+    } else if(op == 77) {
+      // PDEP bits. NOTE: very similar to UNGRP, but not a permutation so positioned under bit ops instead
+      var n = Math.max(Math.max(this.numa, this.numb), this.numo);
+      var s = math.n0;
+      for(var i = math.n0; i < n; i++) {
+        if((b >> i) & math.n1) {
+          o |= (((a >> s) & math.n1) << i);
+          s++;
+        }
       }
-      if(neg) s |= (math.n1 << s);
     } else if(op == 80) {
       // sine, with full input period scaled in the full integer range, and scaled output to fit full output integer range
       if(signed) a += (math.n1 << math.B(this.numa - 1));
@@ -4111,7 +4141,7 @@ function Alu() {
         o |= (((a >> ni) & math.n1) << nj);
       }
     } else if(op == 97) {
-      // "scramble" (mirror bit indices) (requires power of two bitsize to be a permutation)
+      // "bit reversal" (mirror bit indices) (requires power of two bitsize to be a permutation)
       for(var i = 0; i < this.numo; i++) {
         // mirror bits of i and store result in j
         var j = 0;
@@ -4121,8 +4151,8 @@ function Alu() {
           j <<= 1;
           j |= ((i >> l) & 1);
         }
-        var ni = math.supportbigint ? BigInt(i) : i;
-        var nj = math.supportbigint ? BigInt(j) : j;
+        var ni = math.B(i);
+        var nj = math.B(j);
         o |= (((a >> ni) & math.n1) << nj);
       }
     } else if(op == 98) {
@@ -4130,8 +4160,8 @@ function Alu() {
       var mid = (this.numo >> 1);
       for(var i = 0; i < this.numo; i++) {
         var j = (i < mid) ? (i * 2) : ((i - mid) * 2 + 1);
-        var ni = math.supportbigint ? BigInt(i) : i;
-        var nj = math.supportbigint ? BigInt(j) : j;
+        var ni = math.B(i);
+        var nj = math.B(j);
         o |= (((a >> ni) & math.n1) << nj);
       }
     } else if(op == 99) {
@@ -4139,9 +4169,43 @@ function Alu() {
       var mid = (this.numo >> 1);
       for(var i = 0; i < this.numo; i++) {
         var j = (i < mid) ? (i * 2) : ((i - mid) * 2 + 1);
-        var ni = math.supportbigint ? BigInt(i) : i;
-        var nj = math.supportbigint ? BigInt(j) : j;
+        var ni = math.B(i);
+        var nj = math.B(j);
         o |= (((a >> nj) & math.n1) << ni);
+      }
+    } else if(op == 100) {
+      // GRP bits
+      var n = Math.max(Math.max(this.numa, this.numb), this.numo);
+      var r0 = math.n0;
+      var r1 = math.n0;
+      var s0 = math.n0;
+      var s1 = math.n0;
+      for(var i = math.n0; i < n; i++) {
+        var bit = (a >> i) & math.n1;
+        if((b >> i) & math.n1) {
+          r1 |= (bit << s1);
+          s1++;
+        } else {
+          r0 |= (bit << s0);
+          s0++;
+        }
+      }
+      o = (r0 << s1) | r1;
+    } else if(op == 101) {
+      // UNGRP bits
+      var n = Math.max(Math.max(this.numa, this.numb), this.numo);
+      var s = math.n0;
+      for(var i = math.n0; i < n; i++) {
+        if((b >> i) & math.n1) {
+          o |= (((a >> s) & math.n1) << i);
+          s++;
+        }
+      }
+      for(var i = math.n0; i < n; i++) {
+        if(!((b >> i) & math.n1)) {
+          o |= (((a >> s) & math.n1) << i);
+          s++;
+        }
       }
     } else {
       o = math.n0;
@@ -4161,12 +4225,14 @@ function Alu() {
       if((overflow) && this.nummiscout) this.output[this.numo] = 1; // overflow. In case of add, this can serve as carry if you have exactly 1 output too short.
     } else {
       if(op != 89) {
-        if(o > 0x7fffffff) overflow = true;
-        o &= 0x7fffffff; // JS supports max 31-bit int. This masking does the right thing for both the signed and unsigned case.
+        if(o > 0x7fffffff || o < -0x7fffffff) overflow = true; // overflow of JS number
+        o &= 0xffffffff; // ensure behaves as integer, including sign. JS binary operations uses 32-bit signed integers.
+        // overflow of circuit's output size
         for(var i = 0; i < this.numo; i++) {
           this.output[i] = (o & 1);
           o >>= 1;
         }
+        if(o == -1) o = 0; // right shifted negative integer will become -1. But o will be compared to 0 for overflow detection below, not taking negative ones into account. So set to 0 to indicate no overflow from o.
       } else {
         // for a few rare exceptions, the op supports more than 31 bits, up to 53. Essential for the date representation to have enough year bits.
         for(var i = 0; i < this.numo; i++) {
@@ -7310,13 +7376,12 @@ function setColorScheme(index) {
     TEXTFGCOLOR = '#000'; // '#940';
     TEXTBGCOLOR = '#eef';
 
-    led_off_fg_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
-    led_off_bg_colors = ['#fffafa', '#fffcfa', '#fffff4', '#fafffa', '#fbfdff', '#faf8ff', '#fffdfd', '#fcfcfc'];
-    led_off_border_colors = ['#fcc', '#fa8', '#cc2', '#afa', '#ddf', '#d8f', '#fac', '#fff'];
-    led_on_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
-    led_on_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
+    led_off_fg_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666', '#000'];
+    led_off_bg_colors = ['#fffafa', '#fffcfa', '#fffff4', '#fafffa', '#fbfdff', '#faf8ff', '#fffdfd', '#fcfcfc', '#f00'];
+    led_off_border_colors = led_off_fg_colors;//['#fcc', '#fa8', '#cc2', '#afa', '#ddf', '#d8f', '#fac', '#999', '#000'];
+    led_on_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', '#fff', '#080'];
+    led_on_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc', '#0f0'];
     led_on_border_colors = led_on_fg_colors;
-
 
 
     BUSCOLORS = ['#aaa', '#aab', '#aba', '#baa', '#bba', '#bab', '#abb', '#bbb'];
@@ -7342,11 +7407,11 @@ function setColorScheme(index) {
     TEXTFGCOLOR = '#da0'; // '#0c0'; //'#fff';
     TEXTBGCOLOR = '#210'; // '#020'; //'#040';
 
-    led_off_fg_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666'];
-    led_off_bg_colors = ['#400', '#420', '#440', '#040', '#004', '#204', '#422', '#444'];
-    led_off_border_colors = ['#800', '#840', '#880', '#080', '#008', '#408', '#844', '#888'];
-    led_on_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', 'white'];
-    led_on_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#ccc'];
+    led_off_fg_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666', '#f88'];
+    led_off_bg_colors = ['#400', '#420', '#440', '#040', '#004', '#204', '#422', '#444', '#f00'];
+    led_off_border_colors = led_off_fg_colors;//['#800', '#840', '#880', '#080', '#008', '#408', '#844', '#888', '#f88'];
+    led_on_fg_colors = ['red', '#a40', '#880', 'green', '#44f', '#80f', '#d58', '#aaa', '#080'];
+    led_on_bg_colors = ['#faa', '#fca', '#ff4', '#afa', '#bdf', '#a8f', '#fdd', '#fff', '#0f0'];
     led_on_border_colors = led_on_fg_colors;
 
     BUSCOLORS = ['#080', '#480', '#0c0', '#4c0', '#084', '#484', '#0c4', '#4c4'];
@@ -7378,14 +7443,14 @@ function setColorScheme(index) {
     LINKCOLOR = '#22f';
 
     GATEBGCOLOR = '#9b9b9b'; // '#b4b4b4';
-    var offbg = GATEBGCOLOR;
 
-    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#00d', '#a0d', '#f99', '#eee'];
-    led_off_bg_colors = [offbg, offbg, offbg, offbg, offbg, offbg, offbg, offbg];
+    var offbg = GATEBGCOLOR;
+    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', 'white'];
+    led_off_bg_colors = [offbg, offbg, offbg, offbg, offbg, offbg, offbg, offbg, '#f00'];
     led_off_border_colors = led_off_fg_colors;
-    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
-    led_on_bg_colors = led_off_fg_colors;
-    led_on_border_colors = led_off_border_colors;//led_on_fg_colors;
+    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
+    led_on_bg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', '#0f0'];
+    led_on_border_colors = led_on_fg_colors;//led_off_border_colors
 
     SWITCHON_FGCOLOR = 'white';
     SWITCHON_BGCOLOR = '#0e0';
@@ -7406,12 +7471,13 @@ function setColorScheme(index) {
     OFFCOLOR = '#aaf';
     TEXTFGCOLOR = '#aaa';
 
-    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#00d', '#a0d', '#f99', '#eee'];
-    led_off_bg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
+    var offbg = BGCOLOR;
+    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', 'white'];
+    led_off_bg_colors = [offbg, offbg, offbg, offbg, offbg, offbg, offbg, offbg, '#f00'];
     led_off_border_colors = led_off_fg_colors;
-    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
-    led_on_bg_colors = led_off_fg_colors;
-    led_on_border_colors = led_off_border_colors;//led_on_fg_colors;
+    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
+    led_on_bg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', '#0f0'];
+    led_on_border_colors = led_on_fg_colors;//led_off_border_colors
 
     SWITCHON_FGCOLOR = 'white';
     SWITCHON_BGCOLOR = '#0e0';
@@ -7437,12 +7503,13 @@ function setColorScheme(index) {
     OFFCOLOR = '#af0';
     TEXTFGCOLOR = OFFCOLOR;
 
-    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#00d', '#a0d', '#f99', '#eee'];
-    led_off_bg_colors = [BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
+    var offbg = BGCOLOR;
+    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', 'white'];
+    led_off_bg_colors = [offbg, offbg, offbg, offbg, offbg, offbg, offbg, offbg, '#f00'];
     led_off_border_colors = led_off_fg_colors;
-    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
-    led_on_bg_colors = led_off_fg_colors;
-    led_on_border_colors = led_off_border_colors;//led_on_fg_colors;
+    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
+    led_on_bg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', '#0f0'];
+    led_on_border_colors = led_on_fg_colors;//led_off_border_colors
 
     SWITCHON_FGCOLOR = 'white';
     SWITCHON_BGCOLOR = '#0e0';
@@ -7478,19 +7545,11 @@ function setColorScheme(index) {
     SWITCHON_BGCOLOR = '#afa';
     SWITCHOFF_BGCOLOR = TEXTBGCOLOR;
 
-
-    /*led_off_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
-    led_off_bg_colors = ['#800', '#840', '#880', '#080', '#008', '#408', '#844', '#888'];
+    led_off_fg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
+    led_off_bg_colors = ['#fae', '#fbe', '#fde', '#ded', '#c9f', '#e9f', '#fbf', '#fcf', '#f00'];
     led_off_border_colors = led_off_fg_colors;
-    led_on_fg_colors = ['white', 'white', 'black', 'white', 'white', 'white', 'white', 'black'];
-    led_on_bg_colors = ['#f00', '#f80', '#ff0', '#0f0', '#00f', '#a0f', '#f99', '#fff'];
-    led_on_border_colors = led_on_fg_colors;*/
-
-    led_off_fg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
-    led_off_bg_colors = ['#fae', '#fbe', '#fde', '#ded', '#c9f', '#e9f', '#fbf', '#fcf'];
-    led_off_border_colors = led_off_fg_colors;
-    led_on_fg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
-    led_on_bg_colors = ['#f00', '#f80', '#ff0', '#0f0', '#48f', '#a0f', '#f99', '#fff'];
+    led_on_fg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
+    led_on_bg_colors = ['#f00', '#f80', '#ff0', '#0f0', '#48f', '#a0f', '#f99', '#fff', '#0f0'];
     led_on_border_colors = led_on_fg_colors;
 
     SWITCHON_FGCOLOR = led_on_fg_colors[3];
@@ -7507,19 +7566,19 @@ function setColorScheme(index) {
   } else if(index == 6) { // inverted
     setColorScheme(0);
     negateColorScheme(); // this only looks decent for inverting the 'light' color scheme.
-  } else if(index == 7) { // monochrome
-    ONCOLOR = 'black';
+  } else if(index == 7 || index == 8) { // monochrome
+    ONCOLOR = (index == 7 ? 'black' : 'white');
     OFFCOLOR = ONCOLOR;
-    BGCOLOR = 'white';
+    BGCOLOR = (index == 7 ? 'white' : 'black');
     TEXTFGCOLOR = ONCOLOR; // '#940';
     TEXTBGCOLOR = BGCOLOR;
 
     led_off_fg_colors = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
     led_off_bg_colors = [BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
     led_off_border_colors = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
-    led_on_fg_colors = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
-    led_on_bg_colors = [BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
-    led_on_border_colors = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
+    led_on_fg_colors = [BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
+    led_on_bg_colors = [ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR, ONCOLOR];
+    led_on_border_colors = [BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR, BGCOLOR];
 
     // for monochrome RGB led: hidden in main background if off, same color as wire if on (for its bg color; its letter G has opposite color)
     rgb_led_bg_colors = [];
@@ -7553,25 +7612,9 @@ function setColorScheme(index) {
     CHIPLABELBGCOLOR = BGCOLOR;
     CHIPLABELFGCOLOR = ONCOLOR;
 
-    // error BG color remains yellow to keep clearly indicating those
+    // ERRORBGCOLOR remains yellow to keep clearly indicating those
     ERRORFGCOLOROFF = 'black';
     ERRORFGCOLORON = 'black';
-  } else if(index == 8) { // contrast, also intended for unit testing (more distinct colors for on and off LEDs)
-    setColorScheme(2);
-    //led_off_fg_colors = ['black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'];
-    //led_off_bg_colors = ['#0ff', '#08f', '#44f', '#f4f', '#ff4', '#6f4', '#077', '#111'];
-
-    BGCOLOR = '#888';
-    GATEBGCOLOR = '#987'; // '#b4b4b4';
-    var lefoffbg = '#000';
-    led_off_bg_colors = [lefoffbg, lefoffbg, lefoffbg, lefoffbg, lefoffbg, lefoffbg, lefoffbg, lefoffbg];
-    SWITCHOFF_BGCOLOR = '#000';
-
-    ONCOLOR = 'white';
-    OFFCOLOR = 'black';
-    TEXTFGCOLOR = '#000';
-    TEXTBGCOLOR = '#fff';
-    LINKCOLOR = '#22f';
   }
 
   TERMINALMIDCOLOR = util.averageColor(TERMINALFGCOLOR, TERMINALBGCOLOR);
@@ -8451,7 +8494,7 @@ function RendererText() {
       if(virtualsymbol == 'l') {
         var color = cell.components[0] ? cell.components[0].number : 0;
         if(color == -1) color = 0;
-        if(color > led_off_fg_colors.length) color = 0; // not more colors than that supported
+        if(color >= led_off_fg_colors.length) color = 0; // not more colors than that supported
         if(symbol == 'l') {
           this.div0.innerText = 'l';
           this.div1.innerText = 'L';
@@ -9590,6 +9633,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   this.drawonly = 0;
   this.dynamicdraw = false;
   this.dynamicdrawcode = 0;
+  this.norender = false;
 
   this.globalInit = function() {
     this.fallback.globalInit();
@@ -9608,6 +9652,11 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   // one time initialization of a cell
   this.init = function(cell, x, y, clickfun) {
     var c = cell.circuitsymbol;
+    if(digitmap[cell.metasymbol] && cell.numbertype == NUMBER_LED) {
+      // Don't render the LED numbers in the graphical render mode (note: in text mode, they are rendered)
+      this.norender = true;
+    }
+    if(this.norender) return;
     if(NOUSETEXTMAP[c]) {
       // optimization for those that don't need divs at all
       this.usetext = false;
@@ -9615,7 +9664,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     if(this.usetext) this.fallback.init(cell, x, y, clickfun);
     this.tx = tw * cell.x + rglobal.offcanvas0.getXOffsetForCell(cell);
     this.ty = th * cell.y + rglobal.offcanvas0.getYOffsetForCell(cell);
-    if(!cell.comment && cell.circuitsymbol != ' ') {
+    if(!cell.comment && c != ' ') {
       this.canvas0 = rglobal.offcanvas0.getCanvasForCell(cell); //util.makeAbsElement('canvas', 0, 0, tw, th, util.doNotAddToParent/*this.fallback.div0*/);
       this.canvas1 = rglobal.offcanvas1.getCanvasForCell(cell); //util.makeAbsElement('canvas', 0, 0, tw, th, util.doNotAddToParent/*this.fallback.div1*/);
       this.ctx0 = rglobal.offcanvas0.getContextForCell(cell);
@@ -9635,11 +9684,15 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
   // specific initialization, can be re-done if cell changed on click
   this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
+    if(this.norender) return;
+
     if(!this.canvas0) {
       this.usefallbackonly = true;
       this.fallback.init2(cell, symbol, virtualsymbol, opt_title);
       return;
     }
+
+    var c = cell.circuitsymbol;
 
     drawer.tx = this.tx;
     drawer.ty = this.ty;
@@ -9690,7 +9743,6 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       this.text0.title = opt_title;
       if(this.text1) this.text1.title = opt_title;
     }
-    var c = cell.circuitsymbol;
     // This avoids blurry lines that take up other amounts of pixels with lighter colors than desired
     //this.ctx0.translate(0.5, 0.5);
     //this.ctx1.translate(0.5, 0.5);
@@ -10244,7 +10296,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
             alreadybg = true;
             var color = cell.components[0] ? cell.components[0].number : 0;
             if(color == -1) color = 0;
-            if(color > led_off_fg_colors.length) color = 0; // not more colors than that supported
+            if(color >= led_off_fg_colors.length) color = 0; // not more colors than that supported
             drawer.fillBg_(ctx, i == 0 ? led_off_bg_colors[color] : led_on_bg_colors[color]);
 
             this.ctx0.strokeStyle = this.ctx0.fillStyle = led_off_border_colors[color];
@@ -10288,7 +10340,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           }
         }
         //if((c == 'i') && !(cell.drawchip || digitmap[cell.metasymbol])) okdraw = false;
-        if(okdraw) {
+        if(okdraw && textel) {
           /*ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.font = '' + tw + 'px serif';
@@ -10654,6 +10706,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   };
 
   this.setValue = function(cell, value, type) {
+    if(this.norender) return;
+
     if(this.usefallbackonly) {
       this.fallback.setValue(cell, value, type);
       return;
@@ -11016,7 +11070,6 @@ function parseNumbers() {
               value *= 10;
               value += parseInt(c2);
             }
-            if(c == 'i') world[y2][x2].circuitsymbol = '#'; // for TYPE_IC, the numbers are part of the component
           } else {
             break;
           }
@@ -11096,23 +11149,18 @@ function parseNumbers() {
     }
   }
 
-  // hide or change number display or behavior for some components
+  // turn numbers into component extenders for some large devices where the numbers are made part of the surface area
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
       if(world[y][x].skipparsing) continue;
-      if(world[y][x].numbertype == NUMBER_LED) {
-        if(puredigitmap[world[y][x].metasymbol]) {
-          world[y][x].displaysymbol = ' '; // don't render the numbers next to LEDs, the LED color shows the effect
-          // other numbers, such as IC numbers, bus and global wire indices, or timer durations, are not removed but should be shown.
-        }
-      }
       if(world[y][x].numbertype == NUMBER_ALU && puredigitmap[world[y][x].metasymbol]) {
-        world[y][x].circuitsymbol = '#'; // a later pass will turn them into '#'
+        world[y][x].circuitsymbol = '#';
+      }
+      if(world[y][x].numbertype == NUMBER_ICCALL && puredigitmap[world[y][x].metasymbol]) {
+        world[y][x].circuitsymbol = '#';
       }
     }
   }
-
-
 
   // '$' number extenders for bus and global wire
   // TODO: this implementation does not specify various corner cases, it is designed only to work with horizontal or vertical streaks like 4$$$$$,
@@ -11334,18 +11382,52 @@ function getNeighbor(x, y, dir) {
   var dy = y2 - y;
   var wca = world[y2][x2];
   if(dir < 4) {
+    var withantenna = false;
     if(wca.antennax != -1) {
       x2 = wca.antennax + dx;
       y2 += dy;
-      if(x2 < 0 || x2 >= w) return null;
-      if(y2 < 0 || y2 >= h) return null;
+      withantenna = true;
     }
     else if(wca.antennay != -1) {
       x2 += dx;
       y2 = wca.antennay + dy;
-      if(x2 < 0 || x2 >= w) return null;
-      if(y2 < 0 || y2 >= h) return null;
+      withantenna = true;
     }
+    // Normally antennas act as something that teleports to a next neighbor. So this is supported:
+    // s--(   )-->l
+    // but this is not since it won't teleport to that rightmost wire when trying to go to the left on the left side:
+    // (--s  )-->l
+    // but as an exception the above SHOULD be allowed. Therefor the next small piece of code. The trick is: if the neighbor side of the antenna is an isolator, and so is the matching other side of the starting antenna, then take the other one.
+    // TODO: also implement this for the diagonal case
+    var c2 = (x2 >= 0 && x2 < w && y2 >= 0 && y2 < h) ? world[y2][x2].circuitsymbol : ' ';
+    if(withantenna && c2 && (c2 == ' ' || c2 == '@')) { // TODO: 'connected' could be used instead of this isolator test
+      var c = world[y][x].circuitsymbol;
+      // do not do this for direction-dependent symbols (which includes large devices where input/output location matters)
+      if(c != ' ' && c != '%' && c != '&' && !inputmap[c] && !largedevicemap[c] && !largeextendmap[c] && c != '=') {
+        var dxo = (wca.antennax == x) ? 0 : (wca.antennax > x ? 1 : -1);
+        var dyo = (wca.antennay == y) ? 0 : (wca.antennay > y ? 1 : -1);
+        // x,y = orig location
+        // x2,y2 = standard antenna neighbor
+        // x3,y3 = opposite of standard antenna neighbor
+        // x4,y4 = antenna-neighbor of x3,y3, so distance 2 away from x,y with the current source antenna in between
+        var x4 = x + dx * 2;
+        var y4 = y + dy * 2;
+        var c4 = (x4 >= 0 && x4 < w && y4 >= 0 && y4 < h) ? world[y4][x4].circuitsymbol : ' ';
+        // only do this if also c4 is isolator so there would not exist a different connection from x3,y3 to x4,y4
+        if(c4 && (c4 == ' ' || c4 == '@')) {
+          var x3 = x2 - dx * 2;
+          var y3 = y2 - dy * 2;
+          var c3 = (x3 >= 0 && x3 < w && y3 >= 0 && y3 < h) ? world[y3][x3].circuitsymbol : ' ';
+          if(c3 != ' ' && c3 != '%' && c3 != '&' && !inputmap[c3] && !largedevicemap[c3] && !largeextendmap[c3] && c3 != '=') {
+            x2 = x3;
+            y2 = y3;
+          }
+        }
+      }
+    }
+
+    if(x2 < 0 || x2 >= w) return null;
+    if(y2 < 0 || y2 >= h) return null;
   } else {
     var wcb = world[y][x2];
     var wcc = world[y2][x];
@@ -11837,6 +11919,7 @@ function parseICCalls() {
           //   i12i
           //   ##i#
           // that makes the chip touch numbers 12, 1 and 2. but we really only want 12 to count.
+          // NOTE: the above with multiple i's is allowed as long as there are #'s in between, i's don't interact with each other directly (allow touching different IC's) but do interact (and hence form same IC) through #.
           //if(subindex >= -1) console.log('parse error: multiple numbers for sub call ' + subindex + ' ' + world[y][x].number);
           if(world[y][x].number >= subindex) {
             subindex = world[y][x].number;
@@ -12517,17 +12600,28 @@ function mergeComponents(component, oldcomponent) {
 function LargeDevice() {
   // array of all cell coordinates included in this large device (only device main area itself, not output wires etc...)
   this.array = [];
+
+  // component type matching this large device (note: a large device may be made out of multiple components,
+  // but usually they'll have all the same type, or there'll be one clearly defining type)
+  // can be (after TYPE_NULL): TYPE_IC, TYPE_FLIPFLOP, TYPE_MUX, TYPE_VTE, TYPE_DOTMATRIX, TYPE_ALU, TYPE_ROM, TYPE_JUKEBOX
+  this.type = TYPE_NULL;
 };
 
 // UNUSED: WORK IN PROGRESS
 // returns if two cells connect for forming the area of a large device (such as flip-flops, T and L, but not simple devices like a, s and l) (excluding wires, but only the letters and # extenders)
 // for reference, the involved symbols are: jkdtqQcCybBMUiTDJ#
 function largeDeviceConnected(c, c2) { // largeConnected connectedLarge
-  // device extender connects with anything, and could even connect to a non-large device, which must be returned. This may result in the # being not part of a large device (but it must be checked anyway) or an error where different large/small devices are connected to the same series of #'s (which must be handled outside of this function)
+  // device extender connects with anything, and could even connect to a non-large device, which must be returned.
+  // This may result in the # being not part of a large device (but it must be checked anyway) or an error where
+  // different large/small devices are connected to the same series of #'s (which must be handled outside of this function)
   // note how devicemaparea, not just largemaparea, is used here
   if(c == '#' && devicemaparea[c2]) return;
   if(c2 == '#' && devicemaparea[c]) return;
-  if(!largemaparea[c] || !largemaparea[c2]) return false;
+
+  // NOTE: for some large devices, digits are part of the surface area too, but
+  // only if those digits touch its main letter (i for ICs, U for ALU)
+  // however, these digits' circuitsymbol must already have been converted to '#'
+  // by parseNumbers which must alreaady have been called before this.
 
   // exception of further below rules for the ROM bits which must be able to touch and form any bit pattern with b and B
   if((c == 'b' || c == 'B') && (c2 == 'b' || c2 == 'B')) return true;
@@ -12543,8 +12637,6 @@ function largeDeviceConnected(c, c2) { // largeConnected connectedLarge
   if(c_unique && c2_unique) return false;
   // some mix of symbols, e.g. y connecting to a T, forming the enable input of the T
   // note that a few nonsensical combinations can happen here anyway, e.g. a j with a D, but for simplicity of rules (e.g. treat almost all symbols involved in flip-flops the same) those will connect, but should result in error (handled elsewhere)
-  
-  // TODO: some devices (IC, MUX) should also include numbers.
 
   return true;
 }
@@ -12554,7 +12646,6 @@ function largeDeviceConnected(c, c2) { // largeConnected connectedLarge
 // create the components after the cells have been parsed (note: is not really parsing anymore, but a post-processing step of it)
 function parseComponents() {
   var used;
-
   logPerformance('parseComponents start');
 
   globalLooseWireInstanceI = null;

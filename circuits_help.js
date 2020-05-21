@@ -142,13 +142,23 @@ s...... l
 0"source code, but the numbers will be invisible below)"
 
 
-s.............>l0
+s.............>l0 0"0: red (default color)"
 
-s.............>l2
+s.............>l1 0"1: orange"
 
-s.............>l3
+s.............>l2 0"2: yellow"
 
-s.............>l4
+s.............>l3 0"3: green"
+
+s.............>l4 0"4: blue"
+
+s.............>l5 0"5: purple"
+
+s.............>l6 0"6: pink"
+
+s.............>l7 0"7: white"
+
+s.............>l8 0"8: test signal: toggles between red (off) and green (on)"
 
 0"# Logic Gates"
 
@@ -2573,15 +2583,34 @@ s..>r..>l   S..>r..>l
 0"things including: LED colors, timer speeds, IC indices, delay durations,"
 0"bus/bundle wire numbers, etc..."
 
-0"Here numbers on LEDs and timers are demonstrated."
+0"All LED colors:"
 
-0 1 2 3 4 5 6 7
-l l l l l l l l        l l l l l l l l l l l
-^ ^ ^ ^ ^ ^ ^ ^        ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
-. . . . . . . .        . . . . . . . . . . .
-s s s s s s s s        r r r r r r r r r r r
-                       1 2 3 4 5 6 7 8 9 1 1
-                                         0 1
+s.............>l0 0"0: red (default color)"
+
+s.............>l1 0"1: orange"
+
+s.............>l2 0"2: yellow"
+
+s.............>l3 0"3: green"
+
+s.............>l4 0"4: blue"
+
+s.............>l5 0"5: purple"
+
+s.............>l6 0"6: pink"
+
+s.............>l7 0"7: white"
+
+s.............>l8 0"8: test signal: toggles between red (off) and green (on)"
+
+0"Numbers affecting timer speed:"
+
+l l l l l l l l l l l
+^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
+. . . . . . . . . . .
+r r r r r r r r r r r
+1 2 3 4 5 6 7 8 9 1 1
+                  0 1
 
 0"Numbers are parsed from the component outward. So this works correctly:"
 
@@ -2998,6 +3027,7 @@ ssssssss        ^^^^^^^^          ########<p0"down"
  0"40:lshift, 41:rshift, 42:rot lshift, 43:rot rshift"
 0"* higher operations (NOTE: some differ in type with 1 or 2 inputs):"
  0"48:power, 49:log2/integer log, 50:sqrt/integer root"
+ 0"54:binary to BCD, 55:BCD to binary"
 0"* number theory ops (in addition, pow/mul/add with 3 inputs work modular):"
  0"56:modular inverse, 57:gcd, 58:lcm, 59:factorial, 60:binomial, 61:perfectpow"
 0"* expensive number theory ops:"
@@ -3005,13 +3035,14 @@ ssssssss        ^^^^^^^^          ########<p0"down"
  0"67:factorize, 68:discrete log, 69:quadratic residue, 70:euler totient"
 0"* bit ops"
  0"72:count leading zeroes (clz), 73:count trailing zeroes (ctz),74:popcount"
- 0"78:binary to BCD, 79:BCD to binary"
+ 0"76:PEXT, 77:PDEP"
 0"* transcendental functions (inputs/outputs scaled to make period/range match int range):"
  0"80:sine, 81:arcsine/atan2, 82: ln, 83: exp"
 0"* time related:"
  0"88:unix time in seconds, 89:unix time to Y-M-D h:m:s, 90: Y-M-D h:m:s to unix time"
 0"* bit permutation operations:"
- 0"96:mirror bits, 97:scramble bits, 98:perfect shuffle, 99:perfect unshuffle"
+ 0"96:mirror bits, 97:bit reversal, 98:perfect shuffle, 99:perfect unshuffle"
+ 0"100:GRP, 101:UNGRP"
 
 0"Adding 128 to the number makes the operation signed, e.g. operation 27 is"
 0"division, and operation 155 is signed division. Signed operations use twos"
@@ -3357,27 +3388,36 @@ l<---g    g--->l
    s      v
           l
 
-0"That means the following swithes and LEDs are *not* connected:"
-
-(--s  )-->l
-
-s--(  l<--)
-
-0"But in the following two cases they are connected:"
+0"That means the following is connected by that rule:"
 
 s--(  )-->l
 
 (--s  l<--)
 
+0"But the following swithes and LEDs would *not* connected by that rule, but"
+0"an exception is made in limited cases, including the below, when there are"
+0"isolators on matching sides of antennas. So the following is also connected"
+0"after all, but only in limited cases due to a corrent limitation"
+
+(--s  )-->l
+
+s--(  l<--)
+
+(   )
+|   |
+|   v
+s   l
 
 0"The antenna can also connect some non-wire-like connections, such as be"
-0"in-between an input and a device"
+0"in-between an input and a device (this with the standard rule, the limited"
+0"exceptions above would not allow this)":
 
  s--->(    )l
 
 0"Antennas can be nested recursively:"
 
  s-(   s-(    )->l   )->l
+"A     B         B      A"
 
 0"The antenna has very specific special rules for diagonal connections. Those"
 0"are too detailed to explain in this tutorial, but the goal of the rules is"
@@ -3663,7 +3703,7 @@ l<---,,--->l         ||
 3"NEW PART: 8-way wire crossing"
 3"*: 8-way wire crossing"
 
-0"* is a wire crossing that works both straight and diagonally, giving it 8"
+0"the * is a wire crossing that works both straight and diagonally, giving it 8"
 0"connection points and 4 independent signals:"
 
      l
@@ -3781,22 +3821,22 @@ s   s   s
 
 3"0''formatted comment''"
 
-0"The numeric styles do the following:"
+0"The numeric styles do the following (styles not actually shown, see table below for that):"
 
 0"formatted text styles: those support a few markdown features, described further below"
 3"0: left aligned formatted text"
 3"1: center aligned formatted text"
 3"2: right aligned formatted text"
 
-0"full width text: this has the same width as a circuit element per character (wide fixed width)"
-3"3: full width text, shifted left a bit"
-3"4: standard full width text, same as not using any number at all"
-3"5: full width text, shifted right a bit"
-
 0"narrow fixed width text: like full width, but narrower (monospace)."
-3"6: left aligned narrow fixed width text"
-3"7: center aligned narrow fixed width text"
-3"8: right aligned narrow fixed width text"
+3"3: left aligned narrow fixed width text"
+3"4: center aligned narrow fixed width text"
+3"5: right aligned narrow fixed width text"
+
+0"full width text: this has the same width as a circuit element per character (wide fixed width)"
+3"6: full width text, shifted left a bit"
+3"7: standard full width text, same as not using any number at all"
+3"8: full width text, shifted right a bit"
 
 0"The formatted text styles support a small subset of markdown features:"
 3"# : main chapter (heading 1)"
@@ -3831,38 +3871,38 @@ s   s   s
 0"each case."
 
 
-       0v           v
-+-----+--------------+
-|     | "hello world"| 0"full width text (best for circuit labels)"
-+-----+--------------+
-|0    |0"hello world"| 0"formatted left aligned (best for long text)"
-+-----+--------------+
-|1    |1"hello world"| 0"formatted center aligned"
-+-----+--------------+
-|2    |2"hello world"| 0"formatted right aligned"
-+-----+--------------+
-|3    |3"hello world"| 0"narrow fixed width left aligned (best for ASCII art)"
-+-----+--------------+
-|4    |4"hello world"| 0"narrow fixed width center aligned"
-+-----+--------------+
-|5    |5"hello world"| 0"narrow fixed width right aligned"
-+-----+--------------+
-|6    |6"hello world"| 0"full width shifted left (starts at quote/number)"
-+-----+--------------+
-|7    |7"hello world"| 0"standard full width, same as no number"
-+-----+--------------+
-|8    |8"hello world"| 0"full width shifted right (ends at quote/number)"
-+-----+--------------+
-|0 #  |0"# head H1  "| 0"chapter (heading 1)"
-+-----+--------------+
-|0 ## |0"## head H2 "| 0"sub-chapter (heading 2)"
-+-----+--------------+
-|0 ###|0"### head H3"| 0"sub-sub-chapter (heading 3)"
-+-----+--------------+
-|0 -  |0"- bullet   "| 0"bullet list item"
-+-----+--------------+
-|0 *  |0"* bullet   "| 0"bullet list item (same as with -)"
-+-----+--------------+
+         "0v           v"
+.--------.--------------.
+|0"     "| "hello world"| 0"full width text (best for circuit labels)"
+.--------.--------------.
+|0"0    "|0"hello world"| 0"formatted left aligned (best for long text)"
+.--------.--------------.
+|0"1    "|1"hello world"| 0"formatted center aligned"
+.--------.--------------.
+|0"2    "|2"hello world"| 0"formatted right aligned"
+.--------.--------------.
+|0"3    "|3"hello world"| 0"narrow fixed width left aligned (best for ASCII art)"
+.--------.--------------.
+|0"4    "|4"hello world"| 0"narrow fixed width center aligned"
+.--------.--------------.
+|0"5    "|5"hello world"| 0"narrow fixed width right aligned"
+.--------.--------------.
+|0"6    "|6"hello world"| 0"full width shifted left (starts at quote/number)"
+.--------.--------------.
+|0"7    "|7"hello world"| 0"standard full width, same as no number"
+.--------.--------------.
+|0"8    "|8"hello world"| 0"full width shifted right (ends at quote/number)"
+.--------.--------------.
+|0"0 #  "|0"# head H1  "| 0"chapter (heading 1)"
+.--------.--------------.
+|0"0 ## "|0"## head H2 "| 0"sub-chapter (heading 2)"
+.--------.--------------.
+|0"0 ###"|0"### head H3"| 0"sub-sub-chapter (heading 3)"
+.--------.--------------.
+|0"0 -  "|0"- bullet   "| 0"bullet list item"
+.--------.--------------.
+|0"0 *  "|0"* bullet   "| 0"bullet list item (same as with -)"
+.--------.--------------.
 
 0"Horizontal rule:"
 0"___"
@@ -3870,16 +3910,16 @@ s   s   s
 0"Fixed width text will not use markdown, unless a narrow width and a formatted"
 0"number are combined"
 
-       0v          v0
-+-----+--------------+----+
-|3 #  |3"# no head." |    | 0"displays the #"
-+-----+--------------+----+
-|3 #  |3"# heading "0|   0| 0"interprets the #"
-+-----+--------------+----+
-|3 -  |3"- dash    " |    | 0"displays the -"
-+-----+--------------+----+
-|3 -  |3"- bullet  "0|   0| 0"interprets the -"
-+-----+--------------+----+
+          0v          v0
++--------+--------------+----+
+|0"3 #  "|3"# no head." |2" "| 0"displays the #"
++--------+--------------+----+
+|0"3 #  "|3"# heading "0|2"0"| 0"interprets the #"
++--------+--------------+----+
+|0"3 -  "|3"- dash    " |2" "| 0"displays the -"
++--------+--------------+----+
+|0"3 -  "|3"- bullet  "0|2"0"| 0"interprets the -"
++--------+--------------+----+
 
 0"NOTE: The color and background color of the text is determined by the chosen"
 0"rendering color scheme (light, dark, ...). In some schemes, text may have a"
@@ -5449,6 +5489,7 @@ registerCircuit('Unit Test', `
 0"* langton's ant"
 0"* 4 math functions with decimal"
 0"* Lissajous: should automatically get lissajous shape over time"
+0"* All the next unit tests, such as drawint test"
 
 0"# On"
 
@@ -5456,525 +5497,555 @@ registerCircuit('Unit Test', `
 0"OFF, something is broken. A short delay just after loading is allowed."
 0"There should also be no errors indicated."
 
-F...........>l
+F...........>l8
 
-F----------->l
+F----------->l8
 
-f...........]l
+f...........]l8
 
-F>e-Xa-VVo+.>l
+F>e-Xa-VVo+.>l8
 
-f....>O.....>l
+f....>O.....>l8
 
-f....>O#....>l
+f....>O#....>l8
 
-a...........>l
+a...........>l8
 
-A...........]l
+A...........]l8
 
-o...........]l
+o...........]l8
 
-O...........>l
+O...........>l8
 
-E...........>l
+E...........>l8
 
-e...........]l
+e...........]l8
 
-C...........>l
+C...........>l8
 
-c...........]l
+c...........]l8
 
-p...........]l
+p...........]l8
 
-P...........>l
+P...........>l8
 
-s...........]l
+s...........]l8
 
-S...........>l
+S...........>l8
 
-Q...........>l
+Q...........>l8
 
-F...........>lI11
+11IF........>l8
 
-i11.........>l
+i11.........>l8
 
-O...........>lI10
+10IO........>l8
 
-i10.........>l
+i10.........>l8
 
-i10.........>l
+i10.........>l8
 
->bB.........>l
+>bB.........>l8
 
-s....>C.....>l
+s....>C.....>l8
 
-s---->c--->O>l
-s---->j--->O>l
-s---->k----->l
-s---->q--->O>l
-s---->Q----->l
+s---->c--->O>l8
+s---->j--->O>l8
+s---->k----->l8
+s---->q--->O>l8
+s---->Q----->l8
 
-F>j--------->l
+F>j--------->l8
 
-f>k--------->l
+f>k--------->l8
 
-F>q---------]l
+F>q---------]l8
 
-F>q>c------->l
+F>q>c------->l8
 
-F-->a##----->l
+F-->a##----->l8
 
-F-->a#a----->l
+F-->a#a----->l8
 
-F-->a------->l
-f-->a-------]l
-F-->a------->l
+F-->a------->l8
+f-->a-------]l8
+F-->a------->l8
 
-F-->a-------]l
-f-->#-------]l
-F-->a-------]l
+F-->a-------]l8
+f-->#-------]l8
+F-->a-------]l8
 
-F-->o------->l
-f-->#------->l
-F-->o------->l
+F-->o------->l8
+f-->#------->l8
+F-->o------->l8
 
 F-->d
     #
-F>q>c------->l
+F>q>c------->l8
 
 f-->d
     #
-F>q>c-------]l
+F>q>c-------]l8
 
 F-->t
     #
-F>q>c------->l
+F>q>c------->l8
 
 f-->t
     #
-F>q>c-------]l
+F>q>c-------]l8
 
 f-->j
 f-->k
-F>q>c-------]l
+F>q>c-------]l8
 
 F-->j
 f-->k
-F>q>c------->l
+F>q>c------->l8
 
 f-->j
 F-->k
-F>q>c-------]l
+F>q>c-------]l8
 
 F-->j
 F-->k
-F>q>c------->l
+F>q>c------->l8
 
 F-->d
 F-->Q
-F>q>c-------]l
+F>q>c-------]l8
 
 f-->d
 F-->q
-f-->c------->l
+f-->c------->l8
 
      C
      v
      qS
      vv
-F-->dcyQq--->l
-F-->dcyQq--->l
-f-->dcyQq---]l
-F-->dcyQq--->l
+F-->dcyQq--->l8
+F-->dcyQq--->l8
+f-->dcyQq---]l8
+F-->dcyQq--->l8
 
 
-       .-->O>l
-F------+---->l
+       .-->O>l8
+F------+---->l8
 f------.
 
-f .--------->l
+f .--------->l8
  x
-F .------->O>l
+F .------->O>l8
 
 f---v
-f-->a-------]l
+f-->a-------]l8
 
 f---w
-f-->a-------]l
+f-->a-------]l8
 
 f---v
-f--]a-------]l
+f--]a-------]l8
 
 f---w
-f--]a------->l
+f--]a------->l8
 
 3Rw
-  e--------->l
+  e--------->l8
 3R^
 
 3rv
-  e--------->l
+  e--------->l8
 3R^
 
-f->A->q----->l
+f->A->q----->l8
 f---->Q
 
-f->a-]q----->l
+f->a-]q----->l8
 f---->Q
 
  c
  v
-Bb-------->O>l
-bB---------->l
-BB---------->l
-bB---------->l
+Bb-------->O>l8
+bB---------->l8
+BB---------->l8
+bB---------->l8
 
  C
  v
-Bb---------->l
-bB-------->O>l
-BB---------->l
-bB-------->O>l
+Bb---------->l8
+bB-------->O>l8
+BB---------->l8
+bB-------->O>l8
 
-  #---------]l
-  b--------->l
-S>#---------]l
-s>b---------]l
+  #---------]l8
+  b--------->l8
+S>#---------]l8
+s>b---------]l8
 
-  b---------]l
-  b--------->l
-S>b---------]l
-s>b---------]l
+  b---------]l8
+  b--------->l8
+S>b---------]l8
+s>b---------]l8
 
 s>b
 S>#
-s>#--------->l
-s>#---------]l
+s>#--------->l8
+s>#---------]l8
 
 s>b
 S>b
-s>b--------->l
-s>b---------]l
+s>b--------->l8
+s>b---------]l8
 
-F+++++++++++>l
+F+++++++++++>l8
 
-F.-+*XY+*.-+>l
+F.-+*XY+*.-+>l8
 
 
-F..( ). ).>O>l
+F..( ). ).>O>l8
       .
-      ......>l
+      ......>l8
 
 F...
     x
-     .......>l
+     .......>l8
 
 F...
     X
-     .......>l
+     .......>l8
 
-F...X.......>l
+F...X.......>l8
 
-f->O-------->lI5
+        I5
+f->O-------->l8
 
-i5---------->l
+i5---------->l8
 
 f->O-------.
-            X
-i6           lI6
+     I6     X
+i6           l8
   x
-   .........>l
+   .........>l8
 
-S-->C>C>C>C->l
+S-->C>C>C>C->l8
 
 
 F-----.
        \\
-        .--->l
+        .--->l8
 
-        .--->l
+        .--->l8
        /
 F-----.
 
-F           >l
+F           >l8
  ;         /
   .-------.
 
 F-------&
-        &--->l
+        &--->l8
 
-        %--->l
+        %--->l8
 F-------%
 
 F----g10
 
-       10g-->l
+       10g-->l8
 
-         g-->l
+         g-->l8
          1
          0
 
-F--( ( ) )-->l
+S--(     )-->l8
+
+s--(     (--]l8
 
 
-            ]l
+          .->l8
+S-(-S    .)->l8
+  |      .-->l8
+  S
+          .->l8
+s-(-S    .)-]l8
+  |      .-->l8
+  S
+          .-]l8
+S-(-S    .)->l8
+  |      .-->l8
+  s
+          .->l8
+S-(-s    .)->l8
+  |      .--]l8
+  S
 
-            Wl
+(--S      )->l8
 
-             l
-            Yl
-             l
+(         )
+|         |
+S         .->l8
 
-F---------->#l
+F--( ( ) )-->l8
 
-F----------VVl
 
-F----------VXl
+            ]l8
 
-F----0=0---->l
+            Wl8
 
-F12=     =21]l
+             l8
+            Yl8
+             l8
+
+F---------->#l8
+
+F----------VVl8
+
+F----------VXl8
+
+F----0=0---->l8
+
+F12=     =21]l8
    ==---==
-f21=     =12>l
+f21=     =12>l8
 
 
-F---12=45--->l
-F---23=34---]l
-f---34=12--->l
-F---45=23--->l
+F---12=45--->l8
+F---23=34---]l8
+f---34=12--->l8
+F---45=23--->l8
 
   I8
-S.(@@@).....>l
+S.(@@@).....>l8
 
-S>i8........>l
+S>i8........>l8
 
 s->lI
 
-S------->i-->l
+S------->i-->l8
 
-s-------]i-->l
+s-------]i-->l8
 
-S--->i##i--->l
+S--->i##i--->l8
 
-S------>i##->l
+S------>i##->l8
 
-S------>i#i->l
+S------>i#i->l8
 
 s->i->lI2
 
-S------>i2-->l
+S------>i2-->l8
 
-s->O-------->lI23
+       I23
+s->O-------->l8
 
-S------>i2-->l
+S------>i2-->l8
          3
 
         i
-S------>2--->l
+S------>2--->l8
   "text"3
 
         i
-S------>2--->l
+S------>2--->l8
         3
         :
         t
         :
 
-#-----------]l
+#-----------]l8
 
-#------->O-->l
+#------->O-->l8
 
-F..>c.......>l
+F..>c.......>l8
 
-O..>c.......>l
+O..>c.......>l8
 
-S..>c.......>l
+S..>c.......>l8
 
-F..]C.......>l
+F..]C.......>l8
 
-f..]C.......>l
+f..]C.......>l8
 
-f..>C.......>l
+f..>C.......>l8
 
-O.....>d....>l
+O.....>d....>l8
 
-         e-->l
+         e-->l8
         >
-F------+---->l
+F------+---->l8
       >
-       e---->l
+       e---->l8
 
-S-->dy------>l
+S-->dy------>l8
      ^
      S
 
-F..>z.......>l
+F..>z.......>l8
 
     f
     v
-F..>z.......]l
+F..>z.......]l8
 
     F
     v
-F..>z.......>l
+F..>z.......>l8
      .
 f..>z.
 
     f
     v
-F..>Z.......>l
+F..>Z.......>l8
      .
 F..>Z.
 
     F
     v
-F..>Z.......]l
+F..>Z.......]l8
      .
 f..>Z.
     ^
     f
 
           |
-S5110g 5110g>l
+S5110g 5110g>l8
 
           |
-S5120g 5120g>l
+S5120g 5120g>l8
 
 
 F--.
    |
-F. | .------>l
+F. | .------>l8
   ;|/
-F--*-------->l
+F--*-------->l8
   /|;
-F. | .------>l
+F. | .------>l8
    |
-   .-------->l
+   .-------->l8
 
 
 F--.
    |
-F. | .------]l
+F. | .------]l8
   ;|/
-f--*--------]l
+f--*--------]l8
   /|;
-f. | .------>l
+f. | .------>l8
    |
-   .-------->l
+   .-------->l8
 
 
 F--.
    |
-f. | .------]l
+f. | .------]l8
   ;|/
-F--*-------->l
+F--*-------->l8
   /|;
-f. | .------]l
+f. | .------]l8
    |
-   .-------->l
+   .-------->l8
 
 
-    .------->l
-F---,------->l
-f...,.......]l
-    .-------]l
+    .------->l8
+F---,------->l8
+f...,.......]l8
+    .-------]l8
 
 S---------->o
-s-----------]l
+s-----------]l8
 
 S---------->o
-            >l
+            >l8
 
-    T#------]l
-    ##------]l
-    ##------]l
+    T#------]l8
+    ##------]l8
+    ##------]l8
     |^
-    &+------>l
+    &+------>l8
      s
 
-s>T---------]l
-S>#--------->l
-s>#---------]l
-S>#--------->l
-S>#--------->l
-s>#---------]l
+s>T---------]l8
+S>#--------->l8
+s>#---------]l8
+S>#--------->l8
+S>#--------->l8
+s>#---------]l8
 
-s>T>l s>i---]l
-s>#>l S>1--->l
-s>#>l S>6--->l
-s>#>l s>5---]l
-s>#>l s>#---]l
-s>#>l S>#--->l
+s>T>l s>i---]l8
+s>#>l S>1--->l8
+s>#>l S>6--->l8
+s>#>l s>5---]l8
+s>#>l s>#---]l8
+s>#>l S>#--->l8
 I165
 
-    ........]l
+    ........]l8
     .
-s-->M-------]l
+s-->M-------]l8
     #
 S-->#
     ^
     s
 
-    ........>l
+    ........>l8
     .
-s-->M------->l
+s-->M------->l8
     #
 S-->#
     ^
     S
 
-    ........>l
+    ........>l8
     .
-S-->M-------]l
+S-->M-------]l8
     #
 s-->#
     ^
     S
 
-    ........>l
+    ........>l8
     .
-S-->M-------]l
+S-->M-------]l8
     #
-s-->#------->l
+s-->#------->l8
     ^
     S
 
-  .---------]l
+  .---------]l8
 s>U
 s>4
 S>8
 S>#
   #
-s>#--------->l
-s>#---------]l
-S>#---------]l
-s>#--------->l
+s>#--------->l8
+s>#---------]l8
+S>#---------]l8
+s>#--------->l8
   ^
   s
 
-  .---------]l
-s>U---------]l
-s>7---------]l
-S>9---------]l
-s>#--------->l
-s>#---------]l
-s>#--------->l
-S>#--------->l
-S>#--------->l
+  .---------]l8
+s>U---------]l8
+s>5---------]l8
+S>5---------]l8
+s>#--------->l8
+s>#---------]l8
+s>#--------->l8
+S>#--------->l8
+S>#--------->l8
   ^
   s
 
-     .------]l
+     .------]l8
      |
 s>U###
 s>2###
 s>4###
 S>####
   ####
-s>####------>l
-s>####------>l
-S>####------>l
-S>####------]l
+s>####------>l8
+s>####------>l8
+S>####------>l8
+S>####------]l8
   ^^ ^
   sS s
 
@@ -5983,92 +6054,128 @@ s>2###
 s>4###
 S>####
   ####
-s>####------>l
-s>####------>l
-S>####------>l
-S>####------]l
+s>####------>l8
+s>####------>l8
+S>####------>l8
+S>####------]l8
   ^^
   sS
 
-S>e--------->l
+S>e--------->l8
 s>#
 s>#
 
-S>e---------]l
+S>e---------]l8
 S>#
 s>#
 
-S>e--------->l
+S>e--------->l8
 S>#
 S>#
 
-S>h--------->l
+S>h--------->l8
 s>#
 s>#
 
-S>h---------]l
+S>h---------]l8
 S>#
 s>#
 
-S>h---------]l
+S>h---------]l8
 S>#
 S>#
 
 
 
 
-S-321=====$-]l
-s-$=======$-]l
-S-$=======$->l
-S-$=======$->l
-s-$=======$-]l
-s-$=====321->l
+S-321=====$-]l8
+s-$=======$-]l8
+S-$=======$->l8
+S-$=======$->l8
+s-$=======$-]l8
+s-$=====321->l8
   =========
-  ======321->l
-  ========$-]l
-  ========$->l
+  ======321->l8
+  ========$-]l8
+  ========$->l8
 
 
-S-0=======1->l
-s-$=======$->l
-S-$=======$->l
-S-$=======$-]l
+S-0=======1->l8
+s-$=======$->l8
+S-$=======$->l8
+S-$=======$-]l8
    =======
-S-$=======$->l
+S-$=======$->l8
    =======
-s-$=======0->l
-S-$=======$-]l
-S-$=======$->l
-S-1=======$->l
+s-$=======0->l8
+S-$=======$-]l8
+S-$=======$->l8
+S-1=======$->l8
 
 
-   .-------->l
-   |.-------]l
-   ||.------>l
-   |||.----->l
+   .-------->l8
+   |.-------]l8
+   ||.------>l8
+   |||.----->l8
    7$$$
    ========
    = $$$7
-S-7= |||.--->l
-s-$= ||.----]l
-S-$= |.----->l
-S-$= .------>l
+S-7= |||.--->l8
+s-$= ||.----]l8
+S-$= |.----->l8
+S-$= .------>l8
 
 
-S-g321   $g-]l
-s-g$     $g-]l
-S-g$     $g->l
-S-g$     $g->l
-s-g$     $g-]l
-s-g$   321g->l
+S-g321   $g-]l8
+s-g$     $g-]l8
+S-g$     $g->l8
+S-g$     $g->l8
+s-g$     $g-]l8
+s-g$   321g->l8
 
 
-S-7g     g$-]l
-s-$g     g$-]l
-S-$g     g$->l
-S-$g     g$->l
-s-$g     g$-]l
-s-$g     g7->l
+S-7g     g$-]l8
+s-$g     g$-]l8
+S-$g     g$->l8
+S-$g     g$->l8
+s-$g     g$-]l8
+s-$g     g7->l8
+
+
+ llll   .--->l8
+ ^^^^   |.-->l8
+s.|||   ||.-]l8
+s-.||   |||.]l8
+s--.| S>####
+s---. S>#
+I60   s>#
+      s>i60
+
+ssSS
+vvvv
+i###-------->l8
+6  #-------->l8
+0  #--------]l8
+   #--------]l8
+
+
+(-#    )---->l8
+(-6    )---->l8
+(-0    )----]l8
+(-i### )----]l8
+  ^^^^
+  ssSS
+
+  #<S
+  #<S
+  #<s
+  #<s
+  #
+60i####
+   |||.-----]l8
+   ||.------]l8
+   |.------->l8
+   .-------->l8
 
 
 0"# Off"
@@ -6076,138 +6183,138 @@ s-$g     g7->l
 0"In this section, the LED on the right of each contraption must be OFF. If"
 0"it's ON, something is broken. There should also be no errors indicated."
 
-............>l
+............>l8
 
-f...........>l
+f...........>l8
 
-F.....@.....>l
+F.....@.....>l8
 
-      ......>l
+      ......>l8
 F.....+
 
-F.....|.....>l
+F.....|.....>l8
 
-o...........>l
+o...........>l8
 
-e...........>l
+e...........>l8
 
-A...........>l
+A...........>l8
 
-s...........>l
+s...........>l8
 
-p...........>l
+p...........>l8
 
-s.....>o....>l
+s.....>o....>l8
 
-s.....>a....>l
+s.....>a....>l8
 
-s.....>e....>l
+s.....>e....>l8
 
-F.....( (...>l
+F.....( (...>l8
 
-F...( ( )...>l
+F...( ( )...>l8
 
 F.....
-      X.....>l
+      X.....>l8
 
-f---- ------>l
+f---- ------>l8
      x
-F---- ------>l
+F---- ------>l8
 
 F-----------
-            Vl
+            Vl8
 
 F-----------V
-             l
+             l8
 
 F----------.
-            Vl
+            Vl8
 3Rw
-  E--------->l
+  E--------->l8
 3R^
 
-s---->R----->l
+s---->R----->l8
 
-r---->R----->l
+r---->R----->l8
 
-F...........]l
+F...........]l8
 
-F---------->Xl
+F---------->Xl8
 
-F----------V>l
+F----------V>l8
 
       :
-F...........>l
+F...........>l8
       :
 
 F......
       .
      "."
       .
-      ......>l
+      ......>l8
 
 s->oI9
 
-s------>oI92>l
+s------>oI92>l8
 
         i
-S------>2--->l
+S------>2--->l8
         3
 
-S----->i92-->l
+S----->i92-->l8
          :
          t
          :
-S----->i92-->l
+S----->i92-->l8
 
 F.....>o
-      >o---->l
+      >o---->l8
 
 
-F---=0==0--->l
+F---=0==0--->l8
 
-F---=0=0---->l
+F---=0=0---->l8
 
-F---=0------>l
+F---=0------>l8
 
-F---=====--->l
+F---=====--->l8
 
-F----=0=---->l
+F----=0=---->l8
 
-S...........]l
+S...........]l8
 
-s....>S.....>l
+s....>S.....>l8
 
 
 S...(")"
-      ......>l
+      ......>l8
 
-F..>C.......>l
+F..>C.......>l8
 
-O..>C.......>l
+O..>C.......>l8
 
-S..>C.......>l
+S..>C.......>l8
 
 
-       e---->l
+       e---->l8
       ^
 F-----
 
-S-->dy------>l
+S-->dy------>l8
      ^
      s
 
-s-->dy------>l
+s-->dy------>l8
      ^
      S
 
-s-->l-->l
+s------->l-->l8
 
 S---------->o
-s----------->l
+s----------->l8
 
 S---------->o
-            ]l
+            ]l8
 
 
 0"# Toggle"
@@ -6220,152 +6327,152 @@ S---------->o
 s##
 ###
 .
-............>l
+............>l8
 .
-.......>o...>l
+.......>o...>l8
 .
-.......>a...>l
+.......>a...>l8
 .
-.......>e...>l
+.......>e...>l8
 .
-.......>d...>l
+.......>d...>l8
 .
-.......>S...>l
+.......>S...>l8
 .
-.......>a...>l
+.......>a...>l8
 .       ^
 .........
 .
-.......>o...>l
+.......>o...>l8
 .       ^
 .........
 .
 .       c
 .       v
-.......>e...>l
+.......>e...>l8
 .
-...>d>e>c...>l
+...>d>e>c...>l8
 . .   ^
 . .....
 .
-...g12 12g..>l
+...g12 12g..>l8
 .
 .
-.       =1>O>l
+.       =1>O>l8
 .     ===
-.     . =2..>l
+.     . =2..>l8
 .     .
-...1= . =2>O>l
+...1= . =2>O>l8
 .   ==+==
-.>O2= . =1..>l
+.>O2= . =1..>l8
 .     .
 ...2= .
 .   ===
 .>O1=
 .
 .
-...(    )...>l
+...(    )...>l8
 .
 .
 . s>e#>lI6416
 .
-...>i6416...>l
+...>i6416...>l8
 .
-...>O.......]l
+...>O.......]l8
 .
-.  d-. C>jq->l
-.  ^ v C>kQ-]l
-.--.>e-->c-->l
+.  d-. C>jq->l8
+.  ^ v C>kQ-]l8
+.--.>e-->c-->l8
 .
-. C--.>a---->l
+. C--.>a---->l8
 .     X
-.----.>e----]l
+.----.>e----]l8
 .
 ......
 .     x
 .      Y
-.       O--->l
+.       O--->l8
 .
-.---.>o>q--->l
-.   .>O>Q---]l
+.---.>o>q--->l8
+.   .>O>Q---]l8
 .
-.  o...v     l
+.  o...v     l8
 .  ^   o     ^
 ...+.. ..>o...
 .  . .       v
-.  o<.       l
+.  o<.       l8
 .
 .--( )-.
 .      n
-. .--------->l
+. .--------->l8
 . n    u
 .      .&
 . u     |
 . .--( )%
 .
 .
-......>o>C..>l
+......>o>C..>l8
 .    .   ^
 .    .>O..
 .
 .
-.-->dy------>l
+.-->dy------>l8
 .    ^
 .    S
 .
-.     ......>l
+.     ......>l8
 .     .
-. c..>M.....>l
+. c..>M.....>l8
 .     #
-. C..>#.....]l
+. C..>#.....]l8
 .     ^
 .......
 .
-.     ......>l
+.     ......>l8
 .     .
-. C..>M.....]l
+. C..>M.....]l8
 .     #
-.     #.....>l
+.     #.....>l8
 .     ^
 .......
 .
-.8612g 8612g>l
+.8612g 8612g>l8
 .
-.8613g g8613>l
+.8613g g8613>l8
 .
-.g8614 8614g>l
+.g8614 8614g>l8
 .
-.g8615 g8615>l
+.g8615 g8615>l8
 .
-.8710g 8710g>l
-.8711g 8711g>l
-.8712g 8712g>l
+.8710g 8710g>l8
+.8711g 8711g>l8
+.8712g 8712g>l8
 .
-.8713g g8713>l
-.8714g g8714>l
-.8715g g8715>l
+.8713g g8713>l8
+.8714g g8714>l8
+.8715g g8715>l8
 .
-.g8716 8716g>l
-.g8717 8717g>l
-.g8718 8718g>l
+.g8716 8716g>l8
+.g8717 8717g>l8
+.g8718 8718g>l8
 .
-.g8719 g8719>l
-.g8720 g8720>l
-.g8721 g8721>l
+.g8719 g8719>l8
+.g8720 g8720>l8
+.g8721 g8721>l8
 .
-.-->q------->l
+.-->q------->l8
 . c>y
-.--]Q-------]l
+.--]Q-------]l8
 .
-.-->j------->l
+.-->j------->l8
 . C>y
-.--]k-------]l
+.--]k-------]l8
 .
-.-->q------->l
-.--]Q-------]l
+.-->q------->l8
+.--]Q-------]l8
 .
-.-->j------->l
-.--]k-------]l
+.-->j------->l8
+.--]k-------]l8
 .
 .
 .
@@ -6559,19 +6666,48 @@ I196
 
 0"Each input must activate the correct LED in the IC usage on the right"
 
-     "ABCD"      "ABCD"
-      llll        llll
-      ^^^^  :     ^^^^
-      ||||#sD     ||||
-    I0||||| :     #########i0
-   :  |||&%:      #    ^    #
-   As-.|.-sC      #    s    #
-   :   | : :      #"C  B" s>#
-       #sB        #<s    "A"#
-         :        #  "D"    #
-                  #   s     #
-                  #   v     #
-                  ###########
+     "ABCDEFGH"
+      llllllll          "ABCDEFGH"           "C     A"                                 "G     E"
+      ^^^^^^^^           llllllll             s     s                                   s     s
+    I0||||||||  :        ^^^^^^^^              ;   /                                     ;   /
+      |||||||| sH    :   ||||||||      :        X X     :                                 X X
+   :  |||||||.-.:    As  #########i0  sG    #########->lA        ###########            0########
+   As ||||||| s"G"3    ; #    ^    # /      #   ^:  #->lB    :   #     ^   #   :        i  ^:   #
+   : ;|||||||/          X#    s    #X       #   sF  #->lC    Es  #     s   #  sC    :   #  sB   #
+    : .|||||. :          #"F  D" s>#        #  :    #->lD      ; #    "H"  # /      Hl<-#   :   #
+    Bs-.|||.-sF         X#<s    "B"#X       #<sH    #->lE       X#"B"    s>#X       Gl<-#  :    #
+    :   .|.   :        / #  "H"    # ;      #  : Ds>#->lF        #<s "D  F"#        Fl<-#<sD :  #
+       / s ;         Cs  #   s     #  sE    #    :  #->lG       X#    s    #X       El<-#    Hs>#
+      s "D" s        :   #   v     #   :    #   :   #->lH      / #    v    # ;      Dl<-#    :  #
+    " C     E"           ###########        #   Bs  #   :    Gs  0i#########  sA    Cl<-#  Fs   #
+                                            #   :v  i        :      ||||||||   :    Bl<-#  :v   #
+                                            ########0               vvvvvvvv        Al<-#########
+                                                X X                 llllllll        :     X X
+                                               /   ;               "HGFEDCBA"            /   ;
+                                              s     s                                   s     s
+                                             "E     G"                                 "A     C"
+
+          "E"
+      "D"  l                                   "A     C"                           "E     G"
+  :    l  X                                     l     l          "HGFEDCBA"         l     l
+  Cl   ^ /I1                                     <   >            ssssssss           X   X
+  : X  |.    :       :                 :   :      ; /             vvvvvvvv            ; /
+     ; ||.->lF       Cl  #########i1  lE   As>#########        ###########          1########
+ :    .|||.  :         ^ #    v    # X     Bs>#   v:  #    :   #     v   #   :      i  v:   #
+ Bl<-.|||||;            ;#    l    #/      Cs>#   lF  #    Gl  #     l   #  lA      #  lB   #  :
+ :  .|||||| X :          #"F  H" l<#       Ds>#  :    #      X #    "D"  # ^        #   :   #<sH
+   /|||||||  lG         /#>l    "B"#;      Es>#>lD    #       ;#"B"    l<#/         #  :    #<sG
+: X |||||||.. :        v #  "D"    # X     Fs>#  : Hl<#        #>l "H  F"#          #>lH :  #<sF
+Al  ||||||||v        Al  #   l     #  lG   Gs>#    :  #       /#    l    #;         #    Dl<#<sE
+:   ssssssssl"H"3    :   #   ^     #   :   Hs>#   :   #      X #    ^    # v        #    :  #<sD
+   "ABCDEFGH"            ###########       :  #   Bl  #    El  1i#########  lC      #  Fl   #<sC
+                         ^^^^^^^^             #   :^  i    :                 :      #  :^   #<sB
+                         ssssssss             ########1                             #########<sA
+                        "ABCDEFGH"                / ;                                 / ;      :
+                                                 X   X                               <   >
+                                                l     l                             l     l
+                                               "G     E"                           "C     A"
+
 
 0"RENDER:text"
 `, 'unittest');
@@ -6587,10 +6723,10 @@ registerCircuit('Drawing Test', `
 
 0"# LED Colors"
 
-0 1 2 3 4 5 6 7   0 1 2 3 4 5 6 7
-l l l l l l l l   l l l l l l l l
-^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^
-s s s s s s s s   S S S S S S S S
+0 1 2 3 4 5 6 7 8 9   0 1 2 3 4 5 6 7 8 9
+l l l l l l l l l l   l l l l l l l l l l
+^ ^ ^ ^ ^ ^ ^ ^ ^ ^   ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
+s s s s s s s s s s   S S S S S S S S S S
 
  D D
  ^ ^
