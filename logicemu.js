@@ -1405,7 +1405,7 @@ var TYPE_RANDOM = TYPE_index++;
 var TYPE_JUKEBOX = TYPE_index++; // music, speaker, sound, audio
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
-// number types (higher value = higher priority) [numbertype number_type number priority number order numbers priority numbers order]
+// number types (higher value/nearer to bottom = higher priority) [numbertype number_type number priority number order numbers priority numbers order]
 var NUMBER_index = 0;
 var NUMBER_NONE = NUMBER_index++;
 var NUMBER_LED = NUMBER_index++;
@@ -1417,6 +1417,7 @@ var NUMBER_ICCALL = NUMBER_index++;
 var NUMBER_ICDEF = NUMBER_index++;
 var NUMBER_GLOBAL = NUMBER_index++; // for global wire g
 var NUMBER_BUS = NUMBER_index++;
+var NUMBER_ANTENNA = NUMBER_index++; // for antenna wrap
 var NUMBER_COMMENT = NUMBER_index++;
 
 
@@ -1459,7 +1460,7 @@ var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':tru
 var rommap = {'b':true, 'B':true};
 var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true};
 var dinputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true}; // directional inputs only
-var wiremap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x':true, 'g':true, '=':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true}; // TODO: remove antennas from wiremap?
+var wiremap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x':true, 'g':true, '=':true, ',':true, '%':true, '&':true, '*':true, '(':true, ')':true, 'n':true, 'u':true};
 var antennamap = {'(':true, ')':true, 'n':true, 'u':true};
 // only those actively interact diagonally (plus diaginputs but those are not identified by character...)
 var diagonalmap = {'x':true, 'X':true, 'Y':true, '/':true, '\\':true, '*':true};
@@ -3438,8 +3439,8 @@ function Alu() {
         case 48: return this.numc ? 'powm' : 'pow';
         case 49: return this.numb ? 'log' : 'log2';
         case 50: return this.numb ? 'root' : 'sqrt';
-        case 54: return '2bcd';
-        case 55: return 'bcd2';
+        case 54: return this.numb ? '2bas' : '2bcd';
+        case 55: return this.numb ? 'bas2' : 'bcd2';
         case 56: return 'minv';
         case 57: return 'gcd';
         case 58: return 'lcm';
@@ -3525,8 +3526,8 @@ function Alu() {
         case 48: return this.numc ? 'integer power modulo third input' : 'integer power';
         case 49: return this.numb ? 'integer log' : 'log2';
         case 50: return this.numb ? 'integer root' : 'sqrt';
-        case 54: return 'binary to bcd (binary coded decimal)';
-        case 55: return 'bcd to binary (bcd = binary coded decimal)';
+        case 54: return this.numb ? 'binary to base b (b bitsize = output digit bitgroup size; if carry input true, instead uses base b + 1)' : 'binary to bcd (binary coded decimal)';
+        case 55: return this.numb ? 'base b to binary (b bitsize = input digit bitgroup size; if carry input true, instead uses base b + 1)' : 'bcd to binary (bcd = binary coded decimal)';
         case 56: return this.numb ? 'modular inverse (modulo output size)' : 'modular inverse';
         case 57: return 'greatest common divider';
         case 58: return 'least common multiple';
@@ -3891,29 +3892,70 @@ function Alu() {
         }
       }
     } else if(op == 54) {
-      // binary to bcd
-      var neg = a < 0;
-      if(neg) a = -a;
-      var s = math.n0;
-      while(a > 0) {
-        var m = a % math.n10;
-        o |= (m << s);
-        s += math.n4;
-        a = math.supportbigint ? (a / math.n10) : Math.floor(a / 10);
+      if(this.numb == 0) {
+        // binary to bcd
+        var neg = a < 0;
+        if(neg) a = -a;
+        var s = math.n0;
+        while(a > 0) {
+          var m = a % math.n10;
+          o |= (m << s);
+          s += math.n4;
+          a = math.supportbigint ? (a / math.n10) : Math.floor(a / 10);
+        }
+        if(neg) s |= (math.n1 << s);
+      } else {
+        // binary to base b (or if misc input, base b+1), using numb as amount of wires per output digit
+        var base = b;
+        if(miscin) base++;
+        if(base < 2) {
+          overflow = true;
+        } else {
+          var neg = a < 0;
+          if(neg) a = -a;
+          var s = math.n0;
+          while(a > 0) {
+            var m = a % base;
+            o |= (m << s);
+            s += math.B(this.numb);
+            a = math.floordiv(a, base);
+          }
+          if(neg) s |= (math.n1 << s);
+        }
       }
-      if(neg) s |= (math.n1 << s);
     } else if(op == 55) {
-      // bcd to binary
-      var neg = a < 0;
-      if(neg) a = -a;
-      var s = math.n1;
-      while(a > 0) {
-        var m = a & math.n15;
-        o += (m * s);
-        s *= math.n10;
-        a >>= math.n4;
+      if(this.numb == 0) {
+        // bcd to binary
+        var neg = a < 0;
+        if(neg) a = -a;
+        var s = math.n1;
+        while(a > 0) {
+          var m = a & math.n15;
+          o += (m * s);
+          s *= math.n10;
+          a >>= math.n4;
+        }
+        if(neg) s |= (math.n1 << s);
+      } else {
+        // any base b (or if misc input, base b+1) to binary, using numb as amount of wires per input digit
+        var base = b;
+        if(miscin) base++;
+        if(base < 2) {
+          overflow = true;
+        } else {
+          var mask = (math.n1 << math.B(this.numb)) - math.n1;
+          var neg = a < 0;
+          if(neg) a = -a;
+          var s = math.n1;
+          while(a > 0) {
+            var m = a & mask;
+            o += (m * s);
+            s *= base;
+            a >>= math.B(this.numb);
+          }
+          if(neg) s |= (math.n1 << s);
+        }
       }
-      if(neg) s |= (math.n1 << s);
     } else if(op == 56) {
       // modular inverse, modulo 2^outputbits if 1-input op, module b if 2-input op
       if(this.numb == 0) b = (math.n1 << math.B(this.numo));
@@ -4112,9 +4154,13 @@ function Alu() {
       var day = date.getUTCDate();
       var month = date.getUTCMonth() + 1;
       var year = date.getUTCFullYear();
-      o = math.B(seconds) + math.B(minutes << 6) + math.B(hours << 12) + math.B(day << 17) + math.B(month << 22);
-      var y = math.B(year) * math.B(1 << 26);
-      o += y;
+      if(isNaN(seconds)) {
+        overflow = true;
+      } else {
+        o = math.B(seconds) + math.B(minutes << 6) + math.B(hours << 12) + math.B(day << 17) + math.B(month << 22);
+        var y = math.B(year) * math.B(1 << 26);
+        o += y;
+      }
     } else if(op == 90) {
       var seconds = Number(a & math.B(63));
       var minutes = Number((a >> math.B(6) & math.B(63)));
@@ -7719,7 +7765,11 @@ function Cell() {
   this.circuitsymbol = ''; // symbols that take part of circuits, does NOT include comments, numbers (those only alter circuit properties), ...
   this.metasymbol = ''; // like symbol, but comments get all replaced by '"' (use this to check for comment, or for number digits, instead of circuitsymbol)
   this.labelsymbol = null; // used for only very few cell types, for extra text that couldn't be stored in displaysymbol since displaysymbol will render according to actual symbol meaning (e.g. switch becomes green)
-  this.circuitextra = 0; // extra information in addition to circuitsymbol in some cases. For ^>v<m]w[ inputs: 0 = input reacting to devices on sides too, 1 = input not reacting to devices on sides, 2 = diagonal crossing input (diaginput). For 'g': if 1, is number (so connected to real g's, unlike g's which don't normally interact)
+  // extra information in addition to circuitsymbol in some cases.
+  // For ^>v<m]w[ inputs: 0 = input reacting to devices on sides too, 1 = input not reacting to devices on sides, 2 = diagonal crossing input (diaginput).
+  // For 'g': if 1, is number (so connected to real g's, unlike g's which don't normally interact)
+  // For antennas: if 0, antenna behaves similar as a 'g' but connecting to one matching antenna rather than all matching numbered global wires. If 1, antenna acts as a neighbor-warp, which allows to make wrap-around circuits; if 2, similar to 0 but won't connect to something sandwiched in between short hop, like the x in (x)
+  this.circuitextra = 0;
   this.skipparsing = false; // true for things that can be safely skipped for circuit-related parsing (false for any circuit as well as numbers)
   this.components = [null, null, null, null, null, null, null, null]; // components containing this cell (normally the first is used, but can be 2 for +, /, \, For TYPE_IC, up to 8 can be used, the index matching the output dir)
   this.comment = false;
@@ -8105,7 +8155,7 @@ function Cell() {
         console.log('CLICKDEBUG enabled!');
         console.log('===================');
         var w = world[y][x];
-        var s = 'x: ' + x + ', y: ' + y + ', circuitsymbol: ' + w.circuitsymbol + ', metasymbol: ' + w.metasymbol + ', displaysymbol: ' + w.displaysymbol + ' | clusterindex: ' + w.clusterindex;
+        var s = 'x: ' + x + ', y: ' + y + ', circuitsymbol: ' + w.circuitsymbol + ', metasymbol: ' + w.metasymbol + ', displaysymbol: ' + w.displaysymbol + ', circuitextra: ' + w.circuitextra + ' | clusterindex: ' + w.clusterindex;
         s += ', number: ' + w.number + ', numbertype: ' + w.numbertype;
         console.log(s);
         if(w.antennax != -1 || w.antennay != -1) console.log('antennax: ' + w.antennax + ', antennay: ' + w.antennay);
@@ -8718,38 +8768,13 @@ function connected2g(x, y, dir) {
 // for backplane wires and antennas. Connects to slightly less things than '.' would.
 function connected2b(x, y, dir) {
   var temp = world[y][x].circuitsymbol;
-  world[y][x].circuitsymbol = 'g';
+  if(!(antennamap[world[y][x].circuitsymbol] && world[y][x].circuitextra != 1)) world[y][x].circuitsymbol = 'g';
 
   var result = connected2(x, y, dir);
 
   world[y][x].circuitsymbol = temp;
 
   return result;
-}
-
-// another for graphics, for antennas, which are special
-// it's very similar to connected2b, but fixes one more antenna edge case in a
-// hacky way: if an antenna is used to cross an IC or other thin long component,
-// then there's no point in treating the IC as connected to this antenna, the
-// chip is already connected to itself anyway, and the connection of the antenna
-// to the chip makes the graphics look very confusing if the antenna was there
-// to make a wire cross the chip. So don't draw that as connected.
-function connected2a(x, y, dir) {
-  // TODO: also consider inputs pointing to this as connected: because thanks to the wraparound antennas let inputs through. Or alternatively, check the partner-antenna as well.
-  if(!connected2b(x, y, dir)) return false;
-
-  var c = world[y][x].circuitsymbol;
-
-  // this is a very simple hacky heuristic: only disable antennas with 1 gap in
-  // between pointing at each other, like ( )
-  // TODO: better solution would be to check if exactly same device (its # or
-  // core cell) are touching both antennas, while the antennas point at each other.
-  if(c == 'u' && dir == 0 && y - 2 >= 0 && world[y - 2][x].circuitsymbol == 'n') return false;
-  if(c == '(' && dir == 1 && x + 2 < w && world[y][x + 2].circuitsymbol == ')') return false;
-  if(c == 'n' && dir == 2 && y + 2 < h && world[y + 2][x].circuitsymbol == 'u') return false;
-  if(c == ')' && dir == 3 && x - 2 >= 0 && world[y][x - 2].circuitsymbol == '(') return false;
-
-  return true;
 }
 
 
@@ -9070,23 +9095,23 @@ function RendererDrawer() {
   this.drawAntennaSplit_ = function(cell, ctx) {
     var num = 0, code = 0;
     ctx.beginPath();
-    if(connected2a(cell.x, cell.y, 0)) { num++; code |= 1; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.4); }
-    if(connected2a(cell.x, cell.y, 1)) { num++; code |= 2; this.drawLineCore_(ctx, 0.6, 0.5, 1, 0.5); }
-    if(connected2a(cell.x, cell.y, 2)) { num++; code |= 4; this.drawLineCore_(ctx, 0.5, 0.6, 0.5, 1); }
-    if(connected2a(cell.x, cell.y, 3)) { num++; code |= 8; this.drawLineCore_(ctx, 0, 0.5, 0.4, 0.5); }
-    if(connected2a(cell.x, cell.y, 4)) { num++; code |= 16; this.drawLineCore_(ctx, 0.6, 0.4, 1, 0); }
-    if(connected2a(cell.x, cell.y, 5)) { num++; code |= 32; this.drawLineCore_(ctx, 0.6, 0.6, 1, 1); }
-    if(connected2a(cell.x, cell.y, 6)) { num++; code |= 64; this.drawLineCore_(ctx, 0.4, 0.6, 0, 1); }
-    if(connected2a(cell.x, cell.y, 7)) { num++; code |= 128; this.drawLineCore_(ctx, 0.4, 0.4, 0, 0); }
+    if(connected2b(cell.x, cell.y, 0)) { num++; code |= 1; this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.4); }
+    if(connected2b(cell.x, cell.y, 1)) { num++; code |= 2; this.drawLineCore_(ctx, 0.6, 0.5, 1, 0.5); }
+    if(connected2b(cell.x, cell.y, 2)) { num++; code |= 4; this.drawLineCore_(ctx, 0.5, 0.6, 0.5, 1); }
+    if(connected2b(cell.x, cell.y, 3)) { num++; code |= 8; this.drawLineCore_(ctx, 0, 0.5, 0.4, 0.5); }
+    if(connected2b(cell.x, cell.y, 4)) { num++; code |= 16; this.drawLineCore_(ctx, 0.6, 0.4, 1, 0); }
+    if(connected2b(cell.x, cell.y, 5)) { num++; code |= 32; this.drawLineCore_(ctx, 0.6, 0.6, 1, 1); }
+    if(connected2b(cell.x, cell.y, 6)) { num++; code |= 64; this.drawLineCore_(ctx, 0.4, 0.6, 0, 1); }
+    if(connected2b(cell.x, cell.y, 7)) { num++; code |= 128; this.drawLineCore_(ctx, 0.4, 0.4, 0, 0); }
     ctx.stroke();
-    if(connected2a(cell.x, cell.y, 0)) { drawer.drawFilledCircle_(ctx, 0.50, 0.35, 0.07); }
-    if(connected2a(cell.x, cell.y, 1)) { drawer.drawFilledCircle_(ctx, 0.65, 0.50, 0.07); }
-    if(connected2a(cell.x, cell.y, 2)) { drawer.drawFilledCircle_(ctx, 0.50, 0.65, 0.07); }
-    if(connected2a(cell.x, cell.y, 3)) { drawer.drawFilledCircle_(ctx, 0.35, 0.50, 0.07); }
-    if(connected2a(cell.x, cell.y, 4)) { drawer.drawFilledCircle_(ctx, 0.65, 0.35, 0.07); }
-    if(connected2a(cell.x, cell.y, 5)) { drawer.drawFilledCircle_(ctx, 0.65, 0.65, 0.07); }
-    if(connected2a(cell.x, cell.y, 6)) { drawer.drawFilledCircle_(ctx, 0.35, 0.65, 0.07); }
-    if(connected2a(cell.x, cell.y, 7)) { drawer.drawFilledCircle_(ctx, 0.35, 0.35, 0.07); }
+    if(connected2b(cell.x, cell.y, 0)) { drawer.drawFilledCircle_(ctx, 0.50, 0.35, 0.07); }
+    if(connected2b(cell.x, cell.y, 1)) { drawer.drawFilledCircle_(ctx, 0.65, 0.50, 0.07); }
+    if(connected2b(cell.x, cell.y, 2)) { drawer.drawFilledCircle_(ctx, 0.50, 0.65, 0.07); }
+    if(connected2b(cell.x, cell.y, 3)) { drawer.drawFilledCircle_(ctx, 0.35, 0.50, 0.07); }
+    if(connected2b(cell.x, cell.y, 4)) { drawer.drawFilledCircle_(ctx, 0.65, 0.35, 0.07); }
+    if(connected2b(cell.x, cell.y, 5)) { drawer.drawFilledCircle_(ctx, 0.65, 0.65, 0.07); }
+    if(connected2b(cell.x, cell.y, 6)) { drawer.drawFilledCircle_(ctx, 0.35, 0.65, 0.07); }
+    if(connected2b(cell.x, cell.y, 7)) { drawer.drawFilledCircle_(ctx, 0.35, 0.35, 0.07); }
     return [num, code];
   };
 
@@ -9652,7 +9677,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   // one time initialization of a cell
   this.init = function(cell, x, y, clickfun) {
     var c = cell.circuitsymbol;
-    if(digitmap[cell.metasymbol] && cell.numbertype == NUMBER_LED) {
+    if(digitmap[cell.metasymbol] && (cell.numbertype == NUMBER_LED /*|| cell.numbertype == NUMBER_ANTENNA*/)) {
       // Don't render the LED numbers in the graphical render mode (note: in text mode, they are rendered)
       this.norender = true;
     }
@@ -10896,7 +10921,7 @@ function render() {
       if(cell.components[5]) value |= (cell.components[5].value << 5);
       if(cell.components[6]) value |= (cell.components[6].value << 6);
       if(cell.components[7]) value |= (cell.components[7].value << 7);
-      if(antennamap[cell.circuitsymbol]) {
+      if(antennamap[cell.circuitsymbol] && cell.circuitextra == 1) {
         // This is an inaccurate hack to make antennas light up as well.
         // Antennas are actually more like "warp portals" that make far away cells treated as neighbors, but the antennas
         // themselves don't participate in the component structure.
@@ -10904,10 +10929,10 @@ function render() {
         // It is wrong in some edge cases, doesn't check any components beyond 3, doesn't check diagonal directions, and isn't copied in the renderHighlightComponent function
         // TODO: implement more accurate way. Maybe give antenna cells a component array of relevant components for rendering too, then this code can go away again.
         for(var i = 0; i < 4; i++) {
-          if(y > 0 && world[y - 1][x].components[i] && world[y - 1][x].components[i].value && connected2a(x, y, 0)) value |= (1 << i);
-          if(x + 1 < w && world[y][x + 1].components[i] && world[y][x + 1].components[i].value && connected2a(x, y, 1)) value |= (1 << i);
-          if(y + 1 < h && world[y + 1][x].components[i] && world[y + 1][x].components[i].value && connected2a(x, y, 2)) value |= (1 << i);
-          if(x > 0 && world[y][x - 1].components[i] && world[y][x - 1].components[i].value && connected2a(x, y, 3)) value |= (1 << i);
+          if(y > 0 && world[y - 1][x].components[i] && world[y - 1][x].components[i].value && connected2b(x, y, 0)) value |= (1 << i);
+          if(x + 1 < w && world[y][x + 1].components[i] && world[y][x + 1].components[i].value && connected2b(x, y, 1)) value |= (1 << i);
+          if(y + 1 < h && world[y + 1][x].components[i] && world[y + 1][x].components[i].value && connected2b(x, y, 2)) value |= (1 << i);
+          if(x > 0 && world[y][x - 1].components[i] && world[y][x - 1].components[i].value && connected2b(x, y, 3)) value |= (1 << i);
         }
       }
       cell.setValue(value);
@@ -10986,6 +11011,14 @@ function update() {
 // must be called after (or at the end of) parseCells
 // this handles various of the numbers, but those affecting comments (which trump all of those) are already done and removed at this point.
 function parseNumbers() {
+  for(var y = 0; y < h; y++) {
+    for(var x = line0[y]; x < line1[y]; x++) {
+      if(digitmap[world[y][x].symbol] && !world[y][x].comment) {
+        world[y][x].circuitsymbol = ' ';
+        //world[y][x].displaysymbol = ' ';
+      }
+    }
+  }
 
   // .numbertype
   for(var y = 0; y < h; y++) {
@@ -10993,15 +11026,16 @@ function parseNumbers() {
       if(world[y][x].skipparsing) continue;
       var c = world[y][x].metasymbol;
       var type = NUMBER_NONE;
-      if (c == '=') type = NUMBER_BUS;
-      if (c == '"' && world[y][x].symbol == '"') type = NUMBER_COMMENT;
-      if (c == 'l') type = NUMBER_LED;
-      if (c == 'r' || c == 'R') type = NUMBER_TIMER;
-      if (c == 'I') type = NUMBER_ICDEF;
-      if (c == 'i') type = NUMBER_ICCALL;
-      if (c == 'g') type = NUMBER_GLOBAL;
-      if (c == 'U') type = NUMBER_ALU; // TODO: this is not yet working: NUMBER_ALU should trump NUMBER_LED, but it looks like it does not in practice, at least for multidigit number
-      if (c == 'T') type = NUMBER_VTE; // TODO: same problem as NUMBER_ALU: does not actually use the priority order at all, and in addition this number should work next to # too and this code here doesn't know when the # belongs to a T
+      if(c == '=') type = NUMBER_BUS;
+      if(c == '"' && world[y][x].symbol == '"') type = NUMBER_COMMENT;
+      if(c == 'l') type = NUMBER_LED;
+      if(c == 'r' || c == 'R') type = NUMBER_TIMER;
+      if(c == 'I') type = NUMBER_ICDEF;
+      if(c == 'i') type = NUMBER_ICCALL;
+      if(c == 'g') type = NUMBER_GLOBAL;
+      if(c == 'U') type = NUMBER_ALU; // TODO: this is not yet working: NUMBER_ALU should trump NUMBER_LED, but it looks like it does not in practice, at least for multidigit number
+      if(c == 'T') type = NUMBER_VTE; // TODO: same problem as NUMBER_ALU: does not actually use the priority order at all, and in addition this number should work next to # too and this code here doesn't know when the # belongs to a T
+      if(antennamap[c]) type = NUMBER_ANTENNA;
       // todo: rom corner (is diagonal, currently not handled in this code...)
 
       if (type != NUMBER_NONE) {
@@ -11162,6 +11196,31 @@ function parseNumbers() {
     }
   }
 
+  // wrap-around antennas
+  for(var y = 0; y < h; y++) {
+    for(var x = line0[y]; x < line1[y]; x++) {
+      if(world[y][x].skipparsing) continue;
+      if(world[y][x].numbertype == NUMBER_ANTENNA && world[y][x].metasymbol == '0') {
+        for(var x2 = x + 1; x2 < line1[y]; x2++) {
+          if(world[y][x2].skipparsing || !antennamap[world[y][x2].circuitsymbol]) break;
+          world[y][x2].circuitextra = 1;
+        }
+        for(var x2 = x - 1; x2 >= line0[y]; x2--) {
+          if(!antennamap[world[y][x2].circuitsymbol]) break;
+          world[y][x2].circuitextra = 1;
+        }
+        for(var y2 = y + 1; y2 < h; y2++) {
+          if(!antennamap[world[y2][x].circuitsymbol]) break;
+          world[y2][x].circuitextra = 1;
+        }
+        for(var y2 = y - 1; y2 >= 0; y2--) {
+          if(!antennamap[world[y2][x].circuitsymbol]) break;
+          world[y2][x].circuitextra = 1;
+        }
+      }
+    }
+  }
+
   // '$' number extenders for bus and global wire
   // TODO: this implementation does not specify various corner cases, it is designed only to work with horizontal or vertical streaks like 4$$$$$,
   // and then only with core digits 0 to 9. Other behaviour and shapes should be treated as errors, or well-specified, instead of ignored like is done now.
@@ -11258,6 +11317,7 @@ function startLogPerformance() {
 
 // should be called asap after parseCells, everything else that has neighbors will depend on this
 function parseAntennas() {
+  // Note: more antenna related parsing happens in parseNumbers, which must have been called before this
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
       var c = world[y][x].circuitsymbol;
@@ -11271,6 +11331,11 @@ function parseAntennas() {
             if(count != 0) continue;
             world[y][x].antennax = xb;
             world[y][xb].antennax = x;
+            if(world[y][x].circuitextra == 1) world[y][xb].circuitextra = 1; // make it match, if it didn't already
+            if(world[y][xb].circuitextra == 1) world[y][x].circuitextra = 1; // make it match, if it didn't already
+            if(xb == x + 2 && world[y][x].circuitextra == 0) {
+              world[y][x].circuitextra = world[y][xb].circuitextra = 2; // short hop, do not connect to anything in the aimed side
+            }
             break;
           }
           if(world[yb][xb].circuitsymbol == '(') {
@@ -11288,6 +11353,11 @@ function parseAntennas() {
             if(count != 0) continue;
             world[y][x].antennay = yb;
             world[yb][x].antennay = y;
+            if(world[y][x].circuitextra == 1) world[yb][x].circuitextra = 1; // make it match, if it didn't already
+            if(world[yb][x].circuitextra == 1) world[y][x].circuitextra = 1; // make it match, if it didn't already
+            if(yb == y + 2 && world[y][x].circuitextra == 0) {
+              world[y][x].circuitextra = world[yb][x].circuitextra = 2; // short hop, do not connect to anything in the aimed side
+            }
             break;
           }
           if(world[yb][xb].circuitsymbol == 'n') {
@@ -11303,15 +11373,6 @@ function parseAntennas() {
 function parseExtra() {
   for(var y = 0; y < h; y++) {
     for(var x = line0[y]; x < line1[y]; x++) {
-      if(digitmap[world[y][x].symbol] && !world[y][x].comment) {
-        world[y][x].circuitsymbol = ' ';
-        //world[y][x].displaysymbol = ' ';
-      }
-      if(world[y][x].symbol == BACKSLASH_ALTERNATIVE && !world[y][x].comment) {
-        world[y][x].displaysymbol = '\\';
-        world[y][x].circuitsymbol = '\\';
-        world[y][x].metasymbol = '\\';
-      }
       var c = world[y][x].circuitsymbol;
       var wca, wcb, wcc;
 
@@ -11369,8 +11430,9 @@ function getNeighborNoAntennas(x, y, dir) {
 }
 
 // get neighbor, or if antenna, warps to position on other side
-// returns 'wc': "world cell"
+// returns 'wc': "world cell", or null if none
 // dir: 0=N, 1=E, 2=S, 3=W ; 4=NE, 5=SE, 6=SW, 7=NW
+// also warps through antennas, including rules to make wrap-around circuits work
 function getNeighbor(x, y, dir) {
   var x2 = x + ((dir == 1 || dir == 4 || dir == 5) ? 1 : ((dir == 3 || dir == 6 || dir == 7) ? -1 : 0));
   var y2 = y + ((dir == 0 || dir == 4 || dir == 7) ? -1 : ((dir == 2 || dir == 5 || dir == 6) ? 1 : 0));
@@ -11382,58 +11444,24 @@ function getNeighbor(x, y, dir) {
   var dy = y2 - y;
   var wca = world[y2][x2];
   if(dir < 4) {
-    var withantenna = false;
-    if(wca.antennax != -1) {
+    if(wca.circuitextra == 1 && wca.antennax != -1) {
       x2 = wca.antennax + dx;
       y2 += dy;
-      withantenna = true;
+      if(x2 < 0 || x2 >= w) return null;
+      if(y2 < 0 || y2 >= h) return null;
     }
-    else if(wca.antennay != -1) {
+    else if(wca.circuitextra == 1 && wca.antennay != -1) {
       x2 += dx;
       y2 = wca.antennay + dy;
-      withantenna = true;
+      if(x2 < 0 || x2 >= w) return null;
+      if(y2 < 0 || y2 >= h) return null;
     }
-    // Normally antennas act as something that teleports to a next neighbor. So this is supported:
-    // s--(   )-->l
-    // but this is not since it won't teleport to that rightmost wire when trying to go to the left on the left side:
-    // (--s  )-->l
-    // but as an exception the above SHOULD be allowed. Therefor the next small piece of code. The trick is: if the neighbor side of the antenna is an isolator, and so is the matching other side of the starting antenna, then take the other one.
-    // TODO: also implement this for the diagonal case
-    var c2 = (x2 >= 0 && x2 < w && y2 >= 0 && y2 < h) ? world[y2][x2].circuitsymbol : ' ';
-    if(withantenna && c2 && (c2 == ' ' || c2 == '@')) { // TODO: 'connected' could be used instead of this isolator test
-      var c = world[y][x].circuitsymbol;
-      // do not do this for direction-dependent symbols (which includes large devices where input/output location matters)
-      if(c != ' ' && c != '%' && c != '&' && !inputmap[c] && !largedevicemap[c] && !largeextendmap[c] && c != '=') {
-        var dxo = (wca.antennax == x) ? 0 : (wca.antennax > x ? 1 : -1);
-        var dyo = (wca.antennay == y) ? 0 : (wca.antennay > y ? 1 : -1);
-        // x,y = orig location
-        // x2,y2 = standard antenna neighbor
-        // x3,y3 = opposite of standard antenna neighbor
-        // x4,y4 = antenna-neighbor of x3,y3, so distance 2 away from x,y with the current source antenna in between
-        var x4 = x + dx * 2;
-        var y4 = y + dy * 2;
-        var c4 = (x4 >= 0 && x4 < w && y4 >= 0 && y4 < h) ? world[y4][x4].circuitsymbol : ' ';
-        // only do this if also c4 is isolator so there would not exist a different connection from x3,y3 to x4,y4
-        if(c4 && (c4 == ' ' || c4 == '@')) {
-          var x3 = x2 - dx * 2;
-          var y3 = y2 - dy * 2;
-          var c3 = (x3 >= 0 && x3 < w && y3 >= 0 && y3 < h) ? world[y3][x3].circuitsymbol : ' ';
-          if(c3 != ' ' && c3 != '%' && c3 != '&' && !inputmap[c3] && !largedevicemap[c3] && !largeextendmap[c3] && c3 != '=') {
-            x2 = x3;
-            y2 = y3;
-          }
-        }
-      }
-    }
-
-    if(x2 < 0 || x2 >= w) return null;
-    if(y2 < 0 || y2 >= h) return null;
   } else {
     var wcb = world[y][x2];
     var wcc = world[y2][x];
-    var antennaa = wca.antennax != -1 || wca.antennay != -1;
-    var antennab = wcb.antennax != -1 || wcb.antennay != -1;
-    var antennac = wcc.antennax != -1 || wcc.antennay != -1;
+    var antennaa = wca.circuitextra == 1 && (wca.antennax != -1 || wca.antennay != -1);
+    var antennab = wcb.circuitextra == 1 && (wcb.antennax != -1 || wcb.antennay != -1);
+    var antennac = wcc.circuitextra == 1 && (wcc.antennax != -1 || wcc.antennay != -1);
     //   ca  b/  ac  \b
     //   /b  ac  b\  ca
     if(antennaa || antennab || antennac) {
@@ -11452,17 +11480,17 @@ function getNeighbor(x, y, dir) {
 
         var ok = true;
         //   c   e
-        //   n   n
+        //  0n   n0
         // b(     )b'
         //
         // d(     )d'
-        //   u   u
+        //  0u   u0
         //   c'  e'
 
         var wcd = world[wcc.antennay + (wcc.antennay > y2 ? -1 : 1)][x2];
         var wce = world[y2][wcb.antennax + (wcb.antennax > x2 ? -1 : 1)];
-        if(wcd.antennax != wcb.antennax) ok = false;
-        if(wce.antennay != wcc.antennay) ok = false;
+        if(!wcd.circuitextra == 1 || wcd.antennax != wcb.antennax) ok = false;
+        if(!wce.circuitextra == 1 || wce.antennay != wcc.antennay) ok = false;
         if(ok) {
           x2 = wcb.antennax + dx;
           y2 = wcc.antennay + dy;
@@ -11942,7 +11970,7 @@ function parseICCalls() {
         }
 
         // neighbors
-        for(var i = 0; i < 4; i++) { // N, E, S, W
+        for(var i = 0; i < 4; i++) { // 0=N, 1=E, 2=S, 3=W
           var x2 = x + ((i == 1) ? 1 : ((i == 3) ? -1 : 0));
           var y2 = y + ((i == 0) ? -1 : ((i == 2) ? 1 : 0));
           if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
@@ -12042,7 +12070,7 @@ function parseICTemplates() {
         }
 
         // neighbors
-        for(var i = 0; i < 8; i++) { // N, E, S, W ; NE, SE, SW, NW
+        for(var i = 0; i < 8; i++) { // 0=N, 1=E, 2=S, 3=W ; 4=NE, 5=SE, 6=SW, 7=NW
           var x2 = x + ((i == 1 || i == 4 || i == 5) ? 1 : ((i == 3 || i == 6 || i == 7) ? -1 : 0));
           var y2 = y + ((i == 0 || i == 4 || i == 7) ? -1 : ((i == 2 || i == 5 || i == 6) ? 1 : 0));
           if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
@@ -12138,7 +12166,7 @@ function convertJunctionNumbers() {
         }
 
         // neighbors
-        for(var i = 0; i < 4; i++) { // N, E, S, W
+        for(var i = 0; i < 4; i++) { // 0=N, 1=E, 2=S, 3=W
           var x2 = x + ((i == 1) ? 1 : ((i == 3) ? -1 : 0));
           var y2 = y + ((i == 0) ? -1 : ((i == 2) ? 1 : 0));
           if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
@@ -12213,7 +12241,7 @@ function convertBackplaneNumbers() {
       var number = world[y0][x0].number;
       var dir = -1;
 
-      for(var i = 0; i < 4; i++) { // N, E, S, W
+      for(var i = 0; i < 4; i++) { // 0=N, 1=E, 2=S, 3=W
         var x2 = x0 + ((i == 1) ? 1 : ((i == 3) ? -1 : 0));
         var y2 = y0 + ((i == 0) ? -1 : ((i == 2) ? 1 : 0));
         if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
@@ -12263,11 +12291,38 @@ function convertBackplaneNumbers() {
 }
 
 
-// An important thing about this function that is relied on by all users, is that it does NOT connect components to each other, it finds the cells that belong to a single component instead (which includes all its entire output wires which can be huge of course).
+// An important thing about this function that is relied on by all users, is that it does NOT connect components to each other,
+// it finds the cells that belong to a single component instead (which includes all its entire output wires which can be huge of course).
 // todir: 0=N, 1=E, 2=S, 3=W ; 4=NE, 5=SE, 6=SW, 7=NW, from c to c2
 function connected(c, c2, ce, ce2, todir, z, z2) {
-  if(antennamap[c] || antennamap[c2]) {
-    return false;
+  var a = antennamap[c];
+  var a2 = antennamap[c2];
+  if(a || a2) {
+
+    if(a && ce == 1) return false; // wrap-around antenna does not participate
+    if(a2 && ce2 == 1) return false; // wrap-around antenna does not participate
+    if(a && a2) return false; // antennas do not interact with each other
+    //short-hop antenna ignores what's sandwitched in between the (x), as well as inputs touching the sides so that it can hop over a gate or chip with inputs going to that chip
+    if(a && ce == 2) {
+      if(todir == 0 && c == 'u') return false;
+      if(todir == 1 && c == '(') return false;
+      if(todir == 2 && c == 'n') return false;
+      if(todir == 3 && c == ')') return false;
+      if((todir == 0 || todir == 2) && (c == '(' || c == ')') && inputmap[c2]) return false;
+      if((todir == 1 || todir == 3) && (c == 'u' || c == 'n') && inputmap[c2]) return false;
+
+    }
+    if(a2 && ce2 == 2) {
+      if(todir == 2 && c2 == 'u') return false;
+      if(todir == 3 && c2 == '(') return false;
+      if(todir == 0 && c2 == 'n') return false;
+      if(todir == 1 && c2 == ')') return false;
+      if((todir == 0 || todir == 2) && (c2 == '(' || c2 == ')') && inputmap[c]) return false;
+      if((todir == 1 || todir == 3) && (c2 == 'u' || c2 == 'n') && inputmap[c]) return false;
+    }
+    // from now on, antenna acts as '.' wire
+    if(a) c = '.';
+    if(a2) c2 = '.';
   }
 
   // for the diagonal ^ style inputs, for any non-diagonal type of cell (|, -, +, &, %, ...), treat as if we have an orthogonal direction anyway
@@ -12323,20 +12378,6 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
       !(z == 1 && (todir == 0 || todir == 2)) &&
       !(z == 2 && (todir == 5 || todir == 7)) &&
       !(z == 3 && (todir == 4 || todir == 6))) return false;
-
-  /*if(c2 != '#') {
-    // nothing interacts with the front side if device inputs here, that is resolved only later
-    if((c == '^' || c == 'm') && todir == 0) return false;
-    if((c == '>' || c == ']') && todir == 1) return false;
-    if((c == 'v' || c == 'w') && todir == 2) return false;
-    if((c == '<' || c == '[') && todir == 3) return false;
-  } else {
-    // # only interacts with back side of it
-    if((c == '^' || c == 'm') && todir != 2) return false;
-    if((c == '>' || c == ']') && todir != 3) return false;
-    if((c == 'v' || c == 'w') && todir != 0) return false;
-    if((c == '<' || c == '[') && todir != 1) return false;
-  }*/
 
   if(dinputmap[c] && ce != 2) {
     // nothing interacts with the front side if device inputs here, that is resolved only later
@@ -12540,6 +12581,19 @@ function handleBackPlaneConnections(used, stack, x, y, z) {
       used[yb][xb][0] = true;
     }
   }
+  if(antennamap[c] && world[y][x].circuitextra != 1) {
+    var wca = world[y][x];
+    if(wca.antennax != -1 || wca.antennay != -1) {
+      var xb = x;
+      var yb = y;
+      if(wca.antennax != -1) xb = wca.antennax;
+      if(wca.antennay != -1) yb = wca.antennay;
+      if(!used[yb][xb][z]) {
+        stack.push([xb, yb, z]);
+        used[yb][xb][z] = true;
+      }
+    }
+  }
 }
 
 // buses ('=')
@@ -12652,6 +12706,7 @@ function parseComponents() {
   globalLooseWireInstanceE = null;
 
   // PASS 0: parse the buses ('=')
+  logPerformance('parseComponents pass 0 begin');
   used = initUsed3();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
@@ -12681,7 +12736,7 @@ function parseComponents() {
         }
 
         // neighbors
-        for(var i = 0; i < 8; i++) { // N, E, S, W ; NE, SE, SW, NW
+        for(var i = 0; i < 8; i++) { // 0=N, 1=E, 2=S, 3=W ; 4=NE, 5=SE, 6=SW, 7=NW
           var wc2 = getNeighbor(x, y, i);
           if(wc2 == null) continue;
           var x2 = wc2.x;
@@ -12742,6 +12797,7 @@ function parseComponents() {
   }
 
   // PASS 1: large devices and extension ('#') clusters
+  logPerformance('parseComponents pass 1 begin');
   var clusterindex = 0;
   used = initUsed2();
   for(var y0 = 0; y0 < h; y0++) {
@@ -12781,7 +12837,7 @@ function parseComponents() {
         array.push(s);
 
         // neighbors
-        for(var i = 0; i < 4; i++) { // N, E, S, W
+        for(var i = 0; i < 4; i++) { // 0=N, 1=E, 2=S, 3=W
           var x2 = x + ((i == 1) ? 1 : ((i == 3) ? -1 : 0));
           var y2 = y + ((i == 0) ? -1 : ((i == 2) ? 1 : 0));
           if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
@@ -12867,9 +12923,8 @@ function parseComponents() {
     }
   }
 
-  logPerformance('parseComponents pass 1 begin');
-
   // PASS 2: parse all components
+  logPerformance('parseComponents pass 2 begin');
   used = initUsed3();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
@@ -12991,7 +13046,7 @@ function parseComponents() {
           }
 
           // neighbors
-          for(var i = 0; i < 8; i++) { // N, E, S, W ; NE, SE, SW, NW
+          for(var i = 0; i < 8; i++) { // 0=N, 1=E, 2=S, 3=W ; 4=NE, 5=SE, 6=SW, 7=NW
             var wc2 = getNeighbor(x, y, i);
             if(wc2 == null) continue;
             var x2 = wc2.x;
@@ -13098,9 +13153,8 @@ function parseComponents() {
     }
   }
 
-  logPerformance('parseComponents pass 2 begin');
-
   // PASS 3, now to resolve devices made out of multiple devices (ROM, VTE, FF). TODO: remove more code duplication
+  logPerformance('parseComponents pass 3 begin');
   used = initUsed3();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
@@ -13236,6 +13290,7 @@ function parseComponents() {
   }
 
   // pass 4: now resolve inputs and outputs of all components
+  logPerformance('parseComponents pass 4 begin');
   var inputused = initUsed2();
   for(var i = 0; i < components.length; i++) {
     var component = components[i];
@@ -13262,7 +13317,6 @@ function parseComponents() {
             inputused[y2][x2] = true;
           }
         }
-      //} else if((c == 'X' || c == 'Y') && component.type != TYPE_LOOSE_WIRE_IMPLICIT) {
       } else if((c == 'X' && component.type != TYPE_LOOSE_WIRE_IMPLICIT) || c == 'Y') {
         // why not for loose wire: if a X touches an AND with an unused side, then it would be
         // counted as an actual input for the AND and the AND would never work. For other inputs
@@ -13803,8 +13857,9 @@ function makeTocRoom(text, tocPos, tocType, codelen, outCoords) {
     numLines = numchapters + 1;
   }
 
+  var newlines = '';
+
   if(tocType >= 1 && tocType <= 3) {
-    var newlines = '';
     numLines = allRegisteredCircuits.length;
     if(tocType == 2) {
       numLines = 0;
@@ -13931,14 +13986,6 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   if(!parseCells(text)) return false;
   logPerformance('parseCells done');
 
-  logPerformance('parseAntennas begin');
-  if(!parseAntennas()) return false;
-  logPerformance('parseAntennas done');
-
-  logPerformance('parseExtra begin');
-  if(!parseExtra()) return false;
-  logPerformance('parseExtra done');
-
   for(var i = 0; i < tocs.length; i++) {
     var tocX = tocs[i][0];
     var tocY = tocs[i][1];
@@ -13957,6 +14004,14 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   logPerformance('parseNumbers begin');
   parseNumbers();
   logPerformance('parseNumbers done');
+
+  logPerformance('parseAntennas begin');
+  if(!parseAntennas()) return false;
+  logPerformance('parseAntennas done');
+
+  logPerformance('parseExtra begin');
+  if(!parseExtra()) return false;
+  logPerformance('parseExtra done');
 
   logPerformance('parseBackplanes begin');
   convertBackplaneNumbers();
@@ -14029,9 +14084,10 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   // circuits tend to be higher than wider ("articles"), and for reading it's
   // easier to not span the width of the entire screen, but have some more
   // vertical text available instead.
-  // do this only if h is large enough compared to w, because for a less vertical
-  // circuit (less article-like), this is undesired instead.
   if(docwidth2 > docheight2 && fity > fitx * 0.75 && h > 3 * w) docwidth2 = docheight2;
+  // And even if it's not an article but a circuit that's more wide than high,
+  // but part is invisible below the bottom, still make it fit anyway (otherwide e.g. the game of life circuit looks very badly zoomed in on widescreen)
+  else if(docwidth2 > docheight2 && Math.floor(docwidth2 / (fitx + 2)) * h > docheight2) docwidth2 = docheight2;
   tw = Math.floor(docwidth2 / (fitx + 2));
   th = Math.floor(docheight2 / (fity + 2));
   //t = Math.max(tw, th);

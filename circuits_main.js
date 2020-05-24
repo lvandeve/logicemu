@@ -3551,7 +3551,7 @@ i7####### i7####### i7####### i7#######      i7####### i7#######      i7####### 
                        ====2$$$====0$$$                 ====0$$$                 ====0$$$                 ====0$$$                 ====0$$$                 ====0$$$
                        3$$$||||1$$$||||                 1$$$||||                 1$$$||||                 1$$$||||                 1$$$||||                 1$$$||||
                        ||||||||||||||||                 ||||||||                 ||||||||                 ||||||||                 ||||||||                 ||||||||
-                       U78#############                 U78#####                 U78#####                 U78#####                 U78#####                 U78#####
+                       U54#############                 U54#####                 U54#####                 U54#####                 U54#####                 U54#####
                            ^^^^^^^^^^^^                     ^^^^                    ^^^^^                    ^^^^^                   ^^^^^^                   ^^^^^^
                            ||||||||||||                     ||||                    |||||                    |||||                   ||||||                   ||||||
                            5$$$$$$$$$$$                     4$$$                    3$$$$                    2$$$$                   1$$$$$                   0$$$$$
@@ -3598,6 +3598,7 @@ registerCircuit('Add Days To Date', `
 
 
 0"Allows adding days to a date, outputting the new date, taking leap years etc... into account"
+0"You can also add negative days to subtract days instead."
 
 0"Does not support years before 1970 (the unix epoch)"
 
@@ -3613,10 +3614,10 @@ registerCircuit('Add Days To Date', `
                                 U89#########################################
                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
                                 ||||||||||||||||||||||||||||||||||||||||||||
-                     U24##################################################################
+                     U152#################################################################
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
                      |||||||||||||||||||||||||||||||| ||||||||||||||||||||||||||||||||||||
-               U90################################### U26##################################
+               U90################################### U154#################################
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^
                |||||||||||||||||||||||||||||||||||||| |||||||||||||||| ||||||||||||||||||||
                |||||||||||||||||||||||||||||||||||||| |||||||||||||||| T###################
@@ -3924,7 +3925,7 @@ registerCircuit('Conway\'s game of life wrap', `
 
 
 
-     nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+    0nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn0
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
     (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
     (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
@@ -4005,7 +4006,7 @@ registerCircuit('Conway\'s game of life wrap', `
     (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
     (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
     (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
-     uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
+    0uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu0
 
 
           l           ls          l
@@ -4047,7 +4048,7 @@ registerCircuit('Conway\'s game of life ship', `
 
 
 
-     nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+    0nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn0
     (x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx x^vx )
     (##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v##i#v)
     (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
@@ -4128,7 +4129,7 @@ registerCircuit('Conway\'s game of life ship', `
     (#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>#<pi>)
     (#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<#>li<)
     (##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^##i#^)
-     uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
+    0uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu0
 
 
 
@@ -4171,7 +4172,7 @@ registerCircuit('Langtons Ant', `
 0"MODE:electron"
 
 
-      nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+     0nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn0
      ( v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^ v ^)
      (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
      ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
@@ -4232,7 +4233,7 @@ registerCircuit('Langtons Ant', `
      (<###<###<###<###<###<###<###<###<###<###<###<###<###<###<###)
      ( #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v# #v#)
      (>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili>ili)
-      uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu
+     0uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu0
 
 
 

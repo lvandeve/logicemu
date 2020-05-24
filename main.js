@@ -444,10 +444,10 @@ function getStatsText() {
   text += 'estimated num transistors: ' + (numTransistors + numTransistorsLarge) + '\n'; // not exact for large components like built-in flip-flops, ALUs, ...
   text += 'num transistors (excluding large devices): ' + numTransistors  + '\n';
   text += 'estimated num logic gates: ' + (numGates + numGatesLarge + numGatesOther) + '\n'; // not exact for large components like built-in flip-flops, ALUs, ... Also, inverted inputs for logic gates are not counted as extra gates, and multi-input gates count as 1 gate.
-  text += 'num standard logic gates: ' + numGates + '\n';
+  text += 'num standard logic gates (excludes large devices): ' + numGates + '\n';
   text += 'num inverted inputs (extra NOT gates): ' + numInvertedInputs  + '\n';
   text += '\n';
-  text += ' component stats\n';
+  text += ' component stats (= logic gates, leds, large devices, ...)\n';
   text += 'num components: ' + numComponents + '\n';
   text += 'num on components: ' + numOnComponents + '\n';
   text += 'num off components: ' + numOffComponents + '\n';
