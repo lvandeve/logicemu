@@ -1410,6 +1410,8 @@ var NUMBER_index = 0;
 var NUMBER_NONE = NUMBER_index++;
 var NUMBER_LED = NUMBER_index++;
 var NUMBER_TIMER = NUMBER_index++;
+var NUMBER_PULSE = NUMBER_index++;
+var NUMBER_JUKEBOX = NUMBER_index++;
 var NUMBER_ROM = NUMBER_index++;
 var NUMBER_ALU = NUMBER_index++;
 var NUMBER_VTE = NUMBER_index++;
@@ -3419,10 +3421,10 @@ function Alu() {
         case 21: return this.numb ? 'gt' : 'gt0';
         case 22: return 'min';
         case 23: return 'max';
-        case 24: return 'add';
-        case 25: return 'sub';
-        case 26: return 'mul';
-        case 27: return 'div';
+        case 24: return this.numc ? 'addm' : 'add';
+        case 25: return this.numc ? 'subm' : 'sub';
+        case 26: return this.numc ? 'mulm' : 'mul';
+        case 27: return this.numc ? 'divm' : 'div';
         case 28: return 'rem';
         case 29: return 'fdiv';
         case 30: return 'mod';
@@ -3589,7 +3591,7 @@ function Alu() {
     var signed = this.signed;
     if(op < 16) signed = false;
     if(op == 34 || op == 35) signed = true;
-    if(op == 90) signed = false;
+    if(op == 55 || op == 90) signed = false;
 
     var a = math.n0;
     for(var i = 0; i < this.numa; i++) {
@@ -3620,7 +3622,7 @@ function Alu() {
       var maxb = (math.n1 << (nb - math.n1)) - math.n1;
       var maxc = (math.n1 << (nc - math.n1)) - math.n1;
       if(a > maxa) a = (a - maska - math.n1);
-      if(b > maxb) b = (b - maskb - math.n1);
+      if(op != 54 && b > maxb) b = (b - maskb - math.n1);
       if(c > maxc) c = (c - maskc - math.n1);
     }
 
@@ -3903,7 +3905,7 @@ function Alu() {
           s += math.n4;
           a = math.supportbigint ? (a / math.n10) : Math.floor(a / 10);
         }
-        if(neg) s |= (math.n1 << s);
+        if(neg) o |= (math.n1 << math.B(this.numo - 1));
       } else {
         // binary to base b (or if misc input, base b+1), using numb as amount of wires per output digit
         var base = b;
@@ -3920,14 +3922,14 @@ function Alu() {
             s += math.B(this.numb);
             a = math.floordiv(a, base);
           }
-          if(neg) s |= (math.n1 << s);
+          if(neg) o |= (math.n1 << math.B(this.numo - 1));
         }
       }
     } else if(op == 55) {
       if(this.numb == 0) {
         // bcd to binary
-        var neg = a < 0;
-        if(neg) a = -a;
+        var neg = !!(a & (math.n1 << math.B(this.numa - 1)));
+        if(neg) a ^= (math.n1 << math.B(this.numa - 1));
         var s = math.n1;
         while(a > 0) {
           var m = a & math.n15;
@@ -3935,7 +3937,7 @@ function Alu() {
           s *= math.n10;
           a >>= math.n4;
         }
-        if(neg) s |= (math.n1 << s);
+        if(neg) o = -o;
       } else {
         // any base b (or if misc input, base b+1) to binary, using numb as amount of wires per input digit
         var base = b;
@@ -3944,8 +3946,8 @@ function Alu() {
           overflow = true;
         } else {
           var mask = (math.n1 << math.B(this.numb)) - math.n1;
-          var neg = a < 0;
-          if(neg) a = -a;
+          var neg = !!(a & (math.n1 << math.B(this.numa - 1)));
+          if(neg) a ^= (math.n1 << math.B(this.numa - 1));
           var s = math.n1;
           while(a > 0) {
             var m = a & mask;
@@ -3953,12 +3955,12 @@ function Alu() {
             s *= base;
             a >>= math.B(this.numb);
           }
-          if(neg) s |= (math.n1 << s);
+          if(neg) o = -o;
         }
       }
     } else if(op == 56) {
       // modular inverse, modulo 2^outputbits if 1-input op, module b if 2-input op
-      if(this.numb == 0) b = (math.n1 << math.B(this.numo));
+      if(this.numb == 0) b = (math.n1 << math.B(this.numo - 1));
       if(a == 0 || b == 0) {
         overflow = true;
       } else {
@@ -7009,8 +7011,8 @@ function Component() {
           // the code is the same for both since k's output is already inversed elsewhere.
           if(numj1 || numk1) ff.value = 1;
         } else if(numQ1 && numq1) {
-          // Asynchronous set and reset (input on q and Q) override the enable input (ffdisable)
-          ff.value = !ff.value;
+          // NOTE: asynch inputs (q and Q) override even enable input (y). When trying to make SR latch without clock and with enable, use jky, not qQy since in the latter the y will be ignored.
+          ff.value = !ff.value; // asynch toggle
         } else if(numQ1) {
           ff.value = false; // asynch reset (takes priority over set)
         } else if(numq1) {
@@ -7612,10 +7614,26 @@ function setColorScheme(index) {
   } else if(index == 6) { // inverted
     setColorScheme(0);
     negateColorScheme(); // this only looks decent for inverting the 'light' color scheme.
-  } else if(index == 7 || index == 8) { // monochrome
-    ONCOLOR = (index == 7 ? 'black' : 'white');
+  } else if(index == 7) { // contrast
+    setColorScheme(2); //gray
+
+    BGCOLOR = '#888';
+    GATEBGCOLOR = '#987'; // '#b4b4b4';
+    var ledoffbg = '#000';
+    led_off_bg_colors = [ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg];
+    led_off_fg_colors[8] = led_off_fg_colors[0];
+    led_off_border_colors[8] = led_off_border_colors[0];
+    SWITCHOFF_BGCOLOR = '#000';
+
+    ONCOLOR = 'white';
+    OFFCOLOR = 'black';
+    TEXTFGCOLOR = '#000';
+    TEXTBGCOLOR = '#fff';
+    LINKCOLOR = '#22f';
+  } else if(index == 8 || index == 9) { // monochrome
+    ONCOLOR = (index == 8 ? 'black' : 'white');
     OFFCOLOR = ONCOLOR;
-    BGCOLOR = (index == 7 ? 'white' : 'black');
+    BGCOLOR = (index == 8 ? 'white' : 'black');
     TEXTFGCOLOR = ONCOLOR; // '#940';
     TEXTBGCOLOR = BGCOLOR;
 
@@ -7868,31 +7886,44 @@ function Cell() {
     var c = this.circuitsymbol;
     var symbol = this.displaysymbol;
     var virtualsymbol = symbol;
-    if(symbol == '#' && this.components[0]) {
+    var component = this.components[0] || this.components[1];
+    var type = component ? component.type : TYPE_NULL;
+    if(symbol == '#') {
       // TODO: use "typesymbols"
-      if(this.components[0].type == TYPE_SWITCH_ON) virtualsymbol = 'S';
-      if(this.components[0].type == TYPE_SWITCH_OFF) virtualsymbol = 's';
-      if(this.components[0].type == TYPE_LED) virtualsymbol = 'l';
-      if(this.components[0].type == TYPE_PUSHBUTTON_ON) virtualsymbol = 'P';
-      if(this.components[0].type == TYPE_PUSHBUTTON_OFF) virtualsymbol = 'p';
-      if(this.components[0].type == TYPE_TIMER_ON) virtualsymbol = 'R';
-      if(this.components[0].type == TYPE_TIMER_OFF) virtualsymbol = 'r';
-      if(this.components[0].type == TYPE_MUX) virtualsymbol = 'M';
-      if(this.components[0].type == TYPE_ALU) virtualsymbol = 'U';
-      if(this.components[0].type == TYPE_VTE) virtualsymbol = 'T';
-      if(this.components[0].type == TYPE_DOTMATRIX) virtualsymbol = 'D';
-    }
-    if(symbol == '#' && this.components[1]) {
-      if(this.components[1].type == TYPE_MUX) virtualsymbol = 'M';
-      if(this.components[1].type == TYPE_ALU) virtualsymbol = 'U';
-      if(this.components[1].type == TYPE_VTE) virtualsymbol = 'T';
+      if(type == TYPE_SWITCH_ON) virtualsymbol = 'S';
+      if(type == TYPE_SWITCH_OFF) virtualsymbol = 's';
+      if(type == TYPE_LED) virtualsymbol = 'l';
+      if(type == TYPE_PUSHBUTTON_ON) virtualsymbol = 'P';
+      if(type == TYPE_PUSHBUTTON_OFF) virtualsymbol = 'p';
+      if(type == TYPE_TIMER_ON) virtualsymbol = 'R';
+      if(type == TYPE_TIMER_OFF) virtualsymbol = 'r';
+      if(type == TYPE_MUX) virtualsymbol = 'M';
+      if(type == TYPE_ALU) virtualsymbol = 'U';
+      if(type == TYPE_VTE) virtualsymbol = 'T';
+      if(type == TYPE_DOTMATRIX) virtualsymbol = 'D';
     }
 
 
     var title = null;
     if(!this.comment) {
       var tc = c;
-      if(tc == '#') tc = this.components[0].corecell.circuitsymbol;
+      if(digitmap[this.metasymbol]) {
+        if(this.numbertype == NUMBER_LED) title = 'digit affecting LED color';
+        if(this.numbertype == NUMBER_TIMER) title = 'digit indicating timer speed';
+        if(this.numbertype == NUMBER_PULSE) title = 'digit indicating pulse speed';
+        if(this.numbertype == NUMBER_JUKEBOX) title = 'digit indicating jukebox sound frequency';
+        if(this.numbertype == NUMBER_ROM) title = 'digit indicating least significant bit position of ROM address';
+        if(this.numbertype == NUMBER_ALU) title = 'digit affecting ALU operation';
+        if(this.numbertype == NUMBER_VTE && this.metasymbol == '1') title = 'digit indicating decimal display is signed';
+        if(this.numbertype == NUMBER_ICCALL) title = 'IC usage numeric code, matches an IC definition';
+        if(this.numbertype == NUMBER_ICDEF) title = 'IC definition numeric code';
+        if(this.numbertype == NUMBER_GLOBAL) title = 'backplane numbered connection';
+        // TODO: some digits are erronously set to NUMBER_BUS in handleJunctionConnections, disable the misleading title for now
+        //if(this.numbertype == NUMBER_BUS) title = 'bus numbered connection';
+        if(this.numbertype == NUMBER_ANTENNA) title = 'digit indicating the backplane "antennas" use wrap-around';
+        if(this.numbertype == NUMBER_COMMENT) title = 'digit setting comment alignment and style';
+      }
+      if(tc == '#') tc = component.corecell.circuitsymbol;
       if(tc == '-' || tc == '|' || tc == '.' || tc == '/' || tc == '\\' || tc == '%' || tc == '&') {
         title = 'wire. Shift+click to highlight.';
       }
@@ -7911,14 +7942,26 @@ function Cell() {
       if(tc == 'p') title = 'pushbutton (hold mouse down to enable)';
       if(tc == 'P') title = 'pushbutton (hold mouse down to disable)';
       if(tc == 'r' || tc == 'R') title = 'timer (click to freeze/unfreeze)';
-      if(tc == 'l') title = 'LED';
+      if(tc == 'l') {
+        title = 'LED';
+        if(this.number <= 0) title += ' (color 0: red)'; // -1 indicates default color, which is also red
+        if(this.number == 1) title += ' (color 1: orange)';
+        if(this.number == 2) title += ' (color 2: yellow)';
+        if(this.number == 3) title += ' (color 3: green)';
+        if(this.number == 4) title += ' (color 4: blue)';
+        if(this.number == 5) title += ' (color 5: purple)';
+        if(this.number == 6) title += ' (color 6: pink)';
+        if(this.number == 7) title += ' (color 7: white)';
+        if(this.number == 8) title += ' (color 8: off=red, on=green)';
+        if(this.number > 8) title += ' (unknown color)';
+      }
       if(tc == '?') title = 'random generator';
       if(tc == 'J') {
         title = 'jukebox (speaker, for music)';
-        if(this.components[0]) {
-          var jukebox = this.components[0].jukebox;
+        if(component) {
+          var jukebox = component.jukebox;
           if(jukebox) {
-            title += '. Frequency: ' + jukebox.frequency + ' Hz';
+            title += '. Frequency: ' + (jukebox.frequency || 'variable') + ' Hz';
             title += '. Shape: ' + jukebox.getShapeName();
           }
         }
@@ -7929,31 +7972,45 @@ function Cell() {
       if(tc == 'O') title = 'NOR gate';
       if(tc == 'e') title = 'XOR gate (odd parity detector)';
       if(tc == 'E') title = 'XNOR gate (even parity detector)';
-      if(tc == 'h') title = 'one-hot detector';
-      if(tc == 'H') title = 'inverted one-hot detector';
+      if(tc == 'h') title = 'one-hot detector (same as XOR if 2 inputs)';
+      if(tc == 'H') title = 'inverted one-hot detector (same as XNOR if 2 inputs)';
       if(tc == 'f') title = 'constant off (fixed off)';
       if(tc == 'F') title = 'constant on (fixed on)';
-      if(tc == 'c' || tc == 'C') {
-        if(this.components[0] && this.components[0].type == TYPE_COUNTER) {
-          if(tc == 'c') title = 'counter off';
-          if(tc == 'C') title = 'counter on';
-        } else {
-          title = 'flipflop clock input (or counter if combined only with y, q or Q)';
+      if(type == TYPE_FLIPFLOP) {
+        var ff = component.ff;
+        if(!ff && component.master) ff = component.master.ff;
+        var name = 'flipflop';
+        if(ff) {
+          if(ff.numc && ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'D flipflop';
+          if(ff.numc && !ff.numd && !ff.numj && !ff.numk && ff.numt) name = 'T flipflop';
+          if(ff.numc && !ff.numd && ff.numj && ff.numk && !ff.numt) name = 'JK flipflop';
+          if(!ff.numc && ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'D latch';
+          if(!ff.numc && !ff.numd && !ff.numj && !ff.numk && ff.numt) name = 'T latch';
+          if(!ff.numc && !ff.numd && ff.numj && ff.numk && !ff.numt) name = 'JK latch';
+          if(ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'counter';
+          if(ff.numq && ff.numQ && !ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'SR latch';
+          if((!!ff.numq != !!ff.numQ) && !ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'pulse';
+          if(ff.numd && !ff.numc && !ff.numj && !ff.numk && !ff.numt) name = 'D latch';
+          var none = !ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt;
+
+          title = name;
+
+          var cellname = '';
+          if(tc == 'c') title = ((ff.numd || ff.numt || ff.numj || ff.numk) ? (name + ' - clock input') : 'counter') + ' (initially off)';
+          if(tc == 'C') title = ((ff.numd || ff.numt || ff.numj || ff.numk) ? (name + ' - clock input') : 'counter') + ' (initially on)';
+          if(tc == 'y') title = name + ' - enable input';
+          if(tc == 'd') title = name + ' - D input';
+          if(tc == 't') title = name + ' - T input';
+          if(tc == 'j') title = name + ' - J input';
+          if(tc == 'k') title = name + ' - K input';
+          if(tc == 'q') title = (none && !ff.numQ) ? 'pulse' : (name + ' - output and async set');
+          if(tc == 'Q') title = (none && !ff.numq) ? 'inverted pulse' : (name + ' - inverted output and async reset');
         }
+      } else {
+        if(tc == 'c') title = 'counter (initially off)'; // type == TYPE_COUNTER
+        if(tc == 'C') title = 'counter (initially on)'; // type == TYPE_COUNTER
+        if(tc == 'd') title = 'delay'; // type == TYPE_DELAY
       }
-      if(tc == 'd') {
-        if(this.components[0] && this.components[0].type == TYPE_DELAY) {
-          title = 'delay';
-        } else {
-          title = 'flipflop D input';
-        }
-      }
-      if(tc == 'y') title = 'flipflop enable input';
-      if(tc == 't') title = 'flipflop T input';
-      if(tc == 'j') title = 'flipflop J input (or edge enable if combined only with y)';
-      if(tc == 'k') title = 'flipflop K input (or inverted edge enable if combined only with y)';
-      if(tc == 'q') title = 'flipflop output and async set (or pulse if standalone)';
-      if(tc == 'Q') title = 'flipflop inverted output and async reset (or inverted pulse if standalone)';
       if(tc == 'z') title = 'tristate buffer, inputs to same z ANDed, multiple z to wire high when any z high (like OR but read on). Allowed to have multiple output to the same wire, but should be used as one-hot (max 1 high to wire, rest must be low) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
       if(tc == 'Z') title = 'tristate buffer, inputs to same Z ORed, multiple Z to wire low when any Z low (like AND but read on). Allowed to have multiple output to the same wire, but should be used as one-cold (max 1 low to wire, rest must be high) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
       if(tc == 'g') {
@@ -7966,12 +8023,12 @@ function Cell() {
       if(tc == 'n') title = 'backplane wire that connects to one matching connector to below ("antenna")';
       if(tc == 'u') title = 'backplane wire that connects to one matching connector to the top ("antenna")';
       if(tc == 'I' || this.numbertype == NUMBER_ICDEF) title = 'IC definition';
-      if(tc == 'i' || tc == '#i') title = 'IC instance ' + this.components[0].callsubindex;
+      if(tc == 'i' || tc == '#i') title = 'IC instance ' + component.callsubindex;
       if(tc == 'b' || tc == 'B' || tc == '#b') {
         title = 'ROM/RAM bit (b=0, B=1)';
-        if(this.components[0]) {
-          var master = this.components[0].master;
-          var rom = master ? master.rom : this.components[0].rom;
+        if(component) {
+          var master = component.master;
+          var rom = master ? master.rom : component.rom;
           if(rom) {
             if(rom.ram && rom.array && rom.array[0]) {
               var numadr = rom.array.length;
@@ -7996,8 +8053,8 @@ function Cell() {
       }
       if(tc == 'M' || tc == '#M') {
         title = 'mux';
-        var master = this.components[0].master;
-        var mux = master ? master.mux : this.components[0].mux;
+        var master = component.master;
+        var mux = master ? master.mux : component.mux;
         if(mux) {
           if(mux.demux) {
             title = 'demux';
@@ -8048,8 +8105,8 @@ function Cell() {
         }
       }
       if(tc == 'U' || tc == '#U') {
-        var master = this.components[0].master;
-        var alu = master ? master.alu : this.components[0].alu;
+        var master = component.master;
+        var alu = master ? master.alu : component.alu;
         if(alu) {
           var numinputs = (alu.numc ? 3 : (alu.numb ? 2 : 1));
           if(alu.numselect) {
@@ -8073,9 +8130,9 @@ function Cell() {
       }
       if(tc == 'T' || tc == '#T') {
         title = 'terminal';
-        if(this.components[0]) {
-          var master = this.components[0].master;
-          var vte = master ? master.vte : this.components[0].vte;
+        if(component) {
+          var master = component.master;
+          var vte = master ? master.vte : component.vte;
           if(vte) {
             if(!vte.counter && !vte.decimaldisplay && !vte.decimalinput) {
               if(vte.numoutputs > 0) title += ' (with ascii output and keyboard input, click to put cursor here)';
@@ -8104,8 +8161,8 @@ function Cell() {
       }
       if(tc == 'D') {
         title = 'RGB LED';
-        if(this.components[0]) {
-          var dot = this.components[0].dotmatrix;
+        if(component) {
+          var dot = component.dotmatrix;
           if(dot && !dot.rgbled) title = 'dot matrix screen';
         }
       }
@@ -8117,8 +8174,7 @@ function Cell() {
       // TODO: use component type instead?
       var pointer = (c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R' || c == 'b' || c == 'B');
       // currently cursor pointer not enabled for wires etc... that are part of the switch (even though pressing them actually works... but it would look a bit too messy)
-      if((c == '#') && this.components[0]) {
-        var type = this.components[0].type;
+      if(c == '#') {
         if(type == TYPE_SWITCH_OFF || type == TYPE_SWITCH_ON || type == TYPE_PUSHBUTTON_OFF || type == TYPE_PUSHBUTTON_ON || type == TYPE_TIMER_OFF || type == TYPE_TIMER_ON) {
           pointer = true;
         }
@@ -8251,6 +8307,7 @@ function setTocHTML(tocType, linkid, el) {
       //span.style.textDecoration = 'underline';
       span.style.fontWeight = 'bold';
       span.style.cursor = 'pointer';
+      span.style.whiteSpace = 'nowrap';
     }
   }
   if(tocType == 1 || tocType == 2 || tocType == 3) {
@@ -8273,6 +8330,7 @@ function setTocHTML(tocType, linkid, el) {
         span.style.color = LINKCOLOR;
         span.style.textDecoration = 'underline';
         span.style.cursor = 'pointer';
+        span.style.whiteSpace = 'nowrap';
         span.onclick = bind(function(circuit, title, id, index) {
           parseText(circuit, title, allRegisteredCircuits[index]);
           currentSelectedCircuit = index;
@@ -8294,6 +8352,7 @@ function setTocHTML(tocType, linkid, el) {
       span.style.color = LINKCOLOR;
       span.style.textDecoration = 'underline';
       span.style.cursor = 'pointer';
+      span.style.whiteSpace = 'nowrap';
       span.onclick = bind(function(circuit, title, linkid, index) {
         parseText(circuit, title, c);
         currentSelectedCircuit = index;
@@ -8407,7 +8466,7 @@ function RendererText() {
 
   // specific initialization, can be re-done if cell changed on click
   this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
-    if(symbol == ' ') return;
+    if(symbol == ' ' && virtualsymbol == ' ') return;
 
     if (!this.init2done) {
       this.div0.style.color = OFFCOLOR;
@@ -8562,6 +8621,12 @@ function RendererText() {
         this.div0.style.visibility = 'visible';
         // div 1 unused
         this.div1.style.visibility = 'hidden';
+        this.div0.style.boxSizing = 'border-box'; // have the border not make the total size bigger, have it go inside
+        var bordercolor = ONCOLOR;
+        if(!sameDevice(cell.x, cell.y, 0)) this.div0.style.borderTop = '1px solid ' + bordercolor;
+        if(!sameDevice(cell.x, cell.y, 1)) this.div0.style.borderRight = '1px solid ' + bordercolor;
+        if(!sameDevice(cell.x, cell.y, 2)) this.div0.style.borderBottom = '1px solid ' + bordercolor;
+        if(!sameDevice(cell.x, cell.y, 3)) this.div0.style.borderLeft = '1px solid ' + bordercolor;
       }
       if(virtualsymbol == 's' || virtualsymbol == 'S') {
         this.div0.style.color = SWITCHOFF_FGCOLOR;
@@ -8594,6 +8659,14 @@ function RendererText() {
         this.div0.style.visibility = 'hidden';
         this.div1.style.visibility = 'visible';
         this.div1.style.backgroundColor = TERMINALBGCOLOR;
+
+        this.div1.style.boxSizing = 'border-box'; // have the border not make the total size bigger, have it go inside
+        var bordercolor = TERMINALFGCOLOR; //TERMINALMIDCOLOR;
+        if(!sameDevice(cell.x, cell.y, 0)) this.div1.style.borderTop = '1px solid ' + bordercolor;
+        if(!sameDevice(cell.x, cell.y, 1)) this.div1.style.borderRight = '1px solid ' + bordercolor;
+        if(!sameDevice(cell.x, cell.y, 2)) this.div1.style.borderBottom = '1px solid ' + bordercolor;
+        if(!sameDevice(cell.x, cell.y, 3)) this.div1.style.borderLeft = '1px solid ' + bordercolor;
+
         this.div1.style.color = TERMINALFGCOLOR;
         this.div1.innerText = ' ';
         // The font characters are normally slightly bigger than a cell, but don't do that for the terminal, or bottom of letters gets obscured by the black cell below them, hiding bottom of j, underscores, etc
@@ -10288,6 +10361,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       } else if(virtualsymbol == 'T') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'D') {
+        // turn # into space to not render the #'s in graphical mode
         this.fallback.init2(cell, (symbol == 'D') ? 'D' : ' ', virtualsymbol); this.usefallbackonly = true; break;
         // alternative: always pass space: render the DOTMATRIX purely as a plain color, no letter symbols
         //this.fallback.init2(cell, ' ', virtualsymbol); this.usefallbackonly = true; break;
@@ -10348,11 +10422,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           if(!alreadybg) {
             drawer.fillBg_(ctx, GATEBGCOLOR);
           }
-          // box drawing for components
-          if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
-          if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
-          if(!sameDevice(cell.x, cell.y, 2)) drawer.drawLine_(ctx, 1, 1, 0, 1);
-          if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
+          this.drawBorder(cell, drawer, ctx);
         }
         var okdraw = true;
         if(c == '#' || largeextendmap[c]) {
@@ -10377,6 +10447,14 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
     // ensure that if this is a re-init (e.g. after clicking on a bB bit with mouse), it will actually draw the change, not do the optimization when nothing changed
     this.prevvalue = -1;
+  };
+
+  // box drawing for components; must already set the color styles on the ctx beforehand
+  this.drawBorder = function(cell, drawer, ctx) {
+    if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
+    if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
+    if(!sameDevice(cell.x, cell.y, 2)) drawer.drawLine_(ctx, 1, 1, 0, 1);
+    if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
   };
 
   /*
@@ -11030,11 +11108,14 @@ function parseNumbers() {
       if(c == '"' && world[y][x].symbol == '"') type = NUMBER_COMMENT;
       if(c == 'l') type = NUMBER_LED;
       if(c == 'r' || c == 'R') type = NUMBER_TIMER;
+      if(c == 'q' || c == 'Q') type = NUMBER_PULSE;
+      if(c == 'J') type = NUMBER_JUKEBOX;
       if(c == 'I') type = NUMBER_ICDEF;
       if(c == 'i') type = NUMBER_ICCALL;
       if(c == 'g') type = NUMBER_GLOBAL;
       if(c == 'U') type = NUMBER_ALU; // TODO: this is not yet working: NUMBER_ALU should trump NUMBER_LED, but it looks like it does not in practice, at least for multidigit number
       if(c == 'T') type = NUMBER_VTE; // TODO: same problem as NUMBER_ALU: does not actually use the priority order at all, and in addition this number should work next to # too and this code here doesn't know when the # belongs to a T
+      // TODO: the above doesn't work with device extenders # for T and J (for U, i it works because those numbers are required to be next to the i/U)
       if(antennamap[c]) type = NUMBER_ANTENNA;
       // todo: rom corner (is diagonal, currently not handled in this code...)
 
@@ -12158,6 +12239,7 @@ function convertJunctionNumbers() {
         var c = world[y][x].metasymbol;
         if(c != '=' && !digitmap[c]) continue; // we only care about bus and digits, they form a group
         if(digitmap[c] && world[y][x].numbertype != NUMBER_BUS && world[y][x].numbertype != NUMBER_NONE) continue;
+        // TODO: bug: this or code below is setting digits unrelated to buses to "NUMBER_BUS" (when they don't have another NUMBER_... type yet)
         if(digitmap[c]) world[y][x].numbertype = NUMBER_BUS;
         array.push(s);
 

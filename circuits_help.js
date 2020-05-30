@@ -4730,6 +4730,11 @@ registerCircuit('Pulse gate with time (q)', `
 s-->q-->l
 `, 'component' + componentid++);
 
+registerCircuit('Pulse gate with enable (q)', `
+s-->q-->l
+s-->y
+`, 'component' + componentid++);
+
 registerCircuit('Inverted pulse gate (Q)', `
 s-->Q-->l
 `, 'component' + componentid++);
@@ -4738,6 +4743,11 @@ registerCircuit('Inverted pulse gate with time (Q)', `
     1
     0
 s-->Q-->l
+`, 'component' + componentid++);
+
+registerCircuit('Inverted pulse gate with enable (Q)', `
+s-->Q-->l
+s-->y-->l
 `, 'component' + componentid++);
 
 registerCircuit('D flip-flop (d)', `
@@ -4752,7 +4762,7 @@ registerCircuit('T flip-flop (t)', `
  s-->c
 `, 'component' + componentid++);
 
-registerCircuit('JK flip-flop (jk)', `
+registerCircuit('SR or JK flip-flop (jk)', `
  s-->j-->l
  s-->c
  s-->k-->l
@@ -4764,11 +4774,34 @@ registerCircuit('D latch (d)', `
  s-->y
 `, 'component' + componentid++);
 
-registerCircuit('SR latch (qQ)', `
+registerCircuit('SR or JK latch (qQ)', `
  s-->q-->l
      #
  s-->Q-->l
 `, 'component' + componentid++);
+
+registerCircuit('SR or JK latch (jk)', `
+ s-->j-->l
+     #
+ s-->k-->l
+`, 'component' + componentid++);
+
+// NOTE: qQ with enable is not useful, q and Q override the enable. But j and k don't.
+registerCircuit('SR or JK latch with enable (jky)', `
+ s-->j-->l
+ s-->y
+ s-->k-->l
+`, 'component' + componentid++);
+
+registerCircuit('T latch (t)', `
+ s-->t-->l
+`, 'component' + componentid++);
+
+registerCircuit('T latch with enable (ty)', `
+ s-->t-->l
+ s-->y
+`, 'component' + componentid++);
+
 
 registerCircuit('flip-flop with everything (cqQjkdty)', `
  s-->q-->l
@@ -5132,21 +5165,6 @@ s-->#-->l
 
 `, 'component' + componentid++);
 
-registerCircuit('ALU with 2-input operation (U)', `
-
-
-            T#######
-            ^^^^^^^^
-            llllllll
-            ^^^^^^^^
- l<U24##############<s
-   ^^^^^^^^ ^^^^^^^^
-   T####### T#######
-   ^^^^^^^^ ^^^^^^^^
-   ssssssss ssssssss
-
-`, 'component' + componentid++);
-
 registerCircuit('ALU with 1-input operation (U)', `
 
 
@@ -5162,18 +5180,18 @@ registerCircuit('ALU with 1-input operation (U)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('ALU with 2-input operation, no side bits (U)', `
+registerCircuit('ALU with 1-input operation, signed (U)', `
 
 
-   T################
-   ^^^^^^^^^^^^^^^^^
-   lllllllllllllllll
-   ^^^^^^^^^^^^^^^^^
-   U48##############
-   ^^^^^^^^ ^^^^^^^^
-   T####### T#######
-   ^^^^^^^^ ^^^^^^^^
-   ssssssss ssssssss
+   T#######
+   ^^^^^^^^
+   llllllll
+   ^^^^^^^^
+ l<U163####<s
+   ^^^^^^^^
+  1T#######
+   ^^^^^^^^
+   ssssssss
 
 `, 'component' + componentid++);
 
@@ -5192,13 +5210,14 @@ registerCircuit('ALU with 1-input operation, no side bits (U)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('ALU with 2-input operation, signed (U)', `
+registerCircuit('ALU with 2-input operation (U)', `
+
 
             T#######
             ^^^^^^^^
             llllllll
             ^^^^^^^^
- l<U152#############<s
+ l<U24##############<s
    ^^^^^^^^ ^^^^^^^^
    T####### T#######
    ^^^^^^^^ ^^^^^^^^
@@ -5206,7 +5225,79 @@ registerCircuit('ALU with 2-input operation, signed (U)', `
 
 `, 'component' + componentid++);
 
+registerCircuit('ALU with 2-input operation, no side bits (U)', `
 
+
+   T################
+   ^^^^^^^^^^^^^^^^^
+   lllllllllllllllll
+   ^^^^^^^^^^^^^^^^^
+   U48##############
+   ^^^^^^^^ ^^^^^^^^
+   T####### T#######
+   ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('ALU with 2-input operation, signed (U)', `
+
+           1T#######
+            ^^^^^^^^
+            llllllll
+            ^^^^^^^^
+ l<U152#############<s
+   ^^^^^^^^ ^^^^^^^^
+  1T#######1T#######
+   ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('ALU with 3-input operation (U)', `
+
+
+                     T#######
+                     ^^^^^^^^
+                     llllllll
+                     ^^^^^^^^
+ l<U26#######################<s
+   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
+   T####### T####### T#######
+   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss ssssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('ALU with 3-input operation, signed (U)', `
+
+
+                    1T#######
+                     ^^^^^^^^
+                     llllllll
+                     ^^^^^^^^
+ l<U154######################<s
+   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
+  1T#######1T#######1T#######
+   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss ssssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('ALU with 3-input operation, no side bits (U)', `
+
+
+                     T#######
+                     ^^^^^^^^
+                     llllllll
+                     ^^^^^^^^
+   U26#######################
+   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
+   T####### T####### T#######
+   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss ssssssss
+
+`, 'component' + componentid++);
 
 
 
@@ -5360,10 +5451,25 @@ s---g$        $g-->l
 
 registerCircuit('Backplane Antenna ((u)n)', `
 s--(  )-->l
+
+(--s  l<--)
+
+(--s  )-->l
+
+
 `, 'component' + componentid++);
 
-registerCircuit('Backplane Wrap-Around ((u)n)', `
-(--s     l<--)
+registerCircuit('Backplane Wrap-Around ((u)n0)', `
+0nnnnnnn0
+(;  s   )
+( s     )
+(       )
+(<s    l)
+(    l  )
+(   l ^ )
+(   ^  ;)
+0uuuuuuu0
+
 `, 'component' + componentid++);
 
 registerCircuit('Tristate Buffer as OR (z)', `

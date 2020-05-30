@@ -4521,6 +4521,73 @@ T################################################################# T############
 `, 'rsa');
 
 
+registerCircuit('Base conversion', `
+
+0"Base conversion, with the built-in ALU"
+
+0"Give individual input digits in the multiple bottom terminals."
+0"Output digits appear in the multiple top terminals."
+0"If the output base is larger than 10, higher digits will appear as 10, 11,"
+0"12, 13, 14, 15 (not as A,B,C,D,E,F). Also give input digits that way. Don't"
+0"give input digits larger than or equal to the base (e.g. if base is 15, max"
+0"input digit value is 14)."
+
+0"The default set-up will convert from base 10 to base 12. Change base in and"
+0"base out to change this. Use 'increment base' to use a base with a value one"
+0"higher than entered. This allows entering base 16, since without that the max"
+0"base that can be entered is 15."
+
+0"For example, with the default set-up, enter 1, 2, 3 in the three bottom right"
+0"input terminals to enter decimal number 123. The output digits should then"
+0"say 10, 3, representing the number A3 in base 12, which is indeed 123 in base 10."
+
+0"Intermediate stages will also always show the number in binary (signed two's"
+0"complement) and decimal."
+
+         "sign"4  "output digits"4
+            lT##TT##TT##TT##TT##TT##T
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+          l<U182####################################<s"increment base"0
+            ^^^^^^^^^^^^^^^^^^^^^^^^^           ^^^^
+           1T########################"decimal"0 T###
+            ^^^^^^^^^^^^^^^^^^^^^^^^^           ^^^^
+            |||||||||||||||||||||||||           SSss
+            lllllllllllllllllllllllll"binary"0  "base out"3
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+          l<U183####################################<s"increment base"0
+            ^^^^^^^^^^^^^^^^^^^^^^^^^           ^^^^
+            |||||||||||||||||||||||||           T###
+            |||||||||||||||||||||||||           ^^^^
+            sT##TT##TT##TT##TT##TT##T           SsSs
+         "sign"4   "input digits"4              "base in"3
+
+
+0"The following circuit is similar, but supports up to base 64"
+
+
+         "sign"4        "output digits"4
+            lT####TT####TT####TT####TT####TT####T
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          l<U182##################################################<s"increment base"0
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^           ^^^^^^
+           1T####################################"decimal"0 T#####
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^           ^^^^^^
+            |||||||||||||||||||||||||||||||||||||           SSSSss
+            lllllllllllllllllllllllllllllllllllll"binary"0  "base out"3
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          l<U183##################################################<s"increment base"0
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^           ^^^^^^
+            |||||||||||||||||||||||||||||||||||||           T#####
+            |||||||||||||||||||||||||||||||||||||           ^^^^^^
+            sT####TT####TT####TT####TT####TT####T           ssSsSs
+         "sign"4         "input digits"4                    "base in"3
+
+
+
+
+`, 'base');
+
+
 
 registerTitle('Music');
 
