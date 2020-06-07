@@ -160,6 +160,8 @@ s.............>l7 0"7: white"
 
 s.............>l8 0"8: test signal: toggles between red (off) and green (on)"
 
+s.............>l9 0"9: LCD"
+
 0"# Logic Gates"
 
 0"Actual logic is done with logic gates. AND, OR and XOR gates are"
@@ -2600,6 +2602,8 @@ s.............>l6 0"6: pink"
 s.............>l7 0"7: white"
 
 s.............>l8 0"8: test signal: toggles between red (off) and green (on)"
+
+s.............>l9 0"9: LCD"
 
 0"Numbers affecting timer speed:"
 
@@ -6392,6 +6396,17 @@ i###-------->l8
    .-------->l8
 
 
+F->l####---->l8
+   5   5
+F->####l---->l8
+
+  .--------->l8
+  |.-------->l8
+S-++-------->l8
+T###
+  ^^
+  FF
+
 0"# Off"
 
 0"In this section, the LED on the right of each contraption must be OFF. If"
@@ -6456,6 +6471,12 @@ F...........]l8
 F---------->Xl8
 
 F----------V>l8
+
+F----->----->l8
+
+F-----------<l8
+
+F---------->>l8
 
       :
 F...........>l8
