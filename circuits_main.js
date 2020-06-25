@@ -1825,6 +1825,21 @@ registerCircuit('register', `
 0"not write-enabled."
 
 
+             l
+             ^
+             .
+             .
+ "C"s.....>c#d..
+             ^ .
+ "E"s.....>M## .
+           ^ ^ .
+           . ...
+           .
+           s
+
+0"Without MUX notation (M):"
+
+
             l
             ^
         .....
@@ -1840,21 +1855,19 @@ registerCircuit('register', `
             s
 
 0"Logicemu also supports a shortcut for this (a D flip-flop with an enable"
-0"input y), and alternatively a MUX notation (M), these are shown here below,"
-0"but are not used further down, since shortcuts like this are intended for"
-0"bigger circuits that use registers but are not themselves about registers."
+0"input y), this is shown here below, but are not used further down"
 
-       l                l
-       ^                ^
-       .                .
-       .                .
-"C"s-->c    "C"s.....>c#d..
-"E"s-->y                ^ .
-       d    "E"s.....>M## .
-       ^              ^ ^ .
-       .              . ...
-       .              .
-       s              s
+       l
+       ^
+       .
+       .
+"C"s-->c
+"E"s-->y
+       d
+       ^
+       .
+       .
+       s
 
 0"8-bit register"
 
@@ -1889,7 +1902,8 @@ registerCircuit('register', `
     ^
     s
 
-0"And then used as follows:"
+0"And then used as follows. Only if enable (E) is on, and the clock (C) goes"
+0"from low to high, will the 8-bit data from the input be stored to the output"
 
        llllllll
        ^^^^^^^^

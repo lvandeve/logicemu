@@ -2535,6 +2535,8 @@ s..>z....>l
 0"complement of -1)"
 
 
+0"## SPDT relay"
+
 1"SPDT relay"  1"SPDT relay flipped around"
 
    Is                     Is
@@ -2560,6 +2562,8 @@ s..   .                      . .>l
 0"around."
 
 
+0"## DPDT relay"
+
 1"DPDT relay"1"DPDT relay flipped"1"DPDT relay one side flipped"
 
    Is                  Is                     Is
@@ -2583,6 +2587,8 @@ s..   .                   . .>l            l<.   .
 0"The DPDT relay (double pole, double throw) is in fact two SPDT relays"
 0"controlled by the same coil."
 
+
+0"## 4PDT relay"
 
 1"4PDT relay"  1"4PDT relay flipped around"
 
@@ -2610,7 +2616,7 @@ s.    w                    w .>l
 0"The 4PDT relay (double pole, double throw) is in fact four SPDT relays"
 0"controlled by the same coil."
 
-1"DPST (NO) relay"
+0"## DPST (NO) relay"
 
       s
       ...
@@ -2623,7 +2629,7 @@ s.    w                    w .>l
 
 0"The DPST (normally open) relay is two SPST relays to a single coil."
 
-1"DPST (NC) relay"
+0"## DPST (NC) relay"
 
       s
       ...

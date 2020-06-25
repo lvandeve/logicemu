@@ -1456,7 +1456,7 @@ var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'h'
 var largedevicestartmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'y':true,
                       'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'J':true};
 var largedevicemap = util.mergeMaps(largedevicestartmap, {'c':true, 'C':true});
-var largeextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true}; // special extenders for large devices (not all of those are used yet)
+var largeextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#J':true}; // special extenders for large devices (not all of those are used yet)
 // devicemap as well as # (with extends devices)
 var devicemaparea = util.mergeMaps(devicemap, largeextendmap); devicemaparea['#'] = true;
 var largemaparea = util.mergeMaps(largedevicemap, largeextendmap);
@@ -1475,7 +1475,7 @@ var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x'
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true, 'U':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
                 '#':true, '=':true, 'i':true, 'T':true, 'D':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
-                'z':true, 'Z':true, '?':true, 'J':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true};
+                'z':true, 'Z':true, '?':true, 'J':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#J':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true, '$':true};
 var puredigitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
@@ -2327,6 +2327,31 @@ function getIO3(x0, y0, x1, y1, master) {
   return result;
 }
 
+
+// computes the rectangular bounding box of a large component
+// array: 2D array of cell index, x/y coord in 0,1
+// exclude_controls: if true, excludes control inputs of large device: y, c, C, q, Q
+// component: sets x0, y0, x1, y1 fields to this
+function largeComponentBB(array, exclude_controls, component) {
+  var x0 = w, y0 = h, x1 = 0, y1 = 0;
+  for(var i = 0; i < array.length; i++) {
+    var x = array[i][0];
+    var y = array[i][1];
+    if(exclude_controls) {
+      var c = world[y][x].circuitsymbol;
+      if(c == 'y' || c == 'c' || c == 'C' || c == 'q' || c == 'Q') continue;
+    }
+    x0 = Math.min(x0, x);
+    y0 = Math.min(y0, y);
+    x1 = Math.max(x1, x + 1);
+    y1 = Math.max(y1, y + 1);
+  }
+  component.x0 = x0;
+  component.y0 = y0;
+  component.x1 = x1;
+  component.y1 = y1;
+}
+
 // actually also RAM! but it started out with only rom functionality.
 function ROM() {
   this.onehot = false;
@@ -2466,11 +2491,13 @@ function ROM() {
 
   // init before inputs are resolved
   // returns true if ok, false if error
-  this.init1 = function(x0, y0, x1, y1) {
-    this.x0 = x0;
-    this.y0 = y0;
-    this.x1 = x1;
-    this.y1 = y1;
+  this.init1 = function(array) {
+    largeComponentBB(array, false, this);
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
     this.master = null; // the master component for this ROM
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
@@ -3010,13 +3037,15 @@ function Mux() {
 
   // init before inputs are resolved
   // returns true if ok, false if error
-  this.init1 = function(x0, y0, x1, y1) {
+  this.init1 = function(array) {
+    largeComponentBB(array, false, this);
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
     this.master = null; // the master component for this Mux
 
-    this.x0 = x0;
-    this.y0 = y0;
-    this.x1 = x1;
-    this.y1 = y1;
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
@@ -4302,13 +4331,15 @@ function Alu() {
 
   // init before inputs are resolved
   // returns true if ok, false if error
-  this.init1 = function(x0, y0, x1, y1) {
+  this.init1 = function(array) {
     this.master = null; // the master component for this Mux
 
-    this.x0 = x0;
-    this.y0 = y0;
-    this.x1 = x1;
-    this.y1 = y1;
+    largeComponentBB(array, false, this);
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
@@ -5134,11 +5165,13 @@ function VTE() {
 
   // init before inputs are resolved
   // returns true if ok, false if error
-  this.init1 = function(x0, y0, x1, y1) {
-    this.x0 = x0;
-    this.y0 = y0;
-    this.x1 = x1;
-    this.y1 = y1;
+  this.init1 = function(array) {
+    largeComponentBB(array, false, this);
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
     this.master = null; // the master component for this VTE
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
@@ -5651,27 +5684,14 @@ function DotMatrix() {
 
   // init before inputs are resolved
   // returns true if ok, false if error
-  this.init1 = function(component) {
+  this.init1 = function(array, component) {
     // unlike other large components, the master component is the only single
     // component here, since this component has only inputs, and multiple
     // components is only needed if multiple different output values must be
     // supported.
     this.master = component;
-    var x0 = w, x1 = 0, y0 = h, y1 = 0;
-    for(var i = 0; i < component.cells.length; i++) {
-      var x = component.cells[i][0];
-      var y = component.cells[i][1];
-      x0 = Math.min(x, x0);
-      x1 = Math.max(x, x1);
-      y0 = Math.min(y, y0);
-      y1 = Math.max(y, y1);
-    }
-    x1++;
-    y1++;
-    this.x0 = x0;
-    this.y0 = y0;
-    this.x1 = x1;
-    this.y1 = y1;
+    largeComponentBB(array, false, this);
+
     this.w = this.x1 - this.x0;
     this.h = this.y1 - this.y0;
     component.dotmatrix = this;
@@ -6183,32 +6203,18 @@ function JukeBox() {
 
   // init before inputs are resolved
   // returns true if ok, false if error
-  this.init1 = function(component) {
+  this.init1 = function(array, component) {
     // unlike other large components, the master component is the only single
     // component here, since there's only one output value, and multiple
     // components is only needed if multiple different output values must be
     // supported.
     this.master = component;
-    var x0 = w, x1 = 0, y0 = h, y1 = 0;
-    for(var i = 0; i < component.cells.length; i++) {
-      var x = component.cells[i][0];
-      var y = component.cells[i][1];
-      x0 = Math.min(x, x0);
-      x1 = Math.max(x, x1);
-      y0 = Math.min(y, y0);
-      y1 = Math.max(y, y1);
-    }
-    x1++;
-    y1++;
-    this.x0 = x0;
-    this.y0 = y0;
-    this.x1 = x1;
-    this.y1 = y1;
+
+    largeComponentBB(array, false, this);
+
     this.w = this.x1 - this.x0;
     this.h = this.y1 - this.y0;
     component.jukebox = this;
-
-
 
     var freq = component.number;
     var shape = 0;
@@ -6659,6 +6665,11 @@ function Component() {
     if(message && !this.errormessage) this.errormessage = message;
   };
 
+  // Determines whether this is part of a flipflop-like device at electron-level,
+  // e.g. created with two NOR gates with outputs going to each others inputs, but
+  // this also works through MUXes (M) for example.
+  // This is used for the ff_cycle system to randomly settle rapidly blinking electron-based flip-flops,
+  // as well as to auto-choose electron mode.
   this.hasLength2CycleWithTwoInputs = function() {
     if(this.type == TYPE_FLIPFLOP) return false;
     if(this.type == TYPE_VTE) return false;
@@ -7111,6 +7122,12 @@ function Component() {
     } else {
       // regular gate, not flip-flop
       this.value = this.getNewValue(numon, numoff);
+    }
+
+    // This can be for standard logic gates such as two NOR gates configured
+    // as an SR latch, but can also involve large components such as a mux in the
+    // cycle.
+    if(this.ff_cycle) {
       if(this.value != this.prevvalue) this.ff_cycle_time++;
       else this.ff_cycle_time = 0;
     }
@@ -7980,7 +7997,7 @@ function Cell() {
         else title += ' (unknown color)';
       }
       if(tc == '?') title = 'random generator';
-      if(tc == 'J') {
+      if(tc == 'J' || tc == '#J') {
         title = 'jukebox (speaker, for music)';
         if(component) {
           var jukebox = component.jukebox;
@@ -8183,7 +8200,7 @@ function Cell() {
           }
         }
       }
-      if(tc == 'D') {
+      if(tc == 'D' || tc == '#D') {
         title = 'RGB LED';
         if(component) {
           var dot = component.dotmatrix;
@@ -8242,7 +8259,7 @@ function Cell() {
         for(var i = 0; i < w.components.length; i++) {
           var compo = w.components[i];
           if(!compo) continue;
-          console.log('component: index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y + ' number: ' + compo.number + ' | rom_out_pos: ' + compo.rom_out_pos);
+          console.log('component: index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y + ' number: ' + compo.number + ' | rom_out_pos: ' + compo.rom_out_pos + ' ff_cycle: ' + compo.ff_cycle + ',' + compo.ff_cycle_time);
           if(compo.master) console.log('master: index: ' + compo.master.index + ',  type: ' + compo.master.type + ', corecell: ' + compo.master.corecell.circuitsymbol + ', corecell.x: ' + compo.master.corecell.x + ', corecell.y: ' + compo.master.corecell.y);
           for(var j = 0; j < compo.inputs.length; j++) {
             var corecellinfo = (compo.inputs[j].corecell) ? (compo.inputs[j].corecell.circuitsymbol + ', corecell.x: ' + compo.inputs[j].corecell.x + ', corecell.y: ' + compo.inputs[j].corecell.y) : ('' + compo.inputs[j].corecell);
@@ -9552,11 +9569,21 @@ function RendererDrawer() {
 
 // Browsers have certain limits to canvas size (e.g. max 8192 pixels wide, ...), and for large
 // circuits larger than 16384 height can easily be reached, so break it up into smaller pieces
-function MultiCanvas() {
+// initfun = set parameters, CSS style, etc... on the canvases it creates
+function MultiCanvas(x, y, w, h, parent, initfun) {
   if(USE_BRESENHAM) {
-    this.MAX_S = 4096; // max size
+    // as of june 2020, it now looks like it's more performant in chrome to have smaller rather than
+    // larger canvases, when switching tab back to this tab. on larger circuits when using 4096 as MAX_S,
+    // then switching from another tab back to the logicemu tab appears to take 5-10 seconds before
+    // chrome renders anything again since a recent update
+    // Also implemented lazy loading now, so smaller canvases allows creating no canvases at all in areas where
+    // no circuitry is present (but only background and selectable text which are not on a canvas)
+    // however, still cannot go too small, since having many small canvases gives other performance issues,
+    // for example 64 is too small and makes way too many individual canvases.
+    //this.MAX_S = 4096; // max size
+    this.MAX_S = 512; // max size
   } else {
-    // 4096 would be a great max size to use. However, Chrome (at least on my system) makes the
+    // the larger one would be a great max size to use. However, Chrome (at least on my system as of 2018) makes the
     // 45-degree diagonal lines horribly antialiased for large canvas, while for any canvas smaller than 256
     // it makes the diagonal lines like I want (= non smooth). So depending on this super brittle
     // trick now, until HTML gives reliable way to disable smoothing for lines on canvas in the future?
@@ -9568,42 +9595,49 @@ function MultiCanvas() {
   this.canvases = null;
   this.contexts = null;
 
-  this.w = 0;
-  this.h = 0;
+  this.initfun = initfun;
 
-  this.make = function(x, y, w, h, parent) {
-    this.S = Math.floor(this.MAX_S / tw) * tw; // such that size is multiple of cell size so there's no visible edges
 
-    this.w = w;
-    this.h = h;
+  this.S = Math.floor(this.MAX_S / tw) * tw; // such that size is multiple of cell size so there's no visible edges
 
-    var numx = Math.ceil(w  / this.S);
-    var numy = Math.ceil(h  / this.S);
+  this.w = w;
+  this.h = h;
+  this.x = x;
+  this.y = y;
 
-    this.canvases = [];
-    this.contexts = [];
+  var numx = Math.ceil(w  / this.S);
+  var numy = Math.ceil(h  / this.S);
 
-    for(var y2 = 0; y2 < numy; y2++) {
-      this.canvases[y2] = [];
-      this.contexts[y2] = [];
-      for(var x2 = 0; x2 < numx; x2++) {
-        var h2 = Math.min(this.S, h - y2 * this.S);
-        var w2 = Math.min(this.S, w - x2 * this.S);
-        this.canvases[y2][x2] = util.makeAbsElement('canvas', x + x2 * this.S, y + y2 * this.S, w2, h2, parent);
-        this.canvases[y2][x2].width = w2;
-        this.canvases[y2][x2].height = h2;
-        this.canvases[y2][x2].style.display = 'block';
-        this.contexts[y2][x2] = this.canvases[y2][x2].getContext('2d');
-      }
-    }
+  this.canvases = [];
+  this.contexts = [];
+
+  this.makeCanvas = function(x2, y2) {
+    if(!this.canvases[y2]) this.canvases[y2] = [];
+    if(!this.contexts[y2]) this.contexts[y2] = [];
+    var h2 = Math.min(this.S, this.h - y2 * this.S);
+    var w2 = Math.min(this.S, this.w - x2 * this.S);
+    this.canvases[y2][x2] = util.makeAbsElement('canvas', this.x + x2 * this.S, this.y + y2 * this.S, w2, h2, parent);
+    this.canvases[y2][x2].width = w2;
+    this.canvases[y2][x2].height = h2;
+    this.canvases[y2][x2].style.display = 'block';
+    //this.canvases[y2][x2].style.border = '1px solid red'; // for debugging
+    this.contexts[y2][x2] = this.canvases[y2][x2].getContext('2d');
+    this.initfun(this.canvases[y2][x2], this.contexts[y2][x2]);
+  };
+
+  this.hasCanvas = function(x2, y2) {
+    if(!this.canvases[y2]) return false;
+    if(!this.canvases[y2][x2]) return false;
+    return true;
   };
 
   this.remove = function() {
     if(!this.canvases) return;
 
     for(var y2 = 0; y2 < this.canvases.length; y2++) {
+      if(!this.canvases[y2]) continue;
       for(var x2 = 0; x2 < this.canvases[y2].length; x2++) {
-        util.removeElement(this.canvases[y2][x2]);
+        if(this.hasCanvas(x2, y2)) util.removeElement(this.canvases[y2][x2]);
       }
     }
     this.canvases = null;
@@ -9613,6 +9647,7 @@ function MultiCanvas() {
   this.getCanvasAt = function(x, y) {
     var x2 = Math.floor(x / this.S);
     var y2 = Math.floor(y / this.S);
+    if(!this.hasCanvas(x2, y2)) this.makeCanvas(x2, y2);
     return this.canvases[y2][x2];
   };
 
@@ -9623,6 +9658,7 @@ function MultiCanvas() {
   this.getContextAt = function(x, y) {
     var x2 = Math.floor(x / this.S);
     var y2 = Math.floor(y / this.S);
+    if(!this.hasCanvas(x2, y2)) this.makeCanvas(x2, y2);
     return this.contexts[y2][x2];
   };
 
@@ -9648,62 +9684,44 @@ function MultiCanvas() {
   this.getYOffsetForCell = function(cell) {
     return this.getYOffsetAt(cell.y * th);
   };
-
-  // e.g. to set a CSS style on them
-  this.forEach = function(fun) {
-    for(var y2 = 0; y2 < this.canvases.length; y2++) {
-      for(var x2 = 0; x2 < this.canvases[y2].length; x2++) {
-        fun(this.canvases[y2][x2], this.contexts[y2][x2]);
-      }
-    }
-  };
 }
 
 /** @constructor */
 /* global info shared by renderer for every cell */
 function RendererImgGlobal() {
-  this.maincanvas = new MultiCanvas();
-  this.offcanvas0 = new MultiCanvas();
-  this.offcanvas1 = new MultiCanvas();
-  this.extracanvas = new MultiCanvas();
+  this.maincanvas = null;
+  this.offcanvas0 = null;
+  this.offcanvas1 = null;
+  this.extracanvas = null;;
 
   this.init = function() {
     var parent = worldDiv;
 
-    this.maincanvas.remove();
-    this.offcanvas0.remove();
-    this.offcanvas1.remove();
-    this.extracanvas.remove();
+    if(this.maincanvas) this.maincanvas.remove();
+    if(this.offcanvas0) this.offcanvas0.remove();
+    if(this.offcanvas1) this.offcanvas1.remove();
+    if(this.extracanvas) this.extracanvas.remove();
 
-    this.maincanvas.make(0, 0, tw * w, th * h, parent);
-    this.offcanvas0.make(0, 0, tw * w, th * h, parent);
-    this.offcanvas1.make(0, 0, tw * w, th * h, parent);
-    this.extracanvas.make(0, 0, tw * 128, th * 4, parent);
-
-    this.offcanvas0.forEach(function(canvas, context) {
+    this.maincanvas = new MultiCanvas(0, 0, tw * w, th * h, parent, function(canvas, context) {
+      // attempt at disabling antialiazing. It doesn't actually work, since
+      // this does not apply to lines but image, but let's just tell the context
+      // that we want non-AA in as many ways as possible
+      context.imageSmoothingEnabled = false;
+    });
+    this.offcanvas0 = new MultiCanvas(0, 0, tw * w, th * h, parent, function(canvas, context) {
       canvas.style.display = 'none';
+      context.imageSmoothingEnabled = false;
     });
-    this.offcanvas1.forEach(function(canvas, context) {
+    this.offcanvas1 = new MultiCanvas(0, 0, tw * w, th * h, parent, function(canvas, context) {
       canvas.style.display = 'none';
+      context.imageSmoothingEnabled = false;
     });
-    this.extracanvas.forEach(function(canvas, context) {
+    this.extracanvas = new MultiCanvas(0, 0, tw * 128, th * 4, parent, function(canvas, context) {
       canvas.style.display = 'none';
-    });
-
-    // attempt at disabling antialiazing. It doesn't actually work, since
-    // this does not apply to lines but image, but let's just tell the context
-    // that we want non-AA in as many ways as possible
-    this.maincanvas.forEach(function(canvas, context) {
       context.imageSmoothingEnabled = false;
-    });
-    this.offcanvas0.forEach(function(canvas, context) {
-      context.imageSmoothingEnabled = false;
-    });
-    this.offcanvas1.forEach(function(canvas, context) {
-      context.imageSmoothingEnabled = false;
-    });
-    this.extracanvas.forEach(function(canvas, context) {
-      context.imageSmoothingEnabled = false;
+      context.strokeStyle = BGCOLOR;
+      context.fillStyle = BGCOLOR;
+      context.fillRect(0, 0, canvas.width, canvas.height);
     });
   };
 }
@@ -10492,12 +10510,6 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   */
   this.drawGlobalExtras_ = function() {
     var drawer = new RendererDrawer();
-
-    rglobal.extracanvas.forEach(function(canvas, context) {
-      context.strokeStyle = BGCOLOR;
-      context.fillStyle = BGCOLOR;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-    });
 
     var ctx;
 
@@ -12882,6 +12894,8 @@ function parseLargeDevices() {
         else if(c == 'T') type2 = TYPE_VTE;
         else if(c == 'M') type2 = TYPE_MUX;
         else if(c == 'U') type2 = TYPE_ALU;
+        else if(c == 'D') type2 = TYPE_DOTMATRIX;
+        else if(c == 'J') type2 = TYPE_JUKEBOX;
         else if(devicemap[c]) type2 = TYPE_NAND; // NAND is used as placeholder for ANY non-large device here
 
         if(type2 != TYPE_NULL && type != TYPE_NULL && type != type2) {
@@ -12902,6 +12916,9 @@ function parseLargeDevices() {
             if(type == TYPE_ALU) world[y][x].circuitsymbol = '#U';
             if(type == TYPE_VTE) world[y][x].circuitsymbol = '#T';
             if(type == TYPE_ROM) world[y][x].circuitsymbol = '#b';
+            // Don't do this for D and J, it splits up its one component into one component per cell, unlike alu, rom, ..., dotmatrix and jukebox aren't designed for that (and don't need it due to not having outputs).
+            //if(type == TYPE_DOTMATRIX) world[y][x].circuitsymbol = '#D';
+            //if(type == TYPE_JUKEBOX) world[y][x].circuitsymbol = '#J';
           } else {
             world[y][x].largedevicearray = array;
           }
@@ -13102,11 +13119,11 @@ function parseComponents() {
             if(c == 'M' || c == '#M') type2 = TYPE_MUX;
             if(c == 'U' || c == '#U') type2 = TYPE_ALU;
             if(c == 'T' || c == '#T') type2 = TYPE_VTE;
-            if(c == 'D') type2 = TYPE_DOTMATRIX;
+            if(c == 'D' || c == '#D') type2 = TYPE_DOTMATRIX;
             if(c == 'z') type2 = TYPE_TRISTATE;
             if(c == 'Z') type2 = TYPE_TRISTATE_INV;
             if(c == '?') type2 = TYPE_RANDOM;
-            if(c == 'J') type2 = TYPE_JUKEBOX;
+            if(c == 'J' || c == '#J') type2 = TYPE_JUKEBOX;
             if(ffmap[c] || c == '#c') type2 = TYPE_FLIPFLOP;
 
             if(type != TYPE_NULL && type != TYPE_UNKNOWN_DEVICE) {
@@ -13244,14 +13261,6 @@ function parseComponents() {
           if(type == TYPE_TIMER_OFF) {
             component.clocked = false;
           }
-          if(type == TYPE_DOTMATRIX) {
-            var dot = new DotMatrix();
-            dot.init1(component);
-          }
-          if(type == TYPE_JUKEBOX) {
-            var jukebox = new JukeBox();
-            jukebox.init1(component);
-          }
 
           for(var i = 0; i < array.length; i++) {
             var x = array[i][0];
@@ -13264,7 +13273,8 @@ function parseComponents() {
     }
   }
 
-  // PASS 3, now to resolve devices made out of multiple devices (ROM, VTE, FF). TODO: remove more code duplication
+  // PASS 3, now to resolve large devices
+  // these are handled in a separate pass, because for some types, a single large device can be made out of multiple sub-devices, e.g. ROM, FLIP-FLOP, ...
   logPerformance('parseComponents pass 3 begin');
   used = initUsed3();
   for(var y0 = 0; y0 < h; y0++) {
@@ -13276,21 +13286,20 @@ function parseComponents() {
 
       var stack = [[x0, y0, 0]];
       used[y0][x0][0] = true;
-      var rom = false;
-      var mux = false;
-      var alu = false;
-      var vte = false;
-      var ff = false;
       var error = false;
       var array = [];
 
-      if(ffmap[c0] && world[y0][x0].components[0] && world[y0][x0].components[0].type == TYPE_FLIPFLOP) ff = true;
-      else if(rommap[c0]) rom = true; // type not checked, since some are set to TYPE_NULL
-      else if(c0 == 'M' && world[y0][x0].components[0] && world[y0][x0].components[0].type == TYPE_MUX) mux = true;
-      else if(c0 == 'M' && world[y0][x0].components[1] && world[y0][x0].components[1].type == TYPE_MUX) mux = true;
-      else if(c0 == 'U' && world[y0][x0].components[0] && world[y0][x0].components[0].type == TYPE_ALU) alu = true;
-      else if(c0 == 'U' && world[y0][x0].components[1] && world[y0][x0].components[1].type == TYPE_ALU) alu = true;
-      else if(c0 == 'T' && world[y0][x0].components[0] && world[y0][x0].components[0].type == TYPE_VTE) vte = true;
+      var type = TYPE_NULL;
+
+      var component = world[y0][x0].components[0] ? world[y0][x0].components[0] : world[y0][x0].components[1];
+
+      if(ffmap[c0] && component && component.type == TYPE_FLIPFLOP) type = TYPE_FLIPFLOP;
+      else if(rommap[c0]) type = TYPE_ROM; // type not checked, since some are set to TYPE_NULL, and even component may be null
+      else if(c0 == 'M' && component && component.type == TYPE_MUX) type = TYPE_MUX;
+      else if(c0 == 'U' && component && component.type == TYPE_ALU) type = TYPE_ALU;
+      else if(c0 == 'T' && component && component.type == TYPE_VTE) type = TYPE_VTE;
+      else if(c0 == 'D' && component && component.type == TYPE_DOTMATRIX) type = TYPE_DOTMATRIX;
+      else if(c0 == 'J' && component && component.type == TYPE_JUKEBOX) type = TYPE_JUKEBOX;
       else continue;
 
       array = world[y0][x0].largedevicearray;
@@ -13306,66 +13315,57 @@ function parseComponents() {
         used[y][x][z] = true;
       }
 
-      if(rom) {
+      if(type == TYPE_ROM) {
         var romobject = new ROM();
-        var x0 = w, y0 = h, x1 = 0, y1 = 0;
-        for(var i = 0; i < array.length; i++) {
-          x0 = Math.min(x0, array[i][0]);
-          y0 = Math.min(y0, array[i][1]);
-          x1 = Math.max(x1, array[i][0] + 1);
-          y1 = Math.max(y1, array[i][1] + 1);
-        }
-        if(!romobject.init1(x0, y0, x1, y1)) {
-          console.log('rom error @' + x0 + ',' + y0 + '-' + x1 + ',' + y1);
+        if(!romobject.init1(array)) {
+          console.log('rom error @' + array[0][0] + ' ' + array[0][1]);
           romobject.error = true;
         }
       }
 
-      if(mux) {
+      if(type == TYPE_MUX) {
         var muxobject = new Mux();
-        var x0 = w, y0 = h, x1 = 0, y1 = 0;
-        for(var i = 0; i < array.length; i++) {
-          x0 = Math.min(x0, array[i][0]);
-          y0 = Math.min(y0, array[i][1]);
-          x1 = Math.max(x1, array[i][0] + 1);
-          y1 = Math.max(y1, array[i][1] + 1);
-        }
-        if(!muxobject.init1(x0, y0, x1, y1)) {
+        if(!muxobject.init1(array)) {
           console.log('mux error @' + array[0][0] + ' ' + array[0][1]);
           muxobject.error = true;
         }
       }
 
-      if(alu) {
+      if(type == TYPE_ALU) {
         var aluobject = new Alu();
-        var x0 = w, y0 = h, x1 = 0, y1 = 0;
-        for(var i = 0; i < array.length; i++) {
-          x0 = Math.min(x0, array[i][0]);
-          y0 = Math.min(y0, array[i][1]);
-          x1 = Math.max(x1, array[i][0] + 1);
-          y1 = Math.max(y1, array[i][1] + 1);
-        }
-        if(!aluobject.init1(x0, y0, x1, y1)) {
+        if(!aluobject.init1(array)) {
           console.log('alu error @' + array[0][0] + ' ' + array[0][1]);
           aluobject.error = true;
         }
       }
 
-      if(vte) {
+      if(type == TYPE_VTE) {
         var vteobject = new VTE();
-        var x0 = w, y0 = h, x1 = 0, y1 = 0;
-        for(var i = 0; i < array.length; i++) {
-          x0 = Math.min(x0, array[i][0]);
-          y0 = Math.min(y0, array[i][1]);
-          x1 = Math.max(x1, array[i][0] + 1);
-          y1 = Math.max(y1, array[i][1] + 1);
+        if(!vteobject.init1(array)) {
+          console.log('vte error @' + array[0][0] + ' ' + array[0][1]);
+          vteobject.error = true;
         }
-        if(!vteobject.init1(x0, y0, x1, y1)) vteobject.error = true;
       }
 
-      if(ff) {
-        var type = getFFType(array);
-        if(type[0] == TYPE_FLIPFLOP) {
+      if(type == TYPE_DOTMATRIX) {
+        var dot = new DotMatrix();
+        if(!dot.init1(array, component)) {
+          console.log('dotmatrix error @' + array[0][0] + ' ' + array[0][1]);
+          dot.error = true;
+        }
+      }
+
+      if(type == TYPE_JUKEBOX) {
+        var jukebox = new JukeBox();
+        if(!jukebox.init1(array, component)) {
+          console.log('jukebox error @' + array[0][0] + ' ' + array[0][1]);
+          jukebox.error = true;
+        }
+      }
+
+      if(type == TYPE_FLIPFLOP) {
+        var fftype = getFFType(array);
+        if(fftype[0] == TYPE_FLIPFLOP) {
           var ffobject = new FF();
           if(!ffobject.init1(array)) ffobject.error = true;
         } else {
@@ -13389,8 +13389,8 @@ function parseComponents() {
                 break;
               }
             }
-            corecomp.type = type[0];
-            corecomp.value = type[1];
+            corecomp.type = fftype[0];
+            corecomp.value = fftype[1];
             for(var i = 0; i < array.length; i++) {
               var oldcomponent = world[array[i][1]][array[i][0]].components[0];
               if(oldcomponent != corecomp && oldcomponent.index >= 0) {
@@ -13698,10 +13698,10 @@ function parseComponents() {
     if(component.type == TYPE_VTE && (!component.master && !component.vte)) {
       component.markError('is vte but has no master');
     }
-    if(component.type == TYPE_DOTMATRIX && component.dotmatrix.error) {
+    if(component.type == TYPE_DOTMATRIX && component.dotmatrix && component.dotmatrix.error) {
       component.markError(component.dotmatrix.errormessage);
     }
-    if(component.type == TYPE_JUKEBOX && component.jukebox.error) {
+    if(component.type == TYPE_JUKEBOX && component.jukebox && component.jukebox.error) {
       component.markError(component.jukebox.errormessage);
     }
   }

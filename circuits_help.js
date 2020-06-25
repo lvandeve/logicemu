@@ -4861,7 +4861,7 @@ registerCircuit('Terminal 1-bit output (T)', `
 `, 'component' + componentid++);
 
 registerCircuit('Decimal Display Terminal, Signed (T)', `
-     T######1
+    1T######
      ^^^^^^^
      sssssss
     "s"
@@ -4878,7 +4878,7 @@ registerCircuit('Decimal Display Terminal With Passthrough (T)', `
 registerCircuit('Decimal Display Terminal With Passthrough, Signed (T)', `
      lllllll
      ^^^^^^^
-     T######1
+    1T######
      ^^^^^^^
      sssssss
     "s"
@@ -5172,13 +5172,9 @@ s-->#-->l
 registerCircuit('ALU with 1-input operation (U)', `
 
 
-   T#######
-   ^^^^^^^^
    llllllll
    ^^^^^^^^
  l<U32#####<s
-   ^^^^^^^^
-   T#######
    ^^^^^^^^
    ssssssss
 
@@ -5187,13 +5183,9 @@ registerCircuit('ALU with 1-input operation (U)', `
 registerCircuit('ALU with 1-input operation, signed (U)', `
 
 
-   T#######
-   ^^^^^^^^
    llllllll
    ^^^^^^^^
  l<U163####<s
-   ^^^^^^^^
-  1T#######
    ^^^^^^^^
    ssssssss
 
@@ -5202,13 +5194,9 @@ registerCircuit('ALU with 1-input operation, signed (U)', `
 registerCircuit('ALU with 1-input operation, no side bits (U)', `
 
 
-   T#######
-   ^^^^^^^^
    llllllll
    ^^^^^^^^
    U74#####
-   ^^^^^^^^
-   T#######
    ^^^^^^^^
    ssssssss
 
@@ -5217,13 +5205,9 @@ registerCircuit('ALU with 1-input operation, no side bits (U)', `
 registerCircuit('ALU with 2-input operation (U)', `
 
 
-            T#######
-            ^^^^^^^^
             llllllll
             ^^^^^^^^
  l<U24##############<s
-   ^^^^^^^^ ^^^^^^^^
-   T####### T#######
    ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
 
@@ -5232,13 +5216,9 @@ registerCircuit('ALU with 2-input operation (U)', `
 registerCircuit('ALU with 2-input operation, no side bits (U)', `
 
 
-   T################
-   ^^^^^^^^^^^^^^^^^
    lllllllllllllllll
    ^^^^^^^^^^^^^^^^^
    U48##############
-   ^^^^^^^^ ^^^^^^^^
-   T####### T#######
    ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
 
@@ -5246,13 +5226,9 @@ registerCircuit('ALU with 2-input operation, no side bits (U)', `
 
 registerCircuit('ALU with 2-input operation, signed (U)', `
 
-           1T#######
-            ^^^^^^^^
             llllllll
             ^^^^^^^^
  l<U152#############<s
-   ^^^^^^^^ ^^^^^^^^
-  1T#######1T#######
    ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
 
@@ -5261,13 +5237,9 @@ registerCircuit('ALU with 2-input operation, signed (U)', `
 registerCircuit('ALU with 3-input operation (U)', `
 
 
-                     T#######
-                     ^^^^^^^^
                      llllllll
                      ^^^^^^^^
  l<U26#######################<s
-   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
-   T####### T####### T#######
    ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss ssssssss
 
@@ -5276,13 +5248,9 @@ registerCircuit('ALU with 3-input operation (U)', `
 registerCircuit('ALU with 3-input operation, signed (U)', `
 
 
-                    1T#######
-                     ^^^^^^^^
                      llllllll
                      ^^^^^^^^
  l<U154######################<s
-   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
-  1T#######1T#######1T#######
    ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss ssssssss
 
@@ -5291,13 +5259,9 @@ registerCircuit('ALU with 3-input operation, signed (U)', `
 registerCircuit('ALU with 3-input operation, no side bits (U)', `
 
 
-                     T#######
-                     ^^^^^^^^
                      llllllll
                      ^^^^^^^^
    U26#######################
-   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
-   T####### T####### T#######
    ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss ssssssss
 
@@ -7168,6 +7132,14 @@ S--X-   S--X-     S--Xl    X   S--Xl  S--X-  S--Xl   S--X-  S--X-  S--Xl  S--Xl 
 -X--S   -X--S     lX--S   X    lX--S  -X--S  lX--S   -X--S  -X--S  lX--S  lX--S   lX--S
 /       /          |     / ;     ;    l      /       l ;     l;    /l     /l;     /l;
                             s     s         s           s      s             s   s   s
+
+
+l l   l l   l l   l      a l
+^ ^   ^ ^   ^ ^   ^^     ^^
+a e   a e   a |   | ;    . ;
+^^^   ^^    ^^|   s  s   s  s
+s s   s s   s s
+
 
 
 0"# Error color"
