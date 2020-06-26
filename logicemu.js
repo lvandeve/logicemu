@@ -5568,6 +5568,24 @@ function DotMatrix() {
     } else if(this.numc == 4) {
       var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3];
       color = 14 + value;
+    } else if(this.numc == 5) {
+      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3] + 16 * inputs[c0 + 4];
+      if(value >= 27) value = 0;
+      color = 35 + value;
+    } else if(this.numc == 6) {
+      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3] + 16 * inputs[c0 + 4] + 32 * inputs[c0 + 5];
+      color = 62 + value;
+    } else if(this.numc == 7) {
+      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3] + 16 * inputs[c0 + 4] + 32 * inputs[c0 + 5] + 64 * inputs[c0 + 6];
+      if(value >= 125) value = 0;
+      color = 126 + value;
+    } else if(this.numc == 8) {
+      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3] + 16 * inputs[c0 + 4] + 32 * inputs[c0 + 5] + 64 * inputs[c0 + 6] + 128 * inputs[c0 + 7];
+      if(value >= 216) value = 0;
+      color = 251 + value;
+    } else if(this.numc == 9) {
+      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3] + 16 * inputs[c0 + 4] + 32 * inputs[c0 + 5] + 64 * inputs[c0 + 6] + 128 * inputs[c0 + 7] + 256 * inputs[c0 + 8];
+      color = 467 + value;
     }
 
     if(led) {
@@ -5728,15 +5746,18 @@ function DotMatrix() {
     // io format: [[[niv], nic], [[eiv], eic], [[siv], sic], [[wiv], wic],[[nov], noc], [[eov], eoc], [[sov], soc], [[wov], woc]];
 
     var numinputs = 0;
+    var numinputsides = 0;
 
     for(var i = 0; i < 4; i++) {
       // commented out: ignore outputs altogether instead.
       //if(io[i + 4][1] != 0) { this.setError('dotmatrix cannot have outputs'); return false; }
       numinputs += io[i][1];
+      if(io[i][1] != 0) numinputsides++;
     }
 
+    // TODO: once we support y,c,C,q,Q inputs to large devices, use the fact whether there's a c or C input as the distinguishing feature between dot matrix screen and RGB LED
     var rgbled = false;
-    if(numinputs <= 4) {
+    if(numinputs <= 3 || numinputsides < 3) {
       rgbled = true;
     }
 
@@ -5781,10 +5802,12 @@ function DotMatrix() {
 
   /*
   Sorts inputs from getDirs
+  if dot matrix:
   -first the misc bits: dot, fill, R, G, B
   -then the x coordinate, starting from lsb
   -then the y coordinate, starting from lsb
-  }
+  if RGB LED:
+  -clockwise starting from empty side
   */
   this.sortIO = function(dirs) {
     var x0 = this.x0;
@@ -5811,6 +5834,8 @@ function DotMatrix() {
 
     if(led) {
       // sort clockwise starting from the empty side
+      // TODO: there can be ambiguity what is the empty side if we have 2 opposing
+      // non-empty sides and 2 opposing empty sides.
       array = array.sort(function(a, b) {
         var xa = self.master.inputs_x[a];
         var ya = self.master.inputs_y[a];
@@ -5819,7 +5844,9 @@ function DotMatrix() {
         var da = (getDir(xa, ya) + 4 - emptyheading) & 3;
         var db = (getDir(xb, yb) + 4 - emptyheading) & 3;
         if(da != db) return da > db ? 1 : -1;
-        if(((da & 1) == 0)) return xb - xa;
+        if(da == 0) return xa - xb;
+        if(da == 1) return ya - yb;
+        if(da == 2) return xb - xa;
         return yb - ya;
       });
     } else {
@@ -5887,8 +5914,7 @@ function DotMatrix() {
 
     // num color bits
     this.numc = this.rgbled ? dirs.empty[1] : (dirs.misc[2] - this.nummisc);
-    //if(this.numc < 1 || this.numc > 4) { this.setError('not enough or too much misc inputs, need 3-6'); return false; }
-    if(this.numc > 4) { this.setError('too much misc inputs, need 3-6'); return false; }
+    if(this.numc > 9) { this.setError('too much color bit inputs, need 1-9'); return false; }
     this.numx = this.rgbled ? 0 : dirs.x[2];
     this.numy = this.rgbled ? 0 : dirs.y[2];
 
@@ -7422,14 +7448,58 @@ function setColorScheme(index) {
   ERRORFGCOLOROFF = '#f00';
   ERRORFGCOLORON = '#f88';
 
-
   rgb_led_bg_colors = [
-      '#111', '#eee', // 0-1: 2 colors. Slightly different values instead of #000 #fff to be subtly visible against white/black main background
-      '#111', '#0f0', '#f00', '#ff0', // 2-6: 4 colors
-      '#111', '#00f', '#0f0', '#0ff', '#f00', '#f0f', '#ff0', '#fff', // 6-13: 8 colors
-      '#111', '#00a', '#0a0', '#0aa', '#a00', '#a0a', '#a50', '#aaa', '#555', '#55f', '#5f5', '#5ff', '#f55', '#f5f', '#ff5', '#fff', // 14-29: 16 colors
-      '#111a11', '#151', '#181', '#1c1', '#1f1', // 30-34: oscilloscope colors
+      // 0-1: 1-bit palette: 2 colors, black and white. Slightly different values instead of #000 #fff to be subtly visible against white/black main background
+      '#111', '#eee',
+      // 2-6: 4-color palette: RG
+      '#111', '#0f0', '#f00', '#ff0',
+      // 6-13: 8-color palette: RGB
+      '#111', '#00f', '#0f0', '#0ff', '#f00', '#f0f', '#ff0', '#fff',
+      // 14-29: 16 color palette: RGBI
+      '#111', '#00a', '#0a0', '#0aa', '#a00', '#a0a', '#a50', '#aaa', '#555', '#55f', '#5f5', '#5ff', '#f55', '#f5f', '#ff5', '#fff',
+      // 30-34: oscilloscope colors
+      '#111a11', '#151', '#181', '#1c1', '#1f1',
   ];
+  // 35-61: 27 color palette: 3-level RGB
+  for(var i = 0; i < 27; i++) {
+    var b = i % 3;
+    var g = Math.floor(i / 3) % 3;
+    var r = Math.floor(i  / 9) % 3;
+    var a = ['00', '7f', 'ff'];
+    rgb_led_bg_colors.push('#' + a[r] + a[g] + a[b]);
+  }
+  // 62-125: 64 color palette: 4-level RGB
+  for(var i = 0; i < 64; i++) {
+    var b = i & 3;
+    var g = (i >> 2) & 3;
+    var r = (i >> 4) & 3;
+    var a = ['0', '5', 'a', 'f'];
+    rgb_led_bg_colors.push('#' + a[r] + a[g] + a[b]);
+  }
+  // 126-250: 125 color palette: 5-level RGB
+  for(var i = 0; i < 125; i++) {
+    var b = i % 5;
+    var g = Math.floor(i / 5) % 5;
+    var r = Math.floor(i  / 25) % 5;
+    var a = ['00', '3f', '7f', 'bf', 'ff'];
+    rgb_led_bg_colors.push('#' + a[r] + a[g] + a[b]);
+  }
+  // 251-466: 216 color palette: 6-level RGB
+  for(var i = 0; i < 216; i++) {
+    var b = i % 6;
+    var g = Math.floor(i / 6) % 6;
+    var r = Math.floor(i  / 36) % 6;
+    var a = ['0', '3', '6', '9', 'c', 'f'];
+    rgb_led_bg_colors.push('#' + a[r] + a[g] + a[b]);
+  }
+  // 467-978: 512 color palette: 8-level RGB
+  for(var i = 0; i < 512; i++) {
+    var b = i & 7;
+    var g = Math.floor(i >> 3) & 7;
+    var r = Math.floor(i  >> 6) & 7;
+    var a = ['00', '24', '48', '6c', '90', 'b4', 'd8', 'ff'];
+    rgb_led_bg_colors.push('#' + a[r] + a[g] + a[b]);
+  }
   rgb_led_fg_colors = [];
   for(var i = 0; i < rgb_led_bg_colors.length; i++) {
     rgb_led_fg_colors[i] = util.twiddleColor(rgb_led_bg_colors[i], 80);
@@ -7666,8 +7736,8 @@ function setColorScheme(index) {
     // for monochrome RGB led: hidden in main background if off, same color as wire if on (for its bg color; its letter G has opposite color)
     rgb_led_bg_colors = [];
     rgb_led_fg_colors = [];
-    for(var i = 0; i < 35; i++) {
-      if(i == 0 || i == 2 || i == 6 || i == 14 || i == 30) {
+    for(var i = 0; i <= 978; i++) {
+      if(i == 0 || i == 2 || i == 6 || i == 14 || i == 30 || i == 35 || i == 62 || i == 126 || i == 251 || i == 467) {
         rgb_led_bg_colors[i] = BGCOLOR;
         rgb_led_fg_colors[i] = ONCOLOR;
       } else {
@@ -8764,7 +8834,7 @@ function RendererText() {
 
   this.setValue = function(cell, value, type) {
     if(!this.div1) return; // e.g. if this is a comment (TODO: fix the fact that comment gets setValue at all, it should not be part of a component)
-    if(type == TYPE_DOTMATRIX && (cell.circuitsymbol == 'D' || cell.circuitsymbol == '#')) {
+    if(type == TYPE_DOTMATRIX && (cell.circuitsymbol == 'D' || cell.circuitsymbol == '#' || cell.circuitsymbol == '#D')) {
       var dotmatrix = cell.components[0].dotmatrix;
       if(dotmatrix && !dotmatrix.error) {
         var x = cell.x - dotmatrix.x0;

@@ -598,7 +598,14 @@ p-->J40000 0"white noise"
          s
         "G"
 
-0"With more inputs, D is the Dot Matrix screen:"
+0"RGB LEDs with less or more than 3 inputs also exist and use various"
+0"color palettes:"
+
+D    D###    D########
+^    ^^^^    ^^^^^^^^^
+s    ssss    sssssssss
+
+0"With more input groups as configured below, D is the Dot Matrix screen:"
 
 0"With binary addressing:"
 
@@ -2750,8 +2757,8 @@ p-->J400000 0"white noise"
 3"NEW PART: DOT MATRIX, RGB LED"
 3"D: dot matrix screen, RGB LED"
 
-0"With three or less inputs, D is a single RGB LED (a single pixel, which"
-0"can be made larger):"
+0"With three or less inputs, or 4-9 inputs but less than 2 sides used, D is a"
+0"single RGB LED (a single pixel, which can be made larger):"
 
 s.>D<.s    D##
    ^       ###
@@ -2760,7 +2767,59 @@ s.>D<.s    D##
            sss
           "RGB"
 
-0"With more inputs, D is the Dot Matrix screen:"
+0"1-9 color inputs use various different color palettes:"
+
+
+"1 input: mono"0"2 inputs: RG"0"3 inputs: RGB"
+
+ D              D#             D##
+ ^              ^^             ^^^
+ s              ss             sss
+"I"            "RG"           "RGB"
+
+0"4 inputs: RGBI"
+
+ D###
+ ^^^^
+ ssss
+"IRGB"
+
+0"5 inputs: 27 colors 3-level RGB: : 0-26 = 3x3x3 colors""
+
+ D####
+ ^^^^^
+ sssss
+"X8421"
+
+0"6 inputs: 64 colors 4-level RGB"
+
+ D#######
+ ^^ ^^ ^^
+ ss ss ss
+"Rr Gg Bb"
+
+0"7 inputs: 125 colors 5-level RGB: 0-124 = 5x5x5 colors"
+
+ D######
+ ^^^^^^^
+ sssssss
+"...8421"
+
+0"8 inputs: 216 colors 6-level RGB: 0-215 = 6x6x6 colors"
+
+ D#######
+ ^^^^^^^^
+ ssssssss
+"....8421"
+
+0"9 inputs: 512 colors 8-level RGB"
+
+ D##########
+ ^^^ ^^^ ^^^
+ sss sss sss
+"Rrr Ggg Bbb"
+
+0"With more input groups as configured below, D is the Dot Matrix screen:"
 
 0"With binary addressing:"
 
@@ -2793,13 +2852,24 @@ s.>D<.s    D##
       ^^^^^^^^
       ssSssSss
 
-0"The following color schemes are available:"
-0"- 4 color bits: RGBI, 16 colors palette"
-0"- 3 color bits: RGB, 8 colors palette"
-0"- 2 color bits: RG, 4 colors palette: black, red, green, yellow"
-0"- 1 color bits: 2 colors palette: white/black"
-0"- 0 color bits: oscilloscope: green, fades out over time (time based on amount of"
+0"The same color schemes as for the RGB LED are available, with up to 9 color inputs."
+
+0"In addition, 0 color inputs uses oscilloscope color: green, fades out over time (time based on amount of"
 0"dots drawn, line based addressing not supported in case of oscilloscope, 'fill' instead clears)"
+
+0"To see the fadeout, first draw a dot in one place, then change location and keep drawing a dot in the"
+0"different location until old dot starts fading out."
+
+      D#######<p"dot"
+      ########<p"clear"
+      ########
+      ########
+      ########
+    s>########
+    s>########
+    s>########
+           ^^^
+           sss
 
 
 3"NEW PART: Mux"
@@ -5289,12 +5359,92 @@ l<#################<s
 
 
 
-registerCircuit('RGB LED (D)', `
- s-->D<--s
+registerCircuit('RGB LED, 1 Input: I (D)', `
+     D
      ^
      |
-     |
      s
+
+    "I"
+
+`, 'component' + componentid++);
+
+registerCircuit('RGB LED, 2 Inputs: R,G (D)', `
+
+    D#      s->D<-s
+    ^^
+    ||
+    ss
+
+   "RG"
+
+`, 'component' + componentid++);
+
+registerCircuit('RGB LED, 3 Inputs: R,G,B (D)', `
+
+     D##      s->D<-s
+     ^^^         ^
+     |||         |
+     sss         s
+
+    "RGB"
+`, 'component' + componentid++);
+
+registerCircuit('RGB LED, 4 Inputs, RGBI (D)', `
+     D###
+     ^^^^
+     ||||
+     ssss
+
+    "IRGB"
+
+`, 'component' + componentid++);
+
+registerCircuit('RGB LED, 5 Inputs, 3-level RGB (D)', `
+     D####
+     ^^^^^
+     |||||
+     sssss
+    "X8421""0-26: 3x3x3"3
+
+`, 'component' + componentid++);
+
+registerCircuit('RGB LED, 6 Inputs, 4-level RGB (D)', `
+     D#####      D#######
+     ^^^^^^      ^^ ^^ ^^
+     ||||||      || || ||
+     ssssss      ss ss ss
+
+    "RrGgBb"    "Rr Gg Bb"
+
+`, 'component' + componentid++);
+
+registerCircuit('RGB LED, 7 Inputs, 5-level RGB (D)', `
+     D######
+     ^^^^^^^
+     |||||||
+     sssssss
+    "...8421""0-124: 5x5x5"3
+
+`, 'component' + componentid++);
+
+registerCircuit('RGB LED, 8 Inputs, 6-level RGB (D)', `
+     D#######
+     ^^^^^^^^
+     ||||||||
+     ssssssss
+    "....8421""0-215: 6x6x6"3
+
+`, 'component' + componentid++);
+
+registerCircuit('RGB LED, 9 Inputs, 8-level RGB (D)', `
+     D########      D##########
+     ^^^^^^^^^      ^^^ ^^^ ^^^
+     |||||||||      ||| ||| |||
+     sssssssss      sss sss sss
+
+    "RrrGggBbb"    "Rrr Ggg Bbb"
+
 `, 'component' + componentid++);
 
 registerCircuit('Dot Matrix Screen, Binary Addressing (D)', `
@@ -5320,6 +5470,24 @@ registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
     S>########<s"r"
     s>########
     s>########
+      ^^^^^^^^
+      ssSssSss
+
+`, 'component' + componentid++);
+
+registerCircuit('Dot Matrix Screen, Matrix Addressing, 512 Colors (D)', `
+    s>D#######<p"dot"
+    s>########<p"fill"
+    S>########
+    s>########<s"b"
+    s>########<s"b"
+    S>########<s"B"
+    s>########<s"g"
+    s>########<s"g"
+    s>########<s"G"
+    s>########<s"r"
+    s>########<s"r"
+    s>########<S"R"
       ^^^^^^^^
       ssSssSss
 
