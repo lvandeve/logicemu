@@ -2064,19 +2064,23 @@ function newOrder(array, order) {
 
 /*
 returns object {} with following fields:
-i[0]: inputs for north side. {n:num, a:[array], ng:numgroups, ga:[groups]}
-    array has form [[x, y, i, j], ...]. Here:
-      i is computed from x or y component as distance from: i[0]:left, i[1]:top, i[2]:right, i[3]:bottom, o[0]:right, o[1]:bottom, o[2]:left, o[3]:top
-      j is x for N/S, y for E/W
-    groups is array of {n:num, b:[x,y,i,j], f:[x,y,i,j], l:[x,y,i,j]} with:
+i[0]: inputs for north side. {n:num, a:[array], ai:[array], ng:numgroups, ga:[groups], ai:array}
+    array a has form [[x,y,v,p,i], ...]. Here:
+      v is computed from x or y component as distance from: i[0]:left, i[1]:top, i[2]:right, i[3]:bottom, o[0]:right, o[1]:bottom, o[2]:left, o[3]:top
+      --> note: the LSB sides are rotationally invariant, and the order is reversed for input and output because if you have LSB on one side on an input, then for an output on the opposing side, the LSB should be on the same side on screen.
+      p is x for N/S, y for E/W
+      i is index of this input in the given master, and is only present for inputs, not for outputs
+    ai is array that matches the i values from a, and is only present for inputs, not for outputs
+    groups is array of {n:num, f:[x,y,v,p,i], l:[x,y,v,p,i], d:[x,y,v,p], dn:[x,y,v,p], ai:[array]} with:
       f = first
       l = last (*inclusive*!)
-      first and last are in the same order ad described for "i" in array and the order of array a.
+      first and last are in the same order as described for "v" in array and the order of array a.
       d: each value is 0, 1 or -1: how to increment each field of f to reach l.
       dn: negated version of d: for reaching f from l, to go from MSB to LSB instead
+      ai is array of indices of this input in the given master, and is only present for inputs, not for outputs
     A group is a consecutive streak of inputs.
     num == a.length, numgroups == ga.length
-    arrays are sorted in the order of the i value. Note that this means inputs and outputs are sorted in reverse order. LSB is first clockwise for inputs, counterclockwise for outputs.
+    arrays are sorted in the order of the v value. Note that this means inputs and outputs are sorted in reverse order. LSB is first clockwise for inputs, counterclockwise for outputs.
 i[1]: idem for east side
 i[2]: idem for south side
 i[3]: idem for west side
@@ -2084,7 +2088,7 @@ o[0]: outputs for north side. same format as ni.
 o[1]: idem for east side
 o[2]: idem for south side
 o[3]: idem for west side
-iy: inputs of type 'y'. {n:num, a:array}, array is of [x,y]
+iy: inputs of type 'y'. {n:num, a:array, ai:array}, array a is of [x,y], array ai is as above
 ic: idem for inputs of type 'c'
 iC: idem for inputs of type 'C'
 iq: idem for inputs of type 'q'
@@ -2111,19 +2115,19 @@ function getIO(x0, y0, x1, y1, master) {
   var r = {};
   r.i = [];
   r.o = [];
-  r.i[0] = {n:0, a:[], ng:0, ga:[]};
-  r.i[1] = {n:0, a:[], ng:0, ga:[]};
-  r.i[2] = {n:0, a:[], ng:0, ga:[]};
-  r.i[3] = {n:0, a:[], ng:0, ga:[]};
+  r.i[0] = {n:0, a:[], ng:0, ga:[], ai:[]};
+  r.i[1] = {n:0, a:[], ng:0, ga:[], ai:[]};
+  r.i[2] = {n:0, a:[], ng:0, ga:[], ai:[]};
+  r.i[3] = {n:0, a:[], ng:0, ga:[], ai:[]};
   r.o[0] = {n:0, a:[], ng:0, ga:[]};
   r.o[1] = {n:0, a:[], ng:0, ga:[]};
   r.o[2] = {n:0, a:[], ng:0, ga:[]};
   r.o[3] = {n:0, a:[], ng:0, ga:[]};
-  r.iy = {n:0, a:[]};
-  r.ic = {n:0, a:[]};
-  r.iC = {n:0, a:[]};
-  r.iq = {n:0, a:[]};
-  r.iQ = {n:0, a:[]};
+  r.iy = {n:0, a:[], ai:[]};
+  r.ic = {n:0, a:[], ai:[]};
+  r.iC = {n:0, a:[], ai:[]};
+  r.iq = {n:0, a:[], ai:[]};
+  r.iQ = {n:0, a:[], ai:[]};
 
   for(var i = 0; i < master.inputs.length; i++) {
     var x = master.inputs_x[i];
@@ -2134,30 +2138,39 @@ function getIO(x0, y0, x1, y1, master) {
     if(c == 'y') {
       r.iy.n++;
       r.iy.a.push([x2, y2]);
+      r.iy.ai.push(i);
     } else if(c == 'c') {
       r.ic.n++;
       r.ic.a.push([x2, y2]);
+      r.ic.ai.push(i);
     } else if(c == 'C') {
       r.iC.n++;
       r.iC.a.push([x2, y2]);
+      r.iC.ai.push(i);
     } else if(c == 'q') {
       r.iq.n++;
       r.iq.a.push([x2, y2]);
+      r.iq.ai.push(i);
     } else if(c == 'Q') {
       r.iQ.n++;
       r.iQ.a.push([x2, y2]);
+      r.iQ.ai.push(i);
     } else if(y == y0 - 1) {
       r.i[0].n++;
-      r.i[0].a.push([x2, y2, x2 - x0, x2]);
+      r.i[0].a.push([x2, y2, x2 - x0, x2, i]);
+      r.i[0].ai.push(i);
     } else if(x == x1) {
       r.i[1].n++;
-      r.i[1].a.push([x2, y2, y2 - y0, y2]);
+      r.i[1].a.push([x2, y2, y2 - y0, y2, i]);
+      r.i[1].ai.push(i);
     } else if(y == y1) {
       r.i[2].n++;
-      r.i[2].a.push([x2, y2, x1 - x2 - 1, x2]);
+      r.i[2].a.push([x2, y2, x1 - x2 - 1, x2, i]);
+      r.i[2].ai.push(i);
     } else if(x == x0 - 1) {
       r.i[3].n++;
-      r.i[3].a.push([x2, y2, y1 - y2 - 1, y2]);
+      r.i[3].a.push([x2, y2, y1 - y2 - 1, y2, i]);
+      r.i[3].ai.push(i);
     } else {
       return null;
     }
@@ -2187,20 +2200,29 @@ function getIO(x0, y0, x1, y1, master) {
   // computes ng, f, l, ga given object with n and a.
   var process = function(v) {
     v.a.sort(function(a, b) {
-      return a[2] - b[2];
+      return a[2] - b[2]; // sort by LSB order
     });
+    // needs to be resorted too
+    if(v.ai) {
+      for(var i = 0; i < v.ai.length; i++) {
+        v.ai[i] = v.a[i][4];
+      }
+    }
 
     for(var i = 1; i < v.a.length; i++) {
       if(v.a[i - 1][2] == v.a[i][2]) return null; // two inputs to same side, so maybe diagonal input, not supported for this.
     }
 
+    // groups array
     if(v.a.length) {
       var prev = v.a[0];
-      v.ga.push({n:0, f:prev, l:null});
+      v.ga.push({n:0, f:prev, l:null, ai:[]});
       for(var i = 1; i <= v.a.length; i++) {
-        //groups is array of {n:num, f:first, l:last}
+        var b = v.ga[v.ga.length - 1];
+        if(i < v.a.length) {
+          b.ai.push(v.a[i][4]);
+        }
         if(i == v.a.length || v.a[i][2] > prev[2] + 1) {
-          var b = v.ga[v.ga.length - 1];
           b.l = prev;
           b.n = b.l[2] - b.f[2] + 1;
           b.d = [];
@@ -2209,9 +2231,11 @@ function getIO(x0, y0, x1, y1, master) {
           b.d[2] = 1;
           b.d[3] = (b.l[3] > b.f[3]) ? 1 : -1;
           b.dn = [-b.d[0], -b.d[1], -b.d[2], -b.d[3]];
-          if(i < v.a.length) v.ga.push({n:0, f:v.a[i], e:null});
+          if(i < v.a.length) v.ga.push({n:0, f:v.a[i], l:null, ai:[]});
         }
-        if(i < v.a.length) prev = v.a[i];
+        if(i < v.a.length) {
+          prev = v.a[i];
+        }
       }
     }
 
@@ -3306,7 +3330,7 @@ function Alu() {
   this.errormessage = null;
   // input A
   this.adir = -1;
-  this.alsbinv = false;  // true means lsb is on other side than the usual (usual = the rule of 'i' in getIO)
+  this.alsbinv = false;  // true means lsb is on other side than the usual (usual = the rule of 'v' in getIO)
   this.numa = 0;
   // input B
   this.bdir = -1;
@@ -5117,6 +5141,10 @@ function VTE() {
     }
     this.master.vte = this;
     return true;
+  };
+
+  this.processIO = function(io) {
+    // TODO: work in progress
   };
 
 
