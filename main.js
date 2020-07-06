@@ -440,14 +440,14 @@ function getStatsText() {
   text += 'world height: ' + h + '\n';
   text += 'num circuit cells: ' + numCells + '\n'; // not comments, isolators, ...
   text += '\n';
-  text += ' real-world stats\n';
-  text += 'estimated num transistors: ' + (numTransistors + numTransistorsLarge) + '\n'; // not exact for large components like built-in flip-flops, ALUs, ...
+  text += ' physical stats\n';
+  text += 'estimated num transistors (imprecise for large devices): ' + (numTransistors + numTransistorsLarge) + '\n'; // not exact for large components like built-in flip-flops, ALUs, ...
   text += 'num transistors (excluding large devices): ' + numTransistors  + '\n';
-  text += 'estimated num logic gates: ' + (numGates + numGatesLarge + numGatesOther) + '\n'; // not exact for large components like built-in flip-flops, ALUs, ... Also, inverted inputs for logic gates are not counted as extra gates, and multi-input gates count as 1 gate.
+  text += 'estimated num logic gates (imprecise for large devices): ' + (numGates + numGatesLarge + numGatesOther) + '\n'; // not exact for large components like built-in flip-flops, ALUs, ... Also, inverted inputs for logic gates are not counted as extra gates, and multi-input gates count as 1 gate.
   text += 'num standard logic gates (excludes large devices): ' + numGates + '\n';
   text += 'num inverted inputs (extra NOT gates): ' + numInvertedInputs  + '\n';
   text += '\n';
-  text += ' component stats (= logic gates, leds, large devices, ...)\n';
+  text += ' component stats (component = logic gate, LED, large device, ...)\n';
   text += 'num components: ' + numComponents + '\n';
   text += 'num on components: ' + numOnComponents + '\n';
   text += 'num off components: ' + numOffComponents + '\n';
@@ -713,7 +713,7 @@ function createMenuUI() {
   statsButton.title = 'show circuit statistics and parameters. The estimated num transistors assumes NMOS logic, gives exact value when only using basic 2-input logic gates (AND, NAND, XOR, ...), but will use some arbitrary large amount of transistors per big built-in device (ALU, terminal emulator, ...)';
   statsButton.onclick = function() {
     if(dialogDiv) return;
-    dialogDiv = util.makeAbsElement('div', 200, 200, 400, 500);
+    dialogDiv = util.makeAbsElement('div', 200, 200, 500, 500);
     dialogDiv.style.backgroundColor = 'white';
     dialogDiv.style.position = 'fixed';
     dialogDiv.style.border = '1px solid black';

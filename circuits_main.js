@@ -1560,6 +1560,62 @@ registerCircuit('colored LEDs wave', `
 `, 'wave');
 
 
+
+
+registerCircuit('Random Color', `
+   D########
+   #########
+   #########
+   #########
+   #########
+   #########
+   #########
+   #########
+   #########
+   ^^^^^^^^^
+   ?????????
+   ^^^^^^^^^
+   .........
+           |
+           p
+
+`, 'randomcolor');
+
+registerCircuit('512 Color Sequence', `
+   D########
+   #########
+   #########
+   #########
+   #########
+   #########
+   #########
+   #########
+   #########
+   ^^^^^^^^^
+   T########<t<S
+
+`, 'sequence512');
+
+registerCircuit('Random Pixels', `
+
+       D#######<--.t<S
+       ########<p .
+       ########<?<.
+       ########<?<.
+       ########<?<.
+   .>?>########<?<.
+   .>?>########<?<.
+   .>?>########<?<.
+   .        ^^^   .
+   .        ???   .
+   .        ^^^   .
+   ................
+
+
+
+`, 'randompixels');
+
+
 registerCircuit('7-segment display', `
 
           1"7-segment display"
@@ -1725,6 +1781,8 @@ registerCircuit('Asynchronous binary up counter', `
    . . . . . . . .
    c[c[c[c[c[c[c[c<..p
 
+0"MODE:electron"
+
 `, 'counter');
 
 
@@ -1745,6 +1803,8 @@ registerCircuit('Synchronous up counter', `
   c     c     c     c     c     c     c     c
   ^     ^     ^     ^     ^     ^     ^     ^
   ...................................................p
+
+0"MODE:electron"
 
 `, 'synch_counter');
 
@@ -3489,6 +3549,622 @@ T#######
 p
 
 `, 'roll');
+
+
+
+
+
+
+registerCircuit('Controlled Swap Logic', `
+
+0"INSERT:toc"
+
+0"# Controlled Swap Logic"
+
+0"In the series of 'building all logic gates from some primitive', this time"
+0"we're building all logic gates from controlled swap. This is very similar to"
+0"te Fredkin gate, but we're not enforcing the reversibility so it's more"
+0"compact."
+
+0"A 'controlled swap' has two regular inputs connected to two regular outputs,"
+0"and a control input. If the control input is enabled, the inputs are swapped"
+0"to the output."
+
+0"It can be built with a MUX. That's actually two MUXes in one, logicemu allows"
+0"combining that in a single M:"
+
+      s
+      v
+  s-->M-->l
+      #
+  s-->#-->l
+
+
+0"For consistency, unused outputs are connected to a 'z', and unused inputs"
+0"are always connected to 0 (f) or 1 (F):"
+
+      s
+      v
+  s-->M-->l
+      #
+  f-->#-->z
+
+0"## NOT"
+
+      s
+      v
+  F-->M-->l
+      #
+  f-->#-->z
+
+0"## AND"
+
+      s
+      v
+  f-->M-->l
+      #
+  s-->#-->z
+
+
+    ...
+    . v
+  s..>M..>l
+      #
+  s..>#..>z
+
+
+0"## OR"
+
+      s
+      v
+  s-->M-->l
+      #
+  F-->#-->z
+
+
+    ...
+    . v
+  s..>M..>z
+      #
+  s..>#..>l
+
+
+0"## XOR"
+
+      s s
+      v v
+  f-->M>M-->l
+      # #
+  F-->#>#-->z
+
+0"## NAND"
+
+      s
+      v
+  f-->M-.
+      # v
+  s-->#>M-->z
+        #
+  F---->#-->l
+
+
+    ... .....
+    . v .   v
+  s..>M.. F>M..>l
+      #     #
+  s..>#>z f>#>z
+
+
+0"## NOR"
+
+      s
+      v
+  s-->M-.
+      # v
+  F-->#>M-->l
+        #
+  f---->#-->z
+
+
+    ...   .....
+    . v   .   v
+  s..>M>z . F>M..>l
+      #   .   #
+  s..>#.... f>#>z
+
+
+0"## XNOR"
+
+      s s
+      v v
+  F..>M>M..>l
+      # #
+  f..>#>#..>z
+
+
+0"## IMPLY"
+
+      s
+      v
+  s..>M..>z
+      #
+  F..>#..>l
+
+
+0"## NIMPLY"
+
+      s
+      v
+  f..>M..>z
+      #
+  s..>#..>l
+
+
+0"## 3-Input AND"
+
+      s   s
+      v   v
+  s..>M..>M..>z
+      #   #
+    f># f>#..>l
+
+0"## 3-Input OR"
+
+      s   s
+      v   v
+    F># F>#..>z
+      #   #
+  s..>M..>M..>l
+
+
+    ...
+    . v
+  s..>M>z ...
+      #   . v
+  s..>#....>M>z
+            #
+  s........>#..>l
+
+0"## 3-Input XOR/XNOR"
+
+      s s s
+      v v v
+  f..>M>M>M..>l0"XOR"
+      # # #
+  F..>#>#>#..>l0"XNOR"
+
+
+0"## 3-Input Majority Gate"
+
+
+
+    ...  ........
+    . v  .      .
+  s..>M..+...   ...
+      #  .  v   . v
+  s..>#....>M>z .>M>l
+            #     #
+  s........>#....>#>z
+
+
+0"## 3-Input 1-Hot Detector Gate"
+
+  s..............
+                .
+    ... .....   .    f>#>z
+    . v .   v   v      #
+  s..>M.+..>M..>M>z  F>M>l
+      # .   #   #      ^
+  s..>#.. F>#..>#.......
+
+
+0"## 3-Input Equals Gate"
+
+  s...........
+             .
+    ...      .
+    . v      v
+  s..>M.....>M>z
+      #      #
+  s..>#.. ..>#>l
+        v .
+      F>M..
+        #
+      f>#>z
+
+0"## Fredkin Gate"
+
+0"Fredkin gate or controlled swap: since our device already is one, that's easy,"
+0"just pass through the control bit as well."
+
+s......>l
+    v
+s..>M..>l
+    #
+s..>#..>l
+
+0"## Toffoli Gate"
+
+0"Controlled controlled NOT (invert if a AND b)"
+
+    .......
+    .     .
+  s..>M>z .>l
+      #
+  s..>#.. .>l
+    . ^ . .
+    ....+..
+        .
+  s.... . .>l
+      v v .
+  f..>M>M..
+      # #
+  F..>#>#>z
+
+
+0"## Wire Crossing"
+
+      F
+      v
+  s..>M..>l
+      #
+  s..>#..>l
+
+
+0"## Mux"
+
+      s
+      v
+  s..>M..>l
+      #
+  s..>#..>z
+
+
+0"## Demux"
+
+      s
+      v
+  s..>M..>l
+      #
+  f..>#..>l
+
+
+0"## both AND and NIMPLY"
+
+      s
+      v
+  s..>M..>l0"NIMPLY"
+      #
+  f..>#..>l0"AND"
+
+
+0"## both OR and IMPLY"
+
+      s
+      v
+  s..>M..>l0"OR"
+      #
+  F..>#..>l0"IMPLY"
+
+
+0"## both XOR and XNOR"
+
+      s s
+      v v
+  f..>M>M..>l0"XOR"
+      # #
+  F..>#>#..>l0"XNOR"
+
+
+0"## all of XOR, OR and AND"
+
+         f>#>l0"AND"
+           #
+    ...  .>M>l0"XOR"
+    . v  . ^
+  s..>M..+..>l0"AND"
+      #  .
+  s..>#.....>l0"OR"
+
+
+0"## both XOR and OR"
+
+         f>#>z
+           #
+    ...  .>M>l0"XOR"
+    . v  . ^
+  s..>M..+..
+      #  .
+  s..>#.....>l0"OR"
+
+
+0"## both OR and XNOR"
+
+
+    ...   .....
+    . v   .   v
+  s..>M...+..>M..>l0"OR"
+      #   .   #
+  s..>#.... F>#..>l0"XNOR"
+
+
+0"## both AND and OR (Bit Sorter)"
+
+    ...
+    . v
+  s..>M....>l0"AND"
+      #
+  s..>#....>l0"OR"
+
+
+
+0"## both AND and XOR (Half Adder)"
+
+    ...
+    . v
+  s..>M....>l
+      # v
+  s..>#>M..>l
+        #
+      f>#..>z
+
+0"## Full Adder"
+
+0"can be made from 2 half adders and an OR gate, but here combined in a way"
+0"that needs only 4 instead of 5 relays in total."
+
+
+    ...      ...
+    . v      . v
+  s..>M.. ....>M..
+      # v .    # v
+  s..>#>M.. ..>#>M>l"sum"
+        #   .    #
+      f>#...+...>#>l"carry"
+            .
+  s..........
+
+
+
+0"4-bit adder"
+
+
+            s
+    ...     . ...
+    . v     . . v
+s....>M.. ..+..>M..
+      # v . .   # v
+    s>#>M.. ...>#>M>l"1"
+        #         #
+      f>#........>#..
+                    .
+            .........
+            .
+    ...     . ...
+    . v     . . v
+s....>M.. ..+..>M..
+      # v . .   # v
+    s>#>M.. ...>#>M>l"2"
+        #         #
+      f>#........>#..
+                    .
+            .........
+            .
+    ...     . ...
+    . v     . . v
+s....>M.. ..+..>M..
+      # v . .   # v
+    s>#>M.. ...>#>M>l"4"
+        #         #
+      f>#........>#..
+                    .
+            .........
+            .
+    ...     . ...
+    . v     . . v
+s....>M.. ..+..>M..
+      # v . .   # v
+    s>#>M.. ...>#>M>l"8"
+        #         #
+      f>#........>#..
+                    .
+            .........
+            v
+            l
+
+0"8-Bit Barrel Shifter"
+
+
+
+  l     l     l     l     l     l     l     l
+  ^     ^     ^     ^     ^     ^     ^     ^
+  .     .     .     .     .     .     .     .
+  .     .     .     .     .     .     .     .
+  .     .     .     .     .     .     .     .
+  . z   . z   . z   . z   . z   . z   . z   . z
+  . ^   . ^   . ^   . ^   . ^   . ^   . ^   . ^
+  M##<. M##<. M##<. M##<. M##<. M##<. M##<. M##<.
+  ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ .
+  . . ..+.+...+.+...+.+...+.+...+.+...+.+...+.+....s"8+"
+  . .   . .   . .   . .   . .   . .   . .   . .
+  . f   . f   . f   . f   . f   . f   . f   . f
+  .     .     .     .     .     .     .     .
+  .     .     .     .     .     .     .     .
+  .     .     .     .     .     .     .     .
+  . z   . z   . z   . z   . z   . z   . z   . z
+  . ^   . ^   . ^   . ^   . ^   . ^   . ^   . ^
+  M##<. M##<. M##<. M##<. M##<. M##<. M##<. M##<.
+  ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ .
+  . . ..+.+...+.+...+.+...+.+...+.+...+.+...+.+....s"4"
+  . .   . .   . .   . .   . .   . .   . .   . .
+  . ....+.+...+.+...+.+.... f   . f   . f   . f
+  .     . .   . .   . .   .     .     .     .
+  .     . ....+.+...+.+...+......     .     .
+  .     .     . .   . .   .     .     .     .
+  .     .     . ....+.+...+.....+......     .
+  .     .     .     . .   .     .     .     .
+  .     .     .     . ....+.....+.....+......
+  .     .     .     .     .     .     .     .
+  .     .     .     .     .     .     .     .
+  . z   . z   . z   . z   . z   . z   . z   . z
+  . ^   . ^   . ^   . ^   . ^   . ^   . ^   . ^
+  M##<. M##<. M##<. M##<. M##<. M##<. M##<. M##<.
+  ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ .
+  . . ..+.+...+.+...+.+...+.+...+.+...+.+...+.+....s"2"
+  . .   . .   . .   . .   . .   . .   . .   . .
+  . ....+.+.... ....+.+.... ....+.+.... ....+.f
+  .     . .   .     . .   .     . .   .     .
+  .     . ....+...... ....+...... ....+......
+  .     .     .     .     .     .     .     .
+  .     .     .     .     .     .     .     .
+  . z   . z   . z   . z   . z   . z   . z   . z
+  . ^   . ^   . ^   . ^   . ^   . ^   . ^   . ^
+  M##<. M##<. M##<. M##<. M##<. M##<. M##<. M##<.
+  ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ .
+  . . ..+.+...+.+...+.+...+.+...+.+...+.+...+.+....s"1"
+  . .   . .   . .   . .   . .   . .   . .   . .
+  . ..... ..... ..... ..... ..... ..... ..... f
+  .     .     .     .     .     .     .     .
+  .     .     .     .     .     .     .     .
+  s     s     s     s     s     s     s     s
+
+
+
+
+
+
+
+
+
+
+0"# Flip-Flops"
+
+
+0"## D Latch (Gated)"
+      .....
+      .   .
+      .>M..>l
+        #
+"D"2s..>#>z
+        ^
+"E"2s....
+
+
+
+0"## SR Latch"
+
+  F>M....>l
+    # .
+  s>#.+>z
+    ^ .
+     x
+    v .
+  F>M....>l
+    #
+  s>#..>z
+
+
+0"## D Flip Flop"
+
+      ....... .....
+      .     . .   .
+      .>M>z . .>M..>l
+        #   .   #
+"D"2s..>#......>#>z
+        ^       ^
+"C"2s............
+
+
+0"## T Flip Flop"
+
+
+            .................
+            .           .   .
+"T"2s...... .   ....... .   .
+          v v   .     . .   .
+        F>M>M>z .>M>z . .>M..>l
+          # #     #   .   #
+        f>#>#....>#......>#>z
+                  ^       ^
+"C"2s......................
+
+
+0"## Frequency Halver"
+
+
+            ...............
+            .         .   .
+            . ....... .   .
+            v .     . .   .
+          f>M .>M>z . .>M..>l
+            #   #   .   #
+          F>#..>#......>#>z
+                ^       ^
+"C"2s....................
+
+
+0"## JK Flip Flop"
+
+"K"2s......   .................
+          v   .           .   .
+        f>M   .   ....... .   .
+          #   v   .     . .   .
+        F>#..>M>z .>M>z . .>M..>l
+              #     #   .   #
+"J"2s........>#....>#......>#>z
+                    ^       ^
+"C"2s........................
+
+
+0"# Dual Edge-Triggered D Flip-Flop"
+
+              .....
+              .   .
+              .>M....
+                #   .
+"D"2s..........>#>z .
+            .   ^   .
+"C"2s.......+.......+..
+          . .       . v
+          . . ..... .>M...>l
+          . . .   .   #
+          . ..+>M....>#>z
+          .   . #
+          .   .>#..>z
+          .     ^
+          .......
+
+
+0"# Register (D Flip-Flop with Enable)"
+
+
+       .......................
+       .                     .
+       .       ....... ..... .
+       .       .     . .   . .
+       .>M.... .>M>z . .>M....>l
+         #   .   #   .   #
+"D"2s...>#>z ...>#......>#>z
+         ^       ^       ^
+"E"2s.....       .       .
+                 .       .
+"C"2s.....................
+
+
+
+0"# Flickering"
+
+
+   ...
+   v .
+ s>M..>l
+   #
+ f>#..>l
+
+
+0"MODE:immediate"
+
+`, 'controlled_swap');
 
 
 

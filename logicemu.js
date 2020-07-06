@@ -2062,163 +2062,102 @@ function newOrder(array, order) {
 
 
 
+/*
+returns object {} with following fields:
+i[0]: inputs for north side. {n:num, a:[array], ng:numgroups, ga:[groups]}
+    array has form [[x, y, i, j], ...]. Here:
+      i is computed from x or y component as distance from: i[0]:left, i[1]:top, i[2]:right, i[3]:bottom, o[0]:right, o[1]:bottom, o[2]:left, o[3]:top
+      j is x for N/S, y for E/W
+    groups is array of {n:num, b:[x,y,i,j], f:[x,y,i,j], l:[x,y,i,j]} with:
+      f = first
+      l = last (*inclusive*!)
+      first and last are in the same order ad described for "i" in array and the order of array a.
+      d: each value is 0, 1 or -1: how to increment each field of f to reach l.
+      dn: negated version of d: for reaching f from l, to go from MSB to LSB instead
+    A group is a consecutive streak of inputs.
+    num == a.length, numgroups == ga.length
+    arrays are sorted in the order of the i value. Note that this means inputs and outputs are sorted in reverse order. LSB is first clockwise for inputs, counterclockwise for outputs.
+i[1]: idem for east side
+i[2]: idem for south side
+i[3]: idem for west side
+o[0]: outputs for north side. same format as ni.
+o[1]: idem for east side
+o[2]: idem for south side
+o[3]: idem for west side
+iy: inputs of type 'y'. {n:num, a:array}, array is of [x,y]
+ic: idem for inputs of type 'c'
+iC: idem for inputs of type 'C'
+iq: idem for inputs of type 'q'
+iQ: idem for inputs of type 'Q'
+ni: total amount of inputs
+no: total amount of outputs
+nig: total amount of input groups
+nog: total amount of output groups
+nis: total amount of input sides (including mixed input/output)
+nos: total amount of output sides (including mixed input/output)
+nes: total amount of empty sides (no inputs or outputs)
+niis: total amount of input-only sides
+noos: total amount of output-only sides
+nios: total amount of mixed sides (inputs and outputs)
 
-
-
-
-
-// returns: [array, ni, no, ei, eo, si, so, wi, wo]
-// array is array of input and output series, each element is an array: [heading, num, begin, end, output] with:
-// -heading: 0-3 for NESW
-// -num: amount of bits for this series
-// -begin and end: x0-x1 or y0-y1 coordinate of this series on the current side (in absolute world coordinates of the relevant dimension)
-// -output: 1 if this is a series of outputs, else it's a series of inputs.
-// --> inputs and outputs are mixed and given in clockwise order starting from the left side of the north edge.
-// ni, no, ei, eo, si, so, wi and wo are arrays with references to the same elements as the main array, but only for north inputs, north outputs, east inputs, etc...
+The given device is of type LargeDevice.
+For the side-inputs/outputs, only supports rectangular shape (where y, c, C, q and Q may deviate from the rectangular shape)
+Does not support diagonal inputs, so not useable for ICs.
+The inputs appear in following order:
+for n/e/s/w inputs: for N right to left, E: bottom to top, S: left to right, W: top to bottom
+for n/e/s/w outputs: for N left to right, E: top to bottom, S: right to left, W: bottom to top
+*/
 function getIO(x0, y0, x1, y1, master) {
-  var nv = [];
-  var ev = [];
-  var sv = [];
-  var wv = [];
+  var r = {};
+  r.i = [];
+  r.o = [];
+  r.i[0] = {n:0, a:[], ng:0, ga:[]};
+  r.i[1] = {n:0, a:[], ng:0, ga:[]};
+  r.i[2] = {n:0, a:[], ng:0, ga:[]};
+  r.i[3] = {n:0, a:[], ng:0, ga:[]};
+  r.o[0] = {n:0, a:[], ng:0, ga:[]};
+  r.o[1] = {n:0, a:[], ng:0, ga:[]};
+  r.o[2] = {n:0, a:[], ng:0, ga:[]};
+  r.o[3] = {n:0, a:[], ng:0, ga:[]};
+  r.iy = {n:0, a:[]};
+  r.ic = {n:0, a:[]};
+  r.iC = {n:0, a:[]};
+  r.iq = {n:0, a:[]};
+  r.iQ = {n:0, a:[]};
 
   for(var i = 0; i < master.inputs.length; i++) {
     var x = master.inputs_x[i];
     var y = master.inputs_y[i];
-    if(x == x0 - 1) {
-      wv.push([y, 0]);
-    } else if(x == x1) {
-      ev.push([y, 0]);
+    var x2 = master.inputs_x2[i];
+    var y2 = master.inputs_y2[i];
+    var c = world[y2][x2].circuitsymbol;
+    if(c == 'y') {
+      r.iy.n++;
+      r.iy.a.push([x2, y2]);
+    } else if(c == 'c') {
+      r.ic.n++;
+      r.ic.a.push([x2, y2]);
+    } else if(c == 'C') {
+      r.iC.n++;
+      r.iC.a.push([x2, y2]);
+    } else if(c == 'q') {
+      r.iq.n++;
+      r.iq.a.push([x2, y2]);
+    } else if(c == 'Q') {
+      r.iQ.n++;
+      r.iQ.a.push([x2, y2]);
     } else if(y == y0 - 1) {
-      nv.push([x, 0]);
-    } else if(y == y1) {
-      sv.push([x, 0]);
-    } else return null;
-  }
-
-  for(var x = x0; x < x1; x++) {
-    if(connected2(x, y0, 0)) {
-      nv.push([x, 1]);
-    }
-    if(connected2(x, y1 - 1, 2)) {
-      sv.push([x, 1]);
-    }
-  }
-  for(var y = y0; y < y1; y++) {
-    if(connected2(x0, y, 3)) {
-      wv.push([y, 1]);
-    }
-    if(connected2(x1 - 1, y, 1)) {
-      ev.push([y, 1]);
-    }
-  }
-
-  nv.sort(function(a, b) {
-    return a[0] - b[0];
-  });
-  ev.sort(function(a, b) {
-    return a[0] - b[0];
-  });
-  sv.sort(function(a, b) {
-    return b[0] - a[0];
-  });
-  wv.sort(function(a, b) {
-    return b[0] - a[0];
-  });
-
-  var array = []; // array of [heading, num, begin, end, output]
-  var current = null;
-
-  for(var i = 0; i < nv.length; i++) {
-    if(i == 0 || nv[i][1] != current[4] || nv[i][0] > current[3]) {
-      current = [0, 1, nv[i][0], nv[i][0] + 1, nv[i][1]];
-      array.push(current);
-    } else {
-      current[1]++;
-      current[3]++;
-    }
-  }
-  for(var i = 0; i < ev.length; i++) {
-    if(i == 0 || ev[i][1] != current[4] || ev[i][0] > current[3]) {
-      current = [1, 1, ev[i][0], ev[i][0] + 1, ev[i][1]];
-      array.push(current);
-    } else {
-      current[1]++;
-      current[3]++;
-    }
-  }
-  for(var i = 0; i < sv.length; i++) {
-    if(i == 0 || sv[i][1] != current[4] || sv[i][0] < current[2] - 1) {
-      current = [2, 1, sv[i][0], sv[i][0] + 1, sv[i][1]];
-      array.push(current);
-    } else {
-      current[1]++;
-      current[2]--;
-    }
-  }
-  for(var i = 0; i < wv.length; i++) {
-    if(i == 0 || wv[i][1] != current[4] || wv[i][0] < current[2] - 1) {
-      current = [3, 1, wv[i][0], wv[i][0] + 1, wv[i][1]];
-      array.push(current);
-    } else {
-      current[1]++;
-      current[2]--;
-    }
-  }
-
-  var ni = [];
-  var no = [];
-  var ei = [];
-  var eo = [];
-  var si = [];
-  var so = [];
-  var wi = [];
-  var wo = [];
-
-  for(var i = 0; i < array.length; i++) { // [heading, num, begin, end, output]
-    var a = array[i];
-    if(a[0] == 0 && !a[4]) ni.push(a);
-    if(a[0] == 0 && a[4]) no.push(a);
-    if(a[0] == 1 && !a[4]) ei.push(a);
-    if(a[0] == 1 && a[4]) eo.push(a);
-    if(a[0] == 2 && !a[4]) si.push(a);
-    if(a[0] == 2 && a[4]) so.push(a);
-    if(a[0] == 3 && !a[4]) wi.push(a);
-    if(a[0] == 3 && a[4]) wo.push(a);
-  }
-
-  return [array, ni, no, ei, eo, si, so, wi, wo];
-}
-
-
-// Different output format than getIO: can return input and output series on all sides. 0-4 input sides and 0-4 output sides supported. But max 1 input series and 1 output series per side.
-// returns 2D array of form:
-// [[[niv], nic], [[eiv], eic], [[siv], sic], [[wiv], wic],[[nov], noc], [[eov], eoc], [[sov], soc], [[wov], woc]];
-// with first letter the direction (NESW), next i or o for input/output, and next symbol: v for array, c for count
-// end is non-inclusive
-// array has absolute world coordinates of the corresponding inputs or outputs for the dimension corresponding to the side
-// returns null on error, such as having gaps
-function getIO2(x0, y0, x1, y1, master) {
-  var niv = [];
-  var eiv = [];
-  var siv = [];
-  var wiv = [];
-
-  var nov = [];
-  var eov = [];
-  var sov = [];
-  var wov = [];
-
-  for(var i = 0; i < master.inputs.length; i++) {
-    var x = master.inputs_x[i];
-    var y = master.inputs_y[i];
-    if(x == x0 - 1) {
-      wiv.push(y);
+      r.i[0].n++;
+      r.i[0].a.push([x2, y2, x2 - x0, x2]);
     } else if(x == x1) {
-      eiv.push(y);
-    } else if(y == y0 - 1) {
-      niv.push(x);
+      r.i[1].n++;
+      r.i[1].a.push([x2, y2, y2 - y0, y2]);
     } else if(y == y1) {
-      siv.push(x);
+      r.i[2].n++;
+      r.i[2].a.push([x2, y2, x1 - x2 - 1, x2]);
+    } else if(x == x0 - 1) {
+      r.i[3].n++;
+      r.i[3].a.push([x2, y2, y1 - y2 - 1, y2]);
     } else {
       return null;
     }
@@ -2226,105 +2165,85 @@ function getIO2(x0, y0, x1, y1, master) {
 
   for(var x = x0; x < x1; x++) {
     if(connected2(x, y0, 0)) {
-      nov.push(x);
+      r.o[0].n++;
+      r.o[0].a.push([x, y0, x1 - x - 1, x]);
     }
     if(connected2(x, y1 - 1, 2)) {
-      sov.push(x);
+      r.o[2].n++;
+      r.o[2].a.push([x, y1 - 1, x - x0, x]);
     }
   }
   for(var y = y0; y < y1; y++) {
     if(connected2(x0, y, 3)) {
-      wov.push(y);
+      r.o[3].n++;
+      r.o[3].a.push([x0, y, y - y0, y]);
     }
     if(connected2(x1 - 1, y, 1)) {
-      eov.push(y);
+      r.o[1].n++;
+      r.o[1].a.push([x1 - 1, y, y1 - y - 1, y]);
     }
   }
 
-  return [[niv, niv.length],
-          [eiv, eiv.length],
-          [siv, siv.length],
-          [wiv, wiv.length],
-          [nov, nov.length],
-          [eov, eov.length],
-          [sov, sov.length],
-          [wov, wov.length]];
-}
+  // computes ng, f, l, ga given object with n and a.
+  var process = function(v) {
+    v.a.sort(function(a, b) {
+      return a[2] - b[2];
+    });
 
-
-// Another different output format of getIO. Allows gaps in between
-// returns 2D array of form: [[[nv], nc, nt], [[ev], ec, et], [[sv], sc, st], [[wv], wc, wt], ic, oc];
-// with first letter the direction (NESW), and next symbol: v is array with the locations, c num inputs or outputs and t meaning type: 0:none,1:input,2:output.
-// ic and oc are input count and output count
-// array has absolute world coordinates of the corresponding inputs or outputs for the dimension corresponding to the side
-// returns null on error, such as mixing inputs and outputs on a side
-function getIO3(x0, y0, x1, y1, master) {
-  var nv = [];
-  var nt = 0;
-  var ev = [];
-  var et = 0;
-  var sv = [];
-  var st = 0;
-  var wv = [];
-  var wt = 0;
-
-  if(master.inputs.length == 0) return null;
-  for(var i = 0; i < master.inputs.length; i++) {
-    var x = master.inputs_x[i];
-    var y = master.inputs_y[i];
-    if(x == x0 - 1) {
-      wv.push(y);
-      wt = 1;
-    } else if(x == x1) {
-      ev.push(y);
-      et = 1;
-    } else if(y == y0 - 1) {
-      nv.push(x);
-      nt = 1;
-    } else if(y == y1) {
-      sv.push(x);
-      st = 1;
-    } else return null;
-  }
-
-  for(var x = x0; x < x1; x++) {
-    if(connected2(x, y0, 0)) {
-      if(nt == 1) return null; // is already input
-      nv.push(x);
-      nt = 2;
+    for(var i = 1; i < v.a.length; i++) {
+      if(v.a[i - 1][2] == v.a[i][2]) return null; // two inputs to same side, so maybe diagonal input, not supported for this.
     }
-    if(connected2(x, y1 - 1, 2)) {
-      if(st == 1) return null; // is already input
-      sv.push(x);
-      st = 2;
-    }
-  }
-  for(var y = y0; y < y1; y++) {
-    if(connected2(x0, y, 3)) {
-      if(wt == 1) return null; // is already input
-      wv.push(y);
-      wt = 2;
-    }
-    if(connected2(x1 - 1, y, 1)) {
-      if(et == 1) return null; // is already input
-      ev.push(y);
-      et = 2;
-    }
-  }
 
+    if(v.a.length) {
+      var prev = v.a[0];
+      v.ga.push({n:0, f:prev, l:null});
+      for(var i = 1; i <= v.a.length; i++) {
+        //groups is array of {n:num, f:first, l:last}
+        if(i == v.a.length || v.a[i][2] > prev[2] + 1) {
+          var b = v.ga[v.ga.length - 1];
+          b.l = prev;
+          b.n = b.l[2] - b.f[2] + 1;
+          b.d = [];
+          b.d[0] = (b.f[0] == b.l[0]) ? 0 : (b.l[0] > b.f[0] ? 1 : -1);
+          b.d[1] = (b.f[1] == b.l[1]) ? 0 : (b.l[1] > b.f[1] ? 1 : -1);
+          b.d[2] = 1;
+          b.d[3] = (b.l[3] > b.f[3]) ? 1 : -1;
+          b.dn = [-b.d[0], -b.d[1], -b.d[2], -b.d[3]];
+          if(i < v.a.length) v.ga.push({n:0, f:v.a[i], e:null});
+        }
+        if(i < v.a.length) prev = v.a[i];
+      }
+    }
 
-  var result = [[nv, nv.length, nt], [ev, ev.length, et], [sv, sv.length, st], [wv, wv.length, wt]];
+    v.ng = v.ga.length;
+  };
 
-  var ic = 0;
-  var oc = 0;
+  r.ni = 0;
+  r.no = 0;
+  r.nig = 0;
+  r.nog = 0;
+  r.nis = 0;
+  r.nos = 0;
+  r.nes = 0;
+  r.niis = 0;
+  r.noos = 0;
+  r.nios = 0;
   for(var i = 0; i < 4; i++) {
-    if(result[i][2] == 1) ic++;
-    if(result[i][2] == 2) oc++;
+    process(r.i[i]);
+    process(r.o[i]);
+    r.ni += r.i[i].n;
+    r.no += r.o[i].n;
+    r.nig += r.i[i].ng;
+    r.nog += r.o[i].ng;
+    if(r.i[i].n) r.nis++;
+    if(r.o[i].n) r.nos++;
+    if(!r.i[i].n && !r.o[i].n) r.nes++;
+    if(r.i[i].n && !r.o[i].n) r.niis++;
+    if(r.o[i].n && !r.i[i].n) r.noos++;
+    if(r.o[i].n && r.i[i].n) r.nios++;
   }
-  result[4] = ic;
-  result[5] = oc;
 
-  return result;
+  return r;
 }
 
 
@@ -2530,7 +2449,7 @@ function ROM() {
 
 
   /*
-  given the array returned by getIO3,
+  given the array returned by getIO,
   returns object of {
     type: 0=rom, 1=ram, 2=decoder, 3=encoder, 4=priority
     onehot: 0=binary address selection, 1=one-hot (unary) (only used for rom or ram)
@@ -2562,19 +2481,18 @@ function ROM() {
     var somesingleinput = -1; // heading of some input with exactly 1 bit, if present
     var somemultiinput = -1; // heading of some input with more than 1 bits, if present
     for(var i = 0; i < 4; i++) {
-      if(io[i][2] == 1) {
+      if(io.i[i].n && io.o[i].n) return null; // can't have mixed input/output side
+      if(io.i[i].n) {
         numinputsides++;
         someinput = i;
-        if(io[i][1] == 1) somesingleinput = i;
-        if(io[i][1] > 1) somemultiinput = i;
+        if(io.i[i].n == 1) somesingleinput = i;
+        if(io.i[i].n > 1) somemultiinput = i;
       }
-      if(io[i][2] == 2) {
+      if(io.o[i].n) {
         numoutputsides++;
         someoutput = i;
       }
     }
-
-    //io is of form: [[[nv], nc, nt], [[ev], ec, et], [[sv], sc, st], [[wv], wc, wt], ic, oc], with t meaning type: 0:none,1:input,2:output
 
     if(numoutputsides != 1) return null; // every single possible device has 1 output side.
     var outheading = someoutput;
@@ -2643,7 +2561,7 @@ function ROM() {
     var addressheading = someinput;
     if(numinputsides == 3) {
       for(var i = 0; i < 4; i++) {
-        if(io[i][2] == 1 && i != ((outheading + 2) & 3) && io[i][1] != 1) { // if(input size, and not opposite of output, and larger amount than 1)
+        if(io.i[i].n > 1 && i != ((outheading + 2) & 3)) { // if(input size, and not opposite of output, and larger amount than 1)
           addressheading = i;
           break;
         }
@@ -2673,8 +2591,8 @@ function ROM() {
         if(somemultiinput == -1 || somesingleinput == -1) return false;
       }
       if(addressdir != outdir) return null; // must be accross for enc/dec
-      var numin = io[addressheading][1];
-      var numout = io[outheading][1];
+      var numin = io.i[addressheading].n;
+      var numout = io.o[outheading].n;
       if(numin < numout) {
         // decoder (binary to unary)
         type = 2;
@@ -2688,8 +2606,8 @@ function ROM() {
         return null;
       }
     } else {
-      var numaddr = io[addressheading][1];
-      var numout = io[outheading][1];
+      var numaddr = io.i[addressheading].n;
+      var numout = io.o[outheading].n;
 
       if(numout != wordsize) return null;
 
@@ -2704,8 +2622,8 @@ function ROM() {
         rwdir = rwheading & 1;
         datainputheading = ((outheading + 2) & 3);
         datainputdir = datainputheading & 1;
-        if(io[rwheading][1] != 1) return null;
-        if(io[datainputheading][1] != wordsize) return null;
+        if(io.i[rwheading].n != 1) return null;
+        if(io.i[datainputheading].n != wordsize) return null;
         if(numaddr == numwords) unary = 1;
       } else {
         return null;
@@ -2737,17 +2655,17 @@ function ROM() {
       }
     }
 
-    // The arrays have form [heading, dir, i0, i1, num, lsbpos]
+    // The arrays have form [heading, dir, num, lsbpos]
     var result = {'type':type, 'onehot':unary,
                   'word':[worddir, wordlsbpos],
-                  'address':[addressheading, addressheading & 1, io[addressheading][0], io[addressheading][1], addresslsbpos],
-                  'out':[outheading, outdir, io[outheading][0], io[outheading][1], outlsbpos] };
+                  'address':[addressheading, addressheading & 1, io.i[addressheading].n, addresslsbpos],
+                  'out':[outheading, outdir, io.o[outheading].n, outlsbpos] };
     if(type == 1) { // RAM
-      result['rwinput'] = [rwheading, rwdir, io[rwheading][0], io[rwheading][1], -1];
-      result['datainput'] = [datainputheading, datainputdir, io[datainputheading][0], io[datainputheading][1], outlsbpos];
+      result['rwinput'] = [rwheading, rwdir, io.i[rwheading].n, -1];
+      result['datainput'] = [datainputheading, datainputdir, io.i[datainputheading].n, outlsbpos];
     } else {
-      result['rwinput'] = [-1, -1, 0, 0, -1];
-      result['datainput'] = [-1, -1, 0, 0, -1];
+      result['rwinput'] = [-1, -1, 0, -1];
+      result['datainput'] = [-1, -1, 0, -1];
     }
     result['lines'] = lines;
     result['bits'] = bits;
@@ -2761,7 +2679,7 @@ function ROM() {
   -data inputs from lsb to msb (if it's a RAM)
   The given dirs are headings (NESW)
   */
-  this.sortInputs = function(addressdir, datadir, addresslsb) {
+  this.sortIO = function(addressdir, datadir, addresslsb) {
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
@@ -2862,15 +2780,14 @@ function ROM() {
 
     if(!this.master) return false;
 
-    var io = getIO3(x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, this.master);
     if(!io) return false;
-    if(io[5] != 1) return false; // oc != 1. cannot have more than 1 output size nor less
 
     var dirs = this.getDirs(io);
     if(!dirs) return false;
 
     this.addressdir = dirs.address[1];
-    this.addresslsbpos = dirs.address[4];
+    this.addresslsbpos = dirs.address[3];
     this.worddir = dirs.word[0];
     this.wordlsbpos = dirs.word[1];
 
@@ -2908,11 +2825,11 @@ function ROM() {
       }
     }
 
-    this.output.length = dirs.out[3];
+    this.output.length = dirs.out[2];
     this.selected.length = this.lines.length;
 
     if(this.ram) {
-      var realsize = dirs.address[3];
+      var realsize = dirs.address[2];
       if(!this.onehot) {
         if(realsize > 20) realsize = 20; // don't make it too extreme. Max 1M memory. The question is, can javascript even handle that
         realsize = (1 << realsize);
@@ -2924,9 +2841,9 @@ function ROM() {
         for(var j = 0; j < wordwidth; j++) this.array[i][j] = false;
       }
     }
-    this.num_address_inputs = dirs.address[3];
+    this.num_address_inputs = dirs.address[2];
 
-    this.sortInputs(dirs.address[0], dirs.datainput[0], dirs.address[4]);
+    this.sortIO(dirs.address[0], dirs.datainput[0], dirs.address[3]);
 
     return true;
   };
@@ -3081,7 +2998,7 @@ function Mux() {
 
 
   /*
-  given the array returned by getIO3,
+  given the array returned by getIO,
   returns object of {
     datain [heading, lsbpos, num]: input and output's heading, and lsbpos: which data line is for select 0 (normally the one closest to input side of select)
     dataout [heading, lsbpos, num]: heading/lsbpos should be same as datain,
@@ -3112,14 +3029,14 @@ function Mux() {
     var demux = false;
     var demuxdataside = -1;
 
-    //io is of form: [[[nv], nc, nt], [[ev], ec, et], [[sv], sc, st], [[wv], wc, wt], ic, oc], with t meaning type: 0:none,1:input,2:output
+    if(io.nios) return null; // mixed input/output sides not supported
 
     // it's a demux if there is a side with less inputs than outputs
     for(var i = 0; i < 4; i++) {
       var j = getOppositeDir(i);
-      if(io[i][2] == 1 && // is input
-         io[j][2] == 2 && // other is output
-         io[i][1] < io[j][1]) { // less inputs than the other has outputs
+      if(io.i[i].n && // is input
+         io.o[j].n && // other is output
+         io.i[i].n < io.o[j].n) { // less inputs than the other has outputs
         demux = true;
         demuxdataside = i;
         break;
@@ -3128,7 +3045,7 @@ function Mux() {
 
     if(demux) {
       for(var i = 0; i < 4; i++) {
-        if(io[i][2] == 1) {
+        if(io.i[i].n) {
           numinputsides++;
           if(numinputsides > 2) {
             this.setError('too many input sides');
@@ -3136,13 +3053,13 @@ function Mux() {
           }
           if(i == demuxdataside) {
             datain[0] = i;
-            datain[2] = io[i][1];
+            datain[2] = io.i[i].n;
           } else {
             selin[0] = i;
-            selin[2] = io[i][1];
+            selin[2] = io.i[i].n;
           }
         }
-        if(io[i][2] == 2) {
+        if(io.o[i].n) {
           numoutputsides++;
           if(numoutputsides > 2) {
             this.setError('too many output sides');
@@ -3150,10 +3067,10 @@ function Mux() {
           }
           if(i == getOppositeDir(demuxdataside)) {
             dataout[0] = i;
-            dataout[2] = io[i][1];
+            dataout[2] = io.o[i].n;
           } else {
             selout[0] = i;
-            selout[2] = io[i][1];
+            selout[2] = io.o[i].n;
           }
         }
       }
@@ -3162,7 +3079,7 @@ function Mux() {
       if(dataout[2] < (1 << selin[2])) { this.setError('too few data outputs'); return null; }
     } else {
       for(var i = 0; i < 4; i++) {
-        if(io[i][2] == 1) {
+        if(io.i[i].n) {
           numinputsides++;
           if(numinputsides > 2) {
             this.setError('too many input sides');
@@ -3170,11 +3087,11 @@ function Mux() {
           }
           if(numinputsides == 1) {
             datain[0] = i;
-            datain[2] = io[i][1];
+            datain[2] = io.i[i].n;
           }
           if(numinputsides == 2) {
             selin[0] = i;
-            selin[2] = io[i][1];
+            selin[2] = io.i[i].n;
             if(selin[2] > datain[2]) {
               var temp = selin;
               selin = datain;
@@ -3182,7 +3099,7 @@ function Mux() {
             }
           }
         }
-        if(io[i][2] == 2) {
+        if(io.o[i].n) {
           numoutputsides++;
           if(numoutputsides > 2) {
             this.setError('too many output sides');
@@ -3190,11 +3107,11 @@ function Mux() {
           }
           if(numoutputsides == 1) {
             dataout[0] = i;
-            dataout[2] = io[i][1];
+            dataout[2] = io.o[i].n;
           }
           if(numoutputsides == 2) {
             selout[0] = i;
-            selout[2] = io[i][1];
+            selout[2] = io.o[i].n;
           }
         }
       }
@@ -3310,11 +3227,13 @@ function Mux() {
     var rompos = 0;
 
     var side = getSide(getOppositeDir(this.dataindir));
-    var o = io[getOppositeDir(this.dataindir)];
-    for(var i = 0; i < o[0].length; i++) {
+    var o = io.o[getOppositeDir(this.dataindir)];
+    for(var i = 0; i < o.a.length; i++) {
       var j = i;
-      if(this.datainlsbpos) j = o[0].length - i - 1;
-      j = o[0][j] - ((this.dataindir & 1) ? this.y0 : this.x0);
+      var lsbpos = this.datainlsbpos;
+      if(this.dataindir == 2 || this.dataindir == 3) lsbpos = !lsbpos; // take into account the order of getIO
+      if(lsbpos) j = o.a.length - i - 1;
+      j = o.a[j][3] - ((this.dataindir & 1) ? this.y0 : this.x0);
       var x = side[0] + side[2] * j;
       var y = side[1] + side[3] * j;
       var z = side[4];
@@ -3324,11 +3243,13 @@ function Mux() {
     }
 
     side = getSide(getOppositeDir(this.selindir));
-    o = io[getOppositeDir(this.selindir)];
-    for(var i = 0; i < o[0].length; i++) {
+    o = io.o[getOppositeDir(this.selindir)];
+    for(var i = 0; i < o.a.length; i++) {
       var j = i;
-      if(this.selinlsbpos) j = o[0].length - i - 1;
-      j = o[0][j] - ((this.selindir & 1) ? this.y0 : this.x0);
+      var lsbpos = this.selinlsbpos;
+      if(this.selindir == 2 || this.selindir == 3) lsbpos = !lsbpos; // take into account the order of getIO
+      if(lsbpos) j = o.a.length - i - 1;
+      j = o.a[j][3] - ((this.selindir & 1) ? this.y0 : this.x0);
       var x = side[0] + side[2] * j;
       var y = side[1] + side[3] * j;
       var z = side[4];
@@ -3348,7 +3269,7 @@ function Mux() {
 
     if(!this.master) return false;
 
-    var io = getIO3(x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, this.master);
     if(!io) { this.setError('getting io error'); return false; }
 
     var dirs = this.getDirs(io);
@@ -3385,30 +3306,30 @@ function Alu() {
   this.errormessage = null;
   // input A
   this.adir = -1;
-  this.alsbpos = 0;  // 0: left or top, 1: right or bottom. Where the LSB of address input bits is.
+  this.alsbinv = false;  // true means lsb is on other side than the usual (usual = the rule of 'i' in getIO)
   this.numa = 0;
   // input B
   this.bdir = -1;
-  this.blsbpos = 0;
+  this.blsbinv = false;
   this.numb = 0;
   // input C
   this.cdir = -1;
-  this.clsbpos = 0;
+  this.clsbinv = false;
   this.numc = 0;
   // output
   this.odir = -1;
-  this.olsbpos = 0;
+  this.olsbinv = false;
   this.numo = 0;
   // misc side: carry in, carry or overflow out
   this.miscindir = -1;
   this.miscoutdir = -1;
   this.nummiscin = 0;
   this.nummiscout = 0;
-  this.miscinlsbpos = 0;
-  this.miscoutlsbpos = 0;
+  this.miscinlsbinv = false;
+  this.miscoutlsbinv = false;
   // select operation
   this.selectdir = -1;
-  this.selectlsbpos = 0;
+  this.selectlsbinv = false;
   this.numselect = 0;
 
   this.signed = false;
@@ -4398,17 +4319,17 @@ function Alu() {
   /*
   given the array returned by getIO,
   returns object of {
-    a [heading, lsbpos, num]: input A's heading, and lsbpos
-    b [heading, lsbpos, num]: input B's heading, and lsbpos (or heading -1 and num 0 if none)
-    c [heading, lsbpos, num]: input C's heading, and lsbpos (or heading -1 and num 0 if none)
-    o [heading, lsbpos, num]: output's heading, and lsbpos
+    a [heading, lsbinv, num]: input A's heading, and lsbinv
+    b [heading, lsbinv, num]: input B's heading, and lsbinv (or heading -1 and num 0 if none)
+    c [heading, lsbinv, num]: input C's heading, and lsbinv (or heading -1 and num 0 if none)
+    o [heading, lsbinv, num]: output's heading, and lsbinv
     miscin [heading, num]: misc in side heading, num is 0 or 1 (heading -1 and num 0 if none)
     miscout [heading, num]: misc out side heading, num is 0 or 1 (heading -1 and num 0 if none)
-    select [heading, lsbpos, num]: select operation input side heading (heading -1 and num 0 if none)
+    select [heading, lsbinv, num]: select operation input side heading (heading -1 and num 0 if none)
   }
   with
   heading: wind direction of side with this inputs/outputs (NESW), for input is where it comes from, for output is where it goes to
-  lsbpos: is lsbpos for this left or right, value is 0:left/top, 1:right/bottom
+  lsbinv: see info at class fields
   num: the amount
   }
   returns null on error.
@@ -4430,8 +4351,6 @@ function Alu() {
     var select = [-1, -1, 0];
 
     /*
-    io has format: [array, ni, no, ei, eo, si, so, wi, wo]
-    each element is array with elements: [heading, num, begin, end, output]
     There are up to 4 sides:
     -output
     -input(s)
@@ -4448,24 +4367,20 @@ function Alu() {
     -more than 2 groups of wires on the input side is an error
     -more than 1 group of wires on any other side is an error
     */
-    for(var i = 0; i < 4; i++) {
-      var arri = io[1 + i * 2];
-      var arro = io[2 + i * 2];
-      if(arri.length > 0 && arro.length > 0) { this.setError('mixed inputs and outputs on a side'); return null; }
-    }
+    if(io.nios) { this.setError('mixed inputs and outputs on a side'); return null; }
 
     // find main output
     var num = 0;
     var outdir = -1;
     for(var i = 0; i < 4; i++) {
-      var arr = io[2 + i * 2];
-      if(arr.length == 0) continue;
-      if(arr.length > 1) { this.setError('too many output series on one side'); return null; }
-      if(arr[0][1] > num) {
-        num = arr[0][1];
+      if(io.o[i].ng == 0) continue;
+      if(io.o[i].ng > 1) { this.setError('too many output series on one side'); return null; }
+      var arr = io.o[i].ga;
+      if(arr[0].n > num) {
+        num = arr[0].n;
         outdir = i;
         o[0] = outdir;
-        o[1] = (outdir < 2) ? 1 : 0; // TODO: use optional '0' symbol to indicate its LSB position
+        o[1] = false; // TODO: use optional '0' symbol to indicate its LSB position
         o[2] = num;
       }
     }
@@ -4475,11 +4390,11 @@ function Alu() {
     var miscoutdir = -1;
     for(var i = 0; i < 4; i++) {
       if(i == outdir) continue;
-      var arr = io[2 + i * 2];
-      if(arr.length == 0) continue;
-      if(arr.length > 1) { this.setError('too many misc-output series on one side'); return null; }
+      if(io.o[i].ng == 0) continue;
+      if(io.o[i].ng > 1) { this.setError('too many misc-output series on one side'); return null; }
       if(miscoutdir != -1) { this.setError('multiple misc out sides'); return null; }
-      if(arr[0][1] != 1) { this.setError('too many bits in misc output side'); return null; }
+      var arr = io.o[i].ga;
+      if(arr[0].n != 1) { this.setError('too many bits in misc output side'); return null; }
       miscoutdir = i;
       miscout[0] = miscoutdir;
       miscout[1] = 1;
@@ -4487,29 +4402,29 @@ function Alu() {
 
     // get the inputs from opposite side of output
     var indir = (outdir + 2) & 3;
-    var arr = io[1 + indir * 2];
-    var inlsbpos = (indir >= 2) ? 1 : 0; // TODO: use optional '0' symbol to indicate its LSB position, and then also swap input A and B's positions
+    var arr = io.i[indir].ga;
+    var inlsbinv = false; // TODO: use optional '0' symbol to indicate its LSB position
     if(arr.length == 1) {
       a[0] = indir;
-      a[1] = inlsbpos;
-      a[2] = arr[0][1];
+      a[1] = inlsbinv;
+      a[2] = arr[0].n;
     } else if(arr.length == 2) {
       a[0] = indir;
-      a[1] = inlsbpos;
-      a[2] = arr[1][1]; // a is the leftmost one if at bottom side (last one in clockwise order from output)
+      a[1] = inlsbinv;
+      a[2] = arr[1].n; // a is the leftmost one if at bottom side (last one in clockwise order from output)
       b[0] = indir;
-      b[1] = inlsbpos;
-      b[2] = arr[0][1];
+      b[1] = inlsbinv;
+      b[2] = arr[0].n;
     } else if(arr.length == 3) {
       a[0] = indir;
-      a[1] = inlsbpos;
-      a[2] = arr[2][1];
+      a[1] = inlsbinv;
+      a[2] = arr[2].n;
       b[0] = indir;
-      b[1] = inlsbpos;
-      b[2] = arr[1][1];
+      b[1] = inlsbinv;
+      b[2] = arr[1].n;
       c[0] = indir;
-      c[1] = inlsbpos;
-      c[2] = arr[0][1];
+      c[1] = inlsbinv;
+      c[2] = arr[0].n;
     } else {
       if(arr.length == 0) { this.setError('must have input side opposite of output side'); return null; }
       if(arr.length > 2) { this.setError('too many inputs'); return null; }
@@ -4519,29 +4434,29 @@ function Alu() {
     var miscindir = -1;
     for(var i = 0; i < 4; i++) {
       if(i == outdir || i == indir || i == miscoutdir) continue;
-      var arr = io[1 + i * 2];
+      var arr = io.i[i].ga;
       if(arr.length == 0) continue;
       if(miscindir != -1) { this.setError('multiple misc in sides'); return null; }
       if(arr.length == 1) {
-        if(arr[0][1] == 1) {
+        if(arr[0].n == 1) {
           miscindir = i;
           miscin[0] = miscindir;
           miscin[1] = 1;
         } else {
           selectdir = i;
           select[0] = selectdir;
-          select[1] = (selectdir >= 2) ? 1 : 0;
-          select[2] = arr[0][1];
+          select[1] = false; // TODO: use optional '0' symbol to indicate its LSB position
+          select[2] = arr[0].n;
         }
       } else if(arr.length == 2) {
-        if(arr[0][1] != 1) { this.setError('misc in must have 1 bit'); return null; }
+        if(arr[0].n != 1) { this.setError('misc in must have 1 bit'); return null; }
         miscindir = i;
         miscin[0] = miscindir;
         miscin[1] = 1;
         selectdir = i;
         select[0] = selectdir;
-        select[1] = (selectdir >= 2) ? 1 : 0;
-        select[2] = arr[1][1];
+        select[1] = false;  // TODO: use optional '0' symbol to indicate its LSB position
+        select[2] = arr[1].n;
       } else {
         this.setError('too many misc-input series on one side');
         return null;
@@ -4592,11 +4507,13 @@ function Alu() {
         if(db == self.miscindir) return -1;
         throw 'impossible that it is not using at least one adir and one miscindir, given bdir is in center';
       }
-      // NOTE: this assumes alsbpos == blsbpos, miscinlsbpos == selectlsbpos and miscindir == selectdir
-      var lsbpos = (da == self.adir) ? self.alsbpos : (da == self.bdir) ? self.blsbpos : self.selectlsbpos;
-      if(((da & 1) == 0) && lsbpos) return xb - xa;
+      // NOTE: this assumes alsbinv == blsbinv, miscinlsbinv == selectlsbinv and miscindir == selectdir
+      var lsbdir = (da >= 2);
+      var lsbinv = (da == self.adir) ? self.alsbinv : (da == self.bdir) ? self.blsbinv : self.selectlsbinv;
+      if(lsbinv) lsbdir = !lsbdir;
+      if(((da & 1) == 0) && lsbdir) return xb - xa;
       if(((da & 1) == 0)) return xa - xb;
-      if(lsbpos) return yb - ya;
+      if(lsbdir) return yb - ya;
       return ya - yb;
     });
     newOrder(this.master.inputs, array);
@@ -4625,30 +4542,26 @@ function Alu() {
 
     var rompos = 0;
 
-    var side = getSide(this.odir);
-    var o = io[2 + this.odir * 2][0]; // [heading, num, begin, end, output]
-    for(var i = 0; i < o[1]; i++) {
-      var j = i;
-      if(this.olsbpos) j = o[1] - i - 1;
-      j = o[2] + j - ((this.odir & 1) ? this.y0 : this.x0);
-      var x = side[0] + side[2] * j;
-      var y = side[1] + side[3] * j;
-      var z = side[4];
+    var o = io.o[this.odir].ga[0];
+    var f = this.olsbinv ? o.l : o.f;
+    var d = this.olsbinv ? o.dn : o.d;
+    for(var i = 0; i < o.n; i++) {
+      var x = f[0] + d[0] * i;
+      var y = f[1] + d[1] * i;
+      var z = (this.odir & 1) ? 0 : 1;
       var c = world[y][x];
       if(c.circuitsymbol != 'U' && c.circuitsymbol != '#U') continue;
       if(c.components[z]) c.components[z].rom_out_pos = rompos++;
     }
 
     if(this.miscoutdir >= 0) {
-      side = getSide(this.miscoutdir);
-      o = io[2 + this.miscoutdir * 2][0]; // [heading, num, begin, end, output]
-      for(var i = 0; i < o[1]; i++) {
-        var j = i;
-        if(this.miscoutlsbpos) j = o[1] - i - 1;
-        j = o[2] + j - ((this.miscoutdir & 1) ? this.y0 : this.x0);
-        var x = side[0] + side[2] * j;
-        var y = side[1] + side[3] * j;
-        var z = side[4];
+      o = io.o[this.miscoutdir].ga[0];
+      var f = this.miscoutlsbinv ? o.l : o.f;
+      var d = this.miscoutlsbinv ? o.dn : o.d;
+      for(var i = 0; i < o.n; i++) {
+        var x = f[0] + d[0] * i;
+        var y = f[1] + d[1] * i;
+        var z = (this.miscoutdir & 1) ? 0 : 1;
         var c = world[y][x];
         if(c.circuitsymbol != 'U' && c.circuitsymbol != '#U') continue;
         if(c.components[z]) c.components[z].rom_out_pos = rompos++;
@@ -4674,17 +4587,17 @@ function Alu() {
 
 
     this.adir = dirs[0][0];
-    this.alsbpos = dirs[0][1];
+    this.alsbinv = dirs[0][1];
     this.bdir = dirs[1][0];
-    this.blsbpos = dirs[1][1];
+    this.blsbinv = dirs[1][1];
     this.cdir = dirs[2][0];
-    this.clsbpos = dirs[2][1];
+    this.clsbinv = dirs[2][1];
     this.odir = dirs[3][0];
-    this.olsbpos = dirs[3][1];
+    this.olsbinv = dirs[3][1];
     this.miscindir = dirs[4][0];
     this.miscoutdir = dirs[5][0];
     this.selectdir = dirs[6][0];
-    this.selectlsbpos = dirs[6][1];
+    this.selectlsbinv = dirs[6][1];
     this.output = []; // current ouput values (first data output(s), then the select passthrough)
     this.numa = dirs[0][2];
     this.numb = dirs[1][2];
@@ -4999,8 +4912,8 @@ function VTE() {
 
     var index = 0;
     var mul = 1;
-    var write = inputs[this.numinputs];
-    var read = inputs[this.numinputs + 1];
+    var write = this.numinputs > 0 ? inputs[this.numinputs] : false;
+    var read =  this.numinputs > 0 ? inputs[this.numinputs + 1] : inputs[0];
     var prevwrite = this.prevwrite;
     var prevread = this.prevread;
     this.prevwrite = write;
@@ -5208,7 +5121,7 @@ function VTE() {
 
 
   /*
-  given the array returned by getIO2,
+  given the array returned by getIO,
   returns object of {
     input [heading, dir, [iv], num, lsbpos]: input side
     write [heading, dir, [iv], num, lsbpos]: read/write input, also indicates LSB pos
@@ -5253,9 +5166,9 @@ function VTE() {
 
     // find IO direction through output.
     for(var i = 0; i < 4; i++) {
-      if(io[i + 4][1] > 1) {
+      if(io.o[i].n > 1) {
         if(outheading != -1) { this.setError('too many output sides'); return null; }
-        if(io[i][1] > 0) { this.setError('input mixed with output side'); return null; }
+        if(io.i[i].n > 0) { this.setError('input mixed with output side'); return null; }
         outheading = i;
         outdir = (i & 1);
         olsbpos = (i == 0 || i == 1) ? 1 : 0;
@@ -5265,9 +5178,9 @@ function VTE() {
     // find IO direction in heading
     for(var i = 0; i < 4; i++) {
       if(outheading != -1 && i != ((outheading + 2) & 3)) continue; // if there is already an outheading, the inheading must be the opposite
-      if(io[i][1] > 1) {
+      if(io.i[i].n > 1) {
         if(inheading != -1) { this.setError('too many input sides'); return null; }
-        if(io[i + 4][1] > 0) { this.setError('output mixed with input side'); return null; }
+        if(io.o[i].n > 0) { this.setError('output mixed with input side'); return null; }
         inheading = i;
         indir = (i & 1);
         ilsbpos = (i == 3 || i == 2) ? 1 : 0;
@@ -5277,9 +5190,9 @@ function VTE() {
     // If no multibit input nor output, then special case of single 1-bit input
     if(inheading == -1 && outheading == -1) {
       for(var i = 0; i < 4; i++) {
-        if(io[i][1] >= 1) {
+        if(io.i[i].n >= 1) {
           if(inheading != -1) { this.setError('too many input sides'); return null; }
-          if(io[i + 4][1] > 0) { this.setError('output mixed with input side'); return null; }
+          if(io.o[i].n > 0) { this.setError('output mixed with input side'); return null; }
           inheading = i;
           indir = (i & 1);
           ilsbpos = (i == 3 || i == 2) ? 1 : 0;
@@ -5295,15 +5208,15 @@ function VTE() {
     // find misc/control sides
     for(var i = 0; i < 4; i++) {
       if((i & 1) == iodir) continue; // the input/output sides can't have control/misc bits
-      if(io[i][1] == 0 && io[i + 4][1] == 0) {
+      if(io.i[i].n == 0 && io.o[i].n == 0) {
         // nothing, that is ok
-      } else if(io[i][1] >= 1 && io[i + 4][1] == 0) {
+      } else if(io.i[i].n >= 1 && io.o[i].n == 0) {
         if(writeheading != -1) { this.setError('too many write control sides'); return null; };
         writeheading = i;
         writedir = (i & 1);
-        numwrite = io[i][1];
+        numwrite = io.i[i].n;
         //ilsbpos = (i == 1 || i == 2) ? 1 : 0;
-      } else  if(io[i][1] == 1 && io[i + 4][1] == 1) {
+      } else  if(io.i[i].n == 1 && io.o[i].n == 1) {
         if(readheading != -1) { this.setError('too many read control sides'); return null; };
         // TODO: if the read output is on a side, that is, a cell that could also already be a bit output, return error too. Only 1 distinct output can be connected per cell.
         readheading = i;
@@ -5351,12 +5264,17 @@ function VTE() {
       return null;
     }
 
+    var ainput = [];
+    if(inheading >= 0) for(var i = 0; i < io.i[inheading].a.length; i++) ainput[i] = io.i[inheading].a[i][3];
+    var aoutput = [];
+    if(outheading >= 0) for(var i = 0; i < io.o[outheading].a.length; i++) aoutput[i] = io.o[outheading].a[i][3];
+
     var rinput = (inheading == -1) ? [-1, -1, [], 0, -1] :
-        [inheading, inheading & 1, io[inheading][0], io[inheading][1], ilsbpos];
+        [inheading, inheading & 1, ainput, io.i[inheading].n, ilsbpos];
     var rwrite = (writeheading == -1) ? [-1, -1, [], 0, -1] :
         [writeheading, writedir, [], numwrite, ilsbpos];
     var routput = (outheading == -1) ? [-1, -1, [], 0, -1] :
-        [outheading, outdir, io[outheading + 4][0], io[outheading + 4][1], olsbpos];
+        [outheading, outdir, aoutput, io.o[outheading].n, olsbpos];
     var rread = (outheading == -1) ? [-1, -1, [], 0, -1] :
         [readheading, readdir, [], -1, olsbpos];
 
@@ -5455,10 +5373,11 @@ function VTE() {
         // TODO: investigate: is the "!= this.master" check needed? The ROM does it. But in the case here, it prevents outputting the "EOF" signal if it happens to be connected to the cell that happens to be the core cell!
         if(c.components[0] /*&& c.components[0] != this.master*/) {
           var component = c.components[0];
+          var lsbpos = (outputheading == 0 || outputheading == 1) ? olsbpos : !olsbpos;
           if(sideIsNot(x, y, outputheading)) component.rom_out_pos = this.numoutputs;
           //else if(olsbpos) component.rom_out_pos = ((outputdir == 1) ? (dirs.output[3] - y - 1) : (dirs.output[3] - x - 1));
-          else if(olsbpos) component.rom_out_pos = this.numoutputs - 1 - ((outputdir == 1) ? (output_inv[y]) : (output_inv[x]));
-          else component.rom_out_pos = ((outputdir == 1) ? (output_inv[y]) : (output_inv[x]));
+          else if(lsbpos) component.rom_out_pos = ((outputdir == 1) ? (output_inv[y]) : (output_inv[x]));
+          else component.rom_out_pos = this.numoutputs - 1 - ((outputdir == 1) ? (output_inv[y]) : (output_inv[x]));
         }
       }
     }
@@ -5472,7 +5391,7 @@ function VTE() {
 
     if(!this.master) { this.setError('no master present'); return false; }
 
-    var io = getIO2(x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, this.master);
     if(!io) { this.setError('getting io failed'); return false; }
 
     var dirs = this.getDirs(io);
@@ -5718,7 +5637,7 @@ function DotMatrix() {
 
 
   /*
-  given the array returned by getIO2,
+  given the array returned by getIO,
   returns object of {
     rgbled: boolean, true if this is rgbled, then only the field "empty" below is present, used to sort the inputs in clockwise order starting from that side
     empty [heading, numc]: side with nothing, and also TOTAL amount of inputs (relevant for RGB LED only)
@@ -5743,16 +5662,14 @@ function DotMatrix() {
     var x1 = this.x1;
     var y1 = this.y1;
 
-    // io format: [[[niv], nic], [[eiv], eic], [[siv], sic], [[wiv], wic],[[nov], noc], [[eov], eoc], [[sov], soc], [[wov], woc]];
-
     var numinputs = 0;
     var numinputsides = 0;
 
     for(var i = 0; i < 4; i++) {
       // commented out: ignore outputs altogether instead.
-      //if(io[i + 4][1] != 0) { this.setError('dotmatrix cannot have outputs'); return false; }
-      numinputs += io[i][1];
-      if(io[i][1] != 0) numinputsides++;
+      //if(io.o[i].n != 0) { this.setError('dotmatrix cannot have outputs'); return false; }
+      numinputs += io.i[i].n;
+      if(io.i[i].n != 0) numinputsides++;
     }
 
     // TODO: once we support y,c,C,q,Q inputs to large devices, use the fact whether there's a c or C input as the distinguishing feature between dot matrix screen and RGB LED
@@ -5764,7 +5681,7 @@ function DotMatrix() {
     var emptyheading = -1; // the one side without inputs
 
     for(var i = 0; i < 4; i++) {
-      if(io[i][1] == 0) {
+      if(io.i[i].n == 0) {
         emptyheading = i;
         break;
       }
@@ -5779,7 +5696,7 @@ function DotMatrix() {
     var yheading = -1;
     for(var i = 0; i < 3; i++) {
       var j = ((emptyheading + i + 1) & 3);
-      if(!io[j][1]) { this.setError('missing input side, there must be 3'); return null; }
+      if(!io.i[j].n) { this.setError('missing input side, there must be 3'); return null; }
       if(i == 0) {
         mischeading = j;
       } else {
@@ -5792,9 +5709,9 @@ function DotMatrix() {
     var xlsbpos = (xheading >= 2) ? 1 : 0;
     var ylsbpos = (yheading >= 2) ? 1 : 0;
 
-    var misc = [mischeading, mischeading & 1, io[mischeading][1], misclsbpos];
-    var x = [xheading, xheading & 1, io[xheading][1], xlsbpos];
-    var y = [yheading, yheading & 1, io[yheading][1], ylsbpos];
+    var misc = [mischeading, mischeading & 1, io.i[mischeading].n, misclsbpos];
+    var x = [xheading, xheading & 1, io.i[xheading].n, xlsbpos];
+    var y = [yheading, yheading & 1, io.i[yheading].n, ylsbpos];
 
     var result = {'rgbled':false, 'empty':empty, 'misc':misc, 'x':x, 'y':y };
     return result;
@@ -5900,7 +5817,7 @@ function DotMatrix() {
 
     if(!this.master) return false;
 
-    var io = getIO2(x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, this.master);
     if(!io) { this.setError('getIO failed'); return false; }
 
     var dirs = this.getDirs(io);
@@ -6288,7 +6205,7 @@ function JukeBox() {
     var arr = [];
 
     for(var i = 0; i < 4; i++) {
-      var arri = io[1 + i * 2];
+      var arri = io.i[i].ga;
       if(arri.length > 0) {
         if(inputside != -1) { this.setError('can only have one input side'); return null; }
         inputside = i;
@@ -6301,24 +6218,24 @@ function JukeBox() {
     if(arr.length == 1) {
       volume[0] = inputside;
       volume[1] = lsbpos;
-      volume[2] = arr[0][1];
+      volume[2] = arr[0].n;
     } else if(arr.length == 2) {
       volume[0] = inputside;
       volume[1] = lsbpos;
-      volume[2] = arr[0][1];
+      volume[2] = arr[0].n;
       frequency[0] = inputside;
       frequency[1] = lsbpos;
-      frequency[2] = arr[1][1];
+      frequency[2] = arr[1].n;
     } else if(arr.length == 3) {
       volume[0] = inputside;
       volume[1] = lsbpos;
-      volume[2] = arr[0][1];
+      volume[2] = arr[0].n;
       frequency[0] = inputside;
       frequency[1] = lsbpos;
-      frequency[2] = arr[1][1];
+      frequency[2] = arr[1].n;
       shape[0] = inputside;
       shape[1] = lsbpos;
-      shape[2] = arr[2][1];
+      shape[2] = arr[2].n;
     } else {
       if(arr.length > 2) { this.setError('too many input groups'); return null; }
     }
@@ -6349,7 +6266,7 @@ function JukeBox() {
     var self = this;
 
     var heading = dirs.volume[0];
-    var lsbpos = dirs.volume[1]; // 0: left or top, 1: right or bottom. Where the LSB of address input bits is.
+    var lsbdir = (heading >= 2);
     array = array.sort(function(a, b) {
       var xa = self.master.inputs_x[a];
       var ya = self.master.inputs_y[a];
@@ -6358,9 +6275,9 @@ function JukeBox() {
       var da = getDir(xa, ya);
       var db = getDir(xb, yb);
       if(da != db) return da > db ? 1 : -1; // this never happens, only 1 side has inputs
-      if(((da & 1) == 0) && lsbpos) return xb - xa;
+      if(((da & 1) == 0) && lsbdir) return xb - xa;
       if(((da & 1) == 0)) return xa - xb;
-      if(lsbpos) return yb - ya;
+      if(lsbdir) return yb - ya;
       return ya - yb;
     });
 
@@ -7425,6 +7342,8 @@ var SWITCHOFF_BGCOLOR;
 var SWITCHOFF_BORDERCOLOR;
 
 var GATEBGCOLOR;
+var GATEFGONCOLOR;
+var GATEFGOFFCOLOR;
 
 var LINKCOLOR;
 var TITLECOLOR;
@@ -7531,6 +7450,8 @@ function setColorScheme(index) {
     SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
     GATEBGCOLOR = '#f7f7f7';
+    GATEFGONCOLOR = ONCOLOR;
+    GATEFGOFFCOLOR = OFFCOLOR;
 
     LINKCOLOR = '#00e';
     TITLECOLOR = 'black';
@@ -7561,6 +7482,8 @@ function setColorScheme(index) {
     SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
     GATEBGCOLOR = '#020';
+    GATEFGONCOLOR = ONCOLOR;
+    GATEFGOFFCOLOR = OFFCOLOR;
 
     LINKCOLOR = '#880';
     TITLECOLOR = TEXTFGCOLOR;
@@ -7580,6 +7503,8 @@ function setColorScheme(index) {
     LINKCOLOR = '#22f';
 
     GATEBGCOLOR = '#9b9b9b'; // '#b4b4b4';
+    GATEFGONCOLOR = ONCOLOR;
+    GATEFGOFFCOLOR = OFFCOLOR;
 
     var offbg = GATEBGCOLOR;
     led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', 'white'];
@@ -7628,6 +7553,8 @@ function setColorScheme(index) {
 
     TEXTBGCOLOR = 'none';
     GATEBGCOLOR = '#228';
+    GATEFGONCOLOR = ONCOLOR;
+    GATEFGOFFCOLOR = OFFCOLOR;
 
     LINKCOLOR = '#880';
     TITLECOLOR = TEXTFGCOLOR;
@@ -7661,6 +7588,8 @@ function setColorScheme(index) {
 
     TEXTBGCOLOR = '#060';
     GATEBGCOLOR = '#060';
+    GATEFGONCOLOR = ONCOLOR;
+    GATEFGOFFCOLOR = OFFCOLOR;
 
     LINKCOLOR = '#ff0';
     TITLECOLOR = TEXTFGCOLOR;
@@ -7679,6 +7608,8 @@ function setColorScheme(index) {
     LINKCOLOR = '#f00';*/
 
     GATEBGCOLOR = '#ccf';
+    GATEFGONCOLOR = ONCOLOR;
+    GATEFGOFFCOLOR = OFFCOLOR;
     SWITCHON_BGCOLOR = '#afa';
     SWITCHOFF_BGCOLOR = TEXTBGCOLOR;
 
@@ -7706,9 +7637,12 @@ function setColorScheme(index) {
   } else if(index == 7) { // contrast
     setColorScheme(2); //gray
     BGCOLOR = '#999';
-    GATEBGCOLOR = '#a98'; // '#b4b4b4';
     ONCOLOR = 'white';
     OFFCOLOR = 'black';
+
+    GATEBGCOLOR = '#111'; //'#a98'; // '#b4b4b4';
+    GATEFGONCOLOR = '#fff';
+    GATEFGOFFCOLOR = '#aaa';
 
     var ledoffbg = '#000'; // NOTE: disadvantage of LED BG color that differs a lot from main BGCOLOR: 7-segment displays made from LEDs are harder to read
     led_off_bg_colors = [ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg, ledoffbg];
@@ -7756,6 +7690,8 @@ function setColorScheme(index) {
     SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
     GATEBGCOLOR = BGCOLOR;
+    GATEFGONCOLOR = ONCOLOR;
+    GATEFGOFFCOLOR = OFFCOLOR;
 
     LINKCOLOR = 'blue';
     TITLECOLOR = ONCOLOR;
@@ -7813,6 +7749,8 @@ function negateColorScheme() {
   SWITCHON_BORDERCOLOR = util.negateLigntness(SWITCHON_BORDERCOLOR);
   SWITCHOFF_BORDERCOLOR = util.negateLigntness(SWITCHOFF_BORDERCOLOR);
   GATEBGCOLOR = util.negateColor(GATEBGCOLOR);
+  GATEFGONCOLOR = util.negateColor(GATEFGONCOLOR);
+  GATEFGOFFCOLOR = util.negateColor(GATEFGOFFCOLOR);
   LINKCOLOR = util.negateColor(LINKCOLOR);
   TITLECOLOR = util.negateColor(TITLECOLOR);
   TERMINALBGCOLOR = util.negateColor(TERMINALBGCOLOR);
@@ -8066,7 +8004,7 @@ function Cell() {
         else if(number == 9) title += ' (color 9: LCD)';
         else title += ' (unknown color)';
       }
-      if(tc == '?') title = 'random generator';
+      if(tc == '?') title = 'random generator: random bit';
       if(tc == 'J' || tc == '#J') {
         title = 'jukebox (speaker, for music)';
         if(component) {
@@ -9962,6 +9900,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       var textel = (i == 0) ? this.text0 : this.text1;
       var currentColor = (i == 0) ? OFFCOLOR : ONCOLOR;
       var oppositeColor = (i == 0) ? ONCOLOR : OFFCOLOR;
+      var currentGateColor = (i == 0) ? GATEFGOFFCOLOR : GATEFGONCOLOR;
+      var oppositeGateColor = (i == 0) ? GATEFGONCOLOR : GATEFGOFFCOLOR;
+      var gateBorderColor = currentGateColor;
 
       // for big devices like IC and FlipFlop with multiple possible output values, it's
       // ugly if borders get different colors for 'on' and 'off' sub-parts of it, so set to
@@ -9971,7 +9912,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM || type == TYPE_MUX || type == TYPE_ALU) {
           // only for the solid parts, wires part of this component must still use on color
           if(devicemaparea[c]) {
-            ctx.strokeStyle = OFFCOLOR;
+            gateBorderColor = GATEFGOFFCOLOR;
+            ctx.strokeStyle = gateBorderColor;
             ctx.fillStyle = OFFCOLOR;
           }
         }
@@ -10519,7 +10461,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           if(virtualsymbol == 'B') {
             // invert the colors for on bits, to make them more distinguishable
             alreadybg = true;
-            drawer.fillBg_(ctx, currentColor);
+            drawer.fillBg_(ctx, currentGateColor);
             textel.style.color = GATEBGCOLOR;
             // NOTE: the background color may not show up for invalid lone B's,
             // that are not part of a valid ROM. This is because setValue will
@@ -10533,6 +10475,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         if(devicemaparea[c]) {
           if(!alreadybg) {
             drawer.fillBg_(ctx, GATEBGCOLOR);
+            // if alreadybg is set, also a specific fg/border color has already been set, don't override those either (so, this is not for switches/LEDs, but for AND gates and other plain colored devices)
+            textel.style.color = currentGateColor;
+            ctx.strokeStyle = gateBorderColor;
           }
           this.drawBorder(cell, drawer, ctx);
         }

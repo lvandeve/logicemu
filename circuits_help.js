@@ -1769,8 +1769,9 @@ l 0": the output LED"
 
 0"# SECTION I: Input/Output/Wiring"
 
-3"NEW PART: wires"
-3".: wire, wire split, wire corner."
+0"## wires"
+
+3".: wire, wire split, wire corner"
 3"-: horizontal wire"
 3"|: vertical wire"
 
@@ -1782,7 +1783,8 @@ l 0": the output LED"
           |        |
           |        .-----
 
-3"NEW PART: switches"
+0"## switches"
+
 3"s: initially off switch"
 3"S: initially on switch"
 
@@ -1799,7 +1801,8 @@ l 0": the output LED"
 s......   .
           S
 
-3"NEW PART: device inputs"
+0"## device inputs"
+
 3"^: north device input"
 3">: east device input"
 3"v: south device input"
@@ -1813,7 +1816,8 @@ s......   .
 
 s....>o....>l
 
-3"NEW PART: LED"
+0"## LED"
+
 3"l: LED/light (user output)"
 
 0"The LED serves as outputs, to indicate the result. Here of course it's used"
@@ -1824,7 +1828,8 @@ s....>o....>l
 
 s....>l   S....>l
 
-3"NEW PART: push button"
+0"## push button"
+
 3"p: initially off push button"
 3"P: initially on push button"
 
@@ -1837,7 +1842,7 @@ p....>l   P....>l
 
 p..>s..>l
 
-3"NEW BEHAVIOR: controlled switch"
+0"## controlled switch"
 
 0"A switch or pushbutton with an input will only work if its input is on:"
 
@@ -1847,7 +1852,8 @@ p....>s...>l
 
 s....>p...>l
 
-3"NEW PART: wire crossing"
+0"## wire crossing"
+
 3"+: wire crossing"
 3"x: diagonal wire crossing"
 
@@ -1866,7 +1872,7 @@ s.... ....>l
      x
 s.... ....>l
 
-3"NEW BEHAVIOUR: wire and device packing"
+0"## wire and device packing"
 
 0"-| can be packed closer together than ., because . would touch on all sides"
 0"Different devices (here l and s) also don't interact if they touch, they are"
@@ -1885,7 +1891,8 @@ s----->l  |||     .....>l
 0"some distance bewteen them and only use --- or | for close packing when"
 0"really needed. This is purely up to personal preference though."
 
-3"NEW PART: comments"
+0"## comments"
+
 3"double quote: encloses comment"
 
 0"Comments, like this text itself here, are made with double quotes. The comment"
@@ -1895,7 +1902,8 @@ s----->l  |||     .....>l
 0"chapter."
 
 
-3"NEW PART: isolators"
+0"## isolators"
+
 3"(space): isolator"
 3"@: isolator (structural)"
 3"comment: also acts as isolator"
@@ -1912,7 +1920,8 @@ s----->l  |||     .....>l
 0"# SECTION II: Logic Gates"
 
 
-3"NEW PARTS: logic gates OR, AND, XOR"
+0"## logic gates OR, AND, XOR"
+
 3"o: OR gate"
 3"a: AND gate"
 3"e: XOR gate"
@@ -1924,7 +1933,8 @@ s....      s....      s....
     v          v          v
 s..>o..>l  s..>a..>l  s..>e..>l
 
-3"NEW PARTS: logic gates NOR, NAND, XNOR"
+0"## logic gates NOR, NAND, XNOR"
+
 3"O: NOR gate"
 3"A: NAND gate"
 3"E: XNOR gate"
@@ -1935,7 +1945,8 @@ s....      s....      s....
     v          v          v
 s..>O..>l  s..>A..>l  s..>E..>l
 
-3"NEW PARTS: inverted device inputs"
+0"## inverted device inputs"
+
 3"m: north inverted device input"
 3"]: east inverted device input"
 3"w: south inverted device input"
@@ -1956,7 +1967,7 @@ s....      s....      s....
     w          w          w
 s..]O..>l  s..]A..>l  s..]E..>l
 
-3"NEW BEHAVIOR: multi-input gates"
+0"## multi-input gates"
 
 0"Gates can have more than two inputs, for example three below, more is"
 0"possible if the gate would be large enough, how to do that is introduced a"
@@ -1993,7 +2004,7 @@ a..>l       A..>l
 
 e..>l       E..>l
 
-3"NEW BEHAVIOR: NOT gate"
+0"## NOT gate"
 
 0"A NOT gate can be made in several ways from the existing parts. The"
 0"recommended form is with a one-input NOR gate:"
@@ -2009,7 +2020,8 @@ s..>A..>l
 
 s..]o..>l
 
-3"NEW PART: constant"
+0"## constant"
+
 3"f: constant ('fixed') off"
 3"F: constant ('fixed') on"
 
@@ -2027,7 +2039,7 @@ F-->l    s-->F-->l
 0"NOTE: the letter 'f' from 'fixed' instead of 'c' from 'constant' is used"
 0"because 'c' is already used for 'counter' and 'clock' seen further on."
 
-3"NEW BEHAVIOUR: rules for wire with multiple devices"
+0"## rules for wire with multiple devices"
 
 0"A single wire can output to multiple devices. Note that we call the entire"
 0"connected wire shape a single wire in the simulation's terminology. In the"
@@ -2059,7 +2071,8 @@ s...>o
      v
 s...>o....>l
 
-3"NEW PART: device extender"
+0"## device extender"
+
 3"#: device extender"
 
 0"An extender extends the size of a device, for many-input logic gates, or"
@@ -2114,7 +2127,8 @@ s-->o
 
 0"# SECTION III: Flip-Flops And Memory"
 
-3"NEW PART: counter"
+0"## counter"
+
 3"c (standalone): initially off counter"
 3"C (standalone): initially on counter"
 
@@ -2134,7 +2148,8 @@ s..>c..>c..>c..>c..>c..>c..>c..>c..>l
 
 s..>C..>C..>C..>C..>C..>C..>C..>C..>l
 
-3"NEW PARTS: flip flop parts"
+0"## flip flop parts"
+
 3"c: flip flop part: clock, state off, can be combined together"
 3"C: flip flop part: clock, state on, can be combined together"
 3"j: flip flop part: s or j input, can be combined together"
@@ -2257,7 +2272,8 @@ s-->dcyQq-->l
 
 
 
-3"NEW PART: delay"
+0"## delay"
+
 3"d (standalone): 1-tick delay (behavior depends on tick algorithm)"
 
 s..>d..>l
@@ -2301,7 +2317,8 @@ s......>d..>l
   .     #
   .>d..>c
 
-3"NEW PART: pulse"
+0"## pulse"
+
 3"q (standalone): gives single tick pulse on positive input edge"
 3"Q (standalone): gives single tick inverted pulse on positive input edge"
 
@@ -2332,7 +2349,8 @@ s-->y
   .   v          v .
 s-.>d]a->l   s..>c..>l
 
-3"NEW PART: permanent enable"
+0"## permanent enable"
+
 3"j (standalone): initially off, once enabled can never be disabled"
 3"k (standalone): initially on, once disabled can never be enabled"
 
@@ -2341,7 +2359,8 @@ s-->j-->l
 s-->k-->l
 
 
-3"NEW PART: memory"
+0"## memory"
+
 3"b: ROM and RAM bit, value 0"
 3"B: ROM and RAM bit, value 1"
 
@@ -2400,7 +2419,7 @@ s-->k-->l
            sss"data"
 
 
-3"NEW BEHAVIOR: decoder and encoder"
+0"## decoder and encoder"
 
 0"The ROM/RAM components can also be set up to do a completely different"
 0"not memory-related operation: binary decoder, binary encoder or priority"
@@ -2447,7 +2466,8 @@ s-->k-->l
 
 0"# SECTION IV: Integrated Circuits"
 
-3"NEW PARTS: integrated circuit template and usage"
+0"## integrated circuit template and usage"
+
 3"I: IC definition"
 3"i: IC usage"
 
@@ -2527,7 +2547,7 @@ s-->l   s-->l    s-->i6-->l   0"error expected"
                  ^    ^
                  s    s
 
-3"NEW BEHAVIOR: nesting integrated circuit templates"
+0"## nesting integrated circuit templates"
 
 0"You can nest templates, 1 template can refer to others, e.g. here we use the"
 0"I5 from above inside a new template I8 (we're making a full adder from two"
@@ -2541,7 +2561,7 @@ o<#i5      .   .     .   .
 ^ ^ .      . . .     . . .
 s s s      s s s     s s s
 
-3"NEW BEHAVIOR: rotated chips"
+0"## rotated chips"
 
 0"Chips can be rotated in steps of 90 degrees if desired. To do this, rotate"
 0"the position of the number compared to the small i in a different position"
@@ -2561,7 +2581,8 @@ l<#<s
 0"These parts do not extend the logic abilities, but allow different ways of"
 0"input/output interaction"
 
-3"NEW PARTS: timers"
+0"## timers"
+
 3"R: timer initially on"
 3"r: timer initially off"
 
@@ -2583,7 +2604,8 @@ s..>r..>l   S..>r..>l
 
 0"You can click a timer with the mouse to freeze or unfreeze it."
 
-3"NEW PARTS: numbers"
+0"## numbers"
+
 3"0123456789: affect various properties of other parts"
 
 0"Numbers were already encountered above for a few parts. Numbers affect many"
@@ -2662,7 +2684,8 @@ r r r r r r r r r r r
 
 
 
-3"NEW PART: JUKEBOX"
+0"## Jukebox"
+
 3"J: jukebox (speaker)"
 
 0"A Jukebox 'J' acts like a speaker, producing a tone of a given frequency."
@@ -2754,7 +2777,8 @@ p-->J400000 0"white noise"
 1"shape" 1"freq"  1"vol"
 
 
-3"NEW PART: DOT MATRIX, RGB LED"
+0"## Dot Matrix, RGB LED"
+
 3"D: dot matrix screen, RGB LED"
 
 0"With three or less inputs, or 4-9 inputs but less than 2 sides used, D is a"
@@ -2872,7 +2896,8 @@ s.>D<.s    D##
            sss
 
 
-3"NEW PART: Mux"
+0"## Mux"
+
 3"M: Multiplexer (various functions)"
 
 0"M together with # to make it large enough forms a multiplexer, or, in other"
@@ -2936,7 +2961,8 @@ s..>#..>l
 0"These muxes are optional for convenience, notation or compactness, you can"
 0"also instead make them with AND and OR gates or from NAND gates only."
 
-3"NEW PART: Interactive terminal"
+0"## Interactive terminal"
+
 3"T: Interactive multiline terminal (7-bit ASCII)"
 
 0"A rectangular grid of T with extenders # forms an interactive terminal. When"
@@ -3038,7 +3064,8 @@ ssssssss        ^^^^^^^^          ########<p0"down"
                                   ssssssss
 
 
-3"NEW PART: ALU (Arithmetic Logic Unit)"
+0"## ALU (Arithmetic Logic Unit)"
+
 3"U: ALU"
 
 0"The ALU is a built-in component that can do various mathematical operations"
@@ -3182,7 +3209,7 @@ l<U48#######################<s
   ssssssss ssssssss ssSssSsS
 
 
-3"NEW BEHAVIOR: ALU with operation select"
+0"## ALU with operation select"
 
 0"An ALU can also have an operation-select input. For example the following ALU"
 0"allows to select between add, sub, mul, div."
@@ -3208,7 +3235,8 @@ l<#################<s  0"carry in"
 
 
 
-3"NEW PART: Random generator"
+0"## Random generator"
+
 3"?: random generator"
 
 0"The random generator will change to a random value on any positive edge of"
@@ -3236,7 +3264,8 @@ s....>?..>l    p....>?..>l    r....>?..>l
 
 
 
-3"NEW PART: one-hot detector"
+0"## one-hot detector"
+
 3"h: one-hot detector"
 3"H: inverted one-hot detector"
 
@@ -3262,7 +3291,8 @@ s-->#      s-->#
 
 
 
-3"NEW PART: tri-state buffer (or open collector output)"
+0"## tri-state buffer (or open collector output)"
+
 3"z: fake tri-state buffer (and-or)"
 3"Z: fake tri-state buffer (or-and)"
 
@@ -3358,7 +3388,8 @@ s....                      s....
 0"included only for rare situations when they actually help make something more"
 0"readable."
 
-3"NEW PARTS: diagonal wires"
+0"## diagonal wires"
+
 3"/: diagonal wire"
 3"\\: diagonal wire"
 
@@ -3372,7 +3403,7 @@ s....                      s....
   /            ;
  s              s
 
-3"NEW BEHAVIOR: diagonal inputs"
+0"## diagonal inputs"
 
 0"An input of the form ^ > v < m ] w or [ that touches nothing where it points"
 0"at but touches something diagonally on one or both sides of that point, acts"
@@ -3397,7 +3428,8 @@ s      . .
        s s
 
 
-3"NEW PART: global wire"
+0"## global wire"
+
 3"g: global wire (backplane)"
 
 0"The global wire can output to many loose places at any distance everywhere"
@@ -3427,7 +3459,8 @@ l<---g    g--->l
 
   i17-->l    i17-->l    i17-->l
 
-3"NEW PART: straight backplane connections ('antennas')"
+0"## straight backplane connections ('antennas')"
+
 3"(: 'antenna' east"
 3"): 'antenna' west"
 3"u: 'antenna' north"
@@ -3520,7 +3553,8 @@ s-->#
  s--->(    )l
 
 
-3"NEW PART: bus"
+0"## bus"
+
 3"=: bus"
 
 0"A bus is a bundle of wires through which multiple connections can go. Numbers"
@@ -3564,7 +3598,8 @@ s-->#
 
 
 
-3"NEW PART: automatic numbering for bus and global wire"
+0"## automatic numbering for bus and global wire"
+
 3"$: automatic numbering"
 
 0"Instead of manually giving each connection of a bus (or a bundle of global wires)
@@ -3719,7 +3754,8 @@ ssss
 
 
 
-3"NEW PART: Non-interacting wire corner"
+0"## Non-interacting wire corner"
+
 3",: non-interacting wire corner"
 
 0"This is a corners or split that can be more closely packed than .. They"
@@ -3733,7 +3769,8 @@ l<---,,--->l         ||
      ||              ||
      ss              ss
 
-3"NEW PARTS: Double corners"
+0"## Double corners"
+
 3"%: NW plus SE corner"
 3"&: NE plus SW corner"
 
@@ -3748,7 +3785,7 @@ l<---,,--->l         ||
       |             |
       s             s
 
-3"NEW BEHAVIOR: A few more notes about / \\ and x"
+0"## A few more notes about / \\ and x"
 
 0"Diagonal wires themselves can also act as a wire crossing due to connecting"
 0"to corners:"
@@ -3782,7 +3819,8 @@ l<---,,--->l         ||
       |
       s
 
-3"NEW PART: 8-way wire crossing"
+0"## 8-way wire crossing"
+
 3"*: 8-way wire crossing"
 
 0"the * is a wire crossing that works both straight and diagonally, giving it 8"
@@ -3799,7 +3837,7 @@ l<---,,--->l         ||
      s
 
 
-3"NEW BEHAVIOR: device inputs connecting to multiple wires"
+0"## device inputs connecting to multiple wires"
 
 0"Device inputs > < ^ v ] [ m w output on exactly one side, but can receive"
 0"their input from any of the other sides (3 direct neighbors, and 4 more from x)"
@@ -3824,7 +3862,8 @@ s---v----v----v---->l
 s--v--s 0"error expected"
    l
 
-3"NEW PART: multi device input"
+0"## multi device input"
+
 3"V: regular multi device input"
 3"W: inverted multi device input"
 
@@ -3836,7 +3875,8 @@ s--v--s 0"error expected"
 s------VV-VWl
        l  l
 
-3"NEW PART: device input crossing"
+0"## device input crossing"
+
 3"X: regular device input crossing (8-directional)"
 3"Y: inverted device input crossing (8-directional)"
 
@@ -3878,7 +3918,7 @@ s---X-->l
  /  |  ;
 s   s   s
 
-3"NEW BEHAVIOR: integrated circuits diagonal inputs/outputs"
+0"## integrated circuits diagonal inputs/outputs"
 
 0"Chips, too, can have diagonal inputs and outputs:"
 0"For the definition, x from s as inputs, and X to l as outputs"
@@ -4016,7 +4056,8 @@ s   s   s
 0"rectangular area in which ASCII art or code is drawn."
 
 
-3"NEW PART: vertical comments"
+0"## vertical comments"
+
 3"colon: vertical comment"
 
 0"Vertical comments can alternatively be made with a colon above and below. This"
@@ -4054,8 +4095,7 @@ s   s   s
 0"# SECTION VIII: Command Words"
 
 
-3"NEW BEHAVIOR: force modes and settings"
-3"NEW BEHAVIOR: insert tables and links"
+0"## force modes and settings, insert tables and links"
 
 0"Some specific command words in strings make things happen. They all use a"
 0"keyword and a colon. They are demonstrated below, but with a semicolon so"
@@ -5044,7 +5084,21 @@ s->BBb
    bBb
 `, 'component' + componentid++);
 
-registerCircuit('RAM (bB)', `
+registerCircuit('RAM one-hot (bB)', `
+
+   lll
+   ^^^
+   |||
+s->bbb<-p
+s->bbb
+s->bbb
+s->bbb
+   ^^^
+   |||
+   sss
+`, 'component' + componentid++);
+
+registerCircuit('RAM binary, beyond the visible (bB)', `
 
    lll
    ^^^
@@ -5548,6 +5602,28 @@ s---1=              =3-->l
 s---2================2-->l
 s---3=              =1-->l
 s---4=              =0-->l
+`, 'component' + componentid++);
+
+registerCircuit('Bus crossing (=+)', `
+
+      lll
+      ^^^
+      |||
+      012
+      ===
+       =
+       =
+s-0=   =   =2->l
+s-1====+====1->l
+s-2=   =   =0->l
+       =
+       =
+      ===
+      210
+      |||
+      sss
+
+
 `, 'component' + componentid++);
 
 registerCircuit('Backplane global wire (g)', `
@@ -6351,6 +6427,14 @@ S-->M-------]l8
 s-->#
     ^
     S
+
+    S
+    v
+s-->M------->l8
+    #
+S-->#-------]l8
+
+
 
     ........>l8
     .
@@ -7344,6 +7428,17 @@ s-->o
 .
 p#
 ##
+
+
+
+0"Test all parameters:"
+
+  J#####################2000
+  ^^^      ^^^^    ^^^^
+  |||      ||||    ||||
+  sss      sSss    ssss
+1"shape" 1"freq"  1"vol"
+
 
 0"# Time"
 
