@@ -579,12 +579,14 @@ p-->J40000 0"white noise"
 0"Multiple input groups control different properties. The number now is the"
 0"maximum frequency. Both freq and vol must have a non-zero value to hear"
 0"anything."
+0"if a jukebox has an y-input, it's an enable-input and the jukebox only"
+0"produces sound if it's on"
 
-  J#####################2000
-  ^^^      ^^^^    ^^^^
-  |||      ||||    ||||
-  sss      sSss    ssss
-1"shape" 1"freq"  1"vol"
+  J########################y#2000
+  ^^^      ^^^^    ^^^^    ^
+  |||      ||||    ||||    |
+  sss      sSss    ssss    S
+1"shape" 1"freq"  1"vol""enable"1
 
 
 
@@ -605,32 +607,34 @@ D    D###    D########
 ^    ^^^^    ^^^^^^^^^
 s    ssss    sssssssss
 
-0"With more input groups as configured below, D is the Dot Matrix screen:"
+0"With more input groups as configured below and at least a dot (c) or fill (q)"
+0"input, D is the Dot Matrix screen. An optional enable 'y' input is also"
+0"supported."
 
 0"With binary addressing:"
 
-      D#######<p"dot"
-      ########<p"fill"
+      D#######y<S"enable"
+      ########c<p"dot"
+      ########q<p"fill"
       ########
       ########<s"b"
-      ########<S"g"
-    s>########<s"r"
-    s>########<s"i"
-    s>########
+   :s>########<S"g"
+   ys>########<s"r"
+   :s>########<s"i"
            ^^^
            sss
-
+           "x"
 
 0"With line based matrix addressing:"
 
-    s>D#######<p"dot"
-    s>########<p"fill"
-    S>########
-    s>########<s"b"
-    s>########<S"g"
-    S>########<s"r"
-    s>########<s"i"
+    s>D#######y<S"enable"
+    s>########c<p"dot"
+    S>########q<p"fill"
     s>########
+    s>########<s"b"
+    S>########<S"g"
+    s>########<s"r"
+    s>########<s"i"
       ^^^^^^^^
       ssSssSss
 
@@ -699,12 +703,15 @@ s..>#..>l
 0"does not count for this). If there is no blinking cursor, click it with the"
 0"mouse first, then you can type in it"
 
+0"The c input and output are for the keyboard: output command and EOF signal"
+0"The C input is for the screen to input ascii characters"
+
                 lllllll0"ASCII output, from keyboard"
-   2"output"    ^^^^^^^
- 2"keyboard"    |||||||
-    2"ASCII"p-->T######<--p0"read ASCII from"
-                #######    0"input switches to"
-       "EOF"l<--#######    0"screen"
+                ^^^^^^^
+                |||||||
+                T######C<--p0"read ASCII from input switches to screen"
+                #######c<--p0"output keyboard ASCII"
+                #######c-->l"EOF"
                 #######
                 ^^^^^^^
                 |||||||
@@ -728,20 +735,23 @@ s..>#..>l
 
 0"With the following configurations, the terminal works instead as a decimal"
 0"counter, with optional features such as reset, down count, and set from data"
+0"For counters, y, c, C, q and Q have the meanings indicated."
 
-llllllll        llllllll          llllllll
-^^^^^^^^        ^^^^^^^^          ^^^^^^^^
-T#######<p0"up" T#######<p0"up"   T#######<p0"up"
-                ########<p0"reset"########<p0"reset"
-                                  ########<p0"down"
+llllllll         llllllll           llllllll
+^^^^^^^^         ^^^^^^^^           ^^^^^^^^
+T#######c<p0"up" T#######c<p0"up"   T#######c<p0"up"
+                 ########Q<p0"reset"########Q<p0"reset"
+                                    ########C<p0"down"
 
-llllllll        llllllll          llllllll
-^^^^^^^^        ^^^^^^^^          ^^^^^^^^
-T#######<p0"set"T#######<p0"up"   T#######<p0"up"
-^^^^^^^^        ########<p0"set"  ########<p0"set"
-ssssssss        ^^^^^^^^          ########<p0"down"
-                ssssssss          ^^^^^^^^
-                                  ssssssss
+llllllll         llllllll           llllllll
+^^^^^^^^         ^^^^^^^^           ^^^^^^^^
+T#######q<p0"set"T#######c<p0"up"   T#######y<s0"enable"
+^^^^^^^^         ########q<p0"set"  ########c<p0"up"
+ssssssss         ^^^^^^^^           ########C<p0"down"
+                 ssssssss           ########q<p0"set"
+                                    ########Q<p0"reset"
+                                    ^^^^^^^^
+                                    ssssssss
 
 0"A capital U forms an ALU (arithmetic logic unit) with built-in support for"
 0"various advanced mathematical operations. While these can be made from"
@@ -812,10 +822,10 @@ ssssssss        ^^^^^^^^          ########<p0"down"
 
 0"Example: controlled bit invert using xor:"
 
-            T#######
-            ^^^^^^^^
-            llllllll
-            ^^^^^^^^
+   T#######
+   ^^^^^^^^
+   llllllll
+   ^^^^^^^^
    U6###############
    ^^^^^^^^        ^
    ssssssss        s
@@ -878,13 +888,13 @@ s....>?..>l    p....>?..>l    r....>?..>l
     s----->bBBbB
 
 
-0"A RAM is like a writable ROM:"
+0"A RAM is like a writable ROM. The clock input 'c' is used to write."
 
            0"output"
            lllll
            ^^^^^
   0"select"|||||
-    s----->bbBbB<----p0"write"
+    s----->bbBbBc<----p0"write"
     s----->bBBbB
     s----->BbbbB
     s----->BbBbB
@@ -903,7 +913,7 @@ s....>?..>l    p....>?..>l    r....>?..>l
            lllll
            ^^^^^
  1"address"|||||
- "8"s----->bbBbB<----p0"write"
+ "8"s----->bbBbBc<----p0"write"
  "4"s----->bBBbB
  "2"s----->BbbbB
  "1"s----->BbBbB
@@ -913,7 +923,10 @@ s....>?..>l    p....>?..>l    r....>?..>l
            sssss
            0"data input"
 
-0"A thin line of b's can also make devices with different behavior"
+0"In the following configurations, b can also make the following devices with"
+0"different behavior. These are not ROM or RAM at all, but related because"
+0"these unary/binary/priority computations are useful (and part of) the address"
+0"input of actual ROM/RAM."
 
    "76543210"
     llllllll
@@ -1266,9 +1279,9 @@ r--->l
 
 llllllll    llllllll
 ^^^^^^^^    ^^^^^^^^
-b#######    T#######
-     ^^^           ^
-     sss           s
+b#######    T#######c<p
+     ^^^
+     sss
 
 0"Click bits (b, B) of a ROM to toggle them:"
 
@@ -1299,9 +1312,9 @@ f-. .------------. .----->l
 
 p-->a-->e-->o-->l
 
-c-->l
+f-->l
 
-f-->c-->l
+s-->c-->l
 
 s-->z-->l
 
@@ -2358,6 +2371,14 @@ s-->j-->l
 
 s-->k-->l
 
+0"This behavior happens for j because it's a flip-flop input. A j-input"
+0"will enable a flip-flop, but if it's standalone there are no other inputs to"
+0"disable it."
+0"The k, howver, would normally not do that so a standalone k is specially"
+0"modified to do the inverse behaviour of a standalone j."
+
+0"You can ctrl-click the j or k to reset them back anyway."
+
 
 0"## memory"
 
@@ -2379,20 +2400,22 @@ s-->k-->l
           lll        lll
           ^^^        ^^^
           |||        |||
- "1"s---->Bbb        Bbb
- "2"s---->BBb        BBb
-          bBB        bBB
-          bbB        bbB
+ "2"s---->Bbb"0"     Bbb"0"
+ "1"s---->BBb"1"     BBb"1"
+          bBB"2"     bBB"2"
+          bbB"3"     bbB"3"
                       ^^
                       ||
                       ss
+                     "21"
 
-0"RAM, unary address select"
+0"RAM, unary address select. The clock input 'c' writes the data to the selected"
+0"data line."
 
            lll"output"
            ^^^
            |||
-   "a 0"s->bbb<-p"store"
+   "a 0"s->bbbc<-p"store"
    "d 1"s->bbb
    "d 2"s->bbb
    "r 3"s->bbb
@@ -2409,14 +2432,35 @@ s-->k-->l
            lll"output"
            ^^^
            |||
-   "a 1"s->bbb<-p"store"
-   "d 2"s->bbb
+   "a 8"s->bbbc<-p"store"
    "d 4"s->bbb
-   "r 8"s->bbb
+   "d 2"s->bbb
+   "r 1"s->bbb
    "e"     bbb
    "s"     ^^^
    "s"     |||
            sss"data"
+
+0"RAM can also have an enable-input y, if so writing only works if enable is"
+0"on during the positive edge of the clock. It can also have a reset-all input"
+0"Q, which resets all lines to 0"
+
+           lll"output"
+           ^^^
+           |||
+   "a 8"s->bbby<-s"enable"
+   "d 4"s->bbbc<-p"store"
+   "d 2"s->bbbQ<-p"reset all"
+   "r 1"s->bbb
+   "e"     bbb
+   "s"     ^^^
+   "s"     |||
+           sss"data"
+
+0"Summary of the special characters for RAM/ROM:"
+0"- y: enable: enable or disable the clock"
+0"- c: clock (write/store on positive clock edge)"
+0"- Q: reset all (asynchronous, overrides enable)"
 
 
 0"## decoder and encoder"
@@ -2425,6 +2469,11 @@ s-->k-->l
 0"not memory-related operation: binary decoder, binary encoder or priority"
 0"selector. This still makes sense, since those are operations the above"
 0"ROM/RAM components do to handle the unary and/or binary address select."
+
+0"To use a b as such a coder, use b with # instead of mixing multiple b's and"
+0"B's. It is still allowed to have multiple b's (just like you can have an"
+0"AND gate made like a###a), but there must be less than the amount of outputs,"
+0"that's how the distionction is made."
 
 0"Binary N to unary 2^N decoder"
 
@@ -2463,6 +2512,21 @@ s-->k-->l
  ||||||||
  ssssssss
 "76543210"
+
+0"These devices can also have an enable input and enable output. These are"
+0"not indicated with 'y' however since they work differently. The enable input"
+0"will disable all outputs if not on. The enable output will go on if any of the"
+0"regular outputs is on. This allows chaining multiple of them."
+
+ "76543210"
+  llllllll
+  ^^^^^^^^
+  ||||||||
+l<b#######<s
+  ^^^^^^^^
+  ||||||||
+  ssssssss
+ "76543210"
 
 0"# SECTION IV: Integrated Circuits"
 
@@ -2777,6 +2841,17 @@ p-->J400000 0"white noise"
 1"shape" 1"freq"  1"vol"
 
 
+0"A jukebox can also be given an enable-input with y, then it only"
+0"produces sound if it's on"
+
+  J########################y#2000
+  ^^^      ^^^^    ^^^^    ^
+  |||      ||||    ||||    |
+  sss      sSss    ssss    S
+1"shape" 1"freq"  1"vol""enable"1
+
+
+
 0"## Dot Matrix, RGB LED"
 
 3"D: dot matrix screen, RGB LED"
@@ -2847,16 +2922,19 @@ s.>D<.s    D##
 
 0"With binary addressing:"
 
-      D#######<p"dot"
-      ########<p"fill"
+      D#######y<S"enable"
+      ########c<p"dot"
+      ########q<p"fill"
       ########
       ########<s"b"
-      ########<S"g"
-    s>########<s"r"
-    s>########<s"i"
-    s>########
+   :s>########<S"g"
+   ys>########<s"r"
+   :s>########<s"i"
            ^^^
            sss
+           "x"
+
+
 
 0"The BGRI inputs are blue, green, red and intensity. Not all must be present,"
 0"any of 0, 1, 2, 3 or 4 color bits are possible and each amount has a different"
@@ -2865,16 +2943,22 @@ s.>D<.s    D##
 
 0"With line based matrix addressing:"
 
-    s>D#######<p"dot"
-    s>########<p"fill"
-    S>########
-    s>########<s"b"
-    s>########<S"g"
-    S>########<s"r"
-    s>########<s"i"
+    s>D#######y<S"enable"
+    s>########c<p"dot"
+    S>########q<p"fill"
     s>########
+    s>########<s"b"
+    S>########<S"g"
+    s>########<s"r"
+    s>########<s"i"
       ^^^^^^^^
       ssSssSss
+
+0"The following lettered inputs are supported:"
+0"- y: enable"
+0"- c: enable"
+0"- q: fill"
+0"- Q: reset: fill with color 0"
 
 0"The same color schemes as for the RGB LED are available, with up to 9 color inputs."
 
@@ -2884,8 +2968,8 @@ s.>D<.s    D##
 0"To see the fadeout, first draw a dot in one place, then change location and keep drawing a dot in the"
 0"different location until old dot starts fading out."
 
-      D#######<p"dot"
-      ########<p"clear"
+      D#######c<p"dot"
+      ########Q<p"clear"
       ########
       ########
       ########
@@ -2894,6 +2978,12 @@ s.>D<.s    D##
     s>########
            ^^^
            sss
+
+0"Note that the oscilloscope does not support 'fill', since it can only have a few"
+0"dots lit at the time. It supports 'clear', but clear is in a sense cheating"
+0"the dots should normally fade out over time, representing phosphor fading out."
+0"Also note that the phosphor fadeout uses the 'dot' input as clock, not the"
+0"real time."
 
 
 0"## Mux"
@@ -2961,7 +3051,7 @@ s..>#..>l
 0"These muxes are optional for convenience, notation or compactness, you can"
 0"also instead make them with AND and OR gates or from NAND gates only."
 
-0"## Interactive terminal"
+0"## Interactive terminal (VTE)"
 
 3"T: Interactive multiline terminal (7-bit ASCII)"
 
@@ -2976,7 +3066,7 @@ s..>#..>l
 0"With only inputs, it acts as a screen that can read 7-bit ASCII codes from"
 0"any circuit inputs:"
 
-T######<...p3"read"
+T######C<...p3"read"
 #######
 #######
 #######
@@ -2998,9 +3088,9 @@ SsssssS3"ASCII code in to screen"
          lllllll3"keyboard ASCII code out"
          ^^^^^^^
          |||||||
-"out"p..>T######
+         T######c<--p0"out"
+         #######c-->l0"EOF"
          #######
-"eof"l<..#######
 
 0"If you give the VTE both inputs and outputs, it acts as both a screen and a"
 0"buffered keyboard. The screen shows both typed characters and characters read"
@@ -3011,14 +3101,37 @@ SsssssS3"ASCII code in to screen"
           lllllll3"keyboard ASCII code out"0
           ^^^^^^^
           |||||||
-"out"p..>T#######<...p3"read from in to screen"0
-         ########
-"eof"l<..########
+         T#######C<--p0"read from in to screen"0
+         ########c<--p0"out"
+         ########c-->l0"EOF"
          ########
          ########
           ^^^^^^^
           |||||||
           SsssssS"ASCII code in to screen"0
+
+0"The terminal can also have an 'enable' input 'y', in that case the read and write"
+0"signals only work while enable is true."
+
+          lllllll3"keyboard ASCII code out"0
+          ^^^^^^^
+          |||||||
+         T#######y<--s0"enable"
+         ########C<--p0"read from in to screen"0
+         ########c<--p0"out"
+         ########c-->l0"EOF"
+         ########
+          ^^^^^^^
+          |||||||
+          SsssssS"ASCII code in to screen"0
+
+0"Note that the terminal has some inputs/outputs without letters, and some with"
+0"letters:, as follows:"
+
+0"- y: enable: if present and not enabled, disables the inputs below."
+0"- C: read or in, to screen"
+0"- c: write or out, from keyboard (only user-typed characters)"
+0"- c output: EOF signal, from keyboard"
 
 0"With only inputs and no read/out flags, it will instead show the binary input"
 0"in decimal."
@@ -3049,20 +3162,41 @@ SsssssS3"ASCII code in to screen"
 0"With the following configurations, the terminal works instead as a decimal"
 0"counter, with optional features such as reset, down count, and set from data"
 
-llllllll        llllllll          llllllll
-^^^^^^^^        ^^^^^^^^          ^^^^^^^^
-T#######<p0"up" T#######<p0"up"   T#######<p0"up"
-                ########<p0"reset"########<p0"reset"
-                                  ########<p0"down"
+0"For counters, y, c, C, q and Q have the meanings indicated."
 
-llllllll        llllllll          llllllll
-^^^^^^^^        ^^^^^^^^          ^^^^^^^^
-T#######<p0"set"T#######<p0"up"   T#######<p0"up"
-^^^^^^^^        ########<p0"set"  ########<p0"set"
-ssssssss        ^^^^^^^^          ########<p0"down"
-                ssssssss          ^^^^^^^^
-                                  ssssssss
+llllllll         llllllll           llllllll
+^^^^^^^^         ^^^^^^^^           ^^^^^^^^
+T#######c<p0"up" T#######c<p0"up"   T#######c<p0"up"
+                 ########Q<p0"reset"########Q<p0"reset"
+                                    ########C<p0"down"
 
+llllllll         llllllll           llllllll
+^^^^^^^^         ^^^^^^^^           ^^^^^^^^
+T#######q<p0"set"T#######c<p0"up"   T#######y<s0"enable"
+^^^^^^^^         ########q<p0"set"  ########c<p0"up"
+ssssssss         ^^^^^^^^           ########C<p0"down"
+                 ssssssss           ########q<p0"set"
+                                    ########Q<p0"reset"
+                                    ^^^^^^^^
+                                    ssssssss
+
+0"For these counter-configurations, the special input flags use the following"
+0"characters:"
+
+0"- y: enable"
+0"- c: count up"
+0"- C: count down"
+0"- q: set to input value "
+0"- Q: reset counter to 0"
+
+0"NOTE: c and C have different meaning for counter and keyboard/screen. It is"
+0"not possible to make a counter with only C (down count but no up count or q/Q)"
+0"because with only a C it acts like a screen instead where the C input displays"
+0"a character. But a counter only counting up, with a single c, works, because"
+0"a keyboard, which also uses c, also must have a c output for the EOF flag,"
+0"and that's how such counter and keyboard can be distinguished."
+0"And without any such special inputs at all, it'll act as a decimal display or"
+0"decimal keyboard."
 
 0"## ALU (Arithmetic Logic Unit)"
 
@@ -3096,6 +3230,30 @@ ssssssss        ^^^^^^^^          ########<p0"down"
    ssssssss
   " ...8421"
   "       A"
+
+0"2-input example with different sizes: controlled bit invert using xor:"
+
+   T#######
+   ^^^^^^^^
+   llllllll
+   ^^^^^^^^
+   U6###############
+   ^^^^^^^^        ^
+   ssssssss        s
+  " ...8421        1"
+  "       A        B"
+
+0"3-input operation example: multiply values modulo a third value"
+
+                     T#######
+                     ^^^^^^^^
+                     llllllll
+                     ^^^^^^^^
+ l<U26#######################<s
+   ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
+   ssssssss ssssssss ssssssss
+  " ...8421  ...8421  ...8421"
+  "       A        B        C"
 
 0"The top side is the output. The button side contains the input(s). The"
 0"left and right side are optional and contain special flag bits, the input"
@@ -4250,7 +4408,8 @@ registerCircuit('Editing Side Notes', `
 0"# Style used in built-in circuits"
 
 0"Most built-in circuits use a certain style that is not optimally compact but"
-0"gives a consistent overall look. It works as follows:"
+0"gives a consistent overall look. For the examples below, toggle between text"
+0"and graphics rendering mode to see the graphical look."
 
 0"For wires, mostly . is used, no - or |, forcing to have a 1-cell gap between"
 0"neighbor wires. So no closely packed wires. The only exception is for ROM and"
@@ -4264,7 +4423,7 @@ s....>l   s---->l
 
 s....>l
 
-0"but, yes for ROM:"
+0"but, yes for ROM and other such large devices with grouped inputs/outputs:"
 
     lll
     ^^^
@@ -4282,6 +4441,16 @@ s-->bBB
 s..>a..>l     s.&>a..>l   s..>a..>l
    >            &+V          X
 s..>e..>l     s..>e..>l   s..>e..>l
+
+0"NOTE: the rightmost one with X looks fine, but the issue is X does not show"
+0"the directionality, so does not work in the following tighter scenario:"
+
+0"ok:"    0"wrong:"
+
+s>a>l    s>a>l
+ >        X
+s>e>l    s>e>l
+
 
 0"Centers and corners of devices are aligned on a certain grid for aesthetic"
 0"reasons:"
@@ -4933,13 +5102,21 @@ registerCircuit('ASCII Keyboard Terminal (T)', `
      lllllll
      ^^^^^^^
      |||||||
-     T######<p
-     #######>l"eof"0
+     T######c<p
+     #######c>l"eof"0
      #######
 `, 'component' + componentid++);
 
 registerCircuit('ASCII Screen Terminal (T)', `
-     T######<p"read"
+     T######C<p"read"
+     #######
+     #######
+     ^^^^^^^
+     Sssssss
+`, 'component' + componentid++);
+
+registerCircuit('ASCII Screen Terminal, slightly different bounding box (T)', `
+     T#####C<p"read"
      #######
      #######
      ^^^^^^^
@@ -4951,8 +5128,23 @@ registerCircuit('ASCII Terminal With Both (T)', `
                 lllllll
                 ^^^^^^^
                 |||||||
-   2"output"p-->T######<--p0"read"
-      2"EOF"l<--#######
+                T######C<--p0"read"
+                #######c<--p0"output"
+                #######c-->l0"EOF"
+                ^^^^^^^
+                |||||||
+                sssssss
+`, 'component' + componentid++);
+
+registerCircuit('ASCII Terminal With Both and Enable (T)', `
+
+                lllllll
+                ^^^^^^^
+                |||||||
+                T######y<--s0"enable"
+                #######C<--p0"read"
+                #######c<--p0"output"
+                #######c-->l0"EOF"
                 ^^^^^^^
                 |||||||
                 sssssss
@@ -4994,6 +5186,14 @@ registerCircuit('Decimal Display Terminal With Passthrough, Signed (T)', `
     "s"
 `, 'component' + componentid++);
 
+registerCircuit('Decimal Display Terminal With Passthrough, 1-bit (T)', `
+     l
+     ^
+     T
+     ^
+     s
+`, 'component' + componentid++);
+
 registerCircuit('Decimal Keyboard Terminal (T)', `
      lllllll
      ^^^^^^^
@@ -5001,54 +5201,96 @@ registerCircuit('Decimal Keyboard Terminal (T)', `
 `, 'component' + componentid++);
 
 registerCircuit('Terminal Counter (T)', `
+     T#####c<p
+
+`, 'component' + componentid++);
+
+registerCircuit('Terminal Counter  With Output (T)', `
      lllllll
      ^^^^^^^
-     T######<p
+     T######c<p
+
+`, 'component' + componentid++);
+
+registerCircuit('Terminal Counter with Enable (T)', `
+     lllllll
+     ^^^^^^^
+     T######c<p"count"
+     T######y<s"enable"
 
 `, 'component' + componentid++);
 
 registerCircuit('Terminal Counter With Reset (T)', `
      lllllll
      ^^^^^^^
-     T######<p0"count"
-     #######<p0"reset"
+     T######c<p0"count"
+     #######Q<p0"reset"
+
+`, 'component' + componentid++);
+
+registerCircuit('Terminal Counter with Up/Down (T)', `
+     lllllll
+     ^^^^^^^
+     T######c<p0"up"
+     T######C<p0"down"
 
 `, 'component' + componentid++);
 
 registerCircuit('Terminal Counter With Up/Reset/Down (T)', `
      lllllll
      ^^^^^^^
-     T######<p0"up"
-     #######<p0"reset"
-     #######<p0"down"
+     T######c<p0"up"
+     #######Q<p0"reset"
+     #######C<p0"down"
 
 `, 'component' + componentid++);
 
 registerCircuit('Terminal Counter With Set (T)', `
      lllllll
      ^^^^^^^
-     T######<p0"count"
-     #######<p0"set"
+     T######c<p0"count"
+     #######q<p0"set"
      ^^^^^^^
      sssssss
 
 `, 'component' + componentid++);
 
-registerCircuit('Terminal Counter With Up/Set/Down (T)', `
+registerCircuit('Terminal Counter With Enable/Up/Down/Set/Reset (T)', `
      lllllll
      ^^^^^^^
-     T######<p0"up"
-     #######<p0"set"
-     #######<p0"down"
+     #######y<s0"enable"
+     T######c<p0"up"
+     #######C<p0"down"
+     #######q<p0"set"
+     #######Q<p0"reset"
      ^^^^^^^
      sssssss
 
 `, 'component' + componentid++);
 
 registerCircuit('Terminal Decimal Memory Display (T)', `
+
+     T######q<p0"set"
+     ^^^^^^^
+     sssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Terminal Decimal Memory Display With Output (T)', `
      lllllll
      ^^^^^^^
-     T######<p0"set"
+     T######q<p0"set"
+     ^^^^^^^
+     sssssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Terminal Decimal Memory Display with Enable and Reset (T)', `
+     lllllll
+     ^^^^^^^
+     T######y<s0"enable"
+     T######q<p0"set"
+     T######Q<p0"reset"
      ^^^^^^^
      sssssss
 
@@ -5057,7 +5299,7 @@ registerCircuit('Terminal Decimal Memory Display (T)', `
 registerCircuit('Terminal Decimal Memory Display, Signed (T)', `
      lllllll
      ^^^^^^^
-    1T######<p0"set"
+    1T######q<p0"set"
      ^^^^^^^
      sssssss
 
@@ -5074,6 +5316,19 @@ s->BbB
 s->bBb
 `, 'component' + componentid++);
 
+
+registerCircuit('ROM one-hot, with gaps (bB)', `
+   l ll
+   ^ ^^
+   | ||
+s->b#bB
+   ####
+s->B#Bb
+   ####
+s->B#bB
+s->b#Bb
+`, 'component' + componentid++);
+
 registerCircuit('ROM binary (bB)', `
    lll
    ^^^
@@ -5084,15 +5339,41 @@ s->BBb
    bBb
 `, 'component' + componentid++);
 
+registerCircuit('ROM binary, with gaps (bB)', `
+   l ll
+   ^ ^^
+   | ||
+s->b#bB
+   ####
+s->B#Bb
+   ####
+   B#bB
+   b#Bb
+`, 'component' + componentid++);
+
 registerCircuit('RAM one-hot (bB)', `
 
    lll
    ^^^
    |||
-s->bbb<-p
+s->bbbc<p
 s->bbb
 s->bbb
 s->bbb
+   ^^^
+   |||
+   sss
+`, 'component' + componentid++);
+
+registerCircuit('RAM binary (bB)', `
+
+   lll
+   ^^^
+   |||
+s->bbbc<p
+s->bbb
+   bbb
+   bbb
    ^^^
    |||
    sss
@@ -5103,9 +5384,23 @@ registerCircuit('RAM binary, beyond the visible (bB)', `
    lll
    ^^^
    |||
-s->bbb<-p
+s->bbbc<p
 s->bbb
 s->bbb
+   bbb
+   ^^^
+   |||
+   sss
+`, 'component' + componentid++);
+
+registerCircuit('RAM binary with reset and enable (bB)', `
+
+   lll
+   ^^^
+   |||
+s->bbby<s0"enable"
+s->bbbc<p0"set"
+s->bbbQ<p0"reset all:
    bbb
    ^^^
    |||
@@ -5124,6 +5419,18 @@ registerCircuit('Binary to Unary (b)', `
 
 `, 'component' + componentid++);
 
+registerCircuit('Binary to Unary With Enable (b)', `
+
+   llll
+   ^^^^
+   ||||
+l<-b###<-s
+     ^^
+     ||
+     ss
+
+`, 'component' + componentid++);
+
 registerCircuit('Unary to Binary (b)', `
 
    ll
@@ -5136,6 +5443,18 @@ registerCircuit('Unary to Binary (b)', `
 
 `, 'component' + componentid++);
 
+registerCircuit('Unary to Binary With Enable  (b)', `
+
+     ll
+     ^^
+     ||
+l<-b###<-s
+   ^^^^
+   ||||
+   ssss
+
+`, 'component' + componentid++);
+
 registerCircuit('Priority Selector (b)', `
 
  llll
@@ -5145,6 +5464,18 @@ registerCircuit('Priority Selector (b)', `
  ^^^^
  ||||
  ssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Priority Selector With Enable (b)', `
+
+   llll
+   ^^^^
+   ||||
+l<-b###<-s
+   ^^^^
+   ||||
+   ssss
 
 `, 'component' + componentid++);
 
@@ -5358,6 +5689,19 @@ registerCircuit('ALU with 2-input operation, signed (U)', `
 
 `, 'component' + componentid++);
 
+registerCircuit('ALU with 2-input operation, signed (U)', `
+
+   T#######
+   ^^^^^^^^
+   llllllll
+   ^^^^^^^^
+   U6###############
+   ^^^^^^^^        ^
+   ssssssss        s
+
+`, 'component' + componentid++);
+
+
 registerCircuit('ALU with 3-input operation (U)', `
 
 
@@ -5502,26 +5846,42 @@ registerCircuit('RGB LED, 9 Inputs, 8-level RGB (D)', `
 `, 'component' + componentid++);
 
 registerCircuit('Dot Matrix Screen, Binary Addressing (D)', `
-      D#######<p"dot"
-      ########<p"fill"
-      ########
-      ########<s"b"
-      ########<S"g"
-    s>########<s"r"
-    s>########
-    s>########
+      D#######y<S"enable"
+      ########c<p"dot"
+      ########q<p"fill"
+      ########Q<p"clear"
+      #########
+    s>#########<s"b"
+    s>#########<S"g"
+    s>#########<s"r"
            ^^^
            sss
 
 `, 'component' + componentid++);
 
 registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
-    s>D#######<p"dot"
-    s>########<p"fill"
+    s>D#######y<S"enable"
+    s>########c<p"dot"
+    S>########q<p"fill"
+    S>########Q<p"clear"
     S>########
-    s>########<s"b"
-    s>########<S"g"
-    S>########<s"r"
+    s>########<-s"b"
+    s>########<-S"g"
+    S>########<-s"r"
+    s>########
+    s>########
+      ^^^^^^^^
+      ssSssSss
+
+`, 'component' + componentid++);
+
+registerCircuit('Dot Matrix Screen, Matrix Addressing, Dot Input Only (D)', `
+    s>D#######c<p"dot"
+    s>########
+    S>########
+    s>########<-s"b"
+    s>########<-S"g"
+    S>########<-s"r"
     s>########
     s>########
       ^^^^^^^^
@@ -5530,25 +5890,27 @@ registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
 `, 'component' + componentid++);
 
 registerCircuit('Dot Matrix Screen, Matrix Addressing, 512 Colors (D)', `
-    s>D#######<p"dot"
-    s>########<p"fill"
-    S>########
-    s>########<s"b"
-    s>########<s"b"
-    S>########<s"B"
-    s>########<s"g"
-    s>########<s"g"
-    s>########<s"G"
-    s>########<s"r"
-    s>########<s"r"
-    s>########<S"R"
+    s>D#######y<S"enable"
+    s>########c<p"dot"
+    S>########q<p"fill"
+    S>########Q<p"clear"
+    S>#########
+    s>#########<s"b"
+    s>#########<s"b"
+    S>#########<s"B"
+    s>#########<s"g"
+    s>#########<s"g"
+    s>#########<s"G"
+    s>#########<s"r"
+    s>#########<s"r"
+    s>#########<S"R"
       ^^^^^^^^
       ssSssSss
 
 `, 'component' + componentid++);
 
 registerCircuit('Dot Matrix Screen, As Oscilloscope (D)', `
-      D#######<p"dot"
+      D#######c<p"dot"
       ########
       ########
       ########
@@ -5561,10 +5923,10 @@ registerCircuit('Dot Matrix Screen, As Oscilloscope (D)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Dot Matrix Screen, As Oscilloscope With Clear (D)', `
-      D#######<p"dot"
-      ########<p"clear"
-      ########
+registerCircuit('Dot Matrix Screen, As Oscilloscope With Clear and Enable (D)', `
+      D#######y<S"enable"
+      ########c<p"dot"
+      ########Q<p"clear"
       ########
       ########
     s>########
@@ -5592,6 +5954,15 @@ registerCircuit('Jukebox (audio speaker) with multiple controls (J)', `
   ^^^      ^^^^    ^^^^
   |||      ||||    ||||
   sss      sSss    ssss
+
+`, 'component' + componentid++);
+
+registerCircuit('Jukebox (audio speaker) with multiple controls and Enable (J)', `
+
+  2000J#####################y<--s
+      ^^^      ^^^^    ^^^^
+      |||      ||||    ||||
+      sss      sSss    Ssss
 
 `, 'component' + componentid++);
 
@@ -5814,9 +6185,10 @@ registerCircuit('Unit Test', `
 0"* game of life ship: check the ship works and wraps around with autotick"
 0"* langton's ant"
 0"* 4 math functions with decimal"
-0"* Lissajous"
+0"* Lissajous and Plasma"
 0"* Fredkin Gate"
-0"* All the next unit tests, such as drawint test"
+0"* All the next unit tests, such as drawing test"
+0"* All the individual devices in the directly preceding circuits"
 
 0"# On"
 
@@ -6004,15 +6376,15 @@ bB-------->O>l8
 BB---------->l8
 bB-------->O>l8
 
-  #---------]l8
-  b--------->l8
+  b---------]l8
+  #--------->l8
 S>#---------]l8
-s>b---------]l8
+s>#---------]l8
 
   b---------]l8
-  b--------->l8
-S>b---------]l8
-s>b---------]l8
+  #--------->l8
+S>#---------]l8
+s>#---------]l8
 
 s>b
 S>#
@@ -6020,9 +6392,14 @@ s>#--------->l8
 s>#---------]l8
 
 s>b
-S>b
-s>b--------->l8
+S>#
+s>#--------->l8
+s>#---------]l8
+
 s>b---------]l8
+S>#--------->l8
+S>#---------]l8
+s>#---------]l8
 
 F+++++++++++>l8
 
@@ -6385,6 +6762,7 @@ S---------->o
     T#------]l8
     ##------]l8
     ##------]l8
+    cc
     |^
     &+------>l8
      s
@@ -7104,6 +7482,8 @@ s---o
 
 s-->c#a------->l
 
+s-->M#U------->l
+
 s--->i741----->l
 
 I195
@@ -7120,7 +7500,9 @@ I196
 s-->z
     .--------->l
 s-->Z
-
+      ls
+      ^v
+s-->U####----->l
 
 0"# IC input order"
 
@@ -7229,8 +7611,8 @@ s-->e             s-->#i#             s-->kQ-->l    s-->#-->l
                                                            llllllll
                                                            ^^^^^^^^
                                                            T#######
-                                      s>D#######<p"dot"
-                                      s>########<p"fill"
+                                      s>D#######c<p"dot"
+                                      s>########q<p"fill"
   s->a>l      s>U>l         lll       S>########           llllllll
   p->e>l      s>2>l         ^^^       s>########<s"b"      ^^^^^^^^
   r->o>l      s>4>l         |||       s>########<S"g"      T#######

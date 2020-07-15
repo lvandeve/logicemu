@@ -1457,10 +1457,12 @@ var largedevicestartmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q'
                       'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'J':true};
 var largedevicemap = util.mergeMaps(largedevicestartmap, {'c':true, 'C':true});
 var largeextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#J':true}; // special extenders for large devices (not all of those are used yet)
+var extendmap = util.mergeMaps(largeextendmap, {'#':true});
 // devicemap as well as # (with extends devices)
 var devicemaparea = util.mergeMaps(devicemap, largeextendmap); devicemaparea['#'] = true;
 var largemaparea = util.mergeMaps(largedevicemap, largeextendmap);
 var ffmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true};
+var specialmap = {'q':true, 'Q':true, 'c':true, 'C':true, 'y':true}; // these can serve as special inputs for large devices: cells which are normally from flip-flop, but can also instead be special input-cells of other large devices
 var rommap = {'b':true, 'B':true};
 var inputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true};
 var dinputmap = {'^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true}; // directional inputs only
@@ -1739,14 +1741,22 @@ function CallSub(id) {
         rom.error = v.rom.error;
         rom.errormessage = v.rom.errormessage;
         rom.addressdir = v.rom.addressdir;
-        rom.addresslsbpos = v.rom.addresslsbpos;
-        rom.worddir = v.rom.worddir;
-        rom.wordlsbpos = v.rom.wordlsbpos;
+        rom.wordshor = v.rom.wordshor;
+        rom.outdir = v.rom.outdir;
         rom.selected = util.clone(v.rom.selected);
         rom.num_address_inputs = v.rom.num_address_inputs;
         rom.ram = v.rom.ram;
+        rom.has_enable = v.rom.has_enable;
+        //rom.has_set_all = v.rom.has_set_all;
+        rom.has_reset_all = v.rom.has_reset_all;
+        rom.has_outputenable = v.rom.has_outputenable;
+        rom.has_outputenabled = v.rom.has_outputenabled;
         rom.decoder = v.rom.decoder;
         rom.encoder = v.rom.encoder;
+        rom.bits = util.clone(v.rom.bits);
+        rom.bits_inv = util.clone(v.rom.bits_inv);
+        rom.lines = util.clone(v.rom.lines);
+        rom.lines_inv = util.clone(v.rom.lines_inv);
       }
       if(v.mux) {
         var mux = new Mux();
@@ -1782,6 +1792,13 @@ function CallSub(id) {
         vte.numinputs = v.vte.numinputs;
         vte.numoutputs = v.vte.numoutputs;
         vte.numwrite = v.vte.numwrite;
+        vte.has_enable = v.vte.has_enable;
+        vte.has_read = v.vte.has_read;
+        vte.has_write = v.vte.has_write;
+        vte.has_up = v.vte.has_up;
+        vte.has_down = v.vte.has_down;
+        vte.has_set = v.vte.has_set;
+        vte.has_reset = v.vte.has_reset;
         vte.cursorx = v.vte.cursorx;
         vte.cursory = v.vte.cursory;
         vte.prevwrite = v.vte.prevwrite;
@@ -1792,11 +1809,8 @@ function CallSub(id) {
         vte.passthrough = v.vte.passthrough;
         vte.decimalinput = v.vte.decimalinput;
         vte.counter = v.vte.counter;
-        vte.countersettable = v.vte.countersettable;
         vte.countervalue = v.vte.countervalue;
-        vte.previnput = v.vte.previnput;
-        vte.previnput2 = v.vte.previnput2;
-        vte.previnput3 = v.vte.previnput3;
+        vte.previnput = util.clone(v.vte.previnput);
         vte.allowstyping = v.vte.allowstyping;
         vte.keybuffer = util.clone(v.vte.keybuffer);
         vte.invisible = true;
@@ -1870,6 +1884,7 @@ function CallSub(id) {
         jukebox.y0 = v.jukebox.y0;
         jukebox.x1 = v.jukebox.x1;
         jukebox.y1 = v.jukebox.y1;
+        jukebox.has_enable = v.jukebox.has_enable;
         jukebox.numvolinputs = v.jukebox.numvolinputs;
         jukebox.numfreqinputs = v.jukebox.numfreqinputs;
         jukebox.numshapeinputs = v.jukebox.numshapeinputs;
@@ -2060,11 +2075,35 @@ function newOrder(array, order) {
   for(var i = 0; i < array.length; i++) array[i] = result[i];
 }
 
+function newOrderInputs(component, order) {
+  if(order.length != component.inputs.length) return false;  // must use *all* inputs for newOrderInputs
+  newOrder(component.inputs, order);
+  newOrder(component.inputs_negated, order);
+  newOrder(component.inputs_x, order);
+  newOrder(component.inputs_y, order);
+  newOrder(component.inputs_x2, order);
+  newOrder(component.inputs_y2, order);
+  return true;
+}
 
+// returns the direction from which a device input is coming, with x,y the position of the input symbol (<,v, ...) and x2,y2 the position of the device cell this goes to
+// in other words, returns the direction to go from x2,y2 towards x,y
+// return value is dir: 0=N, 1=E, 2=S, 3=W ; 4=NE, 5=SE, 6=SW, 7=NW
+function getInputDir(x, y, x2, y2) {
+  if(x == x2 && y < y2) return 0;
+  if(y == y2 && x > x2) return 1;
+  if(x == x2 && y > y2) return 2;
+  if(y == y2 && x < x2) return 3;
+  if(x > x2 && y < y2) return 4;
+  if(x > x2 && y > y2) return 5;
+  if(x < x2 && y > y2) return 6;
+  if(x < x2 && y < y2) return 7;
+  return -1; // invalid, same pos
+}
 
 /*
 returns object {} with following fields:
-i[0]: inputs for north side. {n:num, a:[array], ai:[array], ng:numgroups, ga:[groups], ai:array}
+i[0]: inputs for north side. {n:num, a:[array], ai:[array], ng:numgroups, ga:[groups], ai:array, nspecial}
     array a has form [[x,y,v,p,i], ...]. Here:
       v is computed from x or y component as distance from: i[0]:left, i[1]:top, i[2]:right, i[3]:bottom, o[0]:right, o[1]:bottom, o[2]:left, o[3]:top
       --> note: the LSB sides are rotationally invariant, and the order is reversed for input and output because if you have LSB on one side on an input, then for an output on the opposing side, the LSB should be on the same side on screen.
@@ -2078,6 +2117,7 @@ i[0]: inputs for north side. {n:num, a:[array], ai:[array], ng:numgroups, ga:[gr
       d: each value is 0, 1 or -1: how to increment each field of f to reach l.
       dn: negated version of d: for reaching f from l, to go from MSB to LSB instead
       ai is array of indices of this input in the given master, and is only present for inputs, not for outputs
+      nspecial: amount of special inputs/outputs matching the direction of this side. Doesn't have to actually touch this side, but same incoming direction to the device as a regular input going to this side. Special input = y, q, Q, c or C.
     A group is a consecutive streak of inputs.
     num == a.length, numgroups == ga.length
     arrays are sorted in the order of the v value. Note that this means inputs and outputs are sorted in reverse order. LSB is first clockwise for inputs, counterclockwise for outputs.
@@ -2088,21 +2128,24 @@ o[0]: outputs for north side. same format as ni.
 o[1]: idem for east side
 o[2]: idem for south side
 o[3]: idem for west side
-iy: inputs of type 'y'. {n:num, a:array, ai:array}, array a is of [x,y], array ai is as above
-ic: idem for inputs of type 'c'
-iC: idem for inputs of type 'C'
-iq: idem for inputs of type 'q'
-iQ: idem for inputs of type 'Q'
-ni: total amount of inputs
+iy: special inputs of type 'y'. {n:num, a:array, ai:array}, array a is of [x,y,d,i], array ai is as above
+    here the array fields are: x,y,i: as for i[0] etc..., d: direction this input comes from (0=N, 1=E, 2=S, 3=W ; 4=NE, 5=SE, 6=SW, 7=NW)
+ic, iC, iq, iQ: idem for inputs of type 'c', 'C', 'q', 'Q'
+oy: special outputs of type 'y'. similar to iy, but witout input-only fields such as ai
+oc, oC, oq, oQ: idem for outputs of type 'c', 'C', 'q', 'Q'
+ispecial: array with pointers to [iy, ic, iC, iq, iQ] in that order
+ni: total amount of non-special inputs
 no: total amount of outputs
-nig: total amount of input groups
-nog: total amount of output groups
-nis: total amount of input sides (including mixed input/output)
-nos: total amount of output sides (including mixed input/output)
-nes: total amount of empty sides (no inputs or outputs)
-niis: total amount of input-only sides
-noos: total amount of output-only sides
-nios: total amount of mixed sides (inputs and outputs)
+nispecial: amount of special inputs
+nospecial: amount of special outputs
+nig: total amount of input groups (non-special)
+nog: total amount of output groups (non-special)
+nis: total amount of input sides (including mixed input/output, excluding special)
+nos: total amount of output sides (including mixed input/output, excluding special)
+nes: total amount of empty sides (no inputs or outputs, ignoring special)
+niis: total amount of input-only sides (ignoring special)
+noos: total amount of output-only sides (ignoring special)
+nios: total amount of mixed sides (inputs and outputs, ignoring special)
 
 The given device is of type LargeDevice.
 For the side-inputs/outputs, only supports rectangular shape (where y, c, C, q and Q may deviate from the rectangular shape)
@@ -2110,24 +2153,34 @@ Does not support diagonal inputs, so not useable for ICs.
 The inputs appear in following order:
 for n/e/s/w inputs: for N right to left, E: bottom to top, S: left to right, W: top to bottom
 for n/e/s/w outputs: for N left to right, E: top to bottom, S: right to left, W: bottom to top
+
+The sides to use to detect inputs/outputs are given by x0, y0, x1, y1
+The values x0s, y0s, x1s, y1s are used for an additional extra check for special inputs. These values can be the same as x0, y0, x1, y1 (in that case nothing more is done), or possibly 1 larger on one or more sides. See getIO for info.
 */
-function getIO(x0, y0, x1, y1, master) {
+function getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, master) {
   var r = {};
   r.i = [];
   r.o = [];
-  r.i[0] = {n:0, a:[], ng:0, ga:[], ai:[]};
-  r.i[1] = {n:0, a:[], ng:0, ga:[], ai:[]};
-  r.i[2] = {n:0, a:[], ng:0, ga:[], ai:[]};
-  r.i[3] = {n:0, a:[], ng:0, ga:[], ai:[]};
-  r.o[0] = {n:0, a:[], ng:0, ga:[]};
-  r.o[1] = {n:0, a:[], ng:0, ga:[]};
-  r.o[2] = {n:0, a:[], ng:0, ga:[]};
-  r.o[3] = {n:0, a:[], ng:0, ga:[]};
+  r.i[0] = {n:0, a:[], ng:0, ga:[], ai:[], nspecial:0};
+  r.i[1] = {n:0, a:[], ng:0, ga:[], ai:[], nspecial:0};
+  r.i[2] = {n:0, a:[], ng:0, ga:[], ai:[], nspecial:0};
+  r.i[3] = {n:0, a:[], ng:0, ga:[], ai:[], nspecial:0};
+  r.o[0] = {n:0, a:[], ng:0, ga:[], nspecial:0};
+  r.o[1] = {n:0, a:[], ng:0, ga:[], nspecial:0};
+  r.o[2] = {n:0, a:[], ng:0, ga:[], nspecial:0};
+  r.o[3] = {n:0, a:[], ng:0, ga:[], nspecial:0};
   r.iy = {n:0, a:[], ai:[]};
   r.ic = {n:0, a:[], ai:[]};
   r.iC = {n:0, a:[], ai:[]};
   r.iq = {n:0, a:[], ai:[]};
   r.iQ = {n:0, a:[], ai:[]};
+  r.oy = {n:0, a:[]};
+  r.oc = {n:0, a:[]};
+  r.oC = {n:0, a:[]};
+  r.oq = {n:0, a:[]};
+  r.oQ = {n:0, a:[]};
+  r.nispecial = 0;
+  r.nospecial = 0;
 
   for(var i = 0; i < master.inputs.length; i++) {
     var x = master.inputs_x[i];
@@ -2136,25 +2189,40 @@ function getIO(x0, y0, x1, y1, master) {
     var y2 = master.inputs_y2[i];
     var c = world[y2][x2].circuitsymbol;
     if(c == 'y') {
+      var d = getInputDir(x, y, x2, y2);
       r.iy.n++;
-      r.iy.a.push([x2, y2]);
+      r.iy.a.push([x2, y2, d, i]);
       r.iy.ai.push(i);
+      if(d >= 0 && d < 4) r.i[d].nspecial++;
+      r.nispecial++;
     } else if(c == 'c') {
+      var d = getInputDir(x, y, x2, y2);
       r.ic.n++;
-      r.ic.a.push([x2, y2]);
+      r.ic.a.push([x2, y2, d, i]);
       r.ic.ai.push(i);
+      if(d >= 0 && d < 4) r.i[d].nspecial++;
+      r.nispecial++;
     } else if(c == 'C') {
+      var d = getInputDir(x, y, x2, y2);
       r.iC.n++;
-      r.iC.a.push([x2, y2]);
+      r.iC.a.push([x2, y2, d, i]);
       r.iC.ai.push(i);
+      if(d >= 0 && d < 4) r.i[d].nspecial++;
+      r.nispecial++;
     } else if(c == 'q') {
+      var d = getInputDir(x, y, x2, y2);
       r.iq.n++;
-      r.iq.a.push([x2, y2]);
+      r.iq.a.push([x2, y2, d, i]);
       r.iq.ai.push(i);
+      if(d >= 0 && d < 4) r.i[d].nspecial++;
+      r.nispecial++;
     } else if(c == 'Q') {
+      var d = getInputDir(x, y, x2, y2);
       r.iQ.n++;
-      r.iQ.a.push([x2, y2]);
+      r.iQ.a.push([x2, y2, d, i]);
       r.iQ.ai.push(i);
+      if(d >= 0 && d < 4) r.i[d].nspecial++;
+      r.nispecial++;
     } else if(y == y0 - 1) {
       r.i[0].n++;
       r.i[0].a.push([x2, y2, x2 - x0, x2, i]);
@@ -2172,29 +2240,64 @@ function getIO(x0, y0, x1, y1, master) {
       r.i[3].a.push([x2, y2, y1 - y2 - 1, y2, i]);
       r.i[3].ai.push(i);
     } else {
-      return null;
+      return null; // some non-special input is not on the rectangle boundary
     }
   }
 
+  // d = dir, x,y,v,p are the 4 array elements as explained above
+  var addOutput = function(d, x, y, v, p, special_only) {
+    var c = world[y][x].circuitsymbol;
+    if(c == 'y') {
+      r.oy.n++;
+      r.oy.a.push([x, y, d]);
+      if(d >= 0 && d < 4) r.o[d].nspecial++;
+      r.nospecial++;
+    } else if(c == 'c') {
+      r.oc.n++;
+      r.oc.a.push([x, y, d]);
+      if(d >= 0 && d < 4) r.o[d].nspecial++;
+      r.nospecial++;
+    } else if(c == 'C') {
+      r.oC.n++;
+      r.oC.a.push([x, y, d]);
+      if(d >= 0 && d < 4) r.o[d].nspecial++;
+      r.nospecial++;
+    } else if(c == 'q') {
+      r.oq.n++;
+      r.oq.a.push([x, y, d]);
+      if(d >= 0 && d < 4) r.o[d].nspecial++;
+      r.nospecial++;
+    } else if(c == 'Q') {
+      r.oQ.n++;
+      r.oQ.a.push([x, y, d]);
+      if(d >= 0 && d < 4) r.o[d].nspecial++;
+      r.nospecial++;
+    } else {
+      if(special_only) return null; // shouldn't put a regular output on an edge that's only for special outputs
+      r.o[d].n++;
+      r.o[d].a.push([x, y, v, p]);
+    }
+  };
+
   for(var x = x0; x < x1; x++) {
-    if(connected2(x, y0, 0)) {
-      r.o[0].n++;
-      r.o[0].a.push([x, y0, x1 - x - 1, x]);
-    }
-    if(connected2(x, y1 - 1, 2)) {
-      r.o[2].n++;
-      r.o[2].a.push([x, y1 - 1, x - x0, x]);
-    }
+    if(connected2(x, y0, 0)) addOutput(0, x, y0, x1 - x - 1, x, false);
+    if(connected2(x, y1 - 1, 2)) addOutput(2, x, y1 - 1, x - x0, x, false);
   }
   for(var y = y0; y < y1; y++) {
-    if(connected2(x0, y, 3)) {
-      r.o[3].n++;
-      r.o[3].a.push([x0, y, y - y0, y]);
-    }
-    if(connected2(x1 - 1, y, 1)) {
-      r.o[1].n++;
-      r.o[1].a.push([x1 - 1, y, y1 - y - 1, y]);
-    }
+    if(connected2(x0, y, 3)) addOutput(3, x0, y, y - y0, y, false);
+    if(connected2(x1 - 1, y, 1)) addOutput(1, x1 - 1, y, y1 - y - 1, y, false);
+  }
+
+  // also support special outputs that are at possible larger bounding box x0s, y0s, x1s, y1s. See largeComponentBB for more info on these.
+  // NOTE: this is only a temporary solution. In theory ALL y,c,C,q,Q of the component's outputs should be considered, and also diagonal ones.
+  // however this temporary solution probably covers almost all use cases, so is likely good enough.
+  for(var x = x0s; x < x1s; x++) {
+    if(y0s != y0 && connected2(x, y0s, 0)) addOutput(0, x, y0s, x1s - x - 1, x, true);
+    if(y1s != y1 && connected2(x, y1s - 1, 2)) addOutput(2, x, y1s - 1, x - x0s, x, true);
+  }
+  for(var y = y0s; y < y1s; y++) {
+    if(x0s != x0 && connected2(x0s, y, 3)) addOutput(3, x0s, y, y - y0s, y, true);
+    if(x1s != x1 && connected2(x1s - 1, y, 1)) addOutput(1, x1s - 1, y, y1s - y - 1, y, true);
   }
 
   // computes ng, f, l, ga given object with n and a.
@@ -2267,37 +2370,146 @@ function getIO(x0, y0, x1, y1, master) {
     if(r.o[i].n && r.i[i].n) r.nios++;
   }
 
+  r.ispecial = [r.iy, r.ic, r.iC, r.iq, r.iQ];
+  r.ospecial = [r.oy, r.oc, r.oC, r.oq, r.oQ];
+
   return r;
 }
 
+// find largest rectangle of 1's in array of 0's and 1's. Returned as [x0, y0, x1, y1] with x1, y1 exclusive end coordinates
+// modifies arr while it works
+function largestRectangle(arr) {
+  var best = 0;
+  var result = [0, 0, 0, 0];
 
-// computes the rectangular bounding box of a large component
+  if(arr.length == 0) return result;
+  var h = arr.length;
+  var w = arr[0].length;
+
+  // store amount of non-0 above current non-0 value
+  for(var y = 1; y < h; y++) {
+    for(var x = 0; x < w; x++) {
+      if(arr[y][x] && arr[y - 1][x]) arr[y][x] += arr[y - 1][x];
+    }
+  }
+
+  for(var y = 0; y < h; y++) {
+    // solve for current row as largest rectangle in histogram
+    var stack = [];
+    var row = arr[y];
+    // left bars
+    var left = [];
+    for(var x = 0; x < w; x++) {
+      while(stack.length > 0) {
+        if(row[stack[stack.length - 1]] < row[x]) break;
+        stack.pop();
+      }
+      var v = (stack.length ? stack[stack.length - 1] : -1);
+      left[x] = x - v - 1;
+      stack.push(x);
+    }
+    // right bars
+    var right = [];
+    stack = [];
+    for(var x = w - 1; x >= 0; x--) {
+      while(stack.length > 0) {
+        if(row[stack[stack.length - 1]] < row[x]) break;
+        stack.pop();
+      }
+      var v = (stack.length ? stack[stack.length - 1] : w);
+      right[x] = v - x - 1;
+      stack.push(x);
+    }
+    // max area
+    for(var x = 0; x < w; x++) {
+      var area = row[x] * (left[x] + right[x] + 1);
+      if(area > best) {
+        best = area;
+        result = [x - left[x], y - row[x] + 1, x + right[x] + 1, y + 1];
+      }
+    }
+  }
+
+  return result;
+};
+
+
+// computes the rectangular bounding box of a large component, as intended to use for the coordinates for getIO, that is, the sides on which main inputs and outputs are detected
 // array: 2D array of cell index, x/y coord in 0,1
-// exclude_controls: if true, excludes control inputs of large device: y, c, C, q, Q
+// if special_controls is false:
+//   simply computes the rectangular bounding box and outputs in the component's x0, y0, x1, y1 fields, does not add any other fields
+// if special_controls: if true, also computes extra bounding boxes related to special input tiles (y, c, C, q, Q) of large device, and outputs them to extra fields
+//   x0, y0, x1, y1 will now exclude any y,c,C,q,Q in its computation, so that they still are the main input/output sides
+//   x0s, y01, x1s, y1s: full bounding box that was normally gotten if special_controls was false
+//   x0b, y0b, x1b, y1b: largest rectangle not containing the special inputs. This can be smaller than x0, y0, x1, y1.
+//   examples: in each example, left side is a possible large component, right of that main bounding box is shown, right of that 's' bounding box, right of that 'b' bounding box
+//   T###y  mmmmm  sssss  bbbby
+//   #####  mmmmm  sssss  bbbb#
+//
+//   T###y  mmmmy  sssss  bbbby --> the difference in this example and previous one is the # below the y, it's no longer there, so main bounding box now smaller.
+//   ####   mmmm   sssss  bbbb#
+//
+//   And also excludes these for computation of x0,y0,x1,y1 (but this one can still be larger than x0b,y0b,x1b,y1b as this one still takes the min/max of regular tiles)
 // component: sets x0, y0, x1, y1 fields to this
-function largeComponentBB(array, exclude_controls, component) {
+// possible resulting areas:
+//   x0,y0,x1,y1: the rectangle to use for getIO for finding the location of input and output sides for large device. May be smaller than all fields in array if special_controls is enabled.
+//   x0b,y0b,x1b,y1b: an inner bounding box that could be smaller than or equal to x0,y0,x1,y1, intended for display (VTE, dot matrix) that excludes special controls
+//   array: original input, may be non rectangular
+
+function largeComponentBB(array, special_controls, component) {
   var x0 = w, y0 = h, x1 = 0, y1 = 0;
   for(var i = 0; i < array.length; i++) {
     var x = array[i][0];
     var y = array[i][1];
-    if(exclude_controls) {
-      var c = world[y][x].circuitsymbol;
-      if(c == 'y' || c == 'c' || c == 'C' || c == 'q' || c == 'Q') continue;
-    }
+    if(special_controls && specialmap[world[y][x].circuitsymbol]) continue;
     x0 = Math.min(x0, x);
     y0 = Math.min(y0, y);
     x1 = Math.max(x1, x + 1);
     y1 = Math.max(y1, y + 1);
   }
+
   component.x0 = x0;
   component.y0 = y0;
   component.x1 = x1;
   component.y1 = y1;
+
+  if(special_controls) {
+    // larger bounding box than above (or same as above would give if !special_controls)
+    var x0s = w, y0s = h, x1s = 0, y1s = 0;
+    for(var i = 0; i < array.length; i++) {
+      var x = array[i][0];
+      var y = array[i][1];
+      x0s = Math.min(x0s, x);
+      y0s = Math.min(y0s, y);
+      x1s = Math.max(x1s, x + 1);
+      y1s = Math.max(y1s, y + 1);
+    }
+    component.x0s = x0s;
+    component.y0s = y0s;
+    component.x1s = x1s;
+    component.y1s = y1s;
+
+    var arr = [];
+    for(var y = y0; y < y1; y++) {
+      var y2 = y - y0;
+      arr[y2] = [];
+      for(var x = x0; x < x1; x++) {
+        var x2 = x - x0;
+        var c = world[y][x].circuitsymbol;
+        arr[y2][x2] = (specialmap[c] ? 0 : 1);
+      }
+    }
+    var r = largestRectangle(arr);
+    component.x0b = x0 + r[0];
+    component.y0b = y0 + r[1];
+    component.x1b = x0 + r[2];
+    component.y1b = y0 + r[3];
+  }
 }
 
 // actually also RAM! but it started out with only rom functionality.
 function ROM() {
-  this.onehot = false;
+  this.onehot = false; // NOTE: actually a wrong name, per-row addressing is better name since it does allow multiple ones to be enabled.
   // 2D array of all bit values, the actual data
   // - height (first index) = #addresses (which word is selected) --> index 0 is always the one closest to the output side
   // - width (second index) = #outputs (which output bit)
@@ -2315,12 +2527,16 @@ function ROM() {
   this.addressdir = -1;
   // NOTE: by default, LSB pos is always on the right side when looking in the direction of the input/output arrows
   // exception to that: the address lines have their LSB on the output side (their direction is always perpendicular to output)
-  this.addresslsbpos = 0; // 0: left or top, 1: right or bottom. Where the LSB of address input bits is.
-  this.worddir = -1; // dir is 0:columns (so outputdir is E or W), 1:rows (so outputdir is N or S)
-  this.wordlsbpos = 0; // where the LSB of the wordlines is
+  this.wordshor = -1; // whether words are horizontal or vertical, for rendering. 0:columns (so outdir is E or W), 1:rows (so outdir is N or S)
+  this.outdir = -1;
   this.selected = []; // selected row/column, for graphical effect. Only as large as the visual part
   this.num_address_inputs = -1;
-  this.ram = false; // if true, is ram instead of rom
+  this.ram = false; // if true, is ram instead of rom ("has_write")
+  this.has_enable = false;
+  //this.has_set_all = false;
+  this.has_reset_all = false;
+  this.has_outputenable = false;
+  this.has_outputenabled = false;
   this.decoder = false; // if true, is decoder instead of rom
   this.encoder = false; // if true, is encoder instead of rom
   this.priority = false; // if true, is priority selector instead of rom (with unary input, unary output)
@@ -2328,15 +2544,17 @@ function ROM() {
   this.bits = []; // array of x or y values of the coordinates where each line has bits
   this.lines_inv = []; // from x-x0 or y-y0 to line index
   this.bits_inv = []; // from x-x0 or y-y0 to bits index
+  this.previnput = [];
+
 
   this.updateRamDisplay = function(bit, line) {
     var x, y;
-    if(this.worddir == 1) {
+    if(this.wordshor == 1) {
       x = this.bits[bit];
-      y = this.wordlsbpos ? this.lines[this.lines.length - 1 - line] : this.lines[line];
+      y = this.lines[line];
     } else {
       y = this.bits[bit];
-      x = this.wordlsbpos ? this.lines[this.lines.length - 1 - line] : this.lines[line];
+      x = this.lines[line];
     }
     if(x < this.x1 && y < this.y1 && x >= this.x0 && y >= this.y0) {
       var c = world[y][x];
@@ -2348,14 +2566,25 @@ function ROM() {
   };
 
   // Converts the address part of the inputs from binary to unary address
-  this.binaryToUnary = function(inputs) {
+  this.binaryToUnary = function(inputs, inputpos, inputsize) {
     var index = 0;
     var mul = 1;
-    for(var i = 0; i < this.num_address_inputs; i++) {
-      index += inputs[i] * mul;
+    for(var i = 0; i < inputsize; i++) {
+      index += inputs[inputpos + i] * mul;
       mul *= 2;
     }
     return index;
+  };
+
+  this.updateOutputEnabled = function() {
+    if(this.has_outputenabled) {
+      for(var i = 0; i < this.output.length - 1; i++) {
+        if(this.output[i]) {
+          this.output[this.output.length - 1] = true;
+          break;
+        }
+      }
+    }
   };
 
   // Assumes the component has already updated all inputs according to the UPDATE_ALGORITHM and gotten the input values from it
@@ -2363,471 +2592,421 @@ function ROM() {
   // for RAM the inputs are in the order: address select, read/write bit, data input
   this.update = function(inputs) {
     if(this.error) return;
-    var write = this.ram && inputs[this.num_address_inputs];
 
     for(var j = 0; j < this.output.length; j++) this.output[j] = false;
     for(var i = 0; i < this.selected.length; i++) this.selected[i] = false;
 
-    if(this.priority) {
-      if(inputs.length == this.num_address_inputs + 1 && inputs[inputs.length - 1] == false) {
-        return; // 'enable' input not on
+
+    var pos = 0;
+
+    var enable = true;
+    var do_set = false;
+    var do_reset_all = false;
+    var output_enable = true;
+
+    if(this.has_enable) {
+      if(!inputs[pos]) enable = false;
+      pos++;
+    }
+
+    if(this.has_set) {
+      if(enable && inputs[pos] && !this.previnput[pos]) do_set = true;
+      this.previnput[pos] = inputs[pos];
+      pos++;
+    }
+
+    if(this.has_reset_all) {
+      if(inputs[pos]) {
+        do_reset_all = true; // asynch, no clock edge, overrides enable
+        do_set = false;
       }
+      pos++;
+    }
+
+    if(this.has_outputenable) {
+      if(!inputs[pos]) output_enable = false;
+      pos++;
+    }
+
+    var output_enabled = false;
+    var numdataout = this.output.length - (this.has_outputenabled ? 1 : 0);
+
+    if(this.priority) {
+      if(!output_enable) return;
 
       var index = -1;
       for(var i = 0; i < this.num_address_inputs; i++) {
-        if(inputs[i]) index = i;
-      }
-      for(var j = 0; j < this.output.length; j++) {
-        this.output[j] = (j == index);
-      }
-    } else if(this.encoder) {
-      if(inputs.length == this.num_address_inputs + 1 && inputs[inputs.length - 1] == false) {
-        return; // 'enable' input not on
+        if(inputs[pos + i]) index = i;
       }
 
+      for(var j = 0; j < numdataout; j++) {
+        this.output[j] = (j == index);
+      }
+      this.updateOutputEnabled();
+    } else if(this.encoder) {
+      if(!output_enable) return;
+
       for(var i = 0; i < this.num_address_inputs; i++) {
-        if(inputs[i]) {
-          for(var j = 0; j < this.output.length; j++) {
-            if((i >> j) & 1) this.output[j] = true;
+        if(inputs[pos + i]) {
+          for(var j = 0; j < numdataout; j++) {
+            if((i >> j) & 1) {
+              this.output[j] = true;
+            }
           }
         }
       }
+      this.updateOutputEnabled();
     } else if(this.decoder) {
-      if(inputs.length == this.num_address_inputs + 1 && inputs[inputs.length - 1] == false) {
-        return; // 'enable' input not on
+      if(!output_enable) return;
+      var index = this.binaryToUnary(inputs, pos, this.num_address_inputs);
+      if(index < numdataout) this.output[index] = true;
+      this.updateOutputEnabled();
+    } else {
+      if(this.onehot) {
+        // one hot can have multiple lines selected, the output is then their OR, and if this is RAM and we are writing, it will write the same value to all selected lines
+        for(var i = 0; i < this.num_address_inputs; i++) {
+          if(inputs[pos + i]) {
+            if(do_set) {
+              for(var j = 0; j < this.array[i].length; j++) {
+                this.array[i][j] = inputs[pos + this.num_address_inputs + j];
+                this.updateRamDisplay(j, i);
+              }
+            }
+            for(var j = 0; j < this.array[i].length; j++) {
+              this.output[j] |= this.array[i][j];
+            }
+            this.selected[i] = true;
+          }
+        }
+      } else {
+        var index = this.binaryToUnary(inputs, pos, this.num_address_inputs);
+        if(index < this.lines.length && (this.outdir == 1 || this.outdir == 2)) index = this.lines.length - index - 1; // translate index to order where output side represents 0 (only when in visible part)
+
+        if(index < this.array.length) {
+          if(do_set) {
+            for(var j = 0; j < this.array[index].length; j++) {
+              this.array[index][j] = inputs[pos + this.num_address_inputs + j];
+              this.updateRamDisplay(j, index);
+            }
+          }
+          for(var j = 0; j < this.array[index].length; j++) {
+            this.output[j] = this.array[index][j];
+          }
+          if(index < this.selected.length) this.selected[index] = true;
+        }
       }
 
-      var index = this.binaryToUnary(inputs);
-      this.output[index] = true;
-    } else if(this.onehot) {
-      // one hot can have multiple lines selected, the output is then their OR, and if this is RAM and we are writing, it will write the same value to all selected lines
-      for(var i = 0; i < this.num_address_inputs; i++) {
-        if(inputs[i]) {
-          if(write) {
-            for(var j = 0; j < this.array[i].length; j++) {
-              this.array[i][j] = inputs[this.num_address_inputs + 1 + j];
+      if(do_reset_all) {
+        for(var i = 0; i < this.array.length; i++) {
+          for(var j = 0; j < this.array[i].length; j++) {
+            if(this.array[i][j]) {
+              this.array[i][j] = false;
               this.updateRamDisplay(j, i);
             }
           }
-          for(var j = 0; j < this.array[i].length; j++) {
-            this.output[j] |= this.array[i][j];
-          }
-          this.selected[i] = true;
         }
-      }
-    } else {
-      var index = this.binaryToUnary(inputs);
-      if(index < this.array.length) {
-        if(write) {
-          for(var j = 0; j < this.array[index].length; j++) {
-            this.array[index][j] = inputs[this.num_address_inputs + 1 + j];
-            this.updateRamDisplay(j, index);
-          }
-        }
-        for(var j = 0; j < this.array[index].length; j++) {
-          this.output[j] = this.array[index][j];
-        }
-        if(index < this.selected.length) this.selected[index] = true;
+        for(var j = 0; j < this.array[0].length; j++) this.output[i] = 0;
       }
     }
+  };
+
+  this.setError = function(text) {
+    this.error = true;
+    if(!this.errormessage) this.errormessage = text;
   };
 
   // init before inputs are resolved
   // returns true if ok, false if error
   this.init1 = function(array) {
-    largeComponentBB(array, false, this);
+    largeComponentBB(array, true, this);
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
     var y1 = this.y1;
+    var x0b = this.x0b;
+    var y0b = this.y0b;
+    var x1b = this.x1b;
+    var y1b = this.y1b;
 
     this.master = null; // the master component for this ROM
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
+        var mainbb = (x >= x0b && x < x1b && y >= y0b && y < y1b);
         var c = world[y][x];
-        if(!(rommap[c.circuitsymbol] || c.circuitsymbol == '#b')) return false;
-        if(c.components[0]) {
-          this.master = c.components[0];
+        if(mainbb && !(rommap[c.circuitsymbol] || c.circuitsymbol == '#b')) { this.setError('can only have b, B or # in the main rectangular region'); return false; }
+        if(!mainbb && rommap[c.circuitsymbol])  { this.setError('cannot have b or B outside of the main rectangular region'); return false; }
+        var component = c.components[0] || c.components[1];
+        if(!this.master && mainbb && component) {
+          this.master = component;
           this.master_orig_x = x;
           this.master_orig_y = y;
-          break;
         }
-      }
-      if(this.master) break;
+      };
     }
-    if(!this.master) return false;
-    for(var y = y0; y < y1; y++) {
-      for(var x = x0; x < x1; x++) {
-        var c = world[y][x];
-        if(!c.components[0]) {
-          c.components[0] = this.master;
-        } else {
-          c.components[0].master = this.master;
-        }
-      }
+    if(!this.master) { this.setError('didn\'t find a master component'); return false; }
+
+    for(var i = 0; i < array.length; i++) {
+      var x = array[i][0];
+      var y = array[i][1];
+      var c = world[y][x];
+      if(c.components[0]) c.components[0].master = this.master;
+      if(c.components[1]) c.components[1].master = this.master;
+      if(!c.components[0] && !c.components[1]) c.components[0] = this.master;
     }
     this.master.rom = this;
     this.master.type = TYPE_ROM; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with #
     return true;
   };
 
-
-  /*
-  given the array returned by getIO,
-  returns object of {
-    type: 0=rom, 1=ram, 2=decoder, 3=encoder, 4=priority
-    onehot: 0=binary address selection, 1=one-hot (unary) (only used for rom or ram)
-    word [dir, lsbpos]: dir is 0:columns (so outputdir is E or W), 1:rows (so outputdir is N or S). The lsbpos here is where line addressed by "0" is. Not always same as where lsbpos of address select inputs are!!
-    addressinput [heading, dir, [v], num, lsbpos]: address selection inputs.
-    rwinput [heading, dir, [v], num, lsbpos]: read/write input of RAM
-    datainput [heading, dir, [v], num, lsbpos]: input for RAM
-    out [heading, dir, [v], num, lsbpos]: output side
-  }
-  with
-  heading: wind direction of side with this inputs/outputs (NESW), for input is where it comes from, for output is where it goes to
-  dir: heading & 1: 0=horizontal, 1=vertical
-  i0: begin coordinate (x or y depends on dir)
-  i1: end coordinate
-  num: i1 - i0
-  lsbpos: is lsbpos for this left or right (not relevant for everything), value is 0:left/top, 1:right/bottom
-  }
-  returns null on error.
-  */
-  this.getDirs = function(io) {
+  this.processIO = function(io) {
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
     var y1 = this.y1;
-    var numinputsides = 0;
-    var numoutputsides = 0;
-    var someinput = -1; // heading of the input if there is only 1 input side. If there are two, then the one opposite of the output side gets precedence
-    var someoutput = -1;
-    var somesingleinput = -1; // heading of some input with exactly 1 bit, if present
-    var somemultiinput = -1; // heading of some input with more than 1 bits, if present
+    var x0b = this.x0b;
+    var y0b = this.y0b;
+    var x1b = this.x1b;
+    var y1b = this.y1b;
+
+
+    if(io.nospecial) { this.setError('special outputs not supported for this component'); return false; }
+
+    var numb = 0, numB = 0;
+    for(var y = y0; y < y1; y++) {
+      for(var x = x0; x < x1; x++) {
+        if(world[y][x].circuitsymbol == 'b') numb++;
+        if(world[y][x].circuitsymbol == 'B') numB++;
+      }
+    }
+    var coder = true;
+    if(numb >= io.no || numB > 0) coder = false;
+
+    var arr = [];
+
+    var hasspecial = !!io.nspecial;
+
+    var outdir = -1;
+    var outenableddir = -1; // output-enabled output (OR of all outputs)
     for(var i = 0; i < 4; i++) {
-      if(io.i[i].n && io.o[i].n) return null; // can't have mixed input/output side
+      if(io.i[i].n && io.o[i].n) { this.setError('can\'t have mixed input/output side'); return false; }
+      if(coder && io.o[i].n == 1) {
+        if(outenableddir > -1) { this.setError('can have only one output-enable side'); return false; }
+        outenableddir = i;
+      } else if(io.o[i].n) {
+        if(outdir > -1) { this.setError('can have only one output side'); return false; }
+        outdir = i;
+      }
+    }
+    if(outdir == -1) { this.setError('must have an output side'); return false; }
+    this.outdir = outdir;
+    if(outenableddir > -1 && (outenableddir & 1) == (outdir & 1)) { this.setError('output-enable side can\'t be across the main output side'); return false; }
+    var addressdir = -1;
+    var worddir = -1;
+    var outenabledir = -1; // output-enable input
+    for(var i = 0; i < 4; i++) {
       if(io.i[i].n) {
-        numinputsides++;
-        someinput = i;
-        if(io.i[i].n == 1) somesingleinput = i;
-        if(io.i[i].n > 1) somemultiinput = i;
-      }
-      if(io.o[i].n) {
-        numoutputsides++;
-        someoutput = i;
-      }
-    }
-
-    if(numoutputsides != 1) return null; // every single possible device has 1 output side.
-    var outheading = someoutput;
-    var outdir = (someoutput & 1);
-    var outlsbpos = (outheading == 0 || outheading == 1) ? 1 : 0;
-
-    var worddir = (outdir + 1) & 1; // the dir of the words: 0:columns (so outputdir is E or W), 1:rows (so outputdir is N or S)
-    var wordlsbpos = (outheading == 0 || outheading == 3) ? 0 : 1;
-
-    var bits = []; // if e.g. output side is north, this contains x coordinate of every position actually used as bit output
-    var lines = []; // // if e.g. output side is north, this contains y coordinate of every position that is actually a line with bits in it
-    var bits_inv = [];
-    var lines_inv = [];
-    var lines_count = [];
-    var bits_count = [];
-    for(var x = x0; x < x1; x++) {
-      bits_count[x] = 0;
-      bits_inv[x - x0] = -1;
-    }
-    for(var y = y0; y < y1; y++) {
-      lines_count[y] = 0;
-      lines_inv[y - y0] = -1;
-      for(var x = x0; x < x1; x++) {
-        if(world[y][x].circuitsymbol == 'b' || world[y][x].circuitsymbol == 'B') {
-          bits_count[x]++;
-          lines_count[y]++;
+        if((i & 1) == (outdir & 1)) {
+          // across output, so word input
+          if(worddir > -1) { this.setError('can have only one word input side'); return false; }
+          worddir = i;
+        } else if(outenableddir > -1 && (i & 1) == (outenableddir & 1)) {
+          if(outenabledir > -1) { this.setError('can have only one output-enable input'); return false; }
+          outenabledir = i;
+        } else {
+          // address input
+          if(addressdir > -1) { this.setError('can have only one address input side'); return false; }
+          addressdir = i;
         }
       }
     }
-    for(var x = x0; x < x1; x++) {
-      if(bits_count[x]) {
-        bits_inv[x - x0] = bits.length;
-        bits.push(x);
-      }
-    }
-    for(var y = y0; y < y1; y++) {
-      if(lines_count[y]) {
-        lines_inv[y - y0] = lines.length;
-        lines.push(y);
-        if(lines_count[y] != bits.length) return null;
-      }
-    }
-    for(var x = x0; x < x1; x++) {
-      if(bits_count[x] && bits_count[x] != lines.length) return null;
-    }
-    if(outdir == 1) {
-      var temp = bits;
-      bits = lines;
-      lines = temp;
-      temp = bits_inv;
-      bits_inv = lines_inv;
-      lines_inv = temp;
-    }
-    this.lines = lines;
-    this.bits = bits;
-    this.lines_inv = lines_inv;
-    this.bits_inv = bits_inv;
+    //if(addressdir == -1) { this.setError('must have an address input side'); return false; }
 
-    var numwords = lines.length; // num visible words (with RAM there could be hidden ones too)
-    var wordsize = bits.length;
 
-    // find the address input.
-    // If there is 1 input, it's that one.
-    // If there are 3 inputs, it's one NOT opposite of the output, and larger than size 1.
-    // If there are 2 inputs, it's one with more than 1 bits
-    var addressheading = someinput;
-    if(numinputsides == 3) {
-      for(var i = 0; i < 4; i++) {
-        if(io.i[i].n > 1 && i != ((outheading + 2) & 3)) { // if(input size, and not opposite of output, and larger amount than 1)
-          addressheading = i;
-          break;
+    if(addressdir == -1 && worddir == -1) { this.setError('must have an address and/or word input side'); return false; }
+
+    // if there is only an input side across the output, then it's intended to be the address side instead.
+    // a wordside can only appear for a RAM, and a RAM must already have an address side that may not be across the output.
+    if(addressdir == -1 && worddir > -1) {
+      var temp = addressdir;
+      addressdir = worddir;
+      worddir = temp;
+    }
+
+    //var outsize = io.o[outdir].n;
+    this.num_address_inputs = io.i[addressdir].n;
+
+    this.onehot = false;
+    var numvisiblewords = 0;
+    var wordsize = 0;
+    if(!coder) {
+      var bits = []; // if e.g. output side is north, this contains x coordinate of every position actually used as bit output
+      var lines = []; // // if e.g. output side is north, this contains y coordinate of every position that is actually a line with bits in it
+      var bits_inv = [];
+      var lines_inv = [];
+      var lines_count = [];
+      var bits_count = [];
+      for(var x = x0b; x < x1b; x++) {
+        bits_count[x] = 0;
+        bits_inv[x - x0b] = -1;
+      }
+      for(var y = y0b; y < y1b; y++) {
+        lines_count[y] = 0;
+        lines_inv[y - y0b] = -1;
+        for(var x = x0b; x < x1b; x++) {
+          if(world[y][x].circuitsymbol == 'b' || world[y][x].circuitsymbol == 'B') {
+            bits_count[x]++;
+            lines_count[y]++;
+          }
         }
       }
-    }
-    if(numinputsides == 2) {
-      addressheading = somemultiinput;
-    }
-    var addressdir = addressheading & 1;
-    var addresslsbpos = (addressheading == 0 || addressheading == 1) ? 0 : 1;
-
-    var type = -1;
-    var unary = 0;
-
-    // only used for ram
-    var rwheading = -1;
-    var rwdir = -1;
-    var datainputheading = -1;
-    var datainputdir = -1;
-
-    if(numwords == 1) {
-      // encoder or decoder. Because RAM or ROM must always have at least 2 words
-      if(numinputsides < 1) return null;
-      if(numinputsides > 2) return null;
-      if(numinputsides == 2) {
-        // an enable input is present
-        if(somemultiinput == -1 || somesingleinput == -1) return false;
+      for(var x = x0b; x < x1b; x++) {
+        if(bits_count[x]) {
+          bits_inv[x - x0b] = bits.length;
+          bits.push(x);
+        }
       }
-      if(addressdir != outdir) return null; // must be accross for enc/dec
-      var numin = io.i[addressheading].n;
-      var numout = io.o[outheading].n;
-      if(numin < numout) {
-        // decoder (binary to unary)
-        type = 2;
-      } else if(numout < numin) {
-        // encoder (unary to binary)
-        type = 3;
-      } else if(numin == numout) {
-        // priority (unary to unary)
-        type = 4;
+      for(var y = y0b; y < y1b; y++) {
+        if(lines_count[y]) {
+          lines_inv[y - y0b] = lines.length;
+          lines.push(y);
+          if(lines_count[y] != bits.length) { this.setError('not all rows filled'); return false; }
+        }
+      }
+      for(var x = x0b; x < x1b; x++) {
+        if(bits_count[x] && bits_count[x] != lines.length) { this.setError('not all columns filled'); return false; }
+      }
+      if(outdir & 1) {
+        var temp = bits;
+        bits = lines;
+        lines = temp;
+        temp = bits_inv;
+        bits_inv = lines_inv;
+        lines_inv = temp;
+      }
+      this.lines = lines;
+      this.bits = bits;
+      this.lines_inv = lines_inv;
+      this.bits_inv = bits_inv;
+
+      numvisiblewords = lines.length; // num visible words (with RAM there could be hidden ones too)
+      wordsize = bits.length;
+
+      this.selected.length = numvisiblewords;
+
+
+      this.onehot = (!coder && (addressdir & 1) != (outdir & 1) && this.num_address_inputs == numvisiblewords);
+    }
+
+
+    // while the result of getIO has lsb in a certain clockwise order (which is inverted for outputs vs inputs), for the ROM with the visual bB grid,
+    // invert the lsbdir if necessary such that we're always in increasing x or y order.
+    // exceptions:
+    // -binary address (not onehot) should use the getIO system, and be adjustable with a placed '0' instead
+    // -inputs/outputs of coder
+
+    var addresslsbinv = false;
+    if(!coder && this.onehot && (addressdir == 3 || addressdir == 2)) addresslsbinv = true;
+
+    var wordlsbinv = false;
+    if(!coder && (worddir == 3 || worddir == 2)) wordlsbinv = true;
+
+    var outlsbinv = false;
+    if(!coder && (outdir == 1 || outdir == 0)) outlsbinv = true;
+
+    // NOTE: in the case of RAM, this is enable for the clock input. In the case of ROM and coders, this is instead output enable.
+    if(io.iy.n) {
+      if(io.iy.n > 1) { this.setError('too many y inputs'); return false; }
+      this.has_enable = true;
+      arr.push(io.iy.ai[0]);
+      this.has_enable = true;
+    }
+
+
+    if(io.iC.n) { this.setError('C input not supported'); return false; }
+
+    if(io.ic.n) {
+      if(io.ic.n > 1) { this.setError('too many c inputs'); return false; }
+      this.has_set = true;
+      arr.push(io.ic.ai[0]);
+    }
+
+    /*if(io.iq.n) {
+      if(io.iq.n > 1) { this.setError('too many q inputs'); return false; }
+      this.has_dot = true;
+      arr.push(io.iq.ai[0]);
+      this.has_set_all = true;
+    }*/
+    if(io.iq.n) { this.setError('q input not supported'); return false; }
+
+    if(io.iQ.n) {
+      if(io.iQ.n > 1) { this.setError('too many Q inputs'); return false; }
+      this.has_dot = true;
+      arr.push(io.iQ.ai[0]);
+      this.has_reset_all = true;
+    }
+
+
+    if(outenabledir > -1) {
+      for(var i = 0; i < io.i[outenabledir].n; i++) {
+        arr.push(io.i[outenabledir].ai[i]);
+      }
+    }
+    if(addressdir > -1) {
+      for(var i = 0; i < io.i[addressdir].n; i++) {
+        var j = (addresslsbinv ? (io.i[addressdir].n - i - 1) : i);
+        arr.push(io.i[addressdir].ai[j]);
+      }
+    }
+    if(worddir > -1) {
+      for(var i = 0; i < io.i[worddir].n; i++) {
+        var j = (wordlsbinv ? (io.i[worddir].n - i - 1) : i);
+        arr.push(io.i[worddir].ai[j]);
+      }
+      this.ram = true;
+    }
+
+
+
+    if(coder) {
+      // encoder, decoder or priority, not a ROM or RAM
+      if(hasspecial) { this.setError('coder doesn\'t support special inputs'); return false; }
+      if(worddir > -1) { this.setError('coder cannot have multiple data input sides'); return false; }
+
+      this.has_outputenable = (outenabledir > -1);
+      this.has_outputenabled = (outenableddir > -1);
+
+      var numout = io.no - (this.has_outputenabled ? 1 : 0);
+      var numin = io.ni - (this.has_outputenable ? 1 : 0);
+
+      if(numout == numin) {
+        this.priority = true;
+      } else if(numout > numin) {
+        this.decoder = true;
       } else {
-        return null;
+        this.encoder = true;
       }
     } else {
-      var numaddr = io.i[addressheading].n;
-      var numout = io.o[outheading].n;
+      // ROM or RAM
 
-      if(numout != wordsize) return null;
 
-      if(numinputsides == 1) {
+
+
+      if(this.ram) {
+        if(!this.has_enable && !this.has_set)  { this.setError('RAM must have set or enable input'); return false; }
+        if(io.i[worddir].n != wordsize) { this.setError('input and output word size must be the same'); return false; }
+      } else {
         // ROM
-        type = 0;
-        if(addressdir != outdir && numaddr == numwords) unary = 1;
-      } else if(numinputsides == 3) {
-        // RAM
-        type = 1;
-        rwheading = ((addressheading + 2) & 3);
-        rwdir = rwheading & 1;
-        datainputheading = ((outheading + 2) & 3);
-        datainputdir = datainputheading & 1;
-        if(io.i[rwheading].n != 1) return null;
-        if(io.i[datainputheading].n != wordsize) return null;
-        if(numaddr == numwords) unary = 1;
-      } else {
-        return null;
+        if(this.has_set) { this.setError('c only supported for RAM'); return false; }
+        if(this.has_reset_all) { this.setError('Q only supported for RAM'); return false; }
       }
-    }
 
-    // Finalize default lsb pos
-    if(unary) addresslsbpos = wordlsbpos;
-    //if(addressdir != outdir) addresslsbpos = wordlsbpos; // OPTION 1: if perpendicular address, make address LSB pos that of the wordlines, which has LSB closest to output
-    //if(addressdir != outdir) wordlsbpos = addresslsbpos; // OPTION 2: if perpendicular address, make wordlines LSB pos match that of the address input rather than closest to outpupt
-    // OPTION 3: Do nothing. All input wires have LSB on the right (when looking in direction of their arrow), and word lines always closest to screen, so it's sometimes on opposite side, oh well
+      this.wordshor = 1 - (outdir & 1);
 
-    // Scan for numbers 0 around that may alter lsb pos
-    // It only changes the binary addresslsbpos or for the encoder/decoder/priority ones. Wordlsbpos is not affected, there have lsb always at output side, it's a graphical thing anyway
-    if(!unary || type == 2 || type == 3 || type == 4) {
-      if (addressdir == 0) {
-        for(var y = y0 - 1; y <= y1; y++) {
-          if(y < 0 || y >= h) continue;
-          if(x0 > 0 && world[y][x0 - 1].metasymbol == '0') addresslsbpos = 0;
-          if(x1 + 1 < w && world[y][x1 + 1].metasymbol == '0') addresslsbpos = 1;
-        }
-      }
-      if (addressdir == 1) {
-        for(var x = x0 - 1; x <= x1; x++) {
-          if(x < 0 || x >= w) continue;
-          if(y0 > 0 && world[y0 - 1][x0].metasymbol == '0') addresslsbpos = 0;
-          if(y1 + 1 < h && world[y1 + 1][x /* + 1*/].metasymbol == '0') addresslsbpos = 1;
-        }
-      }
-    }
 
-    // The arrays have form [heading, dir, num, lsbpos]
-    var result = {'type':type, 'onehot':unary,
-                  'word':[worddir, wordlsbpos],
-                  'address':[addressheading, addressheading & 1, io.i[addressheading].n, addresslsbpos],
-                  'out':[outheading, outdir, io.o[outheading].n, outlsbpos] };
-    if(type == 1) { // RAM
-      result['rwinput'] = [rwheading, rwdir, io.i[rwheading].n, -1];
-      result['datainput'] = [datainputheading, datainputdir, io.i[datainputheading].n, outlsbpos];
-    } else {
-      result['rwinput'] = [-1, -1, 0, -1];
-      result['datainput'] = [-1, -1, 0, -1];
-    }
-    result['lines'] = lines;
-    result['bits'] = bits;
-    return result;
-  };
-
-  /*
-  Sorts as follows:
-  -address inputs from lsb to msb
-  -the read/write input (if it's a RAM or indicator of ROM lsb pos)
-  -data inputs from lsb to msb (if it's a RAM)
-  The given dirs are headings (NESW)
-  */
-  this.sortIO = function(addressdir, datadir, addresslsb) {
-    var x0 = this.x0;
-    var y0 = this.y0;
-    var x1 = this.x1;
-    var y1 = this.y1;
-    var worddir = this.worddir;
-
-    var getDir = function(x, y) {
-      if(y < y0) return 0;
-      if(x >= x1) return 1;
-      if(y >= y1) return 2;
-      if(x < x0) return 3;
-      return -1;
-    };
-
-    //sort master input components from lsb to msb, and if present the "dummy" indicator input last
-    var array = [];
-    for(var i = 0; i < this.master.inputs.length; i++) array[i] = i;
-    var self = this;
-    array = array.sort(function(a, b) {
-      var xa =  self.master.inputs_x[a];
-      var ya =  self.master.inputs_y[a];
-      var xb =  self.master.inputs_x[b];
-      var yb =  self.master.inputs_y[b];
-      var da = getDir(xa, ya);
-      var db = getDir(xb, yb);
-      if(da != db) {
-        if(da == addressdir) return -1;
-        if(db == addressdir) return 1;
-        if(da == datadir) return 1;
-        if(db == datadir) return -1;
-      }
-      var lsbpos = (da == addressdir) ? addresslsb : 0; // 0 for the data inputs, to make it match the outputs (hopefully...)
-      if(((da & 1) == 0) && lsbpos) return xb - xa;
-      if(((da & 1) == 0)) return xa - xb;
-      if(lsbpos) return yb - ya;
-      return ya - yb;
-    });
-    newOrder(this.master.inputs, array);
-    newOrder(this.master.inputs_negated, array);
-    newOrder(this.master.inputs_x, array);
-    newOrder(this.master.inputs_y, array);
-    newOrder(this.master.inputs_x2, array);
-    newOrder(this.master.inputs_y2, array);
-
-    // The '#b' symbols are not used if this is memory where b and B matter, but
-    // is used if this is a non-memory device, where you can use a single b and
-    // multiple #
-    var usefiller = (this.decoder || this.encoder || this.priority);
-
-    var components = [[this.master, this.master_orig_x, this.master_orig_y]];
-    for(var y = y0; y < y1; y++) {
-      for(var x = x0; x < x1; x++) {
-        var c = world[y][x];
-        if(!rommap[c.circuitsymbol] && !(usefiller && c.circuitsymbol == '#b')) continue;
-        if(c.components[0] && c.components[0] != this.master) {
-          components.push([c.components[0], x, y]);
-        }
-      }
-    }
-
-    if(this.decoder || this.encoder || this.priority) {
-      // there may be more bits than outputs in encoder case. Therefor, we need to sort the outputs.
-      var o = {}; //x or y to "has output"
-      for(var i = 0; i < components.length; i++) {
-        o[(this.addressdir == 0) ? components[i][1] : components[i][2]] = true;
-      }
-      var a = []; // array of coordinates of outputs
-      for(var k in o) a.push(k);
-      var self = this;
-      a.sort(function(a, b) {
-        return self.addresslsbpos ? (b - a) : (a - b);
-      });
-      var map = {}; // output coordinate to sort order
-      for(var i = 0; i < a.length; i++) map[a[i]] = i;
-      for(var i = 0; i < components.length; i++) {
-        var component = components[i][0];
-        var x = components[i][1];
-        var y = components[i][2];
-        component.rom_out_pos = (this.addressdir == 0) ? map[x] : map[y];
-      }
-    } else {
-      for(var i = 0; i < components.length; i++) {
-        var component = components[i][0];
-        var x = components[i][1];
-        var y = components[i][2];
-        component.rom_out_pos = this.bits_inv[worddir == 0 ? (y - y0) : (x - x0)];
-      }
-    }
-  };
-
-  // init after inputs are resolved
-  // returns true if ok, false if error (e.g. no rectangle or inputs not all on one side)
-  this.init2 = function() {
-    var x0 = this.x0;
-    var y0 = this.y0;
-    var x1 = this.x1;
-    var y1 = this.y1;
-
-    if(!this.master) return false;
-
-    var io = getIO(x0, y0, x1, y1, this.master);
-    if(!io) return false;
-
-    var dirs = this.getDirs(io);
-    if(!dirs) return false;
-
-    this.addressdir = dirs.address[1];
-    this.addresslsbpos = dirs.address[3];
-    this.worddir = dirs.word[0];
-    this.wordlsbpos = dirs.word[1];
-
-    this.onehot = dirs.onehot;
-    this.ram = (dirs.type == 1);
-    this.decoder = (dirs.type == 2);
-    this.encoder = (dirs.type == 3);
-    this.priority = (dirs.type == 4);
-
-    if(this.decoder || this.priority) {
-      this.array = [];
-    } else {
-      if(this.worddir == 0) {
+      if(outdir & 1) {
         for(var ix = 0; ix < this.lines.length; ix++) {
           var x = this.lines[ix];
-          var ax = (this.wordlsbpos == 0) ? ix : (this.lines.length - ix - 1);
+          var ax = ix;
           this.array[ax] = [];
           for(var iy = 0; iy < this.bits.length; iy++) {
             var y = this.bits[iy];
@@ -2838,7 +3017,7 @@ function ROM() {
       } else {
         for(var iy = 0; iy < this.lines.length; iy++) {
           var y = this.lines[iy];
-          var ay = (this.wordlsbpos == 0) ? iy : (this.lines.length - iy - 1);
+          var ay = iy;
           this.array[ay] = [];
           for(var ix = 0; ix < this.bits.length; ix++) {
             var x = this.bits[ix];
@@ -2847,27 +3026,82 @@ function ROM() {
           }
         }
       }
+
+      if(this.ram) {
+        var addresssize = io.i[addressdir].n;
+        var realsize = addresssize;
+        if(!this.onehot) {
+          if(realsize > 20) realsize = 20; // don't make it too extreme. Max 1M entries. The question is, can javascript even handle that
+          realsize = (1 << realsize);
+        }
+        var oldsize = this.array.length;
+        if(oldsize == 0) { this.setError('invalid oldsize'); return false; }
+        var wordwidth = this.array[0].length;
+        for(var i = oldsize; i < realsize; i++) {
+          this.array[i] = [];
+          for(var j = 0; j < wordwidth; j++) this.array[i][j] = false;
+        }
+      }
     }
 
-    this.output.length = dirs.out[2];
-    this.selected.length = this.lines.length;
 
-    if(this.ram) {
-      var realsize = dirs.address[2];
-      if(!this.onehot) {
-        if(realsize > 20) realsize = 20; // don't make it too extreme. Max 1M memory. The question is, can javascript even handle that
-        realsize = (1 << realsize);
-      }
-      var oldsize = this.array.length;
-      var wordwidth = this.worddir == 0 ? (y1 - y0) : (x1 - x0);
-      for(var i = oldsize; i < realsize; i++) {
-        this.array[i] = [];
-        for(var j = 0; j < wordwidth; j++) this.array[i][j] = false;
+
+    if(!newOrderInputs(this.master, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
+
+    // outputs
+    var rompos = 0;
+    var outa = [];
+
+    var o = io.o[outdir];
+    for(var i = 0; i < o.n; i++) {
+      var j = (outlsbinv ? (o.n - i - 1) : i);
+      var x = o.a[j][0];
+      var y = o.a[j][1];
+      var z = (outdir & 1) ? 0 : 1;
+      outa.push([x, y, z]);
+    }
+    if(outenableddir > -1) {
+      var o = io.o[outenableddir];
+      for(var i = 0; i < o.n; i++) {
+        var x = o.a[i][0];
+        var y = o.a[i][1];
+        var z = (outenableddir & 1) ? 0 : 1;
+        outa.push([x, y, z]);
       }
     }
-    this.num_address_inputs = dirs.address[2];
+    for(var i = 0; i < outa.length; i++) {
+      var x = outa[i][0];
+      var y = outa[i][1];
+      var z = outa[i][2];
+      var c = world[y][x];
+      if(c.components[z]) {
+        c.components[z].rom_out_pos = rompos++;
+      }
+    }
+    this.output.length = outa.length;
 
-    this.sortIO(dirs.address[0], dirs.datainput[0], dirs.address[3]);
+    return true;
+  };
+
+
+  // init after inputs are resolved
+  // returns true if ok, false if error (e.g. no rectangle or inputs not all on one side)
+  this.init2 = function() {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+    var x0s = this.x0s;
+    var y0s = this.y0s;
+    var x1s = this.x1s;
+    var y1s = this.y1s;
+
+    if(!this.master) return false;
+
+    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.master);
+    if(!io) return false;
+
+    if(!this.processIO(io)) return false;
 
     return true;
   };
@@ -3224,12 +3458,7 @@ function Mux() {
       if(lsbpos) return yb - ya;
       return ya - yb;
     });
-    newOrder(this.master.inputs, array);
-    newOrder(this.master.inputs_negated, array);
-    newOrder(this.master.inputs_x, array);
-    newOrder(this.master.inputs_y, array);
-    newOrder(this.master.inputs_x2, array);
-    newOrder(this.master.inputs_y2, array);
+    if(!newOrderInputs(this.master, array)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
 
     // now assign the outputs
 
@@ -3293,7 +3522,7 @@ function Mux() {
 
     if(!this.master) return false;
 
-    var io = getIO(x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, x0, y0, x1, y1, this.master);
     if(!io) { this.setError('getting io error'); return false; }
 
     var dirs = this.getDirs(io);
@@ -4540,12 +4769,7 @@ function Alu() {
       if(lsbdir) return yb - ya;
       return ya - yb;
     });
-    newOrder(this.master.inputs, array);
-    newOrder(this.master.inputs_negated, array);
-    newOrder(this.master.inputs_x, array);
-    newOrder(this.master.inputs_y, array);
-    newOrder(this.master.inputs_x2, array);
-    newOrder(this.master.inputs_y2, array);
+    if(!newOrderInputs(this.master, array)) { throw 'must use *all* inputs for newOrderInputs'; }
 
     // now assign the outputs
 
@@ -4603,7 +4827,7 @@ function Alu() {
 
     if(!this.master) return false;
 
-    var io = getIO(x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, x0, y0, x1, y1, this.master);
     if(!io) { this.setError('getting io error'); return false; }
 
     var dirs = this.getDirs(io);
@@ -4708,6 +4932,11 @@ function VTE() {
   this.y0 = 0;
   this.x1 = 0;
   this.y1 = 0;
+  // The bounding box for the part in which text is displayed
+  this.x0b = 0;
+  this.y0b = 0;
+  this.x1b = 0;
+  this.y1b = 0;
   this.text = null; // not as string but as 2D array of characters
   this.numinputs = 0; // num data inputs
   this.numoutputs = -1; // num data outputs
@@ -4717,6 +4946,14 @@ function VTE() {
   this.prevwrite = false;
   this.prevread = false;
   this.output = [0,0,0,0,0,0,0,0];
+
+  this.has_enable = false;
+  this.has_read = false;
+  this.has_write = false;
+  this.has_up = false;
+  this.has_down = false;
+  this.has_set = false;
+  this.has_reset = false;
 
   /*
   The terminal has the following modes, depending on amount, sizes and locations of input and output groups:
@@ -4734,13 +4971,10 @@ function VTE() {
   this.passthrough = false; // whether it passes through the input (in case of decimal display)
   this.decimalinput = false;
   this.counter = false;
-  this.countersettable = false; // if true, is counter with input bits and a 'set' option to reset it to that value
   this.countervalue = math.n0;
 
 
-  this.previnput = 0;
-  this.previnput2 = 0;
-  this.previnput3 = 0;
+  this.previnput = [];
   this.allowstyping = false;
   this.invisible = false; // if true, is invisible, due to being inside of a chip
   // hidden textarea used to handle typing in better way than pure keyboard events
@@ -4752,8 +4986,8 @@ function VTE() {
   this.errormessage = null;
 
   this.newline = function() {
-    var w = this.x1 - this.x0;
-    var h = this.y1 - this.y0;
+    var w = this.x1b - this.x0b;
+    var h = this.y1b - this.y0b;
     if(this.cursory + 1 < h) {
       this.cursory++;
     } else {
@@ -4767,35 +5001,67 @@ function VTE() {
   // Assumes the component has already updated all inputs according to the UPDATE_ALGORITHM and gotten the input values from it
   // Inputs are MSB to LSB
   this.update = function(inputs) {
-    if(this.counter) {
-      var x = this.x1 - this.x0 - 1;
-      var y = this.y1 - this.y0 - 1;
-      var width = Math.max(this.x1 - this.x0, this.y1 - this.y0);
-      var do_up = false;
-      var do_down = false;
-      var do_set = false;
-      var do_reset = false;
+    var enable = true;
+    var do_read = false;
+    var do_write = false;
+    var do_up = false;
+    var do_down = false;
+    var do_set = false;
+    var do_reset = false;
 
-      if(inputs[this.numinputs + 0] && !this.previnput) {
-        if(this.countersettable && this.numwrite == 1) do_set = true;
-        else do_up = true;
-      }
-      this.previnput = inputs[this.numinputs + 0];
-      if(this.numwrite > 1 && inputs[this.numinputs + 1] && !this.previnput2) {
-        if(this.countersettable) do_set = true;
-        else do_reset = true;
-      }
-      this.previnput2 = inputs[this.numinputs + 1];
-      if(this.numwrite > 2 && inputs[this.numinputs + 2] && !this.previnput3) {
-        do_down = true;
-      }
-      this.previnput3 = inputs[this.numinputs + 2];
+    var pos = 0;
+
+    if(this.has_enable) {
+      if(!inputs[pos]) enable = false;
+      pos++;
+    }
+
+    if(this.has_read) {
+      if(enable && inputs[pos] && !this.previnput[pos]) do_read = true;
+      this.previnput[pos] = inputs[pos];
+      pos++;
+    }
+
+    if(this.has_write) {
+      if(enable && inputs[pos] && !this.previnput[pos]) do_write = true;
+      this.previnput[pos] = inputs[pos];
+      pos++;
+    }
+
+    if(this.has_up) {
+      if(enable && inputs[pos] && !this.previnput[pos]) do_up = true;
+      this.previnput[pos] = inputs[pos];
+      pos++;
+    }
+
+    if(this.has_down) {
+      if(enable && inputs[pos] && !this.previnput[pos]) do_down = true;
+      this.previnput[pos] = inputs[pos];
+      pos++;
+    }
+
+    if(this.has_set) {
+      if(enable && inputs[pos] && !this.previnput[pos]) do_set = true;
+      this.previnput[pos] = inputs[pos];
+      pos++;
+    }
+
+    if(this.has_reset) {
+      if(inputs[pos]) do_reset = true; // reset is asynch and ignores enable
+      pos++;
+    }
+
+    if(this.counter) {
+      var x = this.x1b - this.x0b - 1;
+      var y = this.y1b - this.y0b - 1;
+      var width = Math.max(this.x1b - this.x0b, this.y1b - this.y0b);
 
       if(do_set) {
         var index = math.n0;
         var mul = math.n1;
         for(var i = 0; i < this.numinputs; i++) {
-          var ip = math.supportbigint ? BigInt(inputs[i]) : inputs[i];
+          var j = pos + i;
+          var ip = math.supportbigint ? BigInt(inputs[j]) : inputs[j];
           index += ip * mul;
           mul *= math.n2;
         }
@@ -4819,12 +5085,14 @@ function VTE() {
       var index = this.countervalue;
       var s = '' + index;
       for(var i = 0; i < width; i++) {
+        //if(x >= this.x1b - this.x0b) { x = 0; y++; }
+        if(x < 0) { x = this.x1b - this.x0b - 1; y--; }
+        if(x < 0) break;
+        if(y < 0) break;
         var c = (i < s.length) ? s[s.length - i - 1] : '';
+        if(!this.text) break;
         this.text[y][x] = c;
         x--;
-        //if(x >= this.x1 - this.x0) { x = 0; y++; }
-        if(x < 0) { x = this.x1 - 1; y--; }
-        if(y < 0) break;
       }
       var mul = math.n1;
       for(var i = 0; i < this.numoutputs; i++) {
@@ -4837,12 +5105,13 @@ function VTE() {
       var index = math.n0;
       var mul = math.n1;
       for(var i = 0; i < this.numinputs; i++) {
-        var ip = math.supportbigint ? BigInt(inputs[i]) : inputs[i];
+        var j = i + pos;
+        var ip = math.supportbigint ? BigInt(inputs[j]) : inputs[j];
         index += ip * mul;
         mul *= math.n2;
       }
-      var x = this.x1 - this.x0 - 1;
-      var y = this.y1 - this.y0 - 1;
+      var x = this.x1b - this.x0b - 1;
+      var y = this.y1b - this.y0b - 1;
       if(this.signeddisplay) {
         var max = math.n1 << math.B(this.numinputs);
         var half = math.n1 << (math.B(this.numinputs) - math.n1);
@@ -4850,12 +5119,14 @@ function VTE() {
       }
       var s = '' + index;
       for(var i = 0; i < this.numinputs; i++) {
+        //if(x >= this.x1b - this.x0b) { x = 0; y++; }
+        if(x < 0) { x = this.x1b - this.x0b - 1; y--; }
+        if(x < 0) break;
+        if(y < 0) break;
         var c = (i < s.length) ? s[s.length - i - 1] : '';
+        if(!this.text) break;
         this.text[y][x] = c;
         x--;
-        //if(x >= this.x1 - this.x0) { x = 0; y++; }
-        if(x < 0) { x = this.x1 - this.x0 - 1; y--; }
-        if(y < 0) break;
       }
       if(this.passthrough) {
         for(var i = 0; i < this.numoutputs; i++) {
@@ -4872,7 +5143,7 @@ function VTE() {
         var c = this.text[y][x];
         s += c;
         x++;
-        if(x >= this.x1 - this.x0) { x = math.n0; y++; }
+        if(x >= this.x1b - this.x0b) { x = math.n0; y++; }
       }
       s = s.trim();
 
@@ -4936,15 +5207,11 @@ function VTE() {
 
     var index = 0;
     var mul = 1;
-    var write = this.numinputs > 0 ? inputs[this.numinputs] : false;
-    var read =  this.numinputs > 0 ? inputs[this.numinputs + 1] : inputs[0];
-    var prevwrite = this.prevwrite;
-    var prevread = this.prevread;
-    this.prevwrite = write;
-    this.prevread = read;
-    if(write && !prevwrite) {
+
+    if(do_read) {
       for(var i = 0; i < this.numinputs; i++) {
-        index += inputs[i] * mul;
+        var j = pos + i;
+        index += inputs[j] * mul;
         mul *= 2;
       }
       //console.log('vte update: ' + index);
@@ -4953,26 +5220,26 @@ function VTE() {
         return;
       }
       if(index < 32 || index > 126) index = 63;
-      if(this.cursorx >= this.x1 - this.x0) this.newline();
+      if(this.cursorx >= this.x1b - this.x0b) this.newline();
       this.text[this.cursory][this.cursorx] = String.fromCharCode(index);
       this.cursorx++;
     }
 
-    this.output[this.numoutputs] = (this.keybuffer.length == 0); // eof
+    this.output[0] = (this.keybuffer.length == 0); // eof
 
-    if(read && !prevread && this.keybuffer.length > 0) {
+    if(do_write && this.keybuffer.length > 0) {
       if(this.keybuffer.length > 0) index = this.keybuffer.shift(); // use as queue
 
       var mul = 1;
       for(var i = 0; i < this.numoutputs; i++) {
-        this.output[i] = ((index & mul) ? 1 : 0);
+        this.output[i + 1] = ((index & mul) ? 1 : 0);
         mul *= 2;
       }
     }
   };
 
   this.addChar = function(c) {
-    if(this.cursorx >= this.x1 - this.x0) this.newline();
+    if(this.cursorx >= this.x1b - this.x0b) this.newline();
     this.text[this.cursory][this.cursorx] = c;
     this.cursorx++;
   };
@@ -4994,7 +5261,7 @@ function VTE() {
     this.cursorx--;
     if(this.cursorx < 0) {
       if(this.cursory > 0) {
-        this.cursorx = this.x1 - this.x0 - 0;
+        this.cursorx = this.x1b - this.x0b - 0;
         this.cursory--;
       } else {
         this.cursorx = 0;
@@ -5006,7 +5273,7 @@ function VTE() {
 
 
   this.supportsTyping = function() {
-    return this.numoutputs > 0 && !this.passthrough;
+    return this.numoutputs > 0 && !this.passthrough && !this.counter && !this.decimaldisplay;
   };
 
   // To be done by the renderer
@@ -5103,332 +5370,234 @@ function VTE() {
   // init before inputs are resolved
   // returns true if ok, false if error
   this.init1 = function(array) {
-    largeComponentBB(array, false, this);
+    largeComponentBB(array, true, this);
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
     var y1 = this.y1;
 
     this.master = null; // the master component for this VTE
-    for(var y = y0; y < y1; y++) {
-      for(var x = x0; x < x1; x++) {
-        var c = world[y][x];
-        if(c.circuitsymbol != 'T' && c.circuitsymbol != '#T') { this.setError('invalid char'); return false; }
-        if(c.components[0]) {
-          this.master = c.components[0];
-          this.master_orig_x = x;
-          this.master_orig_y = y;
-          break;
-        }
+
+    for(var i = 0; i < array.length; i++) {
+      var x = array[i][0];
+      var y = array[i][1];
+      var c = world[y][x];
+      var component = c.components[0] || c.components[1];
+      if(component) {
+        this.master = component;
+        this.master_orig_x = x;
+        this.master_orig_y = y;
+        break;
       }
-      if(this.master) break;
     }
+
     if(!this.master) { this.setError('no master found'); return false; }
-    for(var y = y0; y < y1; y++) {
-      for(var x = x0; x < x1; x++) {
-        var c = world[y][x];
 
-        if(c.number == 1) this.signeddisplay = true;
-
-        if(!c.components[0]) {
-          c.components[0] = this.master;
-        } else {
-          if(c.components[0] == this.master) continue;
-          c.components[0].master = this.master;
-          //c.components[0].type = TYPE_VTE;
-        }
-      }
+    for(var i = 0; i < array.length; i++) {
+      var x = array[i][0];
+      var y = array[i][1];
+      var c = world[y][x];
+      if(c.number == 1) this.signeddisplay = true;
+      if(c.components[0]) c.components[0].master = this.master;
+      if(c.components[1]) c.components[1].master = this.master;
+      if(!c.components[0] && !c.components[1]) c.components[0] = this.master;
     }
     this.master.vte = this;
     return true;
   };
 
   this.processIO = function(io) {
-    // TODO: work in progress
-  };
-
-
-  /*
-  given the array returned by getIO,
-  returns object of {
-    input [heading, dir, [iv], num, lsbpos]: input side
-    write [heading, dir, [iv], num, lsbpos]: read/write input, also indicates LSB pos
-    output [heading, dir, [iv], num, lsbpos]: output side
-    read [heading, dir, [iv], num, lsbpos]: read side: the side with eof and keyboard read
-  }
-  with
-  heading: wind direction of side with this inputs/outputs (NESW), or -1 if not present
-  dir: heading & 1: 0=horizontal, 1=vertical
-  i0: begin coordinate (x or y depends on dir)
-  i1: end coordinate
-  num: i1 - i0
-  lsbpos: is lsbpos for this left or right (not relevant for everything)
-  }
-  returns null on error.
-  */
-  this.getDirs = function(io) {
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
     var y1 = this.y1;
 
-    var outheading = -1;
+    if(io.oy.n) { this.setError('y output not supported for this component'); return false; }
+    if(io.oC.n) { this.setError('C output not supported for this component'); return false; }
+    if(io.oq.n) { this.setError('q output not supported for this component'); return false; }
+    if(io.oQ.n) { this.setError('Q output not supported for this component'); return false; }
+
+    // NOTE: normally c is used for the main clock signal, and q and Q only for special types of set/reset. But for the VTE, c is required to uniquely distinguish the counter.
+    // therefore, screen and keyboard use q and Q instead of c and C.
+
     var outdir = -1;
-    var inheading = -1;
+    var outanydir = -1;
     var indir = -1;
-    var writeheading = -1; // the write control side has either 1 input bit (trigger write to screen) or multiple (for e.g. counters with multiple controls like up/reset/down)
-    var writedir = -1;
-    var numwrite = 0;
-    var readheading = -1; // the read control side has exactly 1 input bit (trigger read from keyboard) and 1 output bit (EOF)
-    var readdir = -1;
-    // NOTE: by default, LSB pos is always on the right side when looking in the direction of the input/output arrows
-    var ilsbpos = -1; // 0: left or top, 1: right or bottom.
-    var olsbpos = -1;
 
-    // find IO direction. This is either identified by an output side with
-    // more than 1 bits, or if there are no output sides, an input side with
-    // more than 1 bits (in case of such output side, there exist configurations
-    // with multiple >1 bit input sides, so then only the output side identifies
-    // it). There can be both input and output IO, and then they will always be
-    // opposing sides. The remaining two sides can have misc/control bits.
-
-    // find IO direction through output.
+    var numinputsides = 0;
+    var numoutputsides = 0;
+    this.numoutputs = 0;
+    this.numinputs = 0;
     for(var i = 0; i < 4; i++) {
-      if(io.o[i].n > 1) {
-        if(outheading != -1) { this.setError('too many output sides'); return null; }
-        if(io.i[i].n > 0) { this.setError('input mixed with output side'); return null; }
-        outheading = i;
-        outdir = (i & 1);
-        olsbpos = (i == 0 || i == 1) ? 1 : 0;
+      if(io.o[i].n > 0) {
+        numoutputsides++;
+        this.numoutputs += io.o[i].n;
+        outdir = i;
+        outanydir = i;
+      }
+      if(io.i[i].n > 0) {
+        numinputsides++;
+        this.numinputs += io.i[i].n;
       }
     }
 
-    // find IO direction in heading
-    for(var i = 0; i < 4; i++) {
-      if(outheading != -1 && i != ((outheading + 2) & 3)) continue; // if there is already an outheading, the inheading must be the opposite
-      if(io.i[i].n > 1) {
-        if(inheading != -1) { this.setError('too many input sides'); return null; }
-        if(io.o[i].n > 0) { this.setError('output mixed with input side'); return null; }
-        inheading = i;
-        indir = (i & 1);
-        ilsbpos = (i == 3 || i == 2) ? 1 : 0;
+    var has_eof = false;
+    if(io.oc.n > 1) { this.setError('too many EOF (c) outputs'); return false; }
+    if(io.oc.n == 1) has_eof = true;
+
+    var arr = [];
+
+    if((io.ic.n && !has_eof) || io.iq.n || io.iQ.n) {
+      // counter/memory of any form. This is if it has any c without output-c (EOF, that would indicate keyboard instead), or any q or Q
+      this.counter = true;
+
+      if(has_eof) { this.setError('has EOF output (c) but either a q or Q input, or no c input, EOF can only be used for keyboard which must also have a c input and optional C for screen'); return false; }
+
+      if(io.nis > 1) { this.setError('too many input sides'); return false; }
+      if(io.nos > 1) { this.setError('too many output sides'); return false; }
+
+      if(io.iy.n) {
+        if(io.iy.n > 1) { this.setError('too many y inputs'); return false; }
+        this.has_enable = true;
+        arr.push(io.iy.ai[0]);
       }
-    }
 
-    // If no multibit input nor output, then special case of single 1-bit input
-    if(inheading == -1 && outheading == -1) {
-      for(var i = 0; i < 4; i++) {
-        if(io.i[i].n >= 1) {
-          if(inheading != -1) { this.setError('too many input sides'); return null; }
-          if(io.o[i].n > 0) { this.setError('output mixed with input side'); return null; }
-          inheading = i;
-          indir = (i & 1);
-          ilsbpos = (i == 3 || i == 2) ? 1 : 0;
-        }
+      if(io.ic.n) {
+        if(io.ic.n > 1) { this.setError('too many c inputs'); return false; }
+        this.has_up = true;
+        arr.push(io.ic.ai[0]);
       }
-    }
 
-    if(inheading == -1 && outheading == -1) { this.setError('no input or output side found'); return null; }
+      if(io.iC.n) {
+        if(io.iC.n > 1) { this.setError('too many C inputs'); return false; }
+        this.has_down = true;
+        arr.push(io.iC.ai[0]);
+      }
 
+      if(io.iq.n) {
+        if(io.iq.n > 1) { this.setError('too many q inputs'); return false; }
+        this.has_set = true;
+        arr.push(io.iq.ai[0]);
+      }
 
-    var iodir = (outheading == -1) ? (inheading & 1) : (outheading & 1);
+      if(io.iQ.n) {
+        if(io.iQ.n > 1) { this.setError('too many Q inputs'); return false; }
+        this.has_reset = true;
+        arr.push(io.iQ.ai[0]);
+      }
+    } else if(io.ic.n || io.iC.n) {
+      // keyboard and/or screen (actual VTE)
+      if(io.iy.n) {
+        if(io.iy.n > 1) { this.setError('too many y inputs'); return false; }
+        this.has_enable = true;
+        arr.push(io.iy.ai[0]);
+      }
 
-    // find misc/control sides
-    for(var i = 0; i < 4; i++) {
-      if((i & 1) == iodir) continue; // the input/output sides can't have control/misc bits
-      if(io.i[i].n == 0 && io.o[i].n == 0) {
-        // nothing, that is ok
-      } else if(io.i[i].n >= 1 && io.o[i].n == 0) {
-        if(writeheading != -1) { this.setError('too many write control sides'); return null; };
-        writeheading = i;
-        writedir = (i & 1);
-        numwrite = io.i[i].n;
-        //ilsbpos = (i == 1 || i == 2) ? 1 : 0;
-      } else  if(io.i[i].n == 1 && io.o[i].n == 1) {
-        if(readheading != -1) { this.setError('too many read control sides'); return null; };
-        // TODO: if the read output is on a side, that is, a cell that could also already be a bit output, return error too. Only 1 distinct output can be connected per cell.
-        readheading = i;
-        readdir = (i & 1);
-        //olsbpos = (i == 1 || i == 2) ? 0 : 1; // here, MSB is at the indicator. So that it matches the input order which has indicator on the other side
+      if(io.iC.n) {
+        if(io.iC.n > 1) { this.setError('too many C inputs'); return false; }
+        this.has_read = true;
+        arr.push(io.iC.ai[0]);
+
+        if(numinputsides == 0) { this.setError('screen must have input side'); return false; }
+        if(numinputsides != 1) { this.setError('too many input sides for screen'); return false; }
       } else {
-        { this.setError('unknown input/output side combination for VTE'); return null; }
+        if(numinputsides != 0) { this.setError('pure keyboard cannot have input side'); return false; }
       }
-    }
 
-    if(readheading == -1 && writeheading == -1 && outheading == -1 && inheading != -1) {
-      // pure decimal display
-      this.decimaldisplay = true;
-    } else if(readheading == -1 && writeheading == -1 && outheading != -1 && inheading != -1) {
-      // decimal display with passthrough
-      this.decimaldisplay = true;
-      this.passthrough = true;
-    } else if(readheading == -1 && writeheading == -1 && outheading != -1 && inheading == -1) {
-      // decimal keyboard
-      this.decimalinput = true;
-    } else if(outheading != -1 && inheading == -1 && readheading == -1 && writeheading != -1) {
-      // counter without input bits (not settable)
-      if(numwrite > 3) { this.setError('too many control bits for counter'); return null; }
-      this.decimaldisplay = true;
-      this.counter = true;
-      this.cursorx = this.cursory = -1;
-    } else if(outheading != -1 && inheading != -1 && readheading == -1 && writeheading != -1) {
-      // counter with input bits (settable)
-      if(numwrite > 3) { this.setError('too many control bits for counter'); return null; }
-      this.decimaldisplay = true;
-      this.counter = true;
-      this.countersettable = true;
-      this.cursorx = this.cursory = -1;
-      ilsbpos = (inheading == 1 || inheading == 2) ? 1 : 0;
-    } else if(outheading != -1 && readheading != -1 && inheading == -1 && writeheading == -1) {
-      // this means it's an ascii keyboard
-    } else if(outheading == -1 && readheading == -1 && inheading != -1 && writeheading != -1) {
-      // this means it's an ascii screen
-      if(numwrite > 1) { this.setError('too many write control bits for ascii screen'); return null; }
-    } else if(outheading != -1 && readheading != -1 && inheading != -1 && writeheading != -1) {
-      // this means it's an ascii screen+keyboard combination
-      if(numwrite > 1) { this.setError('too many write control bits for ascii screen'); return null; }
+      if(io.ic.n) {
+        if(io.ic.n > 1) { this.setError('too many c inputs'); return false; }
+        this.has_write = true;
+        arr.push(io.ic.ai[0]);
+        if(numoutputsides != 1) { this.setError('keyboard must have output side'); return false; }
+        if(!has_eof) { this.setError('keyboard must have EOF flag output'); return false; }
+      } else {
+        if(numoutputsides != 0) { this.setError('pure screen cannot have output side'); return false; }
+        if(has_eof) { this.setError('not keyboard (no Q input), so cannot have EOF output (Q)'); return false; }
+      }
     } else {
-      this.setError('unknown input/output side combination for terminal, cannot determine if keyboard, screen, counter, ...');
-      return null;
+      // decimal display, decimal input or decimal passthrough
+
+      if(io.nis > 1) { this.setError('too many input sides'); return false; }
+      if(io.nos > 1) { this.setError('too many output sides'); return false; }
+
+      if(io.nis) {
+        this.decimaldisplay = true;
+      }
+      if(io.nos) {
+        this.decimalinput = true;
+      }
+      if(this.decimaldisplay && this.decimalinput) {
+        this.decimalinput = false;
+        this.passthrough = true;
+      }
+
     }
 
-    var ainput = [];
-    if(inheading >= 0) for(var i = 0; i < io.i[inheading].a.length; i++) ainput[i] = io.i[inheading].a[i][3];
-    var aoutput = [];
-    if(outheading >= 0) for(var i = 0; i < io.o[outheading].a.length; i++) aoutput[i] = io.o[outheading].a[i][3];
+    this.numinputs = 0;
+    for(var i = 0; i < 4; i++) {
+      for(var j = 0; j < io.i[i].ai.length; j++) {
+        arr.push(io.i[i].ai[j]);
+        this.numinputs++;
+      }
+    }
 
-    var rinput = (inheading == -1) ? [-1, -1, [], 0, -1] :
-        [inheading, inheading & 1, ainput, io.i[inheading].n, ilsbpos];
-    var rwrite = (writeheading == -1) ? [-1, -1, [], 0, -1] :
-        [writeheading, writedir, [], numwrite, ilsbpos];
-    var routput = (outheading == -1) ? [-1, -1, [], 0, -1] :
-        [outheading, outdir, aoutput, io.o[outheading].n, olsbpos];
-    var rread = (outheading == -1) ? [-1, -1, [], 0, -1] :
-        [readheading, readdir, [], -1, olsbpos];
+    if(!newOrderInputs(this.master, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
 
-    var result = {'input':rinput, 'write':rwrite, 'output':routput, 'read':rread };
-    return result;
+    var rompos = 0;
+    var outa = [];
+    if(has_eof) {
+      var o = io.oc.a[0];
+      outa.push([o[0], o[1], 0]);
+    }
+    if(outdir >= 0) {
+      var o = io.o[outdir];
+      for(var i = 0; i < o.n; i++) {
+        var x = o.a[i][0];
+        var y = o.a[i][1];
+        var z = (outdir & 1) ? 0 : 1;
+        outa.push([x, y, z]);
+      }
+    }
+    for(var i = 0; i < outa.length; i++) {
+      var x = outa[i][0];
+      var y = outa[i][1];
+      var z = outa[i][2];
+      var c = world[y][x];
+      // TODO: investigate: is the "!= this.master" check needed? The ROM does it. But in the case here, it prevents outputting the "EOF" signal if it happens to be connected to the cell that happens to be the core cell!
+      if(c.components[z] /*&& c.components[z] != this.master*/) {
+        var component = c.components[z];
+        component.rom_out_pos = rompos++;
+      }
+    }
+
+    return true;
   };
 
-  /*
-  Sorts inputs and outputs, as follows:
-  -from lsb to msb
-  -for inputs, the write input comes after that
-  TODO: the above statement might be incorrect, possibly msb and lsb are swapped. Also, other large components usually sort in order of control input bits first, then inputs from LSB to MSB. Change to that. Requires also changing how the update function reads the inputs.
-  dirs is as returned by getDirs: {
-    input [heading, dir, [iv], num, lsbpos]: input side
-    write [heading, dir, [iv], num, lsbpos]: read/write input, also indicates LSB pos
-    output [heading, dir, [iv], num, lsbpos]: output side
-    read [heading, dir, [iv], num, lsbpos]: read side: the side with eof and keyboard read
-  }
-  */
-  this.sortIO = function(dirs) {
-    var x0 = this.x0;
-    var y0 = this.y0;
-    var x1 = this.x1;
-    var y1 = this.y1;
-
-    var inputheading = dirs.input[0];
-    var outputheading = dirs.output[0];
-    var outputdir = dirs.output[1];
-    var writeheading = dirs.write[0];
-    var ilsbpos = dirs.input[4];
-    var olsbpos = dirs.output[4];
-    var readheading = dirs.read[0];
-
-    var getDir = function(x, y) {
-      if(y < y0) return 0;
-      if(x >= x1) return 1;
-      if(y >= y1) return 2;
-      if(x < x0) return 3;
-      return -1;
-    };
-
-    // corners touch two sides. So returns false for any of those for corners.
-    var sideIsNot = function(x, y, d) {
-      if(y <= y0 && d == 0) return false;
-      if(x >= x1 - 1 && d == 1) return false;
-      if(y >= y1 - 1 && d == 2) return false;
-      if(x <= x0 && d == 3) return false;
-      return true;
-    };
-
-    //sort master input components from lsb to msb, then the write input
-    var array = [];
-    for(var i = 0; i < this.master.inputs.length; i++) array[i] = i;
-    var self = this;
-    array = array.sort(function(a, b) {
-      var xa =  self.master.inputs_x[a];
-      var ya =  self.master.inputs_y[a];
-      var xb =  self.master.inputs_x[b];
-      var yb =  self.master.inputs_y[b];
-      var da = getDir(xa, ya);
-      var db = getDir(xb, yb);
-      if(da != db) {
-        // order is: inputs, write, read
-        if(da == inputheading) return -1;
-        if(db == inputheading) return 1;
-        if(da == writeheading) return -1;
-        if(db == writeheading) return 1;
-      }
-      if(da != inputheading && db != inputheading && da == db) {
-        return 0;
-      }
-      if(((da & 1) == 0) && ilsbpos) return xb - xa;
-      if(((da & 1) == 0)) return xa - xb;
-      if(ilsbpos) return yb - ya;
-      return ya - yb;
-    });
-    newOrder(this.master.inputs, array);
-    newOrder(this.master.inputs_negated, array);
-    newOrder(this.master.inputs_x, array);
-    newOrder(this.master.inputs_y, array);
-    newOrder(this.master.inputs_x2, array);
-    newOrder(this.master.inputs_y2, array);
-
-    // also handle outputs
-
-    var output_inv = {};
-    for(var i = 0; i < dirs.output[2].length; i++) {
-      output_inv[dirs.output[2][i]] = i;
-    }
-
-    // TODO: is this creating much more output components than needed? Should be only one row plus 1 eof, not a whole 2D rectangle. And same TODO for ROM!
-    var components = [[this.master, this.master_orig_x, this.master_orig_y]];
-    for(var y = y0; y < y1; y++) {
-      for(var x = x0; x < x1; x++) {
-        var c = world[y][x];
-        // TODO: investigate: is the "!= this.master" check needed? The ROM does it. But in the case here, it prevents outputting the "EOF" signal if it happens to be connected to the cell that happens to be the core cell!
-        if(c.components[0] /*&& c.components[0] != this.master*/) {
-          var component = c.components[0];
-          var lsbpos = (outputheading == 0 || outputheading == 1) ? olsbpos : !olsbpos;
-          if(sideIsNot(x, y, outputheading)) component.rom_out_pos = this.numoutputs;
-          //else if(olsbpos) component.rom_out_pos = ((outputdir == 1) ? (dirs.output[3] - y - 1) : (dirs.output[3] - x - 1));
-          else if(lsbpos) component.rom_out_pos = ((outputdir == 1) ? (output_inv[y]) : (output_inv[x]));
-          else component.rom_out_pos = this.numoutputs - 1 - ((outputdir == 1) ? (output_inv[y]) : (output_inv[x]));
-        }
-      }
-    }
-  };
 
   this.init2 = function() {
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
     var y1 = this.y1;
+    var x0s = this.x0s;
+    var y0s = this.y0s;
+    var x1s = this.x1s;
+    var y1s = this.y1s;
 
     if(!this.master) { this.setError('no master present'); return false; }
 
-    var io = getIO(x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.master);
     if(!io) { this.setError('getting io failed'); return false; }
 
-    var dirs = this.getDirs(io);
+    /*var dirs = this.getDirs(io);
     if(!dirs) { this.setError('getting dirs failed'); return false; }
 
     this.numinputs = dirs.input[3];
     this.numoutputs = dirs.output[3];
     this.numwrite = dirs.write[3];
-    this.sortIO(dirs);
+    this.sortIO(dirs);*/
+
+    if(!this.processIO(io)) { this.setError('processIO failed'); return false; }
 
     this.allowstyping = true;
     if(this.decimaldisplay || this.numoutputs == 0) this.allowstyping = false;
@@ -5458,18 +5627,26 @@ function DotMatrix() {
   this.y0 = 0;
   this.x1 = 0;
   this.y1 = 0;
+  // the bounding box for the lit up rectangle
+  this.x0b = 0;
+  this.y0b = 0;
+  this.x1b = 0;
+  this.y1b = 0;
   this.text = null; // not as string but as 2D array of characters
   this.w = -1;
   this.h = -1;
   this.numx = -1;
   this.numy = -1;
   this.numc = -1; // num bits to control color
-  this.nummisc = -1; // set and fill bit (for RGB led, should be 0, for oscilloscope, should be 1, for dotmatrix, should be 2)
+  this.has_enable = false;
+  this.has_dot = false;
+  this.has_fill = false;
+  this.has_clear = false;
 
-  this.direct = false; // if true, the x/y addresses are direct, not binary addresses, and multiple dots could be set at the same time
+  // TODO: make this separate for x and y direction
+  this.matrix = false; // matrix addressing: if true, the x/y addresses are direct, not binary addresses, and multiple dots could be set at the same time
 
-  this.prevdot = false;
-  this.prevfill = false;
+  this.previnput = [];
   this.prevcolor = -1;
 
   this.error = false;
@@ -5482,6 +5659,7 @@ function DotMatrix() {
 
   this.master = null;
 
+
   this.rgbled = false; // if true, is not a dot matrix screen but a single RGB led with up to 3 inputs
 
   this.setError = function(text) {
@@ -5491,51 +5669,61 @@ function DotMatrix() {
 
   this.update = function(inputs) {
     if(this.error) return;
-    var led = this.rgbled;
     var oscilloscope = (this.numc == 0);
     var index = 0;
-    var mul = 1;
-    var dot = !led && inputs[0]; // place a single pixel
-    var fill = this.nummisc >= 2 && (led || inputs[1]); // fill all pixels
-    var color = 0;
     var c0 = this.nummisc;
 
-    // Choose from palette depending on amount of color input wires.
-    if(this.numc == 0) {
-      // oscilloscope
-      color = 34;
-    } else if(this.numc == 1) {
-      color = 0 + inputs[c0];
-    } else if(this.numc == 2) {
-      var value = inputs[c0] + 2 * inputs[c0 + 1];
-      color = 2 + value;
-    } else if(this.numc == 3) {
-      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2];
-      color = 6 + value;
-    } else if(this.numc == 4) {
-      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3];
-      color = 14 + value;
-    } else if(this.numc == 5) {
-      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3] + 16 * inputs[c0 + 4];
-      if(value >= 27) value = 0;
-      color = 35 + value;
-    } else if(this.numc == 6) {
-      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3] + 16 * inputs[c0 + 4] + 32 * inputs[c0 + 5];
-      color = 62 + value;
-    } else if(this.numc == 7) {
-      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3] + 16 * inputs[c0 + 4] + 32 * inputs[c0 + 5] + 64 * inputs[c0 + 6];
-      if(value >= 125) value = 0;
-      color = 126 + value;
-    } else if(this.numc == 8) {
-      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3] + 16 * inputs[c0 + 4] + 32 * inputs[c0 + 5] + 64 * inputs[c0 + 6] + 128 * inputs[c0 + 7];
-      if(value >= 216) value = 0;
-      color = 251 + value;
-    } else if(this.numc == 9) {
-      var value = inputs[c0] + 2 * inputs[c0 + 1] + 4 * inputs[c0 + 2] + 8 * inputs[c0 + 3] + 16 * inputs[c0 + 4] + 32 * inputs[c0 + 5] + 64 * inputs[c0 + 6] + 128 * inputs[c0 + 7] + 256 * inputs[c0 + 8];
-      color = 467 + value;
+    var enable = true;
+    var do_dot = false;
+    var do_fill = false;
+    var do_clear = false;
+
+    var pos = 0;
+
+    if(this.has_enable) {
+      if(!inputs[pos]) enable = false;
+      pos++;
     }
 
-    if(led) {
+    if(this.has_dot) {
+      if(enable && inputs[pos] && !this.previnput[pos]) do_dot = true;
+      this.previnput[pos] = inputs[pos];
+      pos++;
+    }
+
+    if(this.has_fill) {
+      if(enable && inputs[pos] && !this.previnput[pos]) do_fill = true;
+      this.previnput[pos] = inputs[pos];
+      pos++;
+    }
+
+    if(this.has_clear) {
+      if(enable && inputs[pos] && !this.previnput[pos]) do_clear = true;
+      this.previnput[pos] = inputs[pos];
+      pos++;
+    }
+
+    var color = 0;
+    for(var i = 0; i < this.numc; i++) {
+      color += (inputs[pos + i] << i);
+    }
+    pos += this.numc;
+
+    // the first color of the palette, the clear color. differnt numc gives different palette
+    var color0 = 0;
+    if(this.numc == 0) color0 = 34;
+    else if(this.numc == 1) color0 = 0;
+    else if(this.numc == 2) color0 = 2;
+    else if(this.numc == 3) color0 = 6;
+    else if(this.numc == 4) color0 = 14;
+    else if(this.numc == 5) color0 = 35;
+    else if(this.numc == 6) color0 = 62;
+    else if(this.numc == 7) color0 = 126;
+    else if(this.numc == 8) color0 = 251;
+    else if(this.numc == 9) color0 = 467;
+    color += color0;
+
+    if(this.rgbled) {
       var prevcolor = this.prevcolor;
       this.prevcolor = color;
 
@@ -5547,13 +5735,10 @@ function DotMatrix() {
         }
       }
     } else if(oscilloscope) {
-      var prevdot = this.prevdot;
-      this.prevdot = dot;
-      var prevfill = this.prevfill;
-      this.prevfill = fill;
-
-      if(!prevfill && fill) {
-        // clear
+      if(do_clear || do_fill) {
+        // fill also clears: the oscilloscope concept only supports some max amount of dots lit at the same time.
+        // note that in fact an oscilloscope wouldn't support clear either, dots stay lit for a while due to the phosphor,
+        // but here it's supported anyway
         for(var y = 0; y < this.h; y++) {
           for(var x = 0; x < this.w; x++) {
             this.array[y][x] = 0;
@@ -5561,16 +5746,14 @@ function DotMatrix() {
           }
         }
         for(var i = 0; i < this.oarray.length; i++) this.oarray[i] = -1;
-      } else if(!prevdot && dot) {
+      } else if(do_dot) {
         var x = 0;
         for(var i = 0; i < this.numx; i++) {
-          var v = inputs[this.nummisc + this.numc + i];
-          x += (v << i);
+          x += (inputs[pos + i] << i);
         }
         var y = 0;
         for(var i = 0; i < this.numy; i++) {
-          var v = inputs[this.nummisc + this.numc + this.numx + i];
-          y += (v << i);
+          y += (inputs[pos + this.numx + i] << i);
         }
 
         var op, ox, oy;
@@ -5595,43 +5778,45 @@ function DotMatrix() {
         oy = this.oarray[op][1];
         if(ox >= 0 && oy >= 0 && oy < this.h && ox < this.w && this.oarray2[oy][ox] == op) this.array[oy][ox] = 30;
 
-        this.oarray[this.opointer] = [x, y];
-        this.oarray2[y][x] = this.opointer;
-        this.opointer = (this.opointer + 1) % this.oarray.length;
-
-        if(y < this.h && x < this.w) this.array[y][x] = color;
+        if(y < this.h && x < this.w) {
+          this.array[y][x] = color;
+          this.oarray[this.opointer] = [x, y];
+          this.oarray2[y][x] = this.opointer;
+          this.opointer = (this.opointer + 1) % this.oarray.length;
+        }
       }
     } else {
-      // for direct
+      // for matrix addressing
       var xarray = [];
       var yarray = [];
 
-      var prevdot = this.prevdot;
-      this.prevdot = dot;
-      var prevfill = this.prevfill;
-      this.prevfill = fill;
-
-      if(!prevfill && fill) {
+      if(do_clear) {
+        for(var y = 0; y < this.h; y++) {
+          for(var x = 0; x < this.w; x++) {
+            this.array[y][x] = color0;
+          }
+        }
+      } else if(do_fill) {
         for(var y = 0; y < this.h; y++) {
           for(var x = 0; x < this.w; x++) {
             this.array[y][x] = color;
           }
         }
-      } else if(!prevdot && dot) {
+      } else if(do_dot) {
         var x = 0;
         for(var i = 0; i < this.numx; i++) {
-          var v = inputs[this.nummisc + this.numc + i];
+          var v = inputs[pos + i];
           x += (v << i);
           if(v) xarray.push(i);
         }
         var y = 0;
         for(var i = 0; i < this.numy; i++) {
-          var v = inputs[this.nummisc + this.numc + this.numx + i];
+          var v = inputs[pos + this.numx + i];
           y += (v << i);
           if(v) yarray.push(i);
         }
 
-        if(this.direct) {
+        if(this.matrix) {
           for(var j = 0; j < yarray.length; j++) {
             for(var i = 0; i < xarray.length; i++) {
               var x = xarray[i];
@@ -5655,223 +5840,147 @@ function DotMatrix() {
     // components is only needed if multiple different output values must be
     // supported.
     this.master = component;
-    largeComponentBB(array, false, this);
+    largeComponentBB(array, true, this);
 
-    this.w = this.x1 - this.x0;
-    this.h = this.y1 - this.y0;
+    this.w = this.x1b - this.x0b;
+    this.h = this.y1b - this.y0b;
     component.dotmatrix = this;
     return true;
   };
 
+  this.processIO = function(io) {
+    // commented out: ignore outputs altogether instead.
+    //if(io.no != 0) { this.setError('dotmatrix cannot have outputs'); return false; }
 
-  /*
-  given the array returned by getIO,
-  returns object of {
-    rgbled: boolean, true if this is rgbled, then only the field "empty" below is present, used to sort the inputs in clockwise order starting from that side
-    empty [heading, numc]: side with nothing, and also TOTAL amount of inputs (relevant for RGB LED only)
-    misc [heading, dir, num, lsbpos]: side with dot/fill/color
-    x [heading, dir, num, lsbpos]: side with x coordinate
-    y [heading, dir, num, lsbpos]: side with y coordinate
-  }
-  sets this.rgbled if it's an rgb led. Then misc, x and y have no meaning other than containing the desired inputs in clockwise order.
-  with
-  heading: wind direction of side with this inputs/outputs (NESW), or -1 if not present
-  dir: heading & 1: 0=horizontal, 1=vertical
-  i0: begin coordinate (x or y depends on dir)
-  i1: end coordinate
-  num: i1 - i0
-  lsbpos: is lsbpos for this left or right (not relevant for everything)
-  }
-  returns null on error.
-  */
-  this.getDirs = function(io) {
-    var x0 = this.x0;
-    var y0 = this.y0;
-    var x1 = this.x1;
-    var y1 = this.y1;
+    this.rgbled = true;
 
-    var numinputs = 0;
-    var numinputsides = 0;
+    if(io.nospecial) { this.setError('special outputs not supported for this component'); return false; }
 
-    for(var i = 0; i < 4; i++) {
-      // commented out: ignore outputs altogether instead.
-      //if(io.o[i].n != 0) { this.setError('dotmatrix cannot have outputs'); return false; }
-      numinputs += io.i[i].n;
-      if(io.i[i].n != 0) numinputsides++;
+    var arr = [];
+
+    if(io.iy.n) {
+      if(io.iy.n > 1) { this.setError('too many y inputs'); return false; }
+      this.has_enable = true;
+      arr.push(io.iy.ai[0]);
+      this.rgbled = false;
     }
 
-    // TODO: once we support y,c,C,q,Q inputs to large devices, use the fact whether there's a c or C input as the distinguishing feature between dot matrix screen and RGB LED
-    var rgbled = false;
-    if(numinputs <= 3 || numinputsides < 3) {
-      rgbled = true;
+
+    if(io.iC.n) { this.setError('C input not supported'); return false; }
+
+    if(io.ic.n) {
+      if(io.ic.n > 1) { this.setError('too many c inputs'); return false; }
+      this.has_dot = true;
+      arr.push(io.ic.ai[0]);
+      this.rgbled = false;
     }
 
-    var emptyheading = -1; // the one side without inputs
-
-    for(var i = 0; i < 4; i++) {
-      if(io.i[i].n == 0) {
-        emptyheading = i;
-        break;
-      }
+    if(io.iq.n) {
+      if(io.iq.n > 1) { this.setError('too many q inputs'); return false; }
+      this.has_fill = true;
+      arr.push(io.iq.ai[0]);
+      this.rgbled = false;
     }
 
-    if(emptyheading < 0) { this.setError('must have side without input'); return null; }
-    var empty = [emptyheading, numinputs];
-    if(rgbled) return {'rgbled':true, 'empty':empty};
-
-    var mischeading = -1;
-    var xheading = -1;
-    var yheading = -1;
-    for(var i = 0; i < 3; i++) {
-      var j = ((emptyheading + i + 1) & 3);
-      if(!io.i[j].n) { this.setError('missing input side, there must be 3'); return null; }
-      if(i == 0) {
-        mischeading = j;
-      } else {
-        if(j & 1) yheading = j;
-        else xheading = j;
-      }
+    if(io.iQ.n) {
+      if(io.iQ.n > 1) { this.setError('too many Q inputs'); return false; }
+      this.has_clear = true;
+      arr.push(io.iQ.ai[0]);
+      this.rgbled = false;
     }
 
-    var misclsbpos = (mischeading >= 2) ? 1 : 0;
-    var xlsbpos = (xheading >= 2) ? 1 : 0;
-    var ylsbpos = (yheading >= 2) ? 1 : 0;
+    this.numc = 0;
 
-    var misc = [mischeading, mischeading & 1, io.i[mischeading].n, misclsbpos];
-    var x = [xheading, xheading & 1, io.i[xheading].n, xlsbpos];
-    var y = [yheading, yheading & 1, io.i[yheading].n, ylsbpos];
-
-    var result = {'rgbled':false, 'empty':empty, 'misc':misc, 'x':x, 'y':y };
-    return result;
-  };
-
-  /*
-  Sorts inputs from getDirs
-  if dot matrix:
-  -first the misc bits: dot, fill, R, G, B
-  -then the x coordinate, starting from lsb
-  -then the y coordinate, starting from lsb
-  if RGB LED:
-  -clockwise starting from empty side
-  */
-  this.sortIO = function(dirs) {
-    var x0 = this.x0;
-    var y0 = this.y0;
-    var x1 = this.x1;
-    var y1 = this.y1;
-
-    var led = dirs.rgbled;
-    var emptyheading = dirs.empty[0];
-
-    var getDir = function(x, y) {
-      if(y < y0) return 0;
-      if(x >= x1) return 1;
-      if(y >= y1) return 2;
-      if(x < x0) return 3;
-      return -1;
-    };
-
-
-    //sort inputs from lsb to msb, then the write input
-    var array = [];
-    for(var i = 0; i < this.master.inputs.length; i++) array[i] = i;
-    var self = this;
-
-    if(led) {
-      // sort clockwise starting from the empty side
-      // TODO: there can be ambiguity what is the empty side if we have 2 opposing
-      // non-empty sides and 2 opposing empty sides.
-      array = array.sort(function(a, b) {
-        var xa = self.master.inputs_x[a];
-        var ya = self.master.inputs_y[a];
-        var xb = self.master.inputs_x[b];
-        var yb = self.master.inputs_y[b];
-        var da = (getDir(xa, ya) + 4 - emptyheading) & 3;
-        var db = (getDir(xb, yb) + 4 - emptyheading) & 3;
-        if(da != db) return da > db ? 1 : -1;
-        if(da == 0) return xa - xb;
-        if(da == 1) return ya - yb;
-        if(da == 2) return xb - xa;
-        return yb - ya;
-      });
-    } else {
-      var mischeading = dirs.misc[0];
-      var xheading = dirs.x[0];
-      var yheading = dirs.y[0];
-      var miscdir = dirs.misc[1];
-      var xdir = dirs.x[1];
-      var ydir = dirs.y[1];
-      var misclsbpos = dirs.misc[3];
-      var xlsbpos = dirs.x[3];
-      var ylsbpos = dirs.y[3];
-
-
-      array = array.sort(function(a, b) {
-        var xa = self.master.inputs_x[a];
-        var ya = self.master.inputs_y[a];
-        var xb = self.master.inputs_x[b];
-        var yb = self.master.inputs_y[b];
-        var da = getDir(xa, ya);
-        var db = getDir(xb, yb);
-        if(da != db) {
-          // order is: misc, x, y
-          if(da == mischeading) return -1;
-          if(db == mischeading) return 1;
-          if(da == xheading) return -1;
-          if(db == xheading) return 1;
+    if(this.rgbled) {
+      this.numc = 0;
+      for(var i = 0; i < 4; i++) {
+        for(var j = 0; j < io.i[i].n; j++) {
+          arr.push(io.i[i].ai[j]);
+          this.numc++;
         }
-        var lsbpos = (da == miscdir) ? misclsbpos : ((da == xdir) ? xlsbpos : ylsbpos);
-        if(((da & 1) == 0) && lsbpos) return xb - xa;
-        if(((da & 1) == 0)) return xa - xb;
-        if(lsbpos) return yb - ya;
-        return ya - yb;
-      });
+      }
+    } else {
+      var colorside = -1;
+      var xside = -1;
+      var yside = -1;
+      for(var i = 0; i < 4; i++) {
+        // the dot matrix screen must have 3 regular input sides (ignoring the special q,Q,y inputs), one for x coordinate, one for y coordinate,
+        // one for the color. Since there are only 4 sides total, two sides will be across each other, and the remaining one is definitaly an
+        // x or y coordinate. Between those two, we must diambiguate which one is the color side and which one hte other coordinate. We use
+        // the presense of special inputs (the q, Q and/or y) on a side for that disambiguation: that one is the color side.
+        if(io.i[i].n && io.i[i].nspecial) {
+          if(colorside > -1) { this.setError('multiple possible color sides, only one side may mix special and unmarked inputs'); return false; }
+          colorside = i;
+          this.numc = io.i[i].n;
+        } else if(io.i[i].n) {
+          if(i & 1) {
+            if(yside > -1) { this.setError('multiple possible y-coordinate sides'); return false; }
+            yside = i;
+            this.numy = io.i[i].n;
+          } else {
+            if(xside > -1) { this.setError('multiple possible x-coordinate sides'); return false; }
+            xside = i;
+            this.numx = io.i[i].n;
+          }
+        }
+      }
+      if(xside == -1) { this.setError('no x-coordinate side found'); return false; }
+      if(yside == -1) { this.setError('no y-coordinate side found'); return false; }
+      // no color side is ok: means that it's an oscilloscope
+
+      // sorting order of inputs: first the special inputs (added higher up already), then color bits, then x bits, then y bits (all starting from LSB, according to the LSB rules of getIO)
+      if(colorside > -1) {
+        for(var i = 0; i < io.i[colorside].n; i++) {
+          arr.push(io.i[colorside].ai[i]);
+        }
+      }
+      // matrix addressing. Not supported for oscilloscope (numc == 0) since that one can only draw a limited amount of dots at the same time
+      this.matrix = (this.numc > 0 && this.numx == this.w && this.numy == this.h);
+      var invertx = this.matrix && (xside == 2);
+      var inverty = this.matrix && (yside == 3);
+      for(var i = 0; i < io.i[xside].n; i++) {
+        var j = i;
+        if(invertx) j = io.i[xside].n - i - 1;
+        arr.push(io.i[xside].ai[j]);
+      }
+      for(var i = 0; i < io.i[yside].n; i++) {
+        var j = i;
+        if(inverty) j = io.i[yside].n - i - 1;
+        arr.push(io.i[yside].ai[j]);
+      }
+
     }
-    newOrder(this.master.inputs, array);
-    newOrder(this.master.inputs_negated, array);
-    newOrder(this.master.inputs_x, array);
-    newOrder(this.master.inputs_y, array);
-    newOrder(this.master.inputs_x2, array);
-    newOrder(this.master.inputs_y2, array);
+
+    if(this.numc > 9) { this.setError('too many RGB color inputs, supports up to 9'); return false; }
+
+    if(!newOrderInputs(this.master, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
+
+    return true;
   };
+
+
+
+
 
   this.init2 = function() {
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
     var y1 = this.y1;
+    var x0s = this.x0s;
+    var y0s = this.y0s;
+    var x1s = this.x1s;
+    var y1s = this.y1s;
     var w = x1 - x0;
     var h = y1 - y0;
 
     if(!this.master) return false;
 
-    var io = getIO(x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.master);
     if(!io) { this.setError('getIO failed'); return false; }
 
-    var dirs = this.getDirs(io);
-    if(!dirs) { this.setError('getDirs failed'); return false; }
+    if(!this.processIO(io)) { this.setError('processIO failed'); return false; }
 
-    this.rgbled = dirs.rgbled;
-
-    this.nummisc = 2;
-    if(this.rgbled) this.nummisc = 0;
-    else if(dirs.misc[2] == 1) this.nummisc = 1;
-
-    // num color bits
-    this.numc = this.rgbled ? dirs.empty[1] : (dirs.misc[2] - this.nummisc);
-    if(this.numc > 9) { this.setError('too much color bit inputs, need 1-9'); return false; }
-    this.numx = this.rgbled ? 0 : dirs.x[2];
-    this.numy = this.rgbled ? 0 : dirs.y[2];
-
-
-    if(this.numx == w && this.numy == h) {
-      this.direct = true;
-      // not binary addressing, make the lsbpos match lowest cell x/y index instead
-      dirs.x[3] = 0;
-      dirs.y[3] = 0;
-    }
-
-    this.sortIO(dirs);
 
     this.array = [];
     for(var y = 0; y < h; y++) {
@@ -5885,7 +5994,7 @@ function DotMatrix() {
     this.oarray2 = [];
     this.opointer = 0;
     if(this.numc == 0) {
-      // oscilloscope:: old dots go off
+      // oscilloscope: old dots go off
       var numo = Math.max(this.x1 - this.x0, this.y1 - this.y0) * 4;
       for(var i = 0; i < numo; i++) {
         this.oarray[i] = [-1, -1];
@@ -5943,6 +6052,7 @@ function JukeBox() {
   this.y0 = 0;
   this.x1 = 0;
   this.y1 = 0;
+  this.has_enable = false;
   this.numvolinputs = 0;
   this.numfreqinputs = 0;
   this.numshapeinputs = 0;
@@ -6013,24 +6123,29 @@ function JukeBox() {
   this.update = function(inputs) {
     if(!supportsAudio) return;
 
+    var numenableinputs = this.has_enable ? 1 : 0;
+
     //var value = inputs[0] ? 1 : 0;
     var volvalue = 0;
     for(var i = 0; i < this.numvolinputs; i++) {
-      volvalue += (inputs[i] << i);
+      var j = i + numenableinputs;
+      volvalue += (inputs[j] << i);
     }
     var vol = volvalue / ((1 << this.numvolinputs) - 1);
     var outvol = vol * this.basevolume * this.getVolumeMul();
 
+    if(this.has_enable && !inputs[0]) vol = outvol = volvalue = 0;
+
     var freqvalue = 0;
     for(var i = 0; i < this.numfreqinputs; i++) {
-      var j = i + this.numvolinputs;
+      var j = i + this.numvolinputs + numenableinputs;
       freqvalue += (inputs[j] << i);
     }
     var freq = this.numfreqinputs ? (this.getHighFreq() * freqvalue / ((1 << this.numfreqinputs) - 1)) : this.basefrequency;
 
     var shapevalue = 0;
     for(var i = 0; i < this.numshapeinputs; i++) {
-      var j = i + this.numvolinputs + this.numfreqinputs;
+      var j = i + this.numvolinputs + this.numfreqinputs + numenableinputs;
       shapevalue += (inputs[j] << i);
     }
     var shape = this.numshapeinputs ? shapevalue : this.baseshape;
@@ -6204,118 +6319,60 @@ function JukeBox() {
     return true;
   };
 
-
-
-  /*
-  given the array returned by getIO,
-  returns object of {
-    volume [heading, lsbpos, num]
-    frequency [heading, lsbpos, num]
-  }
-  with
-  heading: wind direction of side with this inputs/outputs (NESW), for input is where it comes from, for output is where it goes to, or -1 if not present
-  lsbpos: is lsbpos for this left or right, value is 0:left/top, 1:right/bottom
-  num: the amount
-  }
-  returns null on error.
-  */
-  this.getDirs = function(io) {
+  this.processIO = function(io) {
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
     var y1 = this.y1;
 
-    var volume = [-1, -1, 0];
-    var frequency = [-1, -1, 0];
-    var shape = [-1, -1, 0];
+    if(io.nospecial) { this.setError('special outputs not supported for this component'); return false; }
 
-    var inputside = -1;
     var arr = [];
 
+    if(io.nis > 1) { this.setError('too many input sides'); return false; }
+
+    // commented out: do allow jukebox output. It's a very simple output (can have any amount, they're all the same) indicating whether it's playing
+    //if(io.nos > 0) { this.setError('jukebox shouldn\'t have output sides'); return false; }
+
+    if(io.iy.n) {
+      if(io.iy.n > 1) { this.setError('too many c inputs'); return false; }
+      this.has_enable = true;
+      arr.push(io.iy.ai[0]);
+    }
+
+    if(io.ic.n) { this.setError('too many c inputs'); return false; }
+    if(io.iC.n) { this.setError('too many C inputs'); return false; }
+    if(io.iq.n) { this.setError('too many q inputs'); return false; }
+    if(io.iQ.n) { this.setError('too many Q inputs'); return false; }
+
+    var g = [];
+    this.numinputs = 0;
     for(var i = 0; i < 4; i++) {
-      var arri = io.i[i].ga;
-      if(arri.length > 0) {
-        if(inputside != -1) { this.setError('can only have one input side'); return null; }
-        inputside = i;
-        arr = arri;
+      for(var j = 0; j < io.i[i].ai.length; j++) {
+        arr.push(io.i[i].ai[j]);
+        this.numinputs++;
+      }
+      if(io.i[i].n) {
+        g = io.i[i].ga;
       }
     }
 
-    var lsbpos = (inputside >= 2) ? 1 : 0;
-
-    if(arr.length == 1) {
-      volume[0] = inputside;
-      volume[1] = lsbpos;
-      volume[2] = arr[0].n;
-    } else if(arr.length == 2) {
-      volume[0] = inputside;
-      volume[1] = lsbpos;
-      volume[2] = arr[0].n;
-      frequency[0] = inputside;
-      frequency[1] = lsbpos;
-      frequency[2] = arr[1].n;
-    } else if(arr.length == 3) {
-      volume[0] = inputside;
-      volume[1] = lsbpos;
-      volume[2] = arr[0].n;
-      frequency[0] = inputside;
-      frequency[1] = lsbpos;
-      frequency[2] = arr[1].n;
-      shape[0] = inputside;
-      shape[1] = lsbpos;
-      shape[2] = arr[2].n;
+    if(g.length == 1) {
+      this.numvolinputs = g[0].n;
+    } else if(g.length == 2) {
+      this.numvolinputs = g[0].n;
+      this.numfreqinputs = g[1].n;
+    } else if(g.length == 3) {
+      this.numvolinputs = g[0].n;
+      this.numfreqinputs = g[1].n;
+      this.numshapeinputs = g[2].n;
     } else {
-      if(arr.length > 2) { this.setError('too many input groups'); return null; }
+      if(g.length > 2) { this.setError('too many input groups'); return false; }
     }
 
-    var result = {'volume': volume, 'frequency': frequency, 'shape': shape};
+    if(!newOrderInputs(this.master, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
 
-    return result;
-  };
-
-  /*Sorts inputs from getDirs*/
-  this.sortIO = function(dirs) {
-    var x0 = this.x0;
-    var y0 = this.y0;
-    var x1 = this.x1;
-    var y1 = this.y1;
-
-    var getDir = function(x, y) {
-      if(y < y0) return 0;
-      if(x >= x1) return 1;
-      if(y >= y1) return 2;
-      if(x < x0) return 3;
-      return -1;
-    };
-
-    //sort inputs from lsb to msb, then the write input
-    var array = [];
-    for(var i = 0; i < this.master.inputs.length; i++) array[i] = i;
-    var self = this;
-
-    var heading = dirs.volume[0];
-    var lsbdir = (heading >= 2);
-    array = array.sort(function(a, b) {
-      var xa = self.master.inputs_x[a];
-      var ya = self.master.inputs_y[a];
-      var xb = self.master.inputs_x[b];
-      var yb = self.master.inputs_y[b];
-      var da = getDir(xa, ya);
-      var db = getDir(xb, yb);
-      if(da != db) return da > db ? 1 : -1; // this never happens, only 1 side has inputs
-      if(((da & 1) == 0) && lsbdir) return xb - xa;
-      if(((da & 1) == 0)) return xa - xb;
-      if(lsbdir) return yb - ya;
-      return ya - yb;
-    });
-
-
-    newOrder(this.master.inputs, array);
-    newOrder(this.master.inputs_negated, array);
-    newOrder(this.master.inputs_x, array);
-    newOrder(this.master.inputs_y, array);
-    newOrder(this.master.inputs_x2, array);
-    newOrder(this.master.inputs_y2, array);
+    return true;
   };
 
   this.init2 = function() {
@@ -6323,12 +6380,19 @@ function JukeBox() {
     var y0 = this.y0;
     var x1 = this.x1;
     var y1 = this.y1;
+    var x0s = this.x0s;
+    var y0s = this.y0s;
+    var x1s = this.x1s;
+    var y1s = this.y1s;
     var w = x1 - x0;
     var h = y1 - y0;
 
     if(!this.master) return false;
 
-    var io = getIO(x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.master);
+    if(!this.processIO(io)) { this.setError('processIO failed'); return false; }
+
+    /*var io = getIO(x0, y0, x1, y1, this.master);
     if(!io) { this.setError('getIO failed'); return false; }
 
     var dirs = this.getDirs(io);
@@ -6338,7 +6402,7 @@ function JukeBox() {
     this.numfreqinputs = dirs.frequency[2];
     this.numshapeinputs = dirs.shape[2];
 
-    this.sortIO(dirs);
+    this.sortIO(dirs);*/
 
     return true;
   };
@@ -6492,12 +6556,7 @@ function TriState() {
       }
       return component.inputs_x2[a] - component.inputs_x2[b];
     });
-    newOrder(component.inputs, array);
-    newOrder(component.inputs_x, array);
-    newOrder(component.inputs_y, array);
-    newOrder(component.inputs_x2, array);
-    newOrder(component.inputs_y2, array);
-    newOrder(component.inputs_negated, array);
+    newOrderInputs(component, array);
 
     /*for(var i = 0; i < component.inputs.length; i += 2) {
       if((component.inputs_x2[i] != component.inputs_x2[i + 1]) ||
@@ -7034,7 +7093,7 @@ function Component() {
         if(this.corecell.circuitsymbol == 'Q' || this.corecell.circuitsymbol == 'k') value = !value;
         this.value = value;
       } else {
-        console.log('suspicious: ff component without ff field');
+        if(!this.error) console.log('suspicious: ff component without ff field');
         //if(clocked) this.value = !this.value;
       }
     } else if(this.type == TYPE_COUNTER) {
@@ -7278,7 +7337,7 @@ function Component() {
     }
     if(this.type == TYPE_VTE) {
       var vte = this.vte;
-      if(!vte) vte = this.master.vte;
+      if(!vte && this.master) vte = this.master.vte;
       if(vte && vte.allowstyping && !vte.invisible) {
         vte.getKeyboardFocus();
       }
@@ -7294,7 +7353,7 @@ function Component() {
       //var x = this.corecell.x, y = this.corecell.y;
       var bit;
       var line;
-      if(rom.worddir == 1) {
+      if(rom.wordshor == 1) {
         bit = rom.bits_inv[x - rom.x0];
         line = rom.lines_inv[rom.wordlsbpos ? (rom.y1 - 1 - y) : (y - rom.y0)];
       } else {
@@ -7378,6 +7437,8 @@ var TITLECOLOR;
 var TERMINALBGCOLOR;
 var TERMINALFGCOLOR;
 var TERMINALMIDCOLOR; // used to indicate cursor can be placed here
+var OUTSIDESCREENBGCOLOR;
+var OUTSIDESCREENGFGOLOR;
 
 var BUSCOLORS;
 
@@ -7480,6 +7541,9 @@ function setColorScheme(index) {
     GATEBGCOLOR = '#f7f7f7';
     GATEFGONCOLOR = ONCOLOR;
     GATEFGOFFCOLOR = OFFCOLOR;
+
+    OUTSIDESCREENBGCOLOR = '#444';
+    OUTSIDESCREENFGCOLOR = '#fff';
 
     LINKCOLOR = '#00e';
     TITLECOLOR = 'black';
@@ -7889,20 +7953,25 @@ function Cell() {
   this.isvte = false; // for drawing
   this.isalutext = false; // for drawing. This makes the cell always display as "on". This is done for the text labels on an ALU with the op name, because otherwise the op name is harder to read (contrast), and also changes color per character depending on whether there happen to be individual outputs there, which is undesired.
   this.clusterindex = -1; // for components connected together with extenders '#'. This is not only for large devices, but also for standard logic gates extended with #, such as a###a forming a single AND gate.
+  // cell error is used for some parsing errors that occur before components are created, e.g. during parseLargeDevices. But once components are there, component.error is mainly used.
+  this.error = false;
+  this.errormessage = null;
 
   this.renderer = null;
   this.clickFun = null;
 
+  this.largedevicearray = null;
+  this.largedevicetype = TYPE_NULL;
+
   // Update the style based on current value in the component
   this.setValue = function(value) {
     if(this.circuitsymbol == 'b' || this.circuitsymbol == 'B') {
-      var master = this.components[0];
+      var master = this.components[0] || this.components[1];
       if(!master) return;
       if(master.master) master = master.master;
       var rom = master.rom;
       if(!rom) return;
-      var co = rom.worddir ? (this.y - rom.y0) : (this.x - rom.x0);
-      if(rom.wordlsbpos) co = rom.worddir ? (rom.y1 - this.y - 1) : (rom.x1 - this.x - 1);
+      var co = rom.wordshor ? (this.y - rom.y0) : (this.x - rom.x0);
       var index = rom.lines_inv[co];
       value = rom.selected[index]; // show which line is selected
     }
@@ -7920,15 +7989,16 @@ function Cell() {
     }
 
     if(this.isvte) {
-      var master = this.components[0];
+      var master = this.components[0] || this.components[1];
       if(!master) return;
       if(master.master) master = master.master;
       var vte = master.vte;
       if(!vte || !vte.text) return;
       if(vte.invisible) return; //inside chip so don't render
-      var x = this.x - vte.x0;
-      var y = this.y - vte.y0;
-      if(x < 0 || y < 0) return;
+      if(this.x < vte.x0b || this.x >= vte.x1b) return;
+      if(this.y < vte.y0b || this.y >= vte.y1b) return;
+      var x = this.x - vte.x0b;
+      var y = this.y - vte.y0b;
       var char = vte.text[y][x];
       var blink = (vte == activeVTE && x == vte.cursorx && y == vte.cursory && vte.supportsTyping());
       var blur = (vte != activeVTE && x == vte.cursorx && y == vte.cursory && vte.supportsTyping());
@@ -7977,6 +8047,10 @@ function Cell() {
       if(type == TYPE_VTE) virtualsymbol = 'T';
       if(type == TYPE_DOTMATRIX) virtualsymbol = 'D';
     }
+
+    // large devices using c, C, q, Q or y inputs and needing different rendering for an inner bounding box
+    if(type == TYPE_VTE && specialmap[c]) virtualsymbol = 'T';
+    if(type == TYPE_DOTMATRIX && specialmap[c]) virtualsymbol = 'D';
 
 
     var title = null;
@@ -8033,16 +8107,6 @@ function Cell() {
         else title += ' (unknown color)';
       }
       if(tc == '?') title = 'random generator: random bit';
-      if(tc == 'J' || tc == '#J') {
-        title = 'jukebox (speaker, for music)';
-        if(component) {
-          var jukebox = component.jukebox;
-          if(jukebox) {
-            title += '. Frequency: ' + (jukebox.frequency || 'variable') + ' Hz';
-            title += '. Shape: ' + jukebox.getShapeName();
-          }
-        }
-      }
       if(tc == 'a') title = 'AND gate';
       if(tc == 'A') title = 'NAND gate';
       if(tc == 'o') title = 'OR gate';
@@ -8053,40 +8117,281 @@ function Cell() {
       if(tc == 'H') title = 'inverted one-hot detector (same as XNOR if 2 inputs)';
       if(tc == 'f') title = 'constant off (fixed off)';
       if(tc == 'F') title = 'constant on (fixed on)';
-      if(type == TYPE_FLIPFLOP) {
-        var ff = component.ff;
-        if(!ff && component.master) ff = component.master.ff;
-        var name = 'flipflop';
-        if(ff) {
-          if(ff.numc && ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'D flipflop';
-          if(ff.numc && !ff.numd && !ff.numj && !ff.numk && ff.numt) name = 'T flipflop';
-          if(ff.numc && !ff.numd && ff.numj && ff.numk && !ff.numt) name = 'JK flipflop';
-          if(!ff.numc && ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'D latch';
-          if(!ff.numc && !ff.numd && !ff.numj && !ff.numk && ff.numt) name = 'T latch';
-          if(!ff.numc && !ff.numd && ff.numj && ff.numk && !ff.numt) name = 'JK latch';
-          if(ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'counter';
-          if(ff.numq && ff.numQ && !ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'SR latch';
-          if((!!ff.numq != !!ff.numQ) && !ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'pulse';
-          if(ff.numd && !ff.numc && !ff.numj && !ff.numk && !ff.numt) name = 'D latch';
-          var none = !ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt;
+      if(devicemaparea[tc]) {
+        if(type == TYPE_FLIPFLOP) {
+          var ff = component.ff;
+          if(!ff && component.master) ff = component.master.ff;
+          var name = 'flipflop';
+          if(ff) {
+            if(ff.numc && ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'D flipflop';
+            if(ff.numc && !ff.numd && !ff.numj && !ff.numk && ff.numt) name = 'T flipflop';
+            if(ff.numc && !ff.numd && ff.numj && ff.numk && !ff.numt) name = 'JK flipflop';
+            if(!ff.numc && ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'D latch';
+            if(!ff.numc && !ff.numd && !ff.numj && !ff.numk && ff.numt) name = 'T latch';
+            if(!ff.numc && !ff.numd && ff.numj && ff.numk && !ff.numt) name = 'JK latch';
+            if(ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'counter';
+            if(ff.numq && ff.numQ && !ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'SR latch';
+            if((!!ff.numq != !!ff.numQ) && !ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'pulse';
+            if(ff.numd && !ff.numc && !ff.numj && !ff.numk && !ff.numt) name = 'D latch';
+            var none = !ff.numc && !ff.numd && !ff.numj && !ff.numk && !ff.numt;
 
-          title = name;
+            title = name;
 
-          var cellname = '';
-          if(tc == 'c') title = ((ff.numd || ff.numt || ff.numj || ff.numk) ? (name + ' - clock input') : 'counter') + ' (initially off)';
-          if(tc == 'C') title = ((ff.numd || ff.numt || ff.numj || ff.numk) ? (name + ' - clock input') : 'counter') + ' (initially on)';
-          if(tc == 'y') title = name + ' - enable input';
-          if(tc == 'd') title = name + ' - D input';
-          if(tc == 't') title = name + ' - T input';
-          if(tc == 'j') title = name + ' - J input';
-          if(tc == 'k') title = name + ' - K input';
-          if(tc == 'q') title = (none && !ff.numQ) ? 'pulse' : (name + ' - output and async set');
-          if(tc == 'Q') title = (none && !ff.numq) ? 'inverted pulse' : (name + ' - inverted output and async reset');
+            var cellname = '';
+            if(tc == 'c') title = ((ff.numd || ff.numt || ff.numj || ff.numk) ? (name + ' - clock input') : 'counter') + ' (initially off)';
+            if(tc == 'C') title = ((ff.numd || ff.numt || ff.numj || ff.numk) ? (name + ' - clock input') : 'counter') + ' (initially on)';
+            if(tc == 'y') title = name + ' - enable input';
+            if(tc == 'd') title = name + ' - D input';
+            if(tc == 't') title = name + ' - T input';
+            if(tc == 'j') title = name + ' - J input';
+            if(tc == 'k') title = name + ' - K input';
+            if(tc == 'q') title = (none && !ff.numQ) ? 'pulse' : (name + ' - output and async set');
+            if(tc == 'Q') title = (none && !ff.numq) ? 'inverted pulse' : (name + ' - inverted output and async reset');
+          }
+        } else if(type == TYPE_VTE) {
+          title = 'terminal';
+          if(component) {
+            var master = component.master;
+            var vte = master ? master.vte : component.vte;
+            if(vte) {
+              if(tc == 'y') {
+                if(vte.counter) {
+                  title = 'enable input (y) for decimal counter';
+                } else {
+                  title = 'enable input (y) for terminal controls';
+                }
+              } else if(tc == 'c') {
+                if(vte.counter) {
+                  title = 'count-up input (c) for decimal counter';
+                } else {
+                  title = 'write signal (Q) for terminal keyboard: command to write user-typed character to output ASCII bits, and outputs EOF flag';
+                }
+              } else if (tc == 'C') {
+                if(vte.counter) {
+                  title = 'count-down input (C) for decimal counter';
+                } else {
+                  title = 'read signal (C) for terminal screen: command to read input ASCII bits to display on screen';
+                }
+              } else if (tc == 'q') {
+                if(vte.counter) {
+                  title = 'set input (q) for decimal counter';
+                } else {
+                  title = 'invalid';
+                }
+              } else if (tc == 'Q') {
+                if(vte.counter) {
+                  title = 'reset input (Q) for decimal counter';
+                } else {
+                  title = 'invalid';
+                }
+              } else {
+                if(!vte.counter && !vte.decimaldisplay && !vte.decimalinput) {
+                  if(vte.numoutputs > 0) title += ' (with ascii output and keyboard input, click to put cursor here)';
+                  if(vte.numinputs > 0) title += ' (with ascii input, shown on the screen if read)';
+                  if(vte.numoutputs > 0 && vte.numinputs > 0) title += ' (only outputs what was typed with keyboard using active cursor, not from the component inputs. The inputs are displayed as ascii on screen only.)';
+                }
+                if(vte.counter) {
+                  var features = [];
+                  if(vte.has_up) features.push('c=up');
+                  if(vte.has_down) features.push('C=down');
+                  if(vte.has_set) features.push('q=set');
+                  if(vte.has_reset) features.push('Q=reset');
+                  if(vte.has_enable) features.push('y=enable');
+                  var phrases = ['as decimal counter with ' + features.join(', ')];
+                  if(vte.has_down) phrases.push('Screen can show signed (negative) values or values larger than the output bits support, but output bits will use twos complement and can be treated as unsigned if desired.');
+                  if(vte.has_set) phrases.push('Data input is treated as ' + (vte.signeddisplay ? 'twos complement signed' : 'unsigned'));
+                  title += ' (' + phrases.join('. ') + ')';
+                }
+                if(vte.decimaldisplay && !vte.counter) {
+                  title += ((vte.numinputs == 1) ? ' (as 1-bit display)' : ' (as decimal display)');
+                  if(vte.passthrough) title += ' (passes through the input to the output)';
+                  if(vte.signeddisplay) title += ' (signed two\'s complement)';
+                }
+                if(vte.decimalinput && !vte.counter) {
+                  title += ' (as decimal input, click to put cursor here, and type decimal digits, or hex digits preceded with 0x).';
+                  title += ' max value, given the ' + vte.numoutputs + ' output wires: ' + (Math.pow(2, vte.numoutputs) - 1);
+                }
+
+                if(vte.supportsTyping()) this.renderer.setCursorPointer(true);
+              }
+            }
+          }
+        } else if(type == TYPE_JUKEBOX) {
+          title = 'jukebox (speaker, for music)';
+          if(tc == 'y') {
+            title = 'enable input (y) for ' + title;
+          } else if(component) {
+            var jukebox = component.jukebox;
+            if(jukebox) {
+              title += '. Frequency: ' + (jukebox.numfreqinputs ? 'variable' : jukebox.basefrequency) + ' Hz';
+              title += '. Shape: ' + jukebox.getShapeName();
+              if(jukebox.numvolinputs) title += '. Has volume input';
+              if(jukebox.numfreqinputs) title += '. Has frequency input';
+              if(jukebox.numshapeinputs) title += '. Has shape input';
+            }
+          }
+        } else if(type == TYPE_MUX) {
+          title = 'mux';
+          var master = component.master;
+          var mux = master ? master.mux : component.mux;
+          if(mux) {
+            if(mux.demux) {
+              title = 'demux';
+              if(mux.bussize > 1) title += ' of width-' + mux.bussize + ' buses';
+              if(mux.bussize == 1 && mux.numdataout > 2) title = '' + mux.numdataout + '-output ' + title;
+              title += '. ';
+              var side0 = '';
+              var side1 = '';
+              if(!(mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'right'; side1 = 'left';}
+              if(!(mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'left'; side1 = 'right';}
+              if((mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'bottom'; side1 = 'top';}
+              if((mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'top'; side1 = 'bottom';}
+              title += 'Output 0 is at the ' + side0 + ', output ' + (mux.numdataout - 1) + ' is at the ' + side1;
+            } else if(mux.swap) {
+              title = 'controlled swap';
+              if(mux.bussize > 1) title += ' of width-' + mux.bussize + ' buses';
+            } else {
+              title = 'mux';
+              if(mux.bussize > 1) title += ' of width-' + mux.bussize + ' buses';
+              if(mux.numselout > 0) title += ' (with selection passthrough)';
+              if(mux.bussize == 1 && mux.numdatain > 2) title = '' + mux.numdatain + '-input ' + title;
+              title += '. ';
+              var side0 = '';
+              var side1 = '';
+              if(!(mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'right'; side1 = 'left';}
+              if(!(mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'left'; side1 = 'right';}
+              if((mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'bottom'; side1 = 'top';}
+              if((mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'top'; side1 = 'bottom';}
+              title += 'Input 0 is at the ' + side0 + ', input ' + (mux.numdatain - 1) + ' is at the ' + side1;
+            }
+            if(mux.numselin > 1) {
+              title += '. ';
+              var sellsbname = '';
+              if(!(mux.selindir & 1) && mux.selinlsbpos) sellsbname = 'right';
+              if(!(mux.selindir & 1) && !mux.selinlsbpos) sellsbname = 'left';
+              if((mux.selindir & 1) && mux.selinlsbpos) sellsbname = 'bottom';
+              if((mux.selindir & 1) && !mux.selinlsbpos) sellsbname = 'top';
+              title += 'There are ' + mux.numselin + ' selection inputs and their LSB is at the ' + sellsbname;
+            }
+            /*title += ' DEBUG: ';
+            title += ' demux: ' + mux.demux + '. ';
+            title += ' swap: ' + mux.swap + '. ';
+            title += ' bussize: ' + mux.bussize + '. ';
+            title += ' numdatain: ' + mux.numdatain + '. ';
+            title += ' numdataout: ' + mux.numdataout + '. ';
+            title += ' numselin: ' + mux.numselin + '. ';
+            title += ' numselout: ' + mux.numselout + '. ';*/
+          }
+        } else if(type == TYPE_ALU) {
+          var master = component.master;
+          var alu = master ? master.alu : component.alu;
+          if(alu) {
+            var numinputs = (alu.numc ? 3 : (alu.numb ? 2 : 1));
+            if(alu.numselect) {
+              title = 'ALU (arithmetic logic unit), with custom selectable operation from the select input bits. First operation (matching select 0 and internal opindex ' +
+                alu.opindex + '): ' + alu.getOpLongName() + '. Select range: 0 - ' + ((1 << alu.numselect) - 1) + '. Selectable opindex range: ' + alu.opindex + ' - ' + (alu.opindex + ((1 << alu.numselect) - 1));
+                if(alu.numselect <= 4) {
+                  title += '. All operations for each select value: ';
+                  var num = 1 << alu.numselect;
+                  for(var i = 0; i < num; i++) {
+                    if(i > 0) title += ', ';
+                    title += '' + i + ':' + alu.getOpShortNameFor(alu.opindex + i);
+                  }
+                }
+            } else {
+              var op = alu.getOpLongName();
+              title = 'ALU (arithmetic logic unit): op: "' + op + '"' + (alu.signed ? ' (signed)' : '') + ',  opindex: ' + alu.opindex + ', num inputs: ' + numinputs;
+            }
+          } else {
+            title = 'ALU (but has error)';
+          }
+        } else if(type == TYPE_ROM) {
+          title = 'ROM/RAM bit (b=0, B=1)';
+          if(component) {
+            var master = component.master;
+            var rom = master ? master.rom : component.rom;
+            if(rom) {
+              if(tc == 'c') {
+                title = 'clock input (write/store) for RAM';
+              } else if(tc == 'Q') {
+                title = 'reset all input for RAM';
+              } else if(tc == 'y') {
+                title = 'enable-input for RAM clock';
+              } else {
+                if(rom.ram && rom.array && rom.array[0]) {
+                  var numadr = rom.array.length;
+                  var width = rom.array[0].length;
+                  title = 'RAM with ' + numadr + ' ' + width + '-bit values (b=0, B=1). Note that the RAM may be bigger than the amount of bits shown, if so only the first lines are shown. Clicking bits with the mouse can toggle them.';
+                }
+                else if(rom.decoder) title = 'decoder (binary to unary)';
+                else if(rom.encoder) title = 'encoder (unary to binary)';
+                else if(rom.priority) title = 'priority selector (unary to unary)';
+                else if(rom.array && rom.array[0]) {
+                  var numadr = rom.array.length;
+                  var width = rom.array[0].length;
+                  title = 'ROM with ' + numadr + ' ' + width + '-bit values (b=0, B=1). Clicking bits with the mouse can toggle them.';
+                }
+                if(rom.onehot) {
+                  title += ' (using per-line addressing, one or more lines can be enabled.)'
+                } else {
+                  if(rom.ram) title += ' (using binary addressing, the address inputs select one line with binary code. In case of large RAM, it is possible for there to be more memory than visible lines, only the first few values are then visible but more hidden ones exist)';
+                  else title += ' (using binary addressing, the address inputs select one line with binary code)';
+                }
+              }
+            }
+          }
+        } else if(type == TYPE_DOTMATRIX) {
+          title = 'RGB LED';
+          if(component) {
+            var dot = component.dotmatrix;
+            if(dot && !dot.rgbled) title = 'dot matrix screen';
+            var colordescription = '';
+            if(dot.numc == 0) colordescription = 'oscilloscope';
+            else if(dot.numc == 1) colordescription = 'two-color';
+            else if(dot.numc == 2) colordescription = 'four-color: red-green';
+            else if(dot.numc == 3) colordescription = '8-color: binary RGB';
+            else if(dot.numc == 4) colordescription = '16-color: RGBI';
+            else if(dot.numc == 5) colordescription = '27-color: 3-level RGB';
+            else if(dot.numc == 6) colordescription = '64-color: 4-level RGB, 2 bits for each';
+            else if(dot.numc == 7) colordescription = '125-color: 5-level RGB';
+            else if(dot.numc == 8) colordescription = '216-color: 6-level RGB';
+            else if(dot.numc == 9) colordescription = '512-color: 8-level RGB, 3 bits for each';
+            else colordescription = 'unknown color palette, more color bits than expected (max is 9)';
+            if(dot) {
+              if(dot.rgbled) {
+                title = 'RGB LED';
+                if(dot.numc != 3) title += '. ' + colordescription;
+              } else {
+                var name = (dot.numc == 0) ? 'oscilloscope' : 'dot matrix screen';
+                if(tc == 'y') {
+                  title = 'enable input for ' + name;
+                } else if(tc == 'c') {
+                  title = 'place-dot input for ' + name;
+                } else if(tc == 'q') {
+                  title = 'fill screen input for ' + name;
+                } else if(tc == 'Q') {
+                  title = 'clear screen input for ' + name;
+                } else {
+                  var addressingdescription = dot.matrix ? 'X and Y coordinate use matrix addressing: can enable multiple rows/columns at the same time, dots are placed at intersections.' : 'X and Y coordinate use binary addressing.';
+                  if(dot.numc == 0) {
+                    title = name;
+                    title += '. Has X coordinate input, Y coordinate input, color choice input, and controls to place dots or clear screen. ';
+                    title += addressingdescription;
+                  } else {
+                    title = name;
+                    title += '. Has X coordinate input, Y coordinate input, color choice input, and can have controls to place dots, fill, ... ';
+                    title += addressingdescription;
+                    title += ' Color palette: ' + colordescription;
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          if(tc == 'c') title = 'counter (initially off)'; // type == TYPE_COUNTER
+          if(tc == 'C') title = 'counter (initially on)'; // type == TYPE_COUNTER
+          if(tc == 'd') title = 'delay'; // type == TYPE_DELAY
         }
-      } else {
-        if(tc == 'c') title = 'counter (initially off)'; // type == TYPE_COUNTER
-        if(tc == 'C') title = 'counter (initially on)'; // type == TYPE_COUNTER
-        if(tc == 'd') title = 'delay'; // type == TYPE_DELAY
       }
       if(tc == 'z') title = 'tristate buffer, inputs to same z ANDed, multiple z to wire high when any z high (like OR but read on). Allowed to have multiple output to the same wire, but should be used as one-hot (max 1 high to wire, rest must be low) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
       if(tc == 'Z') title = 'tristate buffer, inputs to same Z ORed, multiple Z to wire low when any Z low (like AND but read on). Allowed to have multiple output to the same wire, but should be used as one-cold (max 1 low to wire, rest must be high) only to be electrically correct and realistic, but logicemu does not enforce that (does not emulate shorts).)';
@@ -8101,147 +8406,10 @@ function Cell() {
       if(tc == 'u') title = 'backplane wire that connects to one matching connector to the top ("antenna")';
       if(tc == 'I' || this.numbertype == NUMBER_ICDEF) title = 'IC definition';
       if(tc == 'i' || tc == '#i') title = 'IC instance ' + component.callsubindex;
-      if(tc == 'b' || tc == 'B' || tc == '#b') {
-        title = 'ROM/RAM bit (b=0, B=1)';
-        if(component) {
-          var master = component.master;
-          var rom = master ? master.rom : component.rom;
-          if(rom) {
-            if(rom.ram && rom.array && rom.array[0]) {
-              var numadr = rom.array.length;
-              var width = rom.array[0].length;
-              title = 'RAM with ' + numadr + ' ' + width + '-bit values (b=0, B=1). Note that the RAM may be bigger than the amount of bits shown, if so only the first lines are shown. Clicking bits with the mouse can toggle them.';
-            }
-            else if(rom.decoder) title = 'decoder (binary to unary)';
-            else if(rom.encoder) title = 'encoder (unary to binary)';
-            else if(rom.priority) title = 'priority selector (unary to unary)';
-            else if(rom.array && rom.array[0]) {
-              var numadr = rom.array.length;
-              var width = rom.array[0].length;
-              title = 'ROM with ' + numadr + ' ' + width + '-bit values (b=0, B=1). Clicking bits with the mouse can toggle them.';
-            }
-          }
-        }
-      }
       if(tc == '=') {
         if(this.displaysymbol == '$') title = 'bus (wire bundle) connection automatically numbered with $, unique code: ' + this.number + ', connects to matching codes on this bus';
         else if(digitmap[this.displaysymbol]) title = 'bus (wire bundle) numbered connection ' + this.number + ', connects to matching numbers on this bus';
         else title = 'bus (wire bundle)';
-      }
-      if(tc == 'M' || tc == '#M') {
-        title = 'mux';
-        var master = component.master;
-        var mux = master ? master.mux : component.mux;
-        if(mux) {
-          if(mux.demux) {
-            title = 'demux';
-            if(mux.bussize > 1) title += ' of width-' + mux.bussize + ' buses';
-            if(mux.bussize == 1 && mux.numdataout > 2) title = '' + mux.numdataout + '-output ' + title;
-            title += '. ';
-            var side0 = '';
-            var side1 = '';
-            if(!(mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'right'; side1 = 'left';}
-            if(!(mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'left'; side1 = 'right';}
-            if((mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'bottom'; side1 = 'top';}
-            if((mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'top'; side1 = 'bottom';}
-            title += 'Output 0 is at the ' + side0 + ', output ' + (mux.numdataout - 1) + ' is at the ' + side1;
-          } else if(mux.swap) {
-            title = 'controlled swap';
-            if(mux.bussize > 1) title += ' of width-' + mux.bussize + ' buses';
-          } else {
-            title = 'mux';
-            if(mux.bussize > 1) title += ' of width-' + mux.bussize + ' buses';
-            if(mux.numselout > 0) title += ' (with selection passthrough)';
-            if(mux.bussize == 1 && mux.numdatain > 2) title = '' + mux.numdatain + '-input ' + title;
-            title += '. ';
-            var side0 = '';
-            var side1 = '';
-            if(!(mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'right'; side1 = 'left';}
-            if(!(mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'left'; side1 = 'right';}
-            if((mux.dataindir & 1) && mux.datainlsbpos) {side0 = 'bottom'; side1 = 'top';}
-            if((mux.dataindir & 1) && !mux.datainlsbpos) {side0 = 'top'; side1 = 'bottom';}
-            title += 'Input 0 is at the ' + side0 + ', input ' + (mux.numdatain - 1) + ' is at the ' + side1;
-          }
-          if(mux.numselin > 1) {
-            title += '. ';
-            var sellsbname = '';
-            if(!(mux.selindir & 1) && mux.selinlsbpos) sellsbname = 'right';
-            if(!(mux.selindir & 1) && !mux.selinlsbpos) sellsbname = 'left';
-            if((mux.selindir & 1) && mux.selinlsbpos) sellsbname = 'bottom';
-            if((mux.selindir & 1) && !mux.selinlsbpos) sellsbname = 'top';
-            title += 'There are ' + mux.numselin + ' selection inputs and their LSB is at the ' + sellsbname;
-          }
-          /*title += ' DEBUG: ';
-          title += ' demux: ' + mux.demux + '. ';
-          title += ' swap: ' + mux.swap + '. ';
-          title += ' bussize: ' + mux.bussize + '. ';
-          title += ' numdatain: ' + mux.numdatain + '. ';
-          title += ' numdataout: ' + mux.numdataout + '. ';
-          title += ' numselin: ' + mux.numselin + '. ';
-          title += ' numselout: ' + mux.numselout + '. ';*/
-        }
-      }
-      if(tc == 'U' || tc == '#U') {
-        var master = component.master;
-        var alu = master ? master.alu : component.alu;
-        if(alu) {
-          var numinputs = (alu.numc ? 3 : (alu.numb ? 2 : 1));
-          if(alu.numselect) {
-            title = 'ALU (arithmetic logic unit), with custom selectable operation from the select input bits. First operation (matching select 0 and internal opindex ' +
-              alu.opindex + '): ' + alu.getOpLongName() + '. Select range: 0 - ' + ((1 << alu.numselect) - 1) + '. Selectable opindex range: ' + alu.opindex + ' - ' + (alu.opindex + ((1 << alu.numselect) - 1));
-              if(alu.numselect <= 4) {
-                title += '. All operations for each select value: ';
-                var num = 1 << alu.numselect;
-                for(var i = 0; i < num; i++) {
-                  if(i > 0) title += ', ';
-                  title += '' + i + ':' + alu.getOpShortNameFor(alu.opindex + i);
-                }
-              }
-          } else {
-            var op = alu.getOpLongName();
-            title = 'ALU (arithmetic logic unit): op: "' + op + '"' + (alu.signed ? ' (signed)' : '') + ',  opindex: ' + alu.opindex + ', num inputs: ' + numinputs;
-          }
-        } else {
-          title = 'ALU (but has error)';
-        }
-      }
-      if(tc == 'T' || tc == '#T') {
-        title = 'terminal';
-        if(component) {
-          var master = component.master;
-          var vte = master ? master.vte : component.vte;
-          if(vte) {
-            if(!vte.counter && !vte.decimaldisplay && !vte.decimalinput) {
-              if(vte.numoutputs > 0) title += ' (with ascii output and keyboard input, click to put cursor here)';
-              if(vte.numinputs > 0) title += ' (with ascii input, shown on the screen if read)';
-              if(vte.numoutputs > 0 && vte.numinputs > 0) title += ' (only outputs what was typed with keyboard using active cursor, not from the component inputs. The inputs are displayed as ascii on screen only.)';
-            }
-            if(vte.counter && !vte.countersettable && vte.numwrite == 1) title += ' (as counter)';
-            if(vte.counter && !vte.countersettable && vte.numwrite == 2) title += ' (as counter with reset)';
-            if(vte.counter && !vte.countersettable && vte.numwrite == 3) title += ' (as counter with up, reset, down. Screen can show signed (negative) values or values larger than the output bits support, but output bits will use twos complement and can be treated as unsigned if desired.)';
-            if(vte.counter && vte.countersettable && vte.numwrite == 1) title += ' (as decimal display memory)';
-            if(vte.counter && vte.countersettable && vte.numwrite == 2) title += ' (as counter with set)';
-            if(vte.counter && vte.countersettable && vte.numwrite == 3) title += ' (as counter with up, set, down. Screen can show signed (negative) values or values larger than the output bits support, but output bits will use twos complement and can be treated as unsigned if desired. Data input is treated as ' + (vte.signeddisplay ? 'twos complement signed' : 'unsigned') + '.)';
-            if(vte.decimaldisplay && !vte.counter) {
-              title += ' (as decimal display)';
-              if(vte.passthrough) title += ' (passes through the input to the output)';
-              if(vte.signeddisplay) title += ' (signed two\'s complement)';
-            }
-            if(vte.decimalinput && !vte.counter) {
-              title += ' (as decimal input, click to put cursor here, and type decimal digits, or hex digits preceded with 0x).';
-              title += ' max value, given the ' + vte.numoutputs + ' output wires: ' + (Math.pow(2, vte.numoutputs) - 1);
-            }
-
-            if(vte.supportsTyping()) this.renderer.setCursorPointer(true);
-          }
-        }
-      }
-      if(tc == 'D' || tc == '#D') {
-        title = 'RGB LED';
-        if(component) {
-          var dot = component.dotmatrix;
-          if(dot && !dot.rgbled) title = 'dot matrix screen';
-        }
       }
     }
 
@@ -8270,6 +8438,7 @@ function Cell() {
       this.renderer.cleanup();
     }
     this.renderer = getNewRenderer();
+    var component = this.components[0] || this.components[1];
 
     //clickFun
     var f = bind(function(component, x, y, e) {
@@ -8295,7 +8464,7 @@ function Cell() {
         for(var i = 0; i < w.components.length; i++) {
           var compo = w.components[i];
           if(!compo) continue;
-          console.log('component: index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y + ' number: ' + compo.number + ' | rom_out_pos: ' + compo.rom_out_pos + ' ff_cycle: ' + compo.ff_cycle + ',' + compo.ff_cycle_time);
+          console.log('component ' + i + ': index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y + ' number: ' + compo.number + ' | rom_out_pos: ' + compo.rom_out_pos + ' ff_cycle: ' + compo.ff_cycle + ',' + compo.ff_cycle_time);
           if(compo.master) console.log('master: index: ' + compo.master.index + ',  type: ' + compo.master.type + ', corecell: ' + compo.master.corecell.circuitsymbol + ', corecell.x: ' + compo.master.corecell.x + ', corecell.y: ' + compo.master.corecell.y);
           for(var j = 0; j < compo.inputs.length; j++) {
             var corecellinfo = (compo.inputs[j].corecell) ? (compo.inputs[j].corecell.circuitsymbol + ', corecell.x: ' + compo.inputs[j].corecell.x + ', corecell.y: ' + compo.inputs[j].corecell.y) : ('' + compo.inputs[j].corecell);
@@ -8305,7 +8474,7 @@ function Cell() {
 
       }
       return false;
-    }, this.components[0], x, y);
+    }, component, x, y);
 
     this.clickFun = f;
 
@@ -8548,7 +8717,7 @@ function RendererText() {
     if (!this.init2done) {
       this.div0.style.color = OFFCOLOR;
       this.div0.style.textAlign = 'center';
-      this.div0.style.fontSize = tw + 'px';
+      this.div0.style.fontSize = Math.ceil(tw * 0.9) + 'px';
       this.div0.style.fontFamily = 'monospace';
       this.div0.style.backgroundColor = '';
       this.div0.style.zIndex = MAINZINDEX;
@@ -8556,7 +8725,7 @@ function RendererText() {
       if(this.div1) {
         this.div1.style.color = ONCOLOR;
         this.div1.style.textAlign = 'center';
-        this.div1.style.fontSize = tw + 'px';
+        this.div1.style.fontSize = Math.ceil(tw * 0.9) + 'px';
         this.div1.style.fontFamily = 'monospace';
         //this.div1.style.fontWeight = 'bold';
         this.div1.style.backgroundColor = '';
@@ -8690,34 +8859,47 @@ function RendererText() {
         this.div1.style.color = led_on_fg_colors[color];
         this.div1.style.backgroundColor = led_on_bg_colors[color];
       }
-      if(virtualsymbol == 'D') {
+      else if(virtualsymbol == 'D') {
+        var outside = specialmap[symbol];
+        var dotmatrix = null;
+        if(cell.components[0] && cell.components[0].type == TYPE_DOTMATRIX) dotmatrix = cell.components[0].dotmatrix;
+        if(!dotmatrix && cell.components[0] && cell.components[0].master) dotmatrix = cell.components[0].master.dotmatrix;
+        if(dotmatrix && (cell.x < dotmatrix.x0b || cell.x >= dotmatrix.x1b || cell.y < dotmatrix.y0b || cell.y >= dotmatrix.y1b)) outside = true;
+
+        if(outside) {
+          this.div0.innerText = symbol;
+          this.div1.innerText = symbol;
+          this.div0.style.backgroundColor = OUTSIDESCREENBGCOLOR;
+          this.div0.style.color = OUTSIDESCREENFGCOLOR;
+        } else {
+          //this.div0.innerText = 'D';
+          this.div0.style.color = '#888';
+          this.div0.style.backgroundColor = '#888';
+          this.div0.style.visibility = 'visible';
+          // div 1 unused
+          this.div1.style.visibility = 'hidden';
+          this.div0.style.boxSizing = 'border-box'; // have the border not make the total size bigger, have it go inside
+        }
         var color = 0;
-        //this.div0.innerText = 'D';
-        this.div0.style.color = '#888';
-        this.div0.style.backgroundColor = '#888';
-        this.div0.style.visibility = 'visible';
-        // div 1 unused
-        this.div1.style.visibility = 'hidden';
-        this.div0.style.boxSizing = 'border-box'; // have the border not make the total size bigger, have it go inside
         var bordercolor = ONCOLOR;
         if(!sameDevice(cell.x, cell.y, 0)) this.div0.style.borderTop = '1px solid ' + bordercolor;
         if(!sameDevice(cell.x, cell.y, 1)) this.div0.style.borderRight = '1px solid ' + bordercolor;
         if(!sameDevice(cell.x, cell.y, 2)) this.div0.style.borderBottom = '1px solid ' + bordercolor;
         if(!sameDevice(cell.x, cell.y, 3)) this.div0.style.borderLeft = '1px solid ' + bordercolor;
       }
-      if(virtualsymbol == 's' || virtualsymbol == 'S') {
+      else if(virtualsymbol == 's' || virtualsymbol == 'S') {
         this.div0.style.color = SWITCHOFF_FGCOLOR;
         this.div1.style.color = SWITCHON_FGCOLOR;
         this.div0.style.backgroundColor = SWITCHOFF_BGCOLOR;
         this.div1.style.backgroundColor = SWITCHON_BGCOLOR;
       }
-      if(virtualsymbol == 'p' || virtualsymbol == 'P') {
+      else if(virtualsymbol == 'p' || virtualsymbol == 'P') {
         this.div0.style.color = SWITCHOFF_FGCOLOR;
         this.div1.style.color = SWITCHON_FGCOLOR;
         this.div0.style.backgroundColor = SWITCHOFF_BGCOLOR;
         this.div1.style.backgroundColor = SWITCHON_BGCOLOR;
       }
-      if(virtualsymbol == 'r' || virtualsymbol == 'R') {
+      else if(virtualsymbol == 'r' || virtualsymbol == 'R') {
         this.div0.style.color = SWITCHOFF_FGCOLOR;
         this.div1.style.color = SWITCHON_FGCOLOR;
         this.div0.style.backgroundColor = SWITCHOFF_BGCOLOR;
@@ -8725,44 +8907,62 @@ function RendererText() {
         this.div0.innerText = 'r';
         this.div1.innerText = 'R';
       }
-      if(symbol == 'b' || symbol == 'B') {
+      else if(symbol == 'b' || symbol == 'B') {
         //this.div1.style.color = this.div0.style.color;
       }
-      if(symbol == 'c' || symbol == 'C') {
-        this.div0.innerText = 'c';
-        this.div1.innerText = 'C';
-      }
-      if(virtualsymbol == 'T') {
-        this.div0.style.visibility = 'hidden';
-        this.div1.style.visibility = 'visible';
-        this.div1.style.backgroundColor = TERMINALBGCOLOR;
+      else if(virtualsymbol == 'T') {
+        var outside = specialmap[symbol];
+        var vte = null;
+        if(cell.components[0] && cell.components[0].type == TYPE_VTE) vte = cell.components[0].vte;
+        if(!vte && cell.components[0] && cell.components[0].master) vte = cell.components[0].master.vte;
+        if(vte && (cell.x < vte.x0b || cell.x >= vte.x1b || cell.y < vte.y0b || cell.y >= vte.y1b)) outside = true;
 
         this.div1.style.boxSizing = 'border-box'; // have the border not make the total size bigger, have it go inside
         var bordercolor = TERMINALFGCOLOR; //TERMINALMIDCOLOR;
-        if(!sameDevice(cell.x, cell.y, 0)) this.div1.style.borderTop = '1px solid ' + bordercolor;
-        if(!sameDevice(cell.x, cell.y, 1)) this.div1.style.borderRight = '1px solid ' + bordercolor;
-        if(!sameDevice(cell.x, cell.y, 2)) this.div1.style.borderBottom = '1px solid ' + bordercolor;
-        if(!sameDevice(cell.x, cell.y, 3)) this.div1.style.borderLeft = '1px solid ' + bordercolor;
+        if(!sameDevice(cell.x, cell.y, 0)) this.div0.style.borderTop = '1px solid ' + bordercolor;
+        if(!sameDevice(cell.x, cell.y, 1)) this.div0.style.borderRight = '1px solid ' + bordercolor;
+        if(!sameDevice(cell.x, cell.y, 2)) this.div0.style.borderBottom = '1px solid ' + bordercolor;
+        if(!sameDevice(cell.x, cell.y, 3)) this.div0.style.borderLeft = '1px solid ' + bordercolor;
 
-        this.div1.style.color = TERMINALFGCOLOR;
-        this.div1.innerText = ' ';
-        // The font characters are normally slightly bigger than a cell, but don't do that for the terminal, or bottom of letters gets obscured by the black cell below them, hiding bottom of j, underscores, etc
-        this.div1.style.fontSize = Math.floor(tw * 0.9) + 'px';
-
-        if(cell.components[0] && cell.components[0].type == TYPE_VTE) {
+        if(outside) {
+          if(specialmap[symbol]) {
+            this.div0.innerText = symbol;
+            this.div1.innerText = symbol;
+          } else {
+            // hide '#' and so on in outside-typing-area
+            this.div0.innerText = '';
+            this.div1.innerText = '';
+          }
+          this.div0.style.visibility = 'visible';
+          this.div1.style.visibility = 'hidden';
+          this.div0.style.backgroundColor = OUTSIDESCREENBGCOLOR;
+          this.div0.style.color = OUTSIDESCREENFGCOLOR;
+        } else {
+          this.div1.style.visibility = 'hidden';
+          this.div0.style.visibility = 'visible';
+          this.div0.style.backgroundColor = TERMINALBGCOLOR;
+          this.div0.style.color = TERMINALFGCOLOR;
+          this.div0.innerText = ' ';
+          // The font characters are normally slightly bigger than a cell, but don't do that for the terminal, or bottom of letters gets obscured by the black cell below them, hiding bottom of j, underscores, etc
+          this.div0.style.fontSize = Math.floor(tw * 0.9) + 'px';
+        }
+        if(vte) {
           var comp = cell.components[0];
-          var vte = comp.vte;
-          if(vte && vte.master == comp && vte.supportsTyping() && comp.corecell.x == cell.x && comp.corecell.y == cell.y) {
+          if(vte.master == comp && vte.supportsTyping() && comp.corecell.x == cell.x && comp.corecell.y == cell.y) {
             // set at position where this terminal is, because otherwise the browser will scroll the screen towards where the element is placed when focusing it
             vte.initTextArea(worldDiv, cell.x * tw, cell.y * th);
           }
         }
       }
-      if(symbol == 'I' || (cell.numbertype == NUMBER_ICDEF && digitmap[symbol])) {
+      else if(symbol == 'c' || symbol == 'C') {
+        this.div0.innerText = 'c';
+        this.div1.innerText = 'C';
+      }
+      else if(symbol == 'I' || (cell.numbertype == NUMBER_ICDEF && digitmap[symbol])) {
         this.div0.style.color = CHIPLABELFGCOLOR;
         this.div0.style.backgroundColor = CHIPLABELBGCOLOR;
       }
-      if(symbol == '|') {
+      else if(symbol == '|') {
         // The | ascii character renders a bit low compared to others. Tweak that here. TODO: find better way to keep characters properly centered in their cell
         this.div0.style.marginTop = '-' + (th >> 2) + 'px';
         this.div1.style.marginTop = '-' + (th >> 2) + 'px';
@@ -8792,6 +8992,7 @@ function RendererText() {
   };
 
   this.setCursorPointer = function(opt_textstyle) {
+    if(!this.div0) return;
     var style = opt_textstyle ? 'text' : 'pointer';
     this.div0.style.cursor = style;
     this.div1.style.cursor = style;
@@ -8803,12 +9004,14 @@ function RendererText() {
     if(type == TYPE_DOTMATRIX && (cell.circuitsymbol == 'D' || cell.circuitsymbol == '#' || cell.circuitsymbol == '#D')) {
       var dotmatrix = cell.components[0].dotmatrix;
       if(dotmatrix && !dotmatrix.error) {
-        var x = cell.x - dotmatrix.x0;
-        var y = cell.y - dotmatrix.y0;
-        value = dotmatrix.array[y][x];
-        if(value != this.prevvalue) {
-          this.div0.style.color = rgb_led_fg_colors[value];
-          this.div0.style.backgroundColor = rgb_led_bg_colors[value];
+        var x = cell.x - dotmatrix.x0b;
+        var y = cell.y - dotmatrix.y0b;
+        if(x < dotmatrix.w && y < dotmatrix.h) {
+          value = dotmatrix.array[y][x];
+          if(value != this.prevvalue) {
+            this.div0.style.color = rgb_led_fg_colors[value];
+            this.div0.style.backgroundColor = rgb_led_bg_colors[value];
+          }
         }
       }
     } else {
@@ -8861,18 +9064,19 @@ function RendererText() {
     }
   };
 
+  // typevte rendervte typeterminal renderterminal
   this.setTerminal = function(char, blink, blur) {
     if(blink) {
       //blinking cursor for the active terminal
-      this.div1.innerText = '';
-      registerBlinkingCursor(this.div1);
+      this.div0.innerText = '';
+      registerBlinkingCursor(this.div0);
     } else if(blur) {
-      this.div1.innerText = '';
-      this.div1.style.backgroundColor = TERMINALMIDCOLOR;
+      this.div0.innerText = '';
+      this.div0.style.backgroundColor = TERMINALMIDCOLOR;
     } else {
       if(char == this.prevchar) return;
-      this.div1.innerText = char;
-      this.div1.style.backgroundColor = TERMINALBGCOLOR;
+      this.div0.innerText = char;
+      this.div0.style.backgroundColor = TERMINALBGCOLOR;
     }
   };
 }
@@ -8948,6 +9152,8 @@ function sameDevice(x, y, dir) {
   var y2 = n.y;
   var c = world[y][x].circuitsymbol;
   var c2 = world[y2][x2].circuitsymbol;
+
+  if(world[y][x].clusterindex >= 0 && world[y][x].clusterindex == world[y2][x2].clusterindex) return true; // TODO: probably this check is enough and all the below can be removed
 
   if((c == 'b' || c == 'B') && (c2 == 'b' || c2 == 'B')) return true;
   /*if(c == 'c' && c2 == 'c') {
@@ -9935,8 +10141,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       // for big devices like IC and FlipFlop with multiple possible output values, it's
       // ugly if borders get different colors for 'on' and 'off' sub-parts of it, so set to
       // off (the letter character will still get on color)
-      if(i == 1 && cell.components[0]) {
-        var type = cell.components[0].type;
+      if(i == 1 && (cell.components[0] || cell.components[1])) {
+        var component = cell.components[0] || cell.components[1];
+        var type = component.type;
         if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM || type == TYPE_MUX || type == TYPE_ALU) {
           // only for the solid parts, wires part of this component must still use on color
           if(devicemaparea[c]) {
@@ -10444,7 +10651,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'D') {
         // turn # into space to not render the #'s in graphical mode
-        this.fallback.init2(cell, (symbol == 'D') ? 'D' : ' ', virtualsymbol); this.usefallbackonly = true; break;
+        this.fallback.init2(cell, extendmap[symbol] ? ' ' : symbol, virtualsymbol); this.usefallbackonly = true; break;
         // alternative: always pass space: render the DOTMATRIX purely as a plain color, no letter symbols
         //this.fallback.init2(cell, ' ', virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'g') {
@@ -12576,7 +12783,8 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(devicemap[c] && devicemap[c2]) return false; // device cores don't interact
 
   if((c == 'i' || c == '#i') && z != todir) return false;
-  if(c == 'M' || c == '#M' || c == 'U' || c == '#U') {
+  // large devices where outputs from the same cell can be different depending on direction use z cooridnate to distinguish them
+  if(c == 'M' || c == '#M' || c == 'U' || c == '#U' || c == 'T' || c == '#T' || c == 'b' || c == 'B' || c == '#b') {
     if((todir == 0 || todir == 2) && z != 1) return false;
     if((todir == 1 || todir == 3) && z != 0) return false;
     if(todir > 3) return false;
@@ -12640,7 +12848,8 @@ function getZ2(c, c2, ce, ce2, todir, z) {
     if(todir < 4) z2 = ((todir + 2) & 3);
     else z2 = 4 + ((todir + 2) & 3);
   }
-  if(c2 == 'M' || c2 == '#M' || c2 == 'U' || c2 == '#U') {
+  // large devices where outputs from the same cell can be different depending on direction use z cooridnate to distinguish them
+  if(c2 == 'M' || c2 == '#M' || c2 == 'U' || c2 == '#U' || c2 == 'T' || c2 == '#T' || c2 == 'b' || c2 == 'B' || c2 == '#b') {
     if(todir == 0 || todir == 2) z2 = 1;
   }
   if(dinputmap[c2] && ce2 == 2) {
@@ -12877,6 +13086,9 @@ function largeDeviceConnected(c, c2) { // largeConnected connectedLarge isLargeC
 function parseLargeDevices() {
   parseICCalls();
 
+  var TYPE_SMALL = TYPE_NAND; // placeholder for any type of cell that isn't a large device, such as nand, nor, switch, LED, ...
+  var TYPE_SPECIAL = TYPE_NOR; // placeholder for anything that is from the specialmap when it's not yet determined to be flip-flop; it doesn't matter what TYPE we assign to this as long as it's unique
+
   logPerformance('parseLargeDevices begin');
   var clusterindex = 0;
   used = initUsed2();
@@ -12894,8 +13106,8 @@ function parseLargeDevices() {
 
 
       var error = false;
+      var errormessage = 'unknown error';
       var array = [];
-
 
       while(stack.length) {
         var s = stack.pop();
@@ -12930,45 +13142,61 @@ function parseLargeDevices() {
         var x = array[i][0];
         var y = array[i][1];
         var c = world[y][x].circuitsymbol;
+        if(c == '#') continue;
 
         var type2 = TYPE_NULL;
-        if(ffmap[c]) type2 = TYPE_FLIPFLOP;
+        if(specialmap[c]) type2 = TYPE_SPECIAL;
+        else if(ffmap[c]) type2 = TYPE_FLIPFLOP;
         else if(rommap[c]) type2 = TYPE_ROM;
         else if(c == 'T') type2 = TYPE_VTE;
         else if(c == 'M') type2 = TYPE_MUX;
         else if(c == 'U') type2 = TYPE_ALU;
         else if(c == 'D') type2 = TYPE_DOTMATRIX;
         else if(c == 'J') type2 = TYPE_JUKEBOX;
-        else if(devicemap[c]) type2 = TYPE_NAND; // NAND is used as placeholder for ANY non-large device here
+        else if(devicemap[c]) type2 = TYPE_SMALL;
 
-        if(type2 != TYPE_NULL && type != TYPE_NULL && type != type2) {
+        if(type2 != TYPE_NULL && type2 != TYPE_SPECIAL && type != TYPE_NULL && type != TYPE_SPECIAL && type != type2) {
           error = true;  // error: the extension # touches another device type
+          errormessage = 'mixed component cell types in large component';
         }
-        if(type2 != TYPE_NULL && type2 != TYPE_NAND) type = type2;
+        //if(type2 != TYPE_NULL && type2 != TYPE_SMALL) type = type2;
+        if(type2 != TYPE_NULL) {
+          if(type == TYPE_NULL || type == TYPE_SPECIAL) type = type2;
+        }
       }
 
-      for(var i = 0; i < array.length; i++) {
-        var x = array[i][0];
-        var y = array[i][1];
-        if(type == TYPE_NULL) {
-          // nothing to do
-        } else {
-          if(world[y][x].circuitsymbol == '#') {
-            if(type == TYPE_FLIPFLOP) world[y][x].circuitsymbol = '#c';
-            if(type == TYPE_MUX) world[y][x].circuitsymbol = '#M';
-            if(type == TYPE_ALU) world[y][x].circuitsymbol = '#U';
-            if(type == TYPE_VTE) world[y][x].circuitsymbol = '#T';
-            if(type == TYPE_ROM) world[y][x].circuitsymbol = '#b';
-            // Don't do this for D and J, it splits up its one component into one component per cell, unlike alu, rom, ..., dotmatrix and jukebox aren't designed for that (and don't need it due to not having outputs).
-            //if(type == TYPE_DOTMATRIX) world[y][x].circuitsymbol = '#D';
-            //if(type == TYPE_JUKEBOX) world[y][x].circuitsymbol = '#J';
+      // in that case it's a flipflop instead
+      if(type == TYPE_SPECIAL) type = TYPE_FLIPFLOP;
+
+      if(type != TYPE_NULL && type != TYPE_SPECIAL && type != TYPE_SMALL) {
+        for(var i = 0; i < array.length; i++) {
+          var x = array[i][0];
+          var y = array[i][1];
+          if(type == TYPE_NULL) {
+            // nothing to do
           } else {
-            world[y][x].largedevicearray = array;
+            if(world[y][x].circuitsymbol == '#') {
+              if(type == TYPE_FLIPFLOP) world[y][x].circuitsymbol = '#c';
+              if(type == TYPE_MUX) world[y][x].circuitsymbol = '#M';
+              if(type == TYPE_ALU) world[y][x].circuitsymbol = '#U';
+              if(type == TYPE_VTE) world[y][x].circuitsymbol = '#T';
+              if(type == TYPE_ROM) world[y][x].circuitsymbol = '#b';
+              // Don't do this for D and J, it splits up its one component into one component per cell, unlike alu, rom, ..., dotmatrix and jukebox aren't designed for that (and don't need it due to not having outputs).
+              //if(type == TYPE_DOTMATRIX) world[y][x].circuitsymbol = '#D';
+              //if(type == TYPE_JUKEBOX) world[y][x].circuitsymbol = '#J';
+            } else {
+              world[y][x].largedevicearray = array;
+              world[y][x].largedevicetype = type;
+            }
+            if(type == TYPE_VTE) world[y][x].isvte = true;
           }
-          if(type == TYPE_VTE) world[y][x].isvte = true;
+          if(error) {
+            world[y][x].error = true;
+            world[y][x].errormessage = errormessage;
+          }
         }
-        if(error) world[y][x].error = true;
       }
+
       if(array.length > 1) {
         for(var i = 0; i < array.length; i++) {
           var x = array[i][0];
@@ -13093,8 +13321,8 @@ function parseComponents() {
   globalLooseWireInstanceE = null;
 
 
-  // PASS 2: parse all components
-  logPerformance('parseComponents pass 2 begin');
+  // PASS 1: parse all components
+  logPerformance('parseComponents pass 1 begin');
   used = initUsed3();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
@@ -13136,38 +13364,47 @@ function parseComponents() {
           var ce = world[y][x].circuitextra;
           if(!knownmap[c] || world[y][x].comment) continue; // it's an isolator
 
+          if(world[y][x].error) {
+            error = true;
+            if(world[y][x].errormessage) errormessage = world[y][x].errormessage;
+          }
+
           array.push(s);
 
           if(devicemap[c] || largeextendmap[c]) {
             var type2 = TYPE_NULL;
-            if(c == 's') type2 = TYPE_SWITCH_OFF;
-            if(c == 'S') type2 = TYPE_SWITCH_ON;
-            if(c == 'l') type2 = TYPE_LED;
-            if(c == 'p') type2 = TYPE_PUSHBUTTON_OFF;
-            if(c == 'P') type2 = TYPE_PUSHBUTTON_ON;
-            if(c == 'r') type2 = TYPE_TIMER_OFF;
-            if(c == 'R') type2 = TYPE_TIMER_ON;
-            if(c == 'a') type2 = TYPE_AND;
-            if(c == 'A') type2 = TYPE_NAND;
-            if(c == 'o') type2 = TYPE_OR;
-            if(c == 'O') type2 = TYPE_NOR;
-            if(c == 'e') type2 = TYPE_XOR;
-            if(c == 'E') type2 = TYPE_XNOR;
-            if(c == 'h') type2 = TYPE_ONEHOT;
-            if(c == 'H') type2 = TYPE_NONEHOT;
-            if(c == 'f') type2 = TYPE_CONSTANT_OFF;
-            if(c == 'F') type2 = TYPE_CONSTANT_ON;
-            if(c == 'b' || c == 'B' || c == '#b') type2 = TYPE_ROM;
-            if(c == 'i' || c == '#i') type2 = TYPE_IC;
-            if(c == 'M' || c == '#M') type2 = TYPE_MUX;
-            if(c == 'U' || c == '#U') type2 = TYPE_ALU;
-            if(c == 'T' || c == '#T') type2 = TYPE_VTE;
-            if(c == 'D' || c == '#D') type2 = TYPE_DOTMATRIX;
-            if(c == 'z') type2 = TYPE_TRISTATE;
-            if(c == 'Z') type2 = TYPE_TRISTATE_INV;
-            if(c == '?') type2 = TYPE_RANDOM;
-            if(c == 'J' || c == '#J') type2 = TYPE_JUKEBOX;
-            if(ffmap[c] || c == '#c') type2 = TYPE_FLIPFLOP;
+            if(world[y][x].largedevicetype != TYPE_NULL) {
+              type2 = world[y][x].largedevicetype;
+            } else {
+              if(c == 's') type2 = TYPE_SWITCH_OFF;
+              if(c == 'S') type2 = TYPE_SWITCH_ON;
+              if(c == 'l') type2 = TYPE_LED;
+              if(c == 'p') type2 = TYPE_PUSHBUTTON_OFF;
+              if(c == 'P') type2 = TYPE_PUSHBUTTON_ON;
+              if(c == 'r') type2 = TYPE_TIMER_OFF;
+              if(c == 'R') type2 = TYPE_TIMER_ON;
+              if(c == 'a') type2 = TYPE_AND;
+              if(c == 'A') type2 = TYPE_NAND;
+              if(c == 'o') type2 = TYPE_OR;
+              if(c == 'O') type2 = TYPE_NOR;
+              if(c == 'e') type2 = TYPE_XOR;
+              if(c == 'E') type2 = TYPE_XNOR;
+              if(c == 'h') type2 = TYPE_ONEHOT;
+              if(c == 'H') type2 = TYPE_NONEHOT;
+              if(c == 'f') type2 = TYPE_CONSTANT_OFF;
+              if(c == 'F') type2 = TYPE_CONSTANT_ON;
+              if(c == 'b' || c == 'B' || c == '#b') type2 = TYPE_ROM;
+              if(c == 'i' || c == '#i') type2 = TYPE_IC;
+              if(c == 'M' || c == '#M') type2 = TYPE_MUX;
+              if(c == 'U' || c == '#U') type2 = TYPE_ALU;
+              if(c == 'T' || c == '#T') type2 = TYPE_VTE;
+              if(c == 'D' || c == '#D') type2 = TYPE_DOTMATRIX;
+              if(c == 'z') type2 = TYPE_TRISTATE;
+              if(c == 'Z') type2 = TYPE_TRISTATE_INV;
+              if(c == '?') type2 = TYPE_RANDOM;
+              if(c == 'J' || c == '#J') type2 = TYPE_JUKEBOX;
+              if(ffmap[c] || c == '#c') type2 = TYPE_FLIPFLOP;
+            }
 
             if(type != TYPE_NULL && type != TYPE_UNKNOWN_DEVICE) {
               var ok = false;
@@ -13176,7 +13413,15 @@ function parseComponents() {
               if(world[y][x].callsub != null && world[y][x].callsub == corecell.callsub) ok = true;
               if(type == TYPE_TRISTATE && c == 'z') ok = true;
               if(type == TYPE_TRISTATE_INV && c == 'Z') ok = true;
-              if(corecell && corecell.clusterindex >= 0 && corecell.clusterindex == world[y][x].clusterindex && type == type2) ok = true;
+              if(corecell && corecell.clusterindex >= 0 && corecell.clusterindex == world[y][x].clusterindex && type == type2) {
+                // The case of a non-large device, where reusing the same letter within a group of # is ok
+                // e.g. a#a is a single and gate
+                // but: aa would form two and gates, also ok, but no # will not connect them into one
+                // but: a#o would be ambiguous and an error (conflict whether it's AND or OR)
+                // why reusing same letter like that is allowed: to allow to make multiple 3-wide (and wider) and gates that touch each other: a#aa#a are two AND gates of 3 characters wide each.
+                // NOTE: large devices like T, J, ... are treated separately elsewhere
+                ok = true;
+              }
               if(!ok) {
                 if((type == TYPE_TRISTATE && c == 'Z') || (type == TYPE_TRISTATE_INV && c == 'z')) {
                   errormessage = 'error: cannot mix low and high tristate buffers (z and Z)';
@@ -13316,9 +13561,9 @@ function parseComponents() {
     }
   }
 
-  // PASS 3, now to resolve large devices
+  // PASS 2, now to resolve large devices
   // these are handled in a separate pass, because for some types, a single large device can be made out of multiple sub-devices, e.g. ROM, FLIP-FLOP, ...
-  logPerformance('parseComponents pass 3 begin');
+  logPerformance('parseComponents pass 2 begin');
   used = initUsed3();
   for(var y0 = 0; y0 < h; y0++) {
     for(var x0 = line0[y0]; x0 < line1[y0]; x0++) {
@@ -13447,8 +13692,8 @@ function parseComponents() {
     }
   }
 
-  // pass 4: now resolve inputs and outputs of all components
-  logPerformance('parseComponents pass 4 begin');
+  // pass 3: now resolve inputs and outputs of all components
+  logPerformance('parseComponents pass 3 begin');
   var inputused = initUsed2();
   for(var i = 0; i < components.length; i++) {
     var component = components[i];
@@ -13564,9 +13809,8 @@ function parseComponents() {
           continue;
         }
         var component2 = cell2.components[0]; // component outputs to component2 (component is the input, component2 is the output)
-        if(!component2) {
-          continue;
-        }
+        if(!component2) component2 = cell2.components[1];
+        if(!component2) continue;
         if(component2.master) component2 = component2.master;
         var negated2 = negated;
         component2.inputs.push(component);
@@ -13938,9 +14182,12 @@ function countSlowGraphicalDivs() {
   return count;
 }
 
+var documentTitle = 'Circuit Name';
+
 function setDocumentTitle(text) {
   document.title = 'LogicEmu: ' + text;
   circuitNameEl.innerText = /*'Current Circuit: ' +*/ text;
+  documentTitle = text;
 }
 
 var firstParse = true; // to keep scrolled down if you were scrolled down before refresh

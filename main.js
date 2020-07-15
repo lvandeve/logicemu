@@ -984,9 +984,39 @@ function createMenuUI() {
   githubLink.innerHTML = '<a href="https://github.com/lvandeve/logicemu" target="_blank">github</a>';
   githubLink.style.paddingRight = '10px';
 
+  var collapseLink = util.makeElement('span', menuRow0El);
+  //collapseLink.title = 'collapse the top menu bar. After collapsing, press button at top right to bring it back up (requires scrolling up if the circuit is scrolled down)';
+  collapseLink.title = 'collapse the top menu bar. After collapsing, press button at top right to bring it back up';
+  collapseLink.innerText = '[-]';
+  collapseLink.style.paddingRight = '20px';
+  collapseLink.style.float = 'right';
+  collapseLink.style.color = '#00e';
+  //collapseLink.style.textDecoration = 'underline';
+  collapseLink.style.cursor = 'pointer';
+  collapseLink.onclick = function() {
+    util.removeElement(menuRows);
+    menuRows = util.makeElementAt('div', 0, 0);
+    menuRows.style.display = 'block';
+    menuRows.style.width = '100%';
+    menuRows.style.height = '100px';
+    menuRows.style.position = 'fixed';
+    collapseLink = util.makeElement('span', menuRows);
+    collapseLink.title = 'Bring back the top menu bar';
+    collapseLink.innerText = '[+]';
+    collapseLink.style.backgroundColor = '#f8f8f8';
+    collapseLink.style.marginRight = '20px';
+    collapseLink.style.float = 'right';
+    collapseLink.style.color = '#00e';
+    //collapseLink.style.textDecoration = 'underline';
+    collapseLink.style.cursor = 'pointer';
+    collapseLink.onclick = function() {
+      createMenuUI();
+    };
+  };
+
 
   circuitNameEl = util.makeElement('span', menuRow3El);
-  circuitNameEl.innerHTML = 'Circuit Name';
+  circuitNameEl.innerText = documentTitle;
   //circuitNameEl.style.backgroundColor = '#0f0';
   //circuitNameEl.style.border = '1px solid #080';
   circuitNameEl.style.fontSize = '27px';
@@ -1610,7 +1640,7 @@ var introText = `
 0"flip-flops, integrated circuits, ROMs, displays, ... Explore the circuits"
 0"index below or read the help circuits first to learn more!"
 
-     4"adder"          4"JK flipflop"
+  4"full adder"        4"JK flipflop"
 
   s..>a..>o..>l3"carry"
      >    ^              s-->jq->l

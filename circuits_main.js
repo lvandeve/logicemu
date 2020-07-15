@@ -1592,14 +1592,14 @@ registerCircuit('512 Color Sequence', `
    #########
    #########
    ^^^^^^^^^
-   T########<t<S
+   T########c<t<S
 
 `, 'sequence512');
 
 registerCircuit('Random Pixels', `
 
-       D#######<--.t<S
-       ########<p .
+       D#######c<-.t<S
+       ########   .
        ########<?<.
        ########<?<.
        ########<?<.
@@ -1710,7 +1710,7 @@ registerCircuit('10 7-segments', `
 
 registerCircuit('Hello World terminal', `
 
-    T######<............................
+    T######C<...........................
     #######                            .
     #######                            .
     #######                            .
@@ -1749,17 +1749,17 @@ registerCircuit('Keyboard and screen', `
    ##############
    ##############
    ##############
- .>##############
- . ##############
- .        ^^^^^^^
- .        |||||||
- .        |||||||
- .        |||||||
- d<......>T######
+   ##############
+.>C##############
+.         ^^^^^^^
+.         |||||||
+.         |||||||
+.         |||||||
+d<......>cT######
      .    #######
      .    #######
      .    #######
-     a[...#######
+     a[..c#######
      ^
      r10
 
@@ -6258,64 +6258,64 @@ registerCircuit('4-bit CPU', `
   . . .>#######i32 # = = =         |||| g      d g10  8g>a|||  ||||         ||||
   . . . ^^^^       # = = =         |||| w      ^ v       ^|||  ||||         ||||
   . ..+>####illlli # = = =   ......++++>a----->o<a<..... g|||  ||||         ||||
-  .-+-+>#"r1"^^^^#<b<1 = =   .     ||||                . 1|||  ||||  98     ||||
+  .-+-+>#"r1"^^^^#<#<1 = =   .     ||||                . 1|||  ||||  98     ||||
   . . .>#######i32 # = = =   .######i21<...e<a<g19     . 9|||  ||||  gg     ||||
   . . . ^^^^       # = = =    ^^^^ ^^^^    ^ ^         .  |||  ||||  vv     ||||
   . ..+>####illlli # = = =    |||| #i22<g9.. g8        ...|||  #####i23     ||||
-  .-+-+>#"r2"^^^^#<b<2 = =    |||| ^^^^                  ||||  ^^^^^^^^     ||||
+  .-+-+>#"r2"^^^^#<#<2 = =    |||| ^^^^                  ||||  ^^^^^^^^     ||||
   . . .>#######i32 # = = = ===3210=7654==================0321==32107654=====7654==3210==
   . . . ^^^^       # = = = =    "adder"             "shift"     "logic"           vvvv
   . ..+>####illlli # = = = =                                                      O###
-  .-+-+>#"r3"^^^^#<b<3 = = =     "ALU inputs"                                     v
+  .-+-+>#"r3"^^^^#<#<3 = = =     "ALU inputs"                                     v
   . . .>#######i32 # = = = =======3210====7654                                    lg20 "zero"
   . . . ^^^^       # = = = =      ||||    ||||
   . ..+>####illlli # = = = =   "A"llll    llll"B"
-  .-+-+>#"r4"^^^^#<b = = = =      ^^^^    ^^^^
+  .-+-+>#"r4"^^^^#<# = = = =      ^^^^    ^^^^
   . . .>#######i32 # = = = =   0g>#i31 0g>#i31
   . . . ^^^^       # = = = =   4g>#### 5g>####
   . ..+>####illlli # = = = =   1g>#### 1g>####
-  .-+-+>#"r5"^^^^#<b = = = =      ^^^^    ^^^^
+  .-+-+>#"r5"^^^^#<# = = = =      ^^^^    ^^^^
   . . .>#######i32 # = = = =      3210====3210
   . . . ^^^^       # = = = =              ||||
   . ..+>####illlli # = = = =         M########<a<g14
-  .-+-+>#"r6"^^^^#<b = = = =         ^^^^ ^^^^
+  .-+-+>#"r6"^^^^#<# = = = =         ^^^^ ^^^^
   . . .>#######i32 # = ==+=+=========3210 3210======
   . . . ^^^^       # =   = =        "B immediate"4 =
   . ..+>####illlli # =   = =                       =
-  .---+>#"r7"^^^^#<b ====+=+=========3210          =
+  .---+>#"r7"^^^^#<# ====+=+=========3210          =
       .>#######i32 #     = =         ||||"A indir"3=
       . ^^^^       #     = =         M########[g15 =
       g ||||       #     = =         ^^^^ ^^^^     =
       1 ||||"user" #     = ==========3210 3210===============3210
-        M#########<b     =                                   ||||
+        M#########<#     =                                   ||||
     "r8"^^^^ ^^^^  #     =                                   ||||"ABC"
         |||| SSSS  #     =          "jump"                   M#############<g5
         ||||       #     =         ==3210                    ##############<g6
-        M#########<b     =         = ||||                    ^^^^ ^^^^ ^^^^
+        M#########<#     =         = ||||                    ^^^^ ^^^^ ^^^^
     "r9"^^^^ ^^^^  #     =         = M########[g16           |||| |||| f|||
         |||| sSSS  #     =         = ^^^^ ^^^^               |||| ||||  |||
         ||||       #     ==========+=3210 ||||          11   |||| |||| 1|||
-        M#########<b     =         =      ||||          1098 |||| |||| 2|||
+        M#########<#     =         =      ||||          1098 |||| |||| 2|||
     "ra"^^^^ ^^^^  #     =         =     2||||          gggg |||| |||| g|||
         |||| ssSS  #     =         =     1||||"inc"     |||| |||| |||| ||||
         ||||       #     =         =     g||||"IP"      llll llll llll llll
-    "rb"M#########<b     =         =     .#i20<F        ^^^^ ^^^^ ^^^^ ^^^^
+    "rb"M#########<#     =         =     .#i20<F        ^^^^ ^^^^ ^^^^ ^^^^
         ^^^^ ^^^^  #     =         =      ^^^^          |||| |||| |||| ||||"instruction ROM"0
         |||| sssS  #     =         =      ||||          |||| |||| |||| ||||"put program here"0
         ||||       #     =         =    .-.+++--------->bbbb#Bbbb#bbbb#bbbb"0 0000"
-    "rc"M#########<b     =         =    |.-.++--------->bbbb#BbbB#bbbb#bbbB"1 0001"
+    "rc"M#########<#     =         =    |.-.++--------->bbbb#BbbB#bbbb#bbbB"1 0001"
         ^^^^ ^^^^  #     =         ="IP"||.-.+--------->bbbb#BbBb#bbbb#bbBb"2 0010"
         |||| ssss  #     =         =    |||.-.--------->bbbb#BbBB#bbbb#bbBB"3 0011"
         ||||       #     =         = 0g>#i31            BBbB#bBbb#bBBb#bbbb"4 0100"
-    "rd"M#########<b     =         = 7g>####            bbbb#BBBB#bbBB#bBbb"5 0101"
+    "rd"M#########<#     =         = 7g>####            bbbb#BBBB#bbBB#bBbb"5 0101"
         ^^^^ ^^^^  #     =         = 2g>####            bBBb#bBbb#bbbb#bBbB"6 0110"
         |||| ssss  #     =         =    ^^^^            bbBb#bBbb#bbbB#bBbb"7 0111"
         ||||       #     =         =    llll            bBBb#bBbb#bbbb#bBBb"8 1000"
-    "rd"M#########<b     =         =    ^^^^            bbBb#bBbB#bBBb#BBBB"9 1001"
+    "rd"M#########<#     =         =    ^^^^            bbBb#bBbB#bBBb#BBBB"9 1001"
         ^^^^ ^^^^  #     =         = 0g>#i31            BBBb#bbbb#BBBb#bbbb"a 1010"
         |||| ssss  #     =         = 6g>####            bBBB#bBbb#bBbB#Bbbb"b 1011"
         ||||       #     =         = 1g>####            bbbb#bBbb#bbbB#bBBB"c 1100"
-    "rf"M#########<b     =         =    ^^^^            bBBB#bBBB#bBBb#Bbbb"d 1101"
+    "rf"M#########<#     =         =    ^^^^            bBBB#bBBB#bBBb#Bbbb"d 1101"
         ^^^^ ^^^^        =         =====3210            BBbb#BBBB#bBbb#bbbb"e 1110"
         |||| ssss        =                              bbbb#bbbb#bbbb#bbbb"f 1111"
         ||||             =                                                 "      "
@@ -6974,8 +6974,8 @@ registerCircuit('Lissajous', `
 0"after 128 ticks (that is 2^7)."
 
                                                      1
-      D###############################<--g          gr###
-      ################################<----p"clear"  ####
+      D###############################c<-g          gr###
+      ################################Q<---p"clear"  ####
       ################################               ####
       ################################               ####
       ################################
@@ -7023,8 +7023,67 @@ registerCircuit('Lissajous', `
       543210   654321
       ===============
       6543210
-      T######<--g
-      #######<p"reset counter"
+      T######c<--g
+      #######Q<p"reset counter"
+
+`, 'lissajous');
+
+registerCircuit('Plasma', `
+
+0"This circuit creates a so called 'plasma' image by using the result of"
+0"sine functions of the X, Y or combinations of X and Y coordinates as the"
+0"red, green and blue color channel of the result."
+
+0"backplane values 0,1,2,3 form the X coordinate, and 4,5,6,7 form the Y"
+0"coordinate. The counter circles through all possible X and Y coordinates,"
+0"16 values for each so 256 possible coordinates in total, scanline by scanline."
+0"Each clock tick, a pixel is drawn on the dot matrix screen and the counter"
+0"updates to the next value."
+0"The ALUs compute the sine functions and give it to the RGB color inputs of"
+0"the DOT matrix screen."
+0"Coordinates are 4 bits each, the R, G and B color channels use 3 bits each,"
+0"so the sines are set take 4-bit input and give 3-bit output. They already"
+0"perform all necessary scaling of values to have the full period or result fit"
+0"in these bit amounts so no extra multiplies are necessary."
+
+                                      1
+      D###############c<--g          gr###
+      ################Q<----p"clear"  ####
+      ################                ####
+      ################                ####
+      ################
+      ################
+      ################      :
+      ################<-g8  B
+      ################<-g9  B
+      ################<-g10 B
+      ################<-g11 G
+      ################<-g12 G
+   7g>################<-g13 G
+   6g>################<-g14 R
+   5g>################<-g15 R
+   4g>################<-g16 R
+                  ^^^^      :
+                  gggg
+                  3210
+
+                         111
+                         654
+    100      111         ggg
+    098      321         |||
+    ggg      ggg   U80######
+    |||      |||        ^^^^
+U80####  U80####   U24######
+   ^^^^     ^^^^   ^^^^ ^^^^
+   gggg     gggg   gggg gggg
+   3210     7654   3210 7654
+
+
+      76543210
+      gggggggg
+      ||||||||
+      T#######c<d<--g
+      ########Q<p"reset counter"
 
 `, 'lissajous');
 
