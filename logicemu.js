@@ -3667,9 +3667,13 @@ function Alu() {
         case 76: return 'pext';
         case 77: return 'pdep';
         case 80: return 'sin';
-        case 81: return this.numb? 'atn2' : 'asin';
-        case 82: return 'ln';
-        case 83: return 'exp';
+        case 81: return 'asin';
+        case 82: return 'cos';
+        case 83: return 'acos';
+        case 84: return 'tan';
+        case 85: return this.numb? 'atn2' : 'atan';
+        case 86: return 'ln';
+        case 87: return 'exp';
         case 88: return 'time';
         case 89: return 'date';
         case 90: return 'unix';
@@ -3754,9 +3758,13 @@ function Alu() {
         case 76: return 'parallel bit extract (PEXT): select input bits with mask, extract to continguous low order bits of result';
         case 77: return 'parallel bit deposit (PDEP): select output bits with mask, deposit contiguious low order bits of input there';
         case 80: return 'sine (scaled)';
-        case 81: return this.numb ? 'atan2' : 'arcsine (scaled)';
-        case 82: return 'ln (input scaled to 1..e)';
-        case 83: return 'exp (input scaled to 0..1)';
+        case 81: return 'arcsine (scaled)';
+        case 82: return 'cosine (scaled)';
+        case 83: return 'arcosine (scaled)';
+        case 84: return 'tangent (scaled and limited)';
+        case 85: return this.numb ? 'atan2' : 'arctangent (scaled and limited)';
+        case 86: return 'ln (input scaled to 1..e)';
+        case 87: return 'exp (input scaled to 0..1)';
         case 88: return 'time in seconds since unix epoch. Needs positive edge input bit change to update.';
         case 89: return 'convert unix epoch to Y-M-S h:m:s: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
         case 90: return 'Y-M-S h:m:s to unix epoch: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
@@ -4297,6 +4305,40 @@ function Alu() {
       if(math.supportbigint) o = BigInt(o);
       if(signed) o -= (math.n1 << math.B(this.numo - 1));
     } else if(op == 81) {
+      // arcsine, with full input scaled in the full integer range, and scaled output period to fit full output integer range
+      if(signed) a += (math.n1 << math.B(this.numa - 1));
+      var f = Number(a) * 2.0 / ((1 << this.numa) - (signed ? 0 : 1)) - 1.0;
+      f = Math.asin(f);
+      f = f / (Math.PI) + 0.5; // make in range 0..1
+      o = Math.floor(f * (Math.pow(2, this.numo) - (signed ? 0 : 1)));
+      o = math.B(o);
+      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+    } else if(op == 82) {
+      // cosine, with full input period scaled in the full integer range, and scaled output to fit full output integer range
+      if(signed) a += (math.n1 << math.B(this.numa - 1));
+      var f = Number(a) * Math.PI * 2.0 / ((1 << this.numa) - 0);
+      f = Math.cos(f);
+      f = (f + 1.0) / 2.0; // make in range 0..1 instead of -1..1
+      o = Math.floor(f * (Math.pow(2, this.numo) - 1));
+      if(math.supportbigint) o = BigInt(o);
+      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+    } else if(op == 83) {
+      // arccosine, with full input scaled in the full integer range, and scaled output period to fit full output integer range
+      if(signed) a += (math.n1 << math.B(this.numa - 1));
+      var f = Number(a) * 2.0 / ((1 << this.numa) - (signed ? 0 : 1)) - 1.0;
+      f = Math.acos(f);
+      f = f / (Math.PI) + 0.5; // make in range 0..1
+      o = Math.floor(f * (Math.pow(2, this.numo) - (signed ? 0 : 1)));
+      o = math.B(o);
+      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+    } else if(op == 84) {
+        // tan, with input limited to 0..pi/4 (-pi/4..pi/4 if signed) and output 0..1 (-1..1 if signed) (scaled to fit in the full input/output bits)
+      var scaled = Number(a) / ((1 << this.numa) * (signed ? 0.5 : 1)); // full input bit range scaled to -1..1 for signed, 0..1 for unsigned
+      var f = scaled * Math.PI / 4;
+      f = Math.tan(f);
+      f = Math.min(Math.max(signed ? -1 : 0, f), 1);
+      o = math.B(Math.floor(f * ((1 << this.numo) * (signed ? 0.5 : 1))));
+    } else if(op == 85) {
       if(this.numb) {
         // atan2
         // range 0..1 if unsigned, -1..1 if signed
@@ -4310,16 +4352,14 @@ function Alu() {
         o = math.B(o);
         if(!a && !b) overflow = true;
       } else {
-        // arcsine, with full input scaled in the full integer range, and scaled output period to fit full output integer range
-        if(signed) a += (math.n1 << math.B(this.numa - 1));
-        var f = Number(a) * 2.0 / ((1 << this.numa) - (signed ? 0 : 1)) - 1.0;
-        f = Math.asin(f);
-        f = f / (Math.PI) + 0.5; // make in range 0..1
-        o = Math.floor(f * (Math.pow(2, this.numo) - (signed ? 0 : 1)));
-        o = math.B(o);
-        if(signed) o -= (math.n1 << math.B(this.numo - 1));
+        // arctan, with input limited to 0..1 (unsigned) or -1..1 (signed) and output 0..pi/4 or -pi/4..pi/4 (scaled to fit in the full input/output bits)
+        var scaled = Number(a) / ((1 << this.numa) * (signed ? 0.5 : 1)); // full input bit range scaled to -1..1 for signed, 0..1 for unsigned
+        var f = Math.atan(scaled);
+        f /= Math.PI / 4;
+        f = Math.min(Math.max(signed ? -1 : 0, f), 1);
+        o = math.B(Math.floor(f * ((1 << this.numo) * (signed ? 0.5 : 1))));
       }
-    } else if(op == 82) {
+    } else if(op == 86) {
       // ln, with input scaled from 1 to e, so output is scaled from 0 to 1
       if(signed) a += (math.n1 << math.B(this.numa - 1));
       var f = 1 + Number(a) * (Math.E - 1) / ((1 << this.numa) - 0);
@@ -4327,7 +4367,7 @@ function Alu() {
       o = Math.floor(f * (Math.pow(2, this.numo) - 1));
       if(math.supportbigint) o = BigInt(o);
       if(signed) o -= (math.n1 << math.B(this.numo - 1));
-    } else if(op == 83) {
+    } else if(op == 87) {
       // exp, with input scaled from 0 to 1, so output scaled from 1 to e
       if(signed) a += (math.n1 << math.B(this.numa - 1));
       var f = Number(a) / ((1 << this.numa) - 0);
