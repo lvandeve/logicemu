@@ -1402,7 +1402,7 @@ var TYPE_DOTMATRIX = TYPE_index++;
 var TYPE_TRISTATE = TYPE_index++;
 var TYPE_TRISTATE_INV = TYPE_index++;
 var TYPE_RANDOM = TYPE_index++;
-var TYPE_JUKEBOX = TYPE_index++; // music, speaker, sound, audio
+var TYPE_MUSIC_NOTE = TYPE_index++; // music, speaker, sound, audio
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
 // number types (higher value/nearer to bottom = higher priority) [numbertype number_type number priority number order numbers priority numbers order]
@@ -1411,7 +1411,7 @@ var NUMBER_NONE = NUMBER_index++;
 var NUMBER_LED = NUMBER_index++;
 var NUMBER_TIMER = NUMBER_index++;
 var NUMBER_PULSE = NUMBER_index++;
-var NUMBER_JUKEBOX = NUMBER_index++;
+var NUMBER_NOTE = NUMBER_index++;
 var NUMBER_ROM = NUMBER_index++;
 var NUMBER_ALU = NUMBER_index++;
 var NUMBER_VTE = NUMBER_index++;
@@ -1442,21 +1442,21 @@ typesymbols[TYPE_ONEHOT] = 'h'; typesymbols[TYPE_NONEHOT] = 'H';
 typesymbols[TYPE_CONSTANT_OFF] = 'f'; typesymbols[TYPE_CONSTANT_ON] = 'F';
 typesymbols[TYPE_FLIPFLOP] = 'c'; typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd';
 typesymbols[TYPE_TRISTATE] = 'z'; typesymbols[TYPE_TRISTATE_INV] = 'Z';
-typesymbols[TYPE_JUKEBOX] = 'J';
+typesymbols[TYPE_MUSIC_NOTE] = 'N';
 
 
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'h':true, 'H':true, 'f':true, 'F':true,
                  's':true, 'S':true, 'l':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
-                 'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true, '?':true, 'J':true};
+                 'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true, '?':true, 'N':true};
 // all "large" devices with slightly different parsing rules, where different cells can be different types of inputs/outputs
 // the "start" cells allow starting the parsing there. The extra ones can only be used once having started from one of the others
 // characters NOT included here but that can be part of large device once parsing: 'c' (can be standalone gate), '#', digits
 // WORK IN PROGRESS
 var largedevicestartmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'y':true,
-                      'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'J':true};
+                      'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'N':true};
 var largedevicemap = util.mergeMaps(largedevicestartmap, {'c':true, 'C':true});
-var largeextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#J':true}; // special extenders for large devices (not all of those are used yet)
+var largeextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#N':true}; // special extenders for large devices (not all of those are used yet)
 var extendmap = util.mergeMaps(largeextendmap, {'#':true});
 // devicemap as well as # (with extends devices)
 var devicemaparea = util.mergeMaps(devicemap, largeextendmap); devicemaparea['#'] = true;
@@ -1477,7 +1477,7 @@ var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x'
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true, 'U':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
                 '#':true, '=':true, 'i':true, 'T':true, 'D':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
-                'z':true, 'Z':true, '?':true, 'J':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#J':true};
+                'z':true, 'Z':true, '?':true, 'N':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#N':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true, '$':true};
 var puredigitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
@@ -1706,7 +1706,7 @@ function CallSub(id) {
       component.rom = null; // handled further
       component.mux = null; // handled further
       component.vte = null; // handled further
-      component.jukebox = null; // handled further
+      component.musicnote = null; // handled further
       component.alu = null; // handled further
       component.ff = null; // handled further
       component.rom_out_pos = v.rom_out_pos;
@@ -1877,22 +1877,22 @@ function CallSub(id) {
         // Do nothing, don't copy the dotmatrix: it's an output-only
         // component, and is invisible inside IC's, so has no effect
       }
-      if(v.jukebox) {
-        var jukebox = new JukeBox();
-        component.jukebox = jukebox;
-        jukebox.x0 = v.jukebox.x0;
-        jukebox.y0 = v.jukebox.y0;
-        jukebox.x1 = v.jukebox.x1;
-        jukebox.y1 = v.jukebox.y1;
-        jukebox.has_enable = v.jukebox.has_enable;
-        jukebox.numvolinputs = v.jukebox.numvolinputs;
-        jukebox.numfreqinputs = v.jukebox.numfreqinputs;
-        jukebox.numshapeinputs = v.jukebox.numshapeinputs;
-        jukebox.basefrequency = v.jukebox.basefrequency;
-        jukebox.baseshape = v.jukebox.baseshape;
-        jukebox.basevolume = v.jukebox.basevolume;
-        jukebox.error = v.jukebox.error;
-        jukebox.errormessage = v.jukebox.errormessage;
+      if(v.musicnote) {
+        var musicnote = new MusicNote();
+        component.musicnote = musicnote;
+        musicnote.x0 = v.musicnote.x0;
+        musicnote.y0 = v.musicnote.y0;
+        musicnote.x1 = v.musicnote.x1;
+        musicnote.y1 = v.musicnote.y1;
+        musicnote.has_enable = v.musicnote.has_enable;
+        musicnote.numvolinputs = v.musicnote.numvolinputs;
+        musicnote.numfreqinputs = v.musicnote.numfreqinputs;
+        musicnote.numshapeinputs = v.musicnote.numshapeinputs;
+        musicnote.basefrequency = v.musicnote.basefrequency;
+        musicnote.baseshape = v.musicnote.baseshape;
+        musicnote.basevolume = v.musicnote.basevolume;
+        musicnote.error = v.musicnote.error;
+        musicnote.errormessage = v.musicnote.errormessage;
       }
 
       if(v.type == TYPE_SWITCH_OFF || v.type == TYPE_SWITCH_ON) {
@@ -3586,7 +3586,7 @@ function Alu() {
   this.numselect = 0;
 
   this.signed = false;
-  this.opindex = 0;
+  this.opindex = 24; // default (without number), the operation is 'add'
   // not used by all ops
   this.preva = undefined;
   this.prevo = undefined;
@@ -6087,7 +6087,7 @@ var suspendAudioContext = function() {
 
 // Sound, speaker, music, audio
 // has same single output everywhere, so no master needed
-function JukeBox() {
+function MusicNote() {
   this.x0 = 0;
   this.y0 = 0;
   this.x1 = 0;
@@ -6340,7 +6340,7 @@ function JukeBox() {
 
     this.w = this.x1 - this.x0;
     this.h = this.y1 - this.y0;
-    component.jukebox = this;
+    component.musicnote = this;
 
     var freq = component.number;
     var shape = 0;
@@ -6371,8 +6371,8 @@ function JukeBox() {
 
     if(io.nis > 1) { this.setError('too many input sides'); return false; }
 
-    // commented out: do allow jukebox output. It's a very simple output (can have any amount, they're all the same) indicating whether it's playing
-    //if(io.nos > 0) { this.setError('jukebox shouldn\'t have output sides'); return false; }
+    // commented out: do allow musicnote output. It's a very simple output (can have any amount, they're all the same) indicating whether it's playing
+    //if(io.nos > 0) { this.setError('musicnote shouldn\'t have output sides'); return false; }
 
     if(io.iy.n) {
       if(io.iy.n > 1) { this.setError('too many c inputs'); return false; }
@@ -6839,7 +6839,7 @@ function Component() {
       return this.value; // not implemented in this function, but elsewhere
     } else if(this.type == TYPE_RANDOM) {
       return (Math.random() < 0.5);
-    } else if(this.type == TYPE_JUKEBOX) {
+    } else if(this.type == TYPE_MUSIC_NOTE) {
       return numon > 0;
     }
     return false;
@@ -6999,7 +6999,7 @@ function Component() {
         if(!value2 && prevvalue2) numc_neg_edge++;
       }
 
-      if(this.type == TYPE_ROM || this.type == TYPE_MUX || this.type == TYPE_ALU || this.type == TYPE_VTE || this.type == TYPE_DOTMATRIX || this.type == TYPE_JUKEBOX) {
+      if(this.type == TYPE_ROM || this.type == TYPE_MUX || this.type == TYPE_ALU || this.type == TYPE_VTE || this.type == TYPE_DOTMATRIX || this.type == TYPE_MUSIC_NOTE) {
         rom_inputs[i] = value2;
       }
     }
@@ -7032,9 +7032,9 @@ function Component() {
       if(this.dotmatrix) {
         this.dotmatrix.update(rom_inputs);
       }
-    } else if(this.type == TYPE_JUKEBOX) {
-      if(this.jukebox) {
-        this.jukebox.update(rom_inputs);
+    } else if(this.type == TYPE_MUSIC_NOTE) {
+      if(this.musicnote) {
+        this.musicnote.update(rom_inputs);
       }
       this.value = this.getNewValue(numon, numoff);
     } else if(this.type == TYPE_IC) {
@@ -7222,7 +7222,7 @@ function Component() {
     }
     // for TYPE_ROM, just do default behavior, it already toggles bit
     if(e.ctrlKey && this.type != TYPE_ROM && !changeMode) {
-      if(this.jukebox) this.jukebox.stop();
+      if(this.musicnote) this.musicnote.stop();
       var didsomething = true;
       if(e.shiftKey) {
         if(this.altType) {
@@ -7307,7 +7307,7 @@ function Component() {
       var value = this.value;
       var type = changeMode;
       var symbol = typesymbols[type];
-      if(this.jukebox) this.jukebox.stop();
+      if(this.musicnote) this.musicnote.stop();
       /*if(changeMode == 'rem_inputs') {
         this.inputs = [];
         changeMode = null;
@@ -7332,10 +7332,10 @@ function Component() {
       if(type == TYPE_RANDOM) {
         value = Math.random() < 0.5;
       }
-      if(type == TYPE_JUKEBOX) {
-        if(!this.jukebox) {
-          this.jukebox = new JukeBox();
-          this.jukebox.initDefault(this);
+      if(type == TYPE_MUSIC_NOTE) {
+        if(!this.musicnote) {
+          this.musicnote = new MusicNote();
+          this.musicnote.initDefault(this);
         }
       }
       if(!e.ctrlKey && !e.shiftKey) changeMode = null;
@@ -8100,7 +8100,7 @@ function Cell() {
         if(this.numbertype == NUMBER_LED) title = 'digit affecting LED color';
         if(this.numbertype == NUMBER_TIMER) title = 'digit indicating timer speed';
         if(this.numbertype == NUMBER_PULSE) title = 'digit indicating pulse speed';
-        if(this.numbertype == NUMBER_JUKEBOX) title = 'digit indicating jukebox sound frequency';
+        if(this.numbertype == NUMBER_NOTE) title = 'digit indicating music note sound frequency';
         if(this.numbertype == NUMBER_ROM) title = 'digit indicating least significant bit position of ROM address';
         if(this.numbertype == NUMBER_ALU) title = 'digit affecting ALU operation';
         if(this.numbertype == NUMBER_VTE && this.metasymbol == '1') title = 'digit indicating decimal display is signed';
@@ -8256,18 +8256,18 @@ function Cell() {
               }
             }
           }
-        } else if(type == TYPE_JUKEBOX) {
-          title = 'jukebox (speaker, for music)';
+        } else if(type == TYPE_MUSIC_NOTE) {
+          title = 'music note (note/noise, audio speaker, for music)';
           if(tc == 'y') {
             title = 'enable input (y) for ' + title;
           } else if(component) {
-            var jukebox = component.jukebox;
-            if(jukebox) {
-              title += '. Frequency: ' + (jukebox.numfreqinputs ? 'variable' : jukebox.basefrequency) + ' Hz';
-              title += '. Shape: ' + jukebox.getShapeName();
-              if(jukebox.numvolinputs) title += '. Has volume input';
-              if(jukebox.numfreqinputs) title += '. Has frequency input';
-              if(jukebox.numshapeinputs) title += '. Has shape input';
+            var musicnote = component.musicnote;
+            if(musicnote) {
+              title += '. Frequency: ' + (musicnote.numfreqinputs ? 'variable' : musicnote.basefrequency) + ' Hz';
+              title += '. Shape: ' + musicnote.getShapeName();
+              if(musicnote.numvolinputs) title += '. Has volume input';
+              if(musicnote.numfreqinputs) title += '. Has frequency input';
+              if(musicnote.numshapeinputs) title += '. Has shape input';
             }
           }
         } else if(type == TYPE_MUX) {
@@ -11435,13 +11435,13 @@ function parseNumbers() {
       if(c == 'l') type = NUMBER_LED;
       if(c == 'r' || c == 'R') type = NUMBER_TIMER;
       if(c == 'q' || c == 'Q') type = NUMBER_PULSE;
-      if(c == 'J') type = NUMBER_JUKEBOX;
+      if(c == 'N') type = NUMBER_NOTE;
       if(c == 'I') type = NUMBER_ICDEF;
       if(c == 'i') type = NUMBER_ICCALL;
       if(c == 'g') type = NUMBER_GLOBAL;
       if(c == 'U') type = NUMBER_ALU; // TODO: this is not yet working: NUMBER_ALU should trump NUMBER_LED, but it looks like it does not in practice, at least for multidigit number
       if(c == 'T') type = NUMBER_VTE; // TODO: same problem as NUMBER_ALU: does not actually use the priority order at all, and in addition this number should work next to # too and this code here doesn't know when the # belongs to a T
-      // TODO: the above doesn't work with device extenders # for T and J (for U, i it works because those numbers are required to be next to the i/U)
+      // TODO: the above doesn't work with device extenders # for T and N (for U, i it works because those numbers are required to be next to the i/U)
       if(antennamap[c]) type = NUMBER_ANTENNA;
       // todo: rom corner (is diagonal, currently not handled in this code...)
 
@@ -13073,7 +13073,7 @@ function LargeDevice() {
 
   // component type matching this large device (note: a large device may be made out of multiple components,
   // but usually they'll have all the same type, or there'll be one clearly defining type)
-  // can be (after TYPE_NULL): TYPE_IC, TYPE_FLIPFLOP, TYPE_MUX, TYPE_VTE, TYPE_DOTMATRIX, TYPE_ALU, TYPE_ROM, TYPE_JUKEBOX
+  // can be (after TYPE_NULL): TYPE_IC, TYPE_FLIPFLOP, TYPE_MUX, TYPE_VTE, TYPE_DOTMATRIX, TYPE_ALU, TYPE_ROM, TYPE_MUSIC_NOTE
   this.type = TYPE_NULL;
 };
 
@@ -13105,9 +13105,9 @@ function largeDeviceConnected(c, c2) { // largeConnected connectedLarge isLargeC
   // exception of further below rules for c and C: clock gates never interact even when of the different types (large and small)
   if((c == 'c' || c == 'C') && (c2 == 'c' || c2 == 'C')) return false;
 
-  // if they are from uniquely distinct device types, they do not interact. E.g. a J and a L are completely different devices so don't interact. But a j and a k would interact since they can be part of one device with mixed letters, the flip-flop. And y (the enable input) can be part of almost anything so always interacts.
-  var c_unique = (c == 'J' || c == 'i' || c == 'T' || c == 'b' || c == 'B' || c == 'M' || c == 'U' || c == 'D');
-  var c2_unique = (c2 == 'J' || c2 == 'i' || c2 == 'T' || c2 == 'b' || c2 == 'B' || c2 == 'M' || c2 == 'U' || c2 == 'D');
+  // if they are from uniquely distinct device types, they do not interact. E.g. a N and a D are completely different devices so don't interact. But a j and a k would interact since they can be part of one device with mixed letters, the flip-flop. And y (the enable input) can be part of almost anything so always interacts.
+  var c_unique = (c == 'N' || c == 'i' || c == 'T' || c == 'b' || c == 'B' || c == 'M' || c == 'U' || c == 'D');
+  var c2_unique = (c2 == 'N' || c2 == 'i' || c2 == 'T' || c2 == 'b' || c2 == 'B' || c2 == 'M' || c2 == 'U' || c2 == 'D');
   if(c_unique && c2_unique) return false;
   // some mix of symbols, e.g. y connecting to a T, forming the enable input of the T
   // note that a few nonsensical combinations can happen here anyway, e.g. a j with a D, but for simplicity of rules (e.g. treat almost all symbols involved in flip-flops the same) those will connect, but should result in error (handled elsewhere)
@@ -13192,7 +13192,7 @@ function parseLargeDevices() {
         else if(c == 'M') type2 = TYPE_MUX;
         else if(c == 'U') type2 = TYPE_ALU;
         else if(c == 'D') type2 = TYPE_DOTMATRIX;
-        else if(c == 'J') type2 = TYPE_JUKEBOX;
+        else if(c == 'N') type2 = TYPE_MUSIC_NOTE;
         else if(devicemap[c]) type2 = TYPE_SMALL;
 
         if(type2 != TYPE_NULL && type2 != TYPE_SPECIAL && type != TYPE_NULL && type != TYPE_SPECIAL && type != type2) {
@@ -13221,9 +13221,9 @@ function parseLargeDevices() {
               if(type == TYPE_ALU) world[y][x].circuitsymbol = '#U';
               if(type == TYPE_VTE) world[y][x].circuitsymbol = '#T';
               if(type == TYPE_ROM) world[y][x].circuitsymbol = '#b';
-              // Don't do this for D and J, it splits up its one component into one component per cell, unlike alu, rom, ..., dotmatrix and jukebox aren't designed for that (and don't need it due to not having outputs).
+              // Don't do this for D and N, it splits up its one component into one component per cell, unlike alu, rom, ..., dotmatrix and musicnote aren't designed for that (and don't need it due to not having outputs).
               //if(type == TYPE_DOTMATRIX) world[y][x].circuitsymbol = '#D';
-              //if(type == TYPE_JUKEBOX) world[y][x].circuitsymbol = '#J';
+              //if(type == TYPE_MUSIC_NOTE) world[y][x].circuitsymbol = '#N';
             } else {
               world[y][x].largedevicearray = array;
               world[y][x].largedevicetype = type;
@@ -13442,7 +13442,7 @@ function parseComponents() {
               if(c == 'z') type2 = TYPE_TRISTATE;
               if(c == 'Z') type2 = TYPE_TRISTATE_INV;
               if(c == '?') type2 = TYPE_RANDOM;
-              if(c == 'J' || c == '#J') type2 = TYPE_JUKEBOX;
+              if(c == 'N' || c == '#N') type2 = TYPE_MUSIC_NOTE;
               if(ffmap[c] || c == '#c') type2 = TYPE_FLIPFLOP;
             }
 
@@ -13459,7 +13459,7 @@ function parseComponents() {
                 // but: aa would form two and gates, also ok, but no # will not connect them into one
                 // but: a#o would be ambiguous and an error (conflict whether it's AND or OR)
                 // why reusing same letter like that is allowed: to allow to make multiple 3-wide (and wider) and gates that touch each other: a#aa#a are two AND gates of 3 characters wide each.
-                // NOTE: large devices like T, J, ... are treated separately elsewhere
+                // NOTE: large devices like T, N, ... are treated separately elsewhere
                 ok = true;
               }
               if(!ok) {
@@ -13627,7 +13627,7 @@ function parseComponents() {
       else if(c0 == 'U' && component && component.type == TYPE_ALU) type = TYPE_ALU;
       else if(c0 == 'T' && component && component.type == TYPE_VTE) type = TYPE_VTE;
       else if(c0 == 'D' && component && component.type == TYPE_DOTMATRIX) type = TYPE_DOTMATRIX;
-      else if(c0 == 'J' && component && component.type == TYPE_JUKEBOX) type = TYPE_JUKEBOX;
+      else if(c0 == 'N' && component && component.type == TYPE_MUSIC_NOTE) type = TYPE_MUSIC_NOTE;
       else continue;
 
       array = world[y0][x0].largedevicearray;
@@ -13683,11 +13683,11 @@ function parseComponents() {
         }
       }
 
-      if(type == TYPE_JUKEBOX) {
-        var jukebox = new JukeBox();
-        if(!jukebox.init1(array, component)) {
-          console.log('jukebox error @' + array[0][0] + ' ' + array[0][1]);
-          jukebox.error = true;
+      if(type == TYPE_MUSIC_NOTE) {
+        var musicnote = new MusicNote();
+        if(!musicnote.init1(array, component)) {
+          console.log('music note error @' + array[0][0] + ' ' + array[0][1]);
+          musicnote.error = true;
         }
       }
 
@@ -13987,10 +13987,10 @@ function parseComponents() {
         component.markError(component.dotmatrix.errormessage);
       }
     }
-    if(component.jukebox) {
-      if(!component.jukebox.error && !component.jukebox.init2()) component.jukebox.error = true;
-      if(component.jukebox.error) {
-        component.markError(component.jukebox.errormessage);
+    if(component.musicnote) {
+      if(!component.musicnote.error && !component.musicnote.init2()) component.musicnote.error = true;
+      if(component.musicnote.error) {
+        component.markError(component.musicnote.errormessage);
       }
     }
     if(component.type == TYPE_TRISTATE || component.type == TYPE_TRISTATE_INV) {
@@ -14028,8 +14028,8 @@ function parseComponents() {
     if(component.type == TYPE_DOTMATRIX && component.dotmatrix && component.dotmatrix.error) {
       component.markError(component.dotmatrix.errormessage);
     }
-    if(component.type == TYPE_JUKEBOX && component.jukebox && component.jukebox.error) {
-      component.markError(component.jukebox.errormessage);
+    if(component.type == TYPE_MUSIC_NOTE && component.musicnote && component.musicnote.error) {
+      component.markError(component.musicnote.errormessage);
     }
   }
 
@@ -14642,7 +14642,7 @@ registerChangeDropdownElement(TYPE_CONSTANT_ON);
 registerChangeDropdownElement('c');
 registerChangeDropdownElement('C');
 registerChangeDropdownElement(TYPE_DELAY);
-registerChangeDropdownElement(TYPE_JUKEBOX);
+registerChangeDropdownElement(TYPE_MUSIC_NOTE);
 registerChangeDropdownElement(TYPE_RANDOM);
 //registerChangeDropdownElement('rem_inputs');
 

@@ -532,44 +532,44 @@ s-.>d]a->l   s..>c..>l
 
 
 
-0"A Jukebox 'J' acts like a speaker, producing a tone of a given frequency."
+0"A music note 'N' acts like a speaker, producing a tone of a given frequency."
 
 0"NOTE: this only works if your browser supports Web Audio. The browser may"
 0"also require interaction with the page, by clicking something, before audio"
 0"can play."
-0"If not supported, the J's will still indicate when they're enabled."
+0"If not supported, the N's will still indicate when they're enabled."
 
-p-->J349
-  p------>J369
-p-->J391
-  p------>J415
-p-->J440
-p-->J466
-  p------>J493
-p-->J523
-  p------>J554
-p-->J587
-  p------>J622
-p-->J659
-p-->J698
+p-->N349
+  p------>N369
+p-->N391
+  p------>N415
+p-->N440
+p-->N466
+  p------>N493
+p-->N523
+  p------>N554
+p-->N587
+  p------>N622
+p-->N659
+p-->N698
 
 
 0"Values above 100000 indicate different audio wave shapes:"
 
-p-->J000440 0"sine"
+p-->N000440 0"sine"
 
-p-->J100440 0"square"
+p-->N100440 0"square"
 
-p-->J200440 0"triangle"
+p-->N200440 0"triangle"
 
-p-->J300440 0"sawtooth"
+p-->N300440 0"sawtooth"
 
-p-->J40000 0"white noise"
+p-->N400000 0"white noise"
 
 
 0"Multiple inputs control the volume in binary:"
 
-  J###440
+  N###440
   ^^^^
   ||||
   ssss
@@ -579,10 +579,10 @@ p-->J40000 0"white noise"
 0"Multiple input groups control different properties. The number now is the"
 0"maximum frequency. Both freq and vol must have a non-zero value to hear"
 0"anything."
-0"if a jukebox has an y-input, it's an enable-input and the jukebox only"
+0"if a music note has an y-input, it's an enable-input and the music note only"
 0"produces sound if it's on"
 
-  J########################y#2000
+  N########################y#2000
   ^^^      ^^^^    ^^^^    ^
   |||      ||||    ||||    |
   sss      sSss    ssss    S
@@ -600,6 +600,8 @@ p-->J40000 0"white noise"
          s
         "G"
 
+0"('D' comes from display as will be seen below.)"
+
 0"RGB LEDs with less or more than 3 inputs also exist and use various"
 0"color palettes:"
 
@@ -608,7 +610,7 @@ D    D###    D########
 s    ssss    sssssssss
 
 0"With more input groups as configured below and at least a dot (c) or fill (q)"
-0"input, D is the Dot Matrix screen. An optional enable 'y' input is also"
+0"input, D is the Dot Matrix Display. An optional enable 'y' input is also"
 0"supported."
 
 0"With binary addressing:"
@@ -2748,82 +2750,82 @@ r r r r r r r r r r r
 
 
 
-0"## Jukebox"
+0"## Music Note"
 
-3"J: jukebox (speaker)"
+3"N: music note (note/noise, audio speaker)"
 
-0"A Jukebox 'J' acts like a speaker, producing a tone of a given frequency."
+0"A Music Note 'N' acts like a speaker, producing a tone of a given frequency."
 
 0"NOTE: this only works if your browser supports Web Audio. The browser may"
 0"also require interaction with the page, by clicking something, before audio"
 0"can play."
-0"If not supported, the J's will still indicate when they're enabled."
+0"If not supported, the N's will still indicate when they're enabled."
 
-p-->J349
-  p------>J369
-p-->J391
-  p------>J415
-p-->J440
-p-->J466
-  p------>J493
-p-->J523
-  p------>J554
-p-->J587
-  p------>J622
-p-->J659
-p-->J698
+p-->N349
+  p------>N369
+p-->N391
+  p------>N415
+p-->N440
+p-->N466
+  p------>N493
+p-->N523
+  p------>N554
+p-->N587
+  p------>N622
+p-->N659
+p-->N698
 
 0"Values from 20 to 20000 hertz are supported, though not all may be audible"
 0"through your speakers."
 
-p-->J20
+p-->N20
 
-p-->J50
+p-->N50
 
-p-->J100
+p-->N100
 
-p-->J200
+p-->N200
 
-p-->J400
+p-->N400
 
-p-->J1000
+p-->N1000
 
-p-->J2000
+p-->N2000
 
-p-->J4000
+p-->N4000
 
-p-->J8000
+p-->N8000
 
-p-->J12000
+p-->N12000
 
-p-->J15000
+p-->N15000
 
-p-->J20000
+p-->N20000
 
 
 0"Playing two sounds with slightly different frequencies at the same time may create a beat effect:"
 
-  .>J440
+  .>N440
 p..
-  .>J441
+  .>N441
 
 
 0"By default the audio is a sine wave. Adding increments of 100000 allows other wave shapes:"
 
-p-->J000440 0"sine"
+p-->N000440 0"sine"
 
-p-->J100440 0"square"
+p-->N100440 0"square"
 
-p-->J200440 0"triangle"
+p-->N200440 0"triangle"
 
-p-->J300440 0"sawtooth"
+p-->N300440 0"sawtooth"
 
-p-->J400000 0"white noise"
+p-->N400000 0"white noise"
 
 
 0"Multiple inputs control the volume in binary:"
 
-  J###440
+  N###440
   ^^^^
   ||||
   ssss
@@ -2834,17 +2836,17 @@ p-->J400000 0"white noise"
 0"maximum frequency. Both freq and vol must have a non-zero value to hear"
 0"anything."
 
-  J#####################2000
+  N#####################2000
   ^^^      ^^^^    ^^^^
   |||      ||||    ||||
   sss      sSss    ssss
 1"shape" 1"freq"  1"vol"
 
 
-0"A jukebox can also be given an enable-input with y, then it only"
+0"A music note can also be given an enable-input with y, then it only"
 0"produces sound if it's on"
 
-  J########################y#2000
+  N########################y#2000
   ^^^      ^^^^    ^^^^    ^
   |||      ||||    ||||    |
   sss      sSss    ssss    S
@@ -2852,9 +2854,9 @@ p-->J400000 0"white noise"
 
 
 
-0"## Dot Matrix, RGB LED"
+0"## Dot Matrix Display, RGB LED"
 
-3"D: dot matrix screen, RGB LED"
+3"D: dot matrix display, RGB LED"
 
 0"With three or less inputs, or 4-9 inputs but less than 2 sides used, D is a"
 0"single RGB LED (a single pixel, which can be made larger):"
@@ -2918,7 +2920,7 @@ s.>D<.s    D##
  sss sss sss
 "Rrr Ggg Bbb"
 
-0"With more input groups as configured below, D is the Dot Matrix screen:"
+0"With more input groups as configured below, D is the Dot Matrix Display:"
 
 0"With binary addressing:"
 
@@ -3294,7 +3296,7 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
  0"72:count leading zeroes (clz), 73:count trailing zeroes (ctz),74:popcount"
  0"76:PEXT, 77:PDEP"
 0"* transcendental functions (inputs/outputs scaled to make period/range match int range):"
- 0"80:sine, 81:arcsine, 82:cosine, 83:arcscoine, 84:tangent, 85:arctangent/atan2, 86: ln, 87: exp"
+ 0"80:sine, 81:arcsine, 82:cosine, 83:arccosine, 84:tangent, 85:arctangent/atan2, 86: ln, 87: exp"
 0"* time related:"
  0"88:unix time in seconds, 89:unix time to Y-M-D h:m:s, 90: Y-M-D h:m:s to unix time"
 0"* bit permutation operations:"
@@ -3304,6 +3306,14 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
 0"Adding 128 to the number makes the operation signed, e.g. operation 27 is"
 0"division, and operation 155 is signed division. Signed operations use twos"
 0"complements"
+
+0"If no number is added to the ALU, it will default to operation number 24 'add'"
+
+  llll
+  ^^^^
+l<U########<s
+  ^^^^ ^^^^
+  ssss ssss
 
 0"single-input operators such as abs or popcount will use operand A and ignore"
 0"operand B"
@@ -4364,9 +4374,9 @@ registerCircuit('ASCII symbol summary', `
 3"h: one-hot detector ('the real XOR')"
 3"H: inverted one-hot detector"
 
-3"D: dot matrix screen, RGB LED"
+3"D: dot matrix display, RGB LED"
 3"rR: real-time timer"
-3"J: jukebox (speaker for audio/music)"
+3"N: music note (speaker for audio/music/noise)"
 3"?: random bit generator"
 
 3"bB: ROM/RAM bits"
@@ -5845,7 +5855,7 @@ registerCircuit('RGB LED, 9 Inputs, 8-level RGB (D)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Dot Matrix Screen, Binary Addressing (D)', `
+registerCircuit('Dot Matrix Display, Binary Addressing (D)', `
       D#######y<S"enable"
       ########c<p"dot"
       ########q<p"fill"
@@ -5859,7 +5869,7 @@ registerCircuit('Dot Matrix Screen, Binary Addressing (D)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
+registerCircuit('Dot Matrix Display, Matrix Addressing (D)', `
     s>D#######y<S"enable"
     s>########c<p"dot"
     S>########q<p"fill"
@@ -5875,7 +5885,7 @@ registerCircuit('Dot Matrix Screen, Matrix Addressing (D)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Dot Matrix Screen, Matrix Addressing, Dot Input Only (D)', `
+registerCircuit('Dot Matrix Display, Matrix Addressing, Dot Input Only (D)', `
     s>D#######c<p"dot"
     s>########
     S>########
@@ -5889,7 +5899,7 @@ registerCircuit('Dot Matrix Screen, Matrix Addressing, Dot Input Only (D)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Dot Matrix Screen, Matrix Addressing, 512 Colors (D)', `
+registerCircuit('Dot Matrix Display, Matrix Addressing, 512 Colors (D)', `
     s>D#######y<S"enable"
     s>########c<p"dot"
     S>########q<p"fill"
@@ -5909,7 +5919,7 @@ registerCircuit('Dot Matrix Screen, Matrix Addressing, 512 Colors (D)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Dot Matrix Screen, As Oscilloscope (D)', `
+registerCircuit('Dot Matrix Display, As Oscilloscope (D)', `
       D#######c<p"dot"
       ########
       ########
@@ -5923,7 +5933,7 @@ registerCircuit('Dot Matrix Screen, As Oscilloscope (D)', `
 
 `, 'component' + componentid++);
 
-registerCircuit('Dot Matrix Screen, As Oscilloscope With Clear and Enable (D)', `
+registerCircuit('Dot Matrix Display, As Oscilloscope With Clear and Enable (D)', `
       D#######y<S"enable"
       ########c<p"dot"
       ########Q<p"clear"
@@ -5937,29 +5947,29 @@ registerCircuit('Dot Matrix Screen, As Oscilloscope With Clear and Enable (D)', 
 
 `, 'component' + componentid++);
 
-registerCircuit('Jukebox (audio speaker) (J)', `
- s-->J440
+registerCircuit('Music Note (audio speaker) (N)', `
+ s-->N440
 `, 'component' + componentid++);
 
-registerCircuit('Jukebox (audio speaker) with volume (J)', `
- s-->J800
+registerCircuit('Music Note (audio speaker) with volume (N)', `
+ s-->N800
  s-->#
  s-->#
  s-->#
 `, 'component' + componentid++);
 
-registerCircuit('Jukebox (audio speaker) with multiple controls (J)', `
+registerCircuit('Music Note (audio speaker) with multiple controls (N)', `
 
-  J#####################2000
+  N#####################2000
   ^^^      ^^^^    ^^^^
   |||      ||||    ||||
   sss      sSss    ssss
 
 `, 'component' + componentid++);
 
-registerCircuit('Jukebox (audio speaker) with multiple controls and Enable (J)', `
+registerCircuit('Music Note (audio speaker) with multiple controls and Enable (N)', `
 
-  2000J#####################y<--s
+  2000N#####################y<--s
       ^^^      ^^^^    ^^^^
       |||      ||||    ||||
       sss      sSss    Ssss
@@ -7803,7 +7813,7 @@ s-->o
                               3
                               4
                               9
-    B#b#b#b#b#b#b#b#b#b#b#b#b>J
+    B#b#b#b#b#b#b#b#b#b#b#b#b>N
     b#B#b#b#b#b#b#b#b#b#b#b#b>#
     b#b#B#b#b#b#b#b#b#b#b#b#b>#
     b#b#b#B#B#b#b#b#b#b#b#b#b>#
@@ -8606,5 +8616,13 @@ registerCircuit('Help Index', `
 
 
 "INSERT:links_help"
+
+`, 'helpindex');
+
+registerCircuit('Main Index', `
+0"List of main circuits."
+
+
+"INSERT:links_main"
 
 `, 'helpindex');
