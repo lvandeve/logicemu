@@ -770,7 +770,7 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
             ^^^^^^^^
             llllllll
             ^^^^^^^^
- l<U24##############<s
+ l<U16##############<s
    ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
   " ...8421  ...8421"
@@ -782,7 +782,7 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
    ^^^^^^^^
    llllllll
    ^^^^^^^^
- l<U32#####<s
+ l<U24#####<s
    ^^^^^^^^
    ssssssss
   " ...8421"
@@ -796,7 +796,7 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
  lllllllllllllllllllllllllllllllll
  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  |||||||||||||||||||||||||||||||||
- U26##############################
+ U18##############################
  ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
  |||||||||||||||| ||||||||||||||||
  T############### T###############
@@ -844,7 +844,7 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
 l<#################<s  0"carry in"
   #################  :
   #################<s10" 0=add, 1=sub, 2=mul, 3=div"
-  U24##############<s2
+  U16##############<s2
   ^^^^^^^^ ^^^^^^^^  :
   ssssssss ssssssss
  " ...8421  ...8421"
@@ -3215,7 +3215,7 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
             ^^^^^^^^
             llllllll
             ^^^^^^^^
- l<U24##############<s
+ l<U16##############<s
    ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
   " ...8421  ...8421"
@@ -3227,7 +3227,7 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
    ^^^^^^^^
    llllllll
    ^^^^^^^^
- l<U32#####<s
+ l<U24#####<s
    ^^^^^^^^
    ssssssss
   " ...8421"
@@ -3251,7 +3251,7 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
                      ^^^^^^^^
                      llllllll
                      ^^^^^^^^
- l<U26#######################<s
+ l<U18#######################<s
    ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss ssssssss
   " ...8421  ...8421  ...8421"
@@ -3276,12 +3276,12 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
 0"* bitwise operators:"
  0"0:zero, 1:and, 2:nimply b, 3:a, 4:nimply a, 5:b, 6:xor, 7:or,"
  0"8:nor, 9:xnor, 10:not b, 11:imply a, 12:not a, 13:imply b, 14:nand, 15:ones"
-0"* comparisons:"
- 0"16:==, 17:<, 18:<=, 19:!=, 20:>=, 21:>, 22:min, 23:max"
 0"* elementary 2-input operators:"
- 0"24:add, 25:sub, 26:mul, 27:div, 28:remainder, 28:floored div, 29:modulo, 30:clmul"
+ 0"16:add, 17:sub, 18:mul, 19:div, 20:remainder, 21:floored div, 22:modulo, 23:clmul"
 0"* elementary 1-input operators (sign also supports optional 2-input):"
- 0"32:increment, 33:decrement, 34:negate, 35:abs, 36:sign/copysign"
+ 0"24:increment, 25:decrement, 26:negate, 27:abs, 28:sign/copysign"
+0"* comparisons:"
+ 0"32:==, 33:<, 34:<=, 35:!=, 36:>=, 37:>, 38:min, 39:max"
 0"* shift operations:"
  0"40:lshift, 41:rshift, 42:rot lshift, 43:rot rshift"
 0"* higher operations (NOTE: some differ in type with 1 or 2 inputs):"
@@ -3296,7 +3296,7 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
  0"72:count leading zeroes (clz), 73:count trailing zeroes (ctz),74:popcount"
  0"76:PEXT, 77:PDEP"
 0"* transcendental functions (inputs/outputs scaled to make period/range match int range):"
- 0"80:sine, 81:arcsine, 82:cosine, 83:arccosine, 84:tangent, 85:arctangent/atan2, 86: ln, 87: exp"
+ 0"80:sine, 81:arcsine, 82:cosine, 83:arccosine, 84:tangent, 85:arctangent/atan2, 86:ln, 87:exp"
 0"* time related:"
  0"88:unix time in seconds, 89:unix time to Y-M-D h:m:s, 90: Y-M-D h:m:s to unix time"
 0"* bit permutation operations:"
@@ -3307,7 +3307,7 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
 0"division, and operation 155 is signed division. Signed operations use twos"
 0"complements"
 
-0"If no number is added to the ALU, it will default to operation number 24 'add'"
+0"If no number is added to the ALU, it will default to operation number 16 'add'"
 
   llll
   ^^^^
@@ -3352,7 +3352,7 @@ l<U########<s
    lllllllllllllllllllllllllllllllll
    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |||||||||||||||||||||||||||||||||
- l<U26##############################<s
+ l<U18##############################<s
    ^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^
    |||||||||||||||| ||||||||||||||||
    T############### T###############
@@ -3389,7 +3389,7 @@ l<U48#######################<s
 l<#################<s  0"carry in"
   #################  :
   #################<s10" 0=add, 1=sub, 2=mul, 3=div"
-  U24##############<s2
+  U16##############<s2
   ^^^^^^^^ ^^^^^^^^  :
   ssssssss ssssssss
  " ...8421  ...8421"
@@ -5639,7 +5639,7 @@ registerCircuit('ALU with 1-input operation (U)', `
 
    llllllll
    ^^^^^^^^
- l<U32#####<s
+ l<U24#####<s
    ^^^^^^^^
    ssssssss
 
@@ -5650,7 +5650,7 @@ registerCircuit('ALU with 1-input operation, signed (U)', `
 
    llllllll
    ^^^^^^^^
- l<U163####<s
+ l<U147####<s
    ^^^^^^^^
    ssssssss
 
@@ -5672,7 +5672,7 @@ registerCircuit('ALU with 2-input operation (U)', `
 
             llllllll
             ^^^^^^^^
- l<U24##############<s
+ l<U16##############<s
    ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
 
@@ -5693,7 +5693,7 @@ registerCircuit('ALU with 2-input operation, signed (U)', `
 
             llllllll
             ^^^^^^^^
- l<U152#############<s
+ l<U136#############<s
    ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss
 
@@ -5717,7 +5717,7 @@ registerCircuit('ALU with 3-input operation (U)', `
 
                      llllllll
                      ^^^^^^^^
- l<U26#######################<s
+ l<U18#######################<s
    ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss ssssssss
 
@@ -5728,7 +5728,7 @@ registerCircuit('ALU with 3-input operation, signed (U)', `
 
                      llllllll
                      ^^^^^^^^
- l<U154######################<s
+ l<U138######################<s
    ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss ssssssss
 
@@ -5739,7 +5739,7 @@ registerCircuit('ALU with 3-input operation, no side bits (U)', `
 
                      llllllll
                      ^^^^^^^^
-   U26#######################
+   U18#######################
    ^^^^^^^^ ^^^^^^^^ ^^^^^^^^
    ssssssss ssssssss ssssssss
 
@@ -5756,7 +5756,7 @@ registerCircuit('ALU with operation select (U)', `
 l<#################<s
   #################
   #################<s
-  U24##############<s
+  U16##############<s
   ^^^^^^^^ ^^^^^^^^
   ssssssss ssssssss
 
@@ -6860,8 +6860,8 @@ S>#--------->l8
      .------]l8
      |
 s>U###
-s>2###
-s>4###
+s>1###
+s>6###
 S>####
   ####
 s>####------>l8
@@ -6872,8 +6872,8 @@ S>####------]l8
   sS s
 
 s>U###
-s>2###
-s>4###
+s>####
+s>####
 S>####
   ####
 s>####------>l8
@@ -7624,8 +7624,8 @@ s-->e             s-->#i#             s-->kQ-->l    s-->#-->l
                                       s>D#######c<p"dot"
                                       s>########q<p"fill"
   s->a>l      s>U>l         lll       S>########           llllllll
-  p->e>l      s>2>l         ^^^       s>########<s"b"      ^^^^^^^^
-  r->o>l      s>4>l         |||       s>########<S"g"      T#######
+  p->e>l      s>1>l         ^^^       s>########<s"b"      ^^^^^^^^
+  r->o>l      s>6>l         |||       s>########<S"g"      T#######
   S->A>l        #        s->bbB       S>########<s"r"
   P->E>l      s>#        S->BBb       s>########
   R->O>l      s>#        s->BbB       s>########           T#######

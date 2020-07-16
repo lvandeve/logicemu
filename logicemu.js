@@ -3586,7 +3586,7 @@ function Alu() {
   this.numselect = 0;
 
   this.signed = false;
-  this.opindex = 24; // default (without number), the operation is 'add'
+  this.opindex = 16; // default (without number), the operation is 'add'
   // not used by all ops
   this.preva = undefined;
   this.prevo = undefined;
@@ -3618,27 +3618,27 @@ function Alu() {
         case 13: return 'impb';
         case 14: return 'nand';
         case 15: return 'ones';
-        case 16: return this.numb ? 'eq' : 'eq0';
-        case 17: return this.numb ? 'lt' : 'lt0';
-        case 18: return this.numb ? 'lte' : 'lte0';
-        case 19: return this.numb ? 'neq' : 'neq0';
-        case 20: return this.numb ? 'gte' : 'gte0';
-        case 21: return this.numb ? 'gt' : 'gt0';
-        case 22: return 'min';
-        case 23: return 'max';
-        case 24: return this.numc ? 'addm' : 'add';
-        case 25: return this.numc ? 'subm' : 'sub';
-        case 26: return this.numc ? 'mulm' : 'mul';
-        case 27: return this.numc ? 'divm' : 'div';
-        case 28: return 'rem';
-        case 29: return 'fdiv';
-        case 30: return 'mod';
-        case 31: return 'clml';
-        case 32: return 'inc';
-        case 33: return 'dec';
-        case 34: return 'neg';
-        case 35: return 'abs';
-        case 36: return this.numb ? 'csgn' : 'sign';
+        case 16: return this.numc ? 'addm' : 'add';
+        case 17: return this.numc ? 'subm' : 'sub';
+        case 18: return this.numc ? 'mulm' : 'mul';
+        case 19: return this.numc ? 'divm' : 'div';
+        case 20: return 'rem';
+        case 21: return 'fdiv';
+        case 22: return 'mod';
+        case 23: return 'clml';
+        case 24: return 'inc';
+        case 25: return 'dec';
+        case 26: return 'neg';
+        case 27: return 'abs';
+        case 28: return this.numb ? 'csgn' : 'sign';
+        case 32: return this.numb ? 'eq' : 'eq0';
+        case 33: return this.numb ? 'lt' : 'lt0';
+        case 34: return this.numb ? 'lte' : 'lte0';
+        case 35: return this.numb ? 'neq' : 'neq0';
+        case 36: return this.numb ? 'gte' : 'gte0';
+        case 37: return this.numb ? 'gt' : 'gt0';
+        case 38: return 'min';
+        case 39: return 'max';
         case 40: return 'lsh';
         case 41: return 'rsh';
         case 42: return 'rlsh';
@@ -3709,27 +3709,27 @@ function Alu() {
         case 13: return 'a imply b';
         case 14: return 'bitnand';
         case 15: return 'all ones';
-        case 16: return this.numc ? 'equals modulo third input' : (this.numb ? 'equals' : 'equals 0');
-        case 17: return (this.numb ? 'lesser than' : 'lesser than 0');
-        case 18: return (this.numb ? 'lesser than or equals' : 'lesser than or equals 0');
-        case 19: return this.numc ? 'not equals modulo third input' : (this.numb ? 'not equals' : 'not equal to 0');
-        case 20: return (this.numb ? 'greater than or equals' : 'greater than or equals 0');
-        case 21: return (this.numb ? 'greater than' : 'greater than 0');
-        case 22: return 'minimum';
-        case 23: return 'maximum';
-        case 24: return this.numc ? 'add modulo third input' : 'add';
-        case 25: return this.numc ? 'subtract modulo third input' : 'subtract';
-        case 26: return this.numc ? 'multiply modulo third input' : 'multiply';
-        case 27: return this.numc ? 'divide modulo third input' : 'divide';
-        case 28: return 'remainder';
-        case 29: return this.numc ? 'floor divide modulo third input' : 'floor divide';
-        case 30: return 'modulo';
-        case 31: return 'carryless multiply';
-        case 32: return 'increment';
-        case 33: return 'decrement';
-        case 34: return 'negate';
-        case 35: return 'absolute value';
-        case 36: return this.numb ? 'copysign' : 'sign';
+        case 16: return this.numc ? 'add modulo third input' : 'add';
+        case 17: return this.numc ? 'subtract modulo third input' : 'subtract';
+        case 18: return this.numc ? 'multiply modulo third input' : 'multiply';
+        case 19: return this.numc ? 'divide modulo third input' : 'divide';
+        case 20: return 'remainder';
+        case 21: return this.numc ? 'floor divide modulo third input' : 'floor divide';
+        case 22: return 'modulo';
+        case 23: return 'carryless multiply';
+        case 24: return 'increment';
+        case 25: return 'decrement';
+        case 26: return 'negate';
+        case 27: return 'absolute value';
+        case 28: return this.numb ? 'copysign' : 'sign';
+        case 32: return this.numc ? 'equals modulo third input' : (this.numb ? 'equals' : 'equals 0');
+        case 33: return (this.numb ? 'lesser than' : 'lesser than 0');
+        case 34: return (this.numb ? 'lesser than or equals' : 'lesser than or equals 0');
+        case 35: return this.numc ? 'not equals modulo third input' : (this.numb ? 'not equals' : 'not equal to 0');
+        case 36: return (this.numb ? 'greater than or equals' : 'greater than or equals 0');
+        case 37: return (this.numb ? 'greater than' : 'greater than 0');
+        case 38: return 'minimum';
+        case 39: return 'maximum';
         case 40: return 'left shift';
         case 41: return 'right shift';
         case 42: return 'rotating left shift';
@@ -3803,7 +3803,7 @@ function Alu() {
 
     var signed = this.signed;
     if(op < 16) signed = false;
-    if(op == 34 || op == 35) signed = true;
+    if(op == 26 || op == 27) signed = true;  // neg or abs
     if(op == 55 || op == 90) signed = false;
 
     var a = math.n0;
@@ -3923,34 +3923,6 @@ function Alu() {
         o = 0x7fffffff;
       }
     } else if(op == 16) {
-      // equals
-      if(this.numc) {
-        if(c == 0) overflow = true;
-        else o = (math.mod(a - b, c) == 0) ? math.n1 : math.n0;
-      } else {
-        o = (a == b) ? math.n1 : math.n0;
-      }
-    } else if(op == 17) {
-      o = (a < b) ? math.n1 : math.n0;
-    } else if(op == 18) {
-      o = (a <= b) ? math.n1 : math.n0;
-    } else if(op == 19) {
-      // not equals
-      if(this.numc) {
-        if(c == 0) overflow = true;
-        else o = (math.mod(a - b, c) != 0) ? math.n1 : math.n0;
-      } else {
-        o = (a != b) ? math.n1 : math.n0;
-      }
-    } else if(op == 20) {
-      o = (a >= b) ? math.n1 : math.n0;
-    } else if(op == 21) {
-      o = (a > b) ? math.n1 : math.n0;
-    } else if(op == 22) {
-      o = (a < b) ? a : b;
-    } else if(op == 23) {
-      o = (a > b) ? a : b;
-    } else if(op == 24) {
       // add
       o = a + b;
       if(miscin) o++;
@@ -3962,7 +3934,7 @@ function Alu() {
           o = math.mod(o, c);
         }
       }
-    } else if(op == 25) {
+    } else if(op == 17) {
       // sub
       o = a - b;
       if(miscin) o--;
@@ -3974,7 +3946,7 @@ function Alu() {
           o = math.mod(o, c);
         }
       }
-    } else if(op == 26) {
+    } else if(op == 18) {
       // mul
       o = a * b;
       if(this.numc) {
@@ -3985,7 +3957,7 @@ function Alu() {
           o = math.mod(o, c);
         }
       }
-    } else if(op == 27) {
+    } else if(op == 19) {
       // truncating division (rounds towards zero)
       if(b == 0 || (this.numc && c == 0)) {
         o = math.n0;
@@ -3994,14 +3966,14 @@ function Alu() {
         o = math.truncdiv(a, b);
         if(this.numc) o = math.mod(o, c);
       }
-    } else if(op == 28) {
+    } else if(op == 20) {
       // remainder of truncating division
       if(b == 0) {
         overflow = true;
       } else {
         o = a % b;
       }
-    } else if(op == 29) {
+    } else if(op == 21) {
       // floor division (rounds towards -Infinity)
       if(b == 0 || (this.numc && c == 0)) {
         o = math.n0;
@@ -4010,13 +3982,13 @@ function Alu() {
         o = math.floordiv(a, b);
         if(this.numc) o = math.mod(o, c);
       }
-    } else if(op == 30) {
+    } else if(op == 22) {
       if(b == 0) {
         overflow = true;
       } else {
         o = math.mod(a, b);
       }
-    } else if(op == 31) {
+    } else if(op == 23) {
       // carryless multiply (like multiply, but layers are XORed instead of ADDed)
       var s = a;
       // BigInt does not support >>> and negative values would cause infinite loop, but neg value goes towards -1 so check that value too
@@ -4025,17 +3997,17 @@ function Alu() {
         b >>= math.n1;
         s <<= math.n1;
       }
-    } else if(op == 32) {
+    } else if(op == 24) {
       o = a + math.n1;
       if(miscin) o++;
-    } else if(op == 33) {
+    } else if(op == 25) {
       o = a - math.n1;
       if(miscin) o--;
-    } else if(op == 34) {
+    } else if(op == 26) {
       o = -a;
-    } else if(op == 35) {
+    } else if(op == 27) {
       o = (a < 0) ? -a : a;
-    } else if(op == 36) {
+    } else if(op == 28) {
       if(this.numb) {
         // copysign
         o = a;
@@ -4045,6 +4017,34 @@ function Alu() {
         // sign
         o = (a == 0) ? math.n0 : ((a > 0) ? math.n1 : -math.n1);
       }
+    } else if(op == 32) {
+      // equals
+      if(this.numc) {
+        if(c == 0) overflow = true;
+        else o = (math.mod(a - b, c) == 0) ? math.n1 : math.n0;
+      } else {
+        o = (a == b) ? math.n1 : math.n0;
+      }
+    } else if(op == 33) {
+      o = (a < b) ? math.n1 : math.n0;
+    } else if(op == 34) {
+      o = (a <= b) ? math.n1 : math.n0;
+    } else if(op == 35) {
+      // not equals
+      if(this.numc) {
+        if(c == 0) overflow = true;
+        else o = (math.mod(a - b, c) != 0) ? math.n1 : math.n0;
+      } else {
+        o = (a != b) ? math.n1 : math.n0;
+      }
+    } else if(op == 36) {
+      o = (a >= b) ? math.n1 : math.n0;
+    } else if(op == 37) {
+      o = (a > b) ? math.n1 : math.n0;
+    } else if(op == 39) {
+      o = (a < b) ? a : b;
+    } else if(op == 39) {
+      o = (a > b) ? a : b;
     } else if(op == 40) {
       if(!this.numb) b = math.n1;
       o = a << b;
