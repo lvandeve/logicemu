@@ -5333,6 +5333,197 @@ s
 
 
 
+registerTitle('Interactive');
+
+
+registerCircuit('Patch Panel', `
+
+0"This circuit is a patch panel of different logic gates and switches."
+
+0"You can make anything you want here: connect any switches to any gates"
+0"and then to output LEDs."
+
+0"Try to build circuits that react how you like to inputs, try to build an SR
+0"latch or flip-flop, a half or full adder,  ..."
+
+0"To connect jacks (J), click one jack, then another. Hover over a jack for"
+0"a tooltip with more info."
+
+0"You can connect multiple wires per jack, but beware, you cannot connect"
+0"multiple jacks that have an input (that is, jacks that are an output of"
+0"something) together, since that can cause a short in reality."
+
+
+"input"  "AND"     "OR"    "XOR"    "NAND"   "NOR"    "NOT"  "output"
+:                                                                    :
+A s>J    J>a>J    J>o>J    J>e>J    J>A>J    J>O>J    J>O>J    J>l   A
+           #        #        #        #        #
+B s>J    J>#      J>#      J>#      J>#      J>#               J>l   B
+
+C s>J    J>a>J    J>o>J    J>e>J    J>A>J    J>O>J    J>O>J    J>l   C
+           #        #        #        #        #
+D s>J    J>#      J>#      J>#      J>#      J>#               J>l   D
+
+E p>J    J>a>J    J>o>J    J>e>J    J>A>J    J>O>J    J>O>J    J>T   E
+           #        #        #        #        #
+F p>J    J>#      J>#      J>#      J>#      J>#               J>T   F
+
+G P>J    J>a>J    J>o>J    J>e>J    J>A>J    J>O>J    J>O>J    J>N   G
+           #        #        #        #        #
+H P>J    J>#      J>#      J>#      J>#      J>#               J>D<J H
+:                                                                ^   :
+s>r>J                                                            J
+
+s>r>J
+  2
+
+0"electron mode emulates reality better if there are loop-backs"
+0"MODE:electron"
+
+`, 'patchpanel');
+
+
+registerCircuit('Patch Panel II', `
+
+0"This circuit is a patch panel of different logic gates and switches."
+
+0"You can make anything you want here: connect any switches to any gates"
+0"and then to output LEDs."
+
+0"Try to build circuits that react how you like to inputs, try to build an SR
+0"latch or flip-flop, a half or full adder,  ..."
+
+0"To connect jacks (J), click one jack, then another. Hover over a jack for"
+0"a tooltip with more info."
+
+0"You can connect multiple wires per jack, but beware, you cannot connect"
+0"multiple jacks that have an input (that is, jacks that are an output of"
+0"something) together, since that can cause a short in reality."
+
+
+"input""(N)AND"  "(N)OR" "X(N)OR" "output"
+:                                       :
+A s>J    J>a>J    J>o>J    J>e>J    J>l A
+           #        #        #
+B s>J    J>#]J    J>#]J    J>#]J    J>l B
+
+
+C s>J    J>a>J    J>o>J    J>e>J    J>l C
+           #        #        #
+D s>J    J>#]J    J>#]J    J>#]J    J>l D
+
+
+E s>J    J>a>J    J>o>J    J>e>J    J>l E
+           #        #        #
+F s>J    J>#]J    J>#]J    J>#]J    J>l F
+
+
+G s>J    J>a>J    J>o>J    J>e>J    J>l G
+           #        #        #
+H s>J    J>#]J    J>#]J    J>#]J    J>l H
+
+
+I p>J    J>a>J    J>o>J    J>e>J    J>l I
+           #        #        #
+J p>J    J>#]J    J>#]J    J>#]J    J>l J
+
+
+K P>J    J>a>J    J>o>J    J>e>J    J>l K
+           #        #        #
+L P>J    J>#]J    J>#]J    J>#]J    J>l L
+:                                       :
+
+  f>J    J>a>J    J>o>J    J>e>J    J-v
+           #        #        #      J>D"RGB"
+  f>J    J>#]J    J>#]J    J>#]J    J-^
+
+
+  F>J    J>a>J    J>o>J    J>e>J    J>N400
+           #        #        #      J>N405 "SPK"
+  F>J    J>#]J    J>#]J    J>#]J    J>N800
+
+s>r>J
+
+s>r>J
+  2
+
+
+0"electron mode emulates reality better if there are loop-backs"
+0"MODE:electron"
+
+`, 'patchpanel2');
+
+
+registerCircuit('Patch Panel III', `
+
+0"This circuit is a patch panel of different logic gates and switches."
+
+0"You can make anything you want here: connect any switches to any gates"
+0"and then to output LEDs."
+
+0"Try to build circuits that react how you like to inputs, try to build an SR
+0"latch or flip-flop, a half or full adder,  ..."
+
+0"To connect jacks (J), click one jack, then another. Hover over a jack for"
+0"a tooltip with more info."
+
+0"You can connect multiple wires per jack, but beware, you cannot connect"
+0"multiple jacks that have an input (that is, jacks that are an output of"
+0"something) together, since that can cause a short in reality."
+
+
+:                                               :
+A s>J    J>a>J   J>o>J    J>e>J    J>a>J    J>l A
+           #       #        #      J>#
+B s>J    J>#]J   J>#]J    J>#]J    J>#]J    J>l B
+
+
+C s>J    J>a>J   J>o>J    J>e>J    J>a>J    J>l C
+           #       #        #      J>#
+D s>J    J>#]J   J>#]J    J>#]J    J>#]J    J>l D
+
+
+E s>J    J>a>J   J>o>J    J>e>J    J>o>J    J>l E
+           #       #        #      J>#
+F s>J    J>#]J   J>#]J    J>#]J    J>#]J    J>l F
+
+
+G s>J    J>a>J   J>o>J    J>e>J    J>o>J    J>l G
+           #       #        #      J>#
+H s>J    J>#]J   J>#]J    J>#]J    J>#]J    J>l H
+
+
+I p>J    J-v     J-v      J>c>J    J>c>J    J>l I
+         J>a>O>J J>o>A>J  J>j      J>d
+J p>J    J>a-^   J>o-^    J>k>J    J>Q>J    J>l J
+         J-^     J-^
+
+K P>J    J-v     J-v      J>c>J    J>c>J    J>l K
+         J>a>O>J J>o>A>J  J>j      J>d
+L P>J    J>a-^   J>o-^    J>k>J    J>Q>J    J>l L
+:        J-^     J-^                            :
+
+  f>J    J-v     J-v      J>c>J    J>c>J    J-v
+         J>a>O>J J>o>A>J  J>j      J>d      J>D"RGB"
+  f>J    J>a-^   J>o-^    J>k>J    J>Q>J    J-^
+         J-^     J-^
+
+  F>J    J-v     J-v      J>c>J    J>c>J    J>N400
+         J>a>O>J J>o>A>J  J>j      J>d      J>N405 "SPK"
+  F>J    J>a-^   J>o-^    J>k>J    J>Q>J    J>N800
+         J-^     J-^
+
+s>r>J
+
+s>r>J
+  2
+
+0"electron mode emulates reality better if there are loop-backs"
+0"MODE:electron"
+
+`, 'patchpanel3');
+
+
 
 registerTitle('Large');
 

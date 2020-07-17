@@ -530,7 +530,33 @@ s-.>d]a->l   s..>c..>l
 
    R------>l
 
+0"J is a patch panel jack. Path panel jacks allow making arbitrary connections"
+0"between any two jacks."
 
+0"Click a jack, then another jack, to connect them together with a patch wire."
+0"To remove a wire, click both its jacks again. To remove all wires from one"
+0"jack, click that jack twice. To remove all jacks from the board (or save"
+0"state), see the dropdown for patchpanel jacks in the menu bar."
+
+0"A jack supports a maximum of 4 wires, adding more will remove the oldest one."
+
+0"You cannot connect multiple jacks that have an input (an arrow pointing to"
+0"it) together in one group, if you try an older input connection may be"
+0"removed, or it may refuse to connect and indicate a temporary red line. This"
+0"is because multiple inputs to the same connected jacks gives a conflict (we"
+0"could OR them, but instead we choose the realistic approach where this can"
+0"cause an electric short)."
+
+0"Example: the jacks J below allow you to choose to connect the switches"
+0"to an AND gate, a XOR gate, directly to a LED, or make some other combination:"
+
+s>J    J>a>J    J>l
+         #
+s>J    J>#
+
+s>J    J>e>J    J>l
+         #
+s>J    J>#
 
 0"A music note 'N' acts like a speaker, producing a tone of a given frequency."
 
@@ -1398,6 +1424,18 @@ s-->e<--S
 0"allow to change the wiring layout. But it's useful to change a switch into a"
 0"pushbutton for example."
 
+0"Next is a dropdown for patch panel jacks. That's only useful if there are"
+0"patch panel jacks in the circuit, like these:"
+
+s-->J   J-->l
+
+s-->J   J-->l
+
+0"The stats button shows several statistics, such as estimated amount of"
+0"transistors, about the circuit. Some statistics try to estimate real life"
+0"cost of the circuit, others are more related to the internal emulation and"
+0"have no real-life meaning."
+
 `, 'controlshelp');
 
 registerCircuit('Rendering Modes', `
@@ -1709,14 +1747,21 @@ registerTitle('Editing');
 registerCircuit('Editing Help', `
 0"# LogicEmu Editing Help"
 
-0"This tutorial introduces all the parts and cell characters for editing."
+0"This tutorial explains how to edit and create new circuits in LogicEmu."
+
+0"It explains how editing is done in general, and explains all the types of"
+0"parts that exist, and the cells they are made from."
 
 0"Table of contents:"
 0"INSERT:toc"
 
-0"Editing is done with ASCII text. The simulation is cell based: Every"
-0"character is a cell. Cells contain wires, parts, and so on. Devices can span"
-0"multiple cells, e.g. a long wire, an enlarged AND gate, ..."
+0"# Introduction"
+
+0"The simulation is cell based. Cells contain wires, parts, and so on. Devices"
+0"can span multiple cells, e.g. a long wire, an enlarged AND gate, ..."
+
+0"Each cell is an ASCII character, so a circuit can be created in a text editor"
+0"with a fixed-width font."
 
 0"In fact, to show better how circuits are built in this editing help, we"
 0"force text rendering mode instead of graphical here with the following"
@@ -1725,18 +1770,21 @@ registerCircuit('Editing Help', `
 3"RENDER:text"
 
 0"Editing can be done in the browser here with the 'edit' button in the top"
-0"bar. It is possible and more pleasant to do the actual editing itself of that"
-0"circuit from the text field in a good plain text editor (one that supports"
-0"block selection). Then paste the finished circuit back in the box to try it"
-0"out"
+0"bar. But it is possible and more pleasant to do the actual editing itself"
+0"in a good plain text editor (one that supports block selection). Then paste"
+0"the finished circuit back in the box to try it out."
 
 0"Try out the edit button here: You can change the AND gate below into an OR"
-0"gate, by turning the 'a' into an 'o'. Press the 'edit' button, find this and"
+0"gate, by turning the 'a' into an 'o'. Press the 'edit' button, find this AND"
 0"gate in it, change the a into an o, and press 'done'."
 
-s..>a..>l
+
+
+s..>a..>l     "<------ the AND gate to find"0
     ^
 s....
+
+
 
 0"Note how not only that logic gate but also this text itself was in there."
 0"That is because this whole page including all text is a circuit you can edit!"
@@ -1784,7 +1832,7 @@ l 0": the output LED"
 
 0"# SECTION I: Input/Output/Wiring"
 
-0"## wires"
+0"## Wires"
 
 3".: wire, wire split, wire corner"
 3"-: horizontal wire"
@@ -1798,7 +1846,7 @@ l 0": the output LED"
           |        |
           |        .-----
 
-0"## switches"
+0"## Switches"
 
 3"s: initially off switch"
 3"S: initially on switch"
@@ -1816,21 +1864,6 @@ l 0": the output LED"
 s......   .
           S
 
-0"## device inputs"
-
-3"^: north device input"
-3">: east device input"
-3"v: south device input"
-3"<: west device input"
-
-0"These arrow heads connect a wire to the input side of devices such as logic"
-0"gates and LEDs. While not introduced yet, below we use an 'o' diode to"
-0"demonstrate them best. A wire directly connected to some device is an output"
-0"of that device, while when connected with an arrowhead it's an input. so the"
-0"signal below goes from the switch s to the o and then from the o to the l:"
-
-s....>o....>l
-
 0"## LED"
 
 3"l: LED/light (user output)"
@@ -1843,21 +1876,33 @@ s....>o....>l
 
 s....>l   S....>l
 
-0"## push button"
+0"## Device inputs"
+
+3"^: north device input"
+3">: east device input"
+3"v: south device input"
+3"<: west device input"
+
+0"You may have noticed the arrow heads in the LED circuit above. These connect"
+0"a wire to the input side of devices such as logic gates and LEDs. While not"
+0"introduced yet, below we use an 'o' as diode to demonstrate them best. A wire"
+0"directly connected to some device is an output of that device, while when"
+0"connected with an arrowhead it's an input. so the signal below goes from the"
+0"switch s to the o and then from the o to the LED l:"
+
+s....>o....>l
+
+0"## Push button"
 
 3"p: initially off push button"
 3"P: initially on push button"
 
-0"these toggle back to original state when releasing the mouse button"
+0"these are similar to the switch s/S, but toggle back to original state when"
+0"releasing the mouse button"
 
 p....>l   P....>l
 
-0"This switch will only leave through the push button signal if the switch is"
-0"on itself"
-
-p..>s..>l
-
-0"## controlled switch"
+0"## Controlled switch"
 
 0"A switch or pushbutton with an input will only work if its input is on:"
 
@@ -1867,7 +1912,7 @@ p....>s...>l
 
 s....>p...>l
 
-0"## wire crossing"
+0"## Wire crossing"
 
 3"+: wire crossing"
 3"x: diagonal wire crossing"
@@ -1887,12 +1932,13 @@ s.... ....>l
      x
 s.... ....>l
 
-0"## wire and device packing"
+0"## Wire and device packing"
 
 0"-| can be packed closer together than ., because . would touch on all sides"
-0"Different devices (here l and s) also don't interact if they touch, they are"
-0"individual LEDs and switches The circuit with . instead of -| operates as one"
-0"because those .'s are all connected"
+0"Different devices (here l and s) also don't interact if they touch (see"
+0"further how to make them larger instead), they are individual LEDs and"
+0"switches The circuit with . instead of -| operates as one because those .'s"
+0"are all connected"
 
           lll
           ^^^
@@ -1902,11 +1948,7 @@ s----->l  |||     .....>l
           |||
           sss
 
-0"NOTE: for style reasons, most built-in circuits use '.' for most wires with"
-0"some distance bewteen them and only use --- or | for close packing when"
-0"really needed. This is purely up to personal preference though."
-
-0"## comments"
+0"## Comments"
 
 3"double quote: encloses comment"
 
@@ -1917,7 +1959,7 @@ s----->l  |||     .....>l
 0"chapter."
 
 
-0"## isolators"
+0"## Isolators"
 
 3"(space): isolator"
 3"@: isolator (structural)"
@@ -1935,7 +1977,7 @@ s----->l  |||     .....>l
 0"# SECTION II: Logic Gates"
 
 
-0"## logic gates OR, AND, XOR"
+0"## Logic gates OR, AND, XOR"
 
 3"o: OR gate"
 3"a: AND gate"
@@ -1948,7 +1990,7 @@ s....      s....      s....
     v          v          v
 s..>o..>l  s..>a..>l  s..>e..>l
 
-0"## logic gates NOR, NAND, XNOR"
+0"## Logic gates NOR, NAND, XNOR"
 
 3"O: NOR gate"
 3"A: NAND gate"
@@ -1960,7 +2002,7 @@ s....      s....      s....
     v          v          v
 s..>O..>l  s..>A..>l  s..>E..>l
 
-0"## inverted device inputs"
+0"## Inverted device inputs"
 
 3"m: north inverted device input"
 3"]: east inverted device input"
@@ -1982,7 +2024,12 @@ s....      s....      s....
     w          w          w
 s..]O..>l  s..]A..>l  s..]E..>l
 
-0"## multi-input gates"
+
+0"NOTE: to invert *outputs* of devices, instead use a different device type,"
+0"e.g. use NAND 'A' instead of AND 'a'"
+
+
+0"## Multi-input logic gates"
 
 0"Gates can have more than two inputs, for example three below, more is"
 0"possible if the gate would be large enough, how to do that is introduced a"
@@ -2035,7 +2082,7 @@ s..>A..>l
 
 s..]o..>l
 
-0"## constant"
+0"## Constant (fixed value)"
 
 3"f: constant ('fixed') off"
 3"F: constant ('fixed') on"
@@ -2054,7 +2101,7 @@ F-->l    s-->F-->l
 0"NOTE: the letter 'f' from 'fixed' instead of 'c' from 'constant' is used"
 0"because 'c' is already used for 'counter' and 'clock' seen further on."
 
-0"## rules for wire with multiple devices"
+0"## Rules for wire with multiple devices"
 
 0"A single wire can output to multiple devices. Note that we call the entire"
 0"connected wire shape a single wire in the simulation's terminology. In the"
@@ -2086,7 +2133,7 @@ s...>o
      v
 s...>o....>l
 
-0"## device extender"
+0"## Device extender"
 
 3"#: device extender"
 
@@ -2142,7 +2189,7 @@ s-->o
 
 0"# SECTION III: Flip-Flops And Memory"
 
-0"## counter"
+0"## Counter"
 
 3"c (standalone): initially off counter"
 3"C (standalone): initially on counter"
@@ -2163,7 +2210,7 @@ s..>c..>c..>c..>c..>c..>c..>c..>c..>l
 
 s..>C..>C..>C..>C..>C..>C..>C..>C..>l
 
-0"## flip flop parts"
+0"## Flip flop"
 
 3"c: flip flop part: clock, state off, can be combined together"
 3"C: flip flop part: clock, state on, can be combined together"
@@ -2287,7 +2334,7 @@ s-->dcyQq-->l
 
 
 
-0"## delay"
+0"## Delay"
 
 3"d (standalone): 1-tick delay (behavior depends on tick algorithm)"
 
@@ -2332,7 +2379,7 @@ s......>d..>l
   .     #
   .>d..>c
 
-0"## pulse"
+0"## Pulse"
 
 3"q (standalone): gives single tick pulse on positive input edge"
 3"Q (standalone): gives single tick inverted pulse on positive input edge"
@@ -2364,7 +2411,7 @@ s-->y
   .   v          v .
 s-.>d]a->l   s..>c..>l
 
-0"## permanent enable"
+0"## Permanent enable"
 
 3"j (standalone): initially off, once enabled can never be disabled"
 3"k (standalone): initially on, once disabled can never be enabled"
@@ -2382,7 +2429,7 @@ s-->k-->l
 0"You can ctrl-click the j or k to reset them back anyway."
 
 
-0"## memory"
+0"## Memory"
 
 3"b: ROM and RAM bit, value 0"
 3"B: ROM and RAM bit, value 1"
@@ -2465,7 +2512,7 @@ s-->k-->l
 0"- Q: reset all (asynchronous, overrides enable)"
 
 
-0"## decoder and encoder"
+0"## Decoder and encoder"
 
 0"The ROM/RAM components can also be set up to do a completely different"
 0"not memory-related operation: binary decoder, binary encoder or priority"
@@ -2532,10 +2579,10 @@ l<b#######<s
 
 0"# SECTION IV: Integrated Circuits"
 
-0"## integrated circuit template and usage"
+0"## Integrated circuit template and usage"
 
-3"I: IC definition"
-3"i: IC usage"
+3"I: IC template / definition"
+3"i: IC usage / instance"
 
 0"I and i respectively define and use integrated circuit (IC). Numbers are used"
 0"to identify them. This allows to design and reuse templates or sub-circuits."
@@ -2552,8 +2599,8 @@ l<b#######<s
     .   .      ||    ||
     s   s      ss    ss
 
-0"The master template must use exactly s as input and l as output, to mark"
-0"them. In the copy any gate inputs to the ic count as input and wires exiting"
+0"The template must use exactly s as input and l as output, to mark them."
+0"In the copy any gate inputs to the ic count as input and wires exiting"
 0"count as output, so copies can use anything, including gates and other"
 0"template copies, as inputs and outputs"
 
@@ -2613,7 +2660,7 @@ s-->l   s-->l    s-->i6-->l   0"error expected"
                  ^    ^
                  s    s
 
-0"## nesting integrated circuit templates"
+0"## Nesting integrated circuit templates"
 
 0"You can nest templates, 1 template can refer to others, e.g. here we use the"
 0"I5 from above inside a new template I8 (we're making a full adder from two"
@@ -2627,7 +2674,7 @@ o<#i5      .   .     .   .
 ^ ^ .      . . .     . . .
 s s s      s s s     s s s
 
-0"## rotated chips"
+0"## Rotated chips"
 
 0"Chips can be rotated in steps of 90 degrees if desired. To do this, rotate"
 0"the position of the number compared to the small i in a different position"
@@ -2647,7 +2694,7 @@ l<#<s
 0"These parts do not extend the logic abilities, but allow different ways of"
 0"input/output interaction"
 
-0"## timers"
+0"## Timers"
 
 3"R: timer initially on"
 3"r: timer initially off"
@@ -2670,7 +2717,7 @@ s..>r..>l   S..>r..>l
 
 0"You can click a timer with the mouse to freeze or unfreeze it."
 
-0"## numbers"
+0"## Numbers"
 
 3"0123456789: affect various properties of other parts"
 
@@ -2747,7 +2794,38 @@ r r r r r r r r r r r
 0"color of circuits rather than comments)."
 
 
+0"## Patch Panel Jack"
 
+3"J: jack for patch panel wires"
+
+0"J is a patch panel jack. Path panel jacks allow making arbitrary connections"
+0"between any two jacks."
+
+0"Click a jack, then another jack, to connect them together with a patch wire."
+0"To remove a wire, click both its jacks again. To remove all wires from one"
+0"jack, click that jack twice. To remove all jacks from the board (or save"
+0"state), see the dropdown for patchpanel jacks in the menu bar."
+
+0"A jack supports a maximum of 4 wires, adding more will remove the oldest one."
+
+0"You cannot connect multiple jacks that have an input (an arrow pointing to"
+0"it) together in one group, if you try an older input connection may be"
+0"removed, or it may refuse to connect and indicate a temporary red line. This"
+0"is because multiple inputs to the same connected jacks gives a conflict (we"
+0"could OR them, but instead we choose the realistic approach where this can"
+0"cause an electric short)."
+
+0"Example: the jacks J below allow you to choose to connect the switches"
+0"to an AND gate, a XOR gate, directly to a LED, or make some other combination:"
+
+s>J    J>a>J    J>l
+         #
+       J>#
+
+
+s>J    J>e>J    J>l
+         #
+       J>#
 
 
 0"## Music Note"
@@ -3430,9 +3508,7 @@ s....>?..>l    p....>?..>l    r....>?..>l
 
 
 
-
-
-0"## one-hot detector"
+0"## One-hot detector"
 
 3"h: one-hot detector"
 3"H: inverted one-hot detector"
@@ -3459,7 +3535,7 @@ s-->#      s-->#
 
 
 
-0"## tri-state buffer (or open collector output)"
+0"## Tri-state buffer (or open collector output)"
 
 3"z: fake tri-state buffer (and-or)"
 3"Z: fake tri-state buffer (or-and)"
@@ -3556,7 +3632,7 @@ s....                      s....
 0"included only for rare situations when they actually help make something more"
 0"readable."
 
-0"## diagonal wires"
+0"## Diagonal wires"
 
 3"/: diagonal wire"
 3"\\: diagonal wire"
@@ -3571,7 +3647,7 @@ s....                      s....
   /            ;
  s              s
 
-0"## diagonal inputs"
+0"## Diagonal inputs"
 
 0"An input of the form ^ > v < m ] w or [ that touches nothing where it points"
 0"at but touches something diagonally on one or both sides of that point, acts"
@@ -3596,7 +3672,7 @@ s      . .
        s s
 
 
-0"## global wire"
+0"## Global wire"
 
 3"g: global wire (backplane)"
 
@@ -3627,7 +3703,7 @@ l<---g    g--->l
 
   i17-->l    i17-->l    i17-->l
 
-0"## straight backplane connections ('antennas')"
+0"## Straight backplane connections ('antennas')"
 
 3"(: 'antenna' east"
 3"): 'antenna' west"
@@ -3721,7 +3797,7 @@ s-->#
  s--->(    )l
 
 
-0"## bus"
+0"## Bus"
 
 3"=: bus"
 
@@ -3766,7 +3842,7 @@ s-->#
 
 
 
-0"## automatic numbering for bus and global wire"
+0"## Automatic numbering for bus and global wire"
 
 3"$: automatic numbering"
 
@@ -4005,7 +4081,7 @@ l<---,,--->l         ||
      s
 
 
-0"## device inputs connecting to multiple wires"
+0"## Device inputs connecting to multiple wires"
 
 0"Device inputs > < ^ v ] [ m w output on exactly one side, but can receive"
 0"their input from any of the other sides (3 direct neighbors, and 4 more from x)"
@@ -4030,7 +4106,7 @@ s---v----v----v---->l
 s--v--s 0"error expected"
    l
 
-0"## multi device input"
+0"## Multi device input"
 
 3"V: regular multi device input"
 3"W: inverted multi device input"
@@ -4043,7 +4119,7 @@ s--v--s 0"error expected"
 s------VV-VWl
        l  l
 
-0"## device input crossing"
+0"## Device input crossing"
 
 3"X: regular device input crossing (8-directional)"
 3"Y: inverted device input crossing (8-directional)"
@@ -4086,7 +4162,7 @@ s---X-->l
  /  |  ;
 s   s   s
 
-0"## integrated circuits diagonal inputs/outputs"
+0"## Integrated circuits diagonal inputs/outputs"
 
 0"Chips, too, can have diagonal inputs and outputs:"
 0"For the definition, x from s as inputs, and X to l as outputs"
@@ -4224,7 +4300,7 @@ s   s   s
 0"rectangular area in which ASCII art or code is drawn."
 
 
-0"## vertical comments"
+0"## Vertical comments"
 
 3"colon: vertical comment"
 
@@ -4263,7 +4339,7 @@ s   s   s
 0"# SECTION VIII: Command Words"
 
 
-0"## force modes and settings, insert tables and links"
+0"## Force modes and settings, insert tables and links"
 
 0"Some specific command words in strings make things happen. They all use a"
 0"keyword and a colon. They are demonstrated below, but with a semicolon so"
@@ -4362,6 +4438,7 @@ registerCircuit('ASCII symbol summary', `
 3"g: global backplane wires"
 3"=: bus (bundle of wires)"
 3"()un: straight connected backplane wires, 'antennas'"
+3"J: patch panel jack"
 
 3"I: IC template"
 3"i: IC instance"
@@ -4374,7 +4451,7 @@ registerCircuit('ASCII symbol summary', `
 3"h: one-hot detector ('the real XOR')"
 3"H: inverted one-hot detector"
 
-3"D: dot matrix display, RGB LED"
+3"D: dot matrix display, RGB LED, oscilloscope"
 3"rR: real-time timer"
 3"N: music note (speaker for audio/music/noise)"
 3"?: random bit generator"
@@ -5105,6 +5182,14 @@ registerCircuit('flip-flop with everything (cqQjkdty)', `
  s-->t-->l
  s-->c-->l
  s-->y-->l
+
+`, 'component' + componentid++);
+
+registerCircuit('Path Panel Jack (J)', `
+
+ s-->J    J-->l
+
+ s-->J    J-->l
 
 `, 'component' + componentid++);
 
@@ -7011,6 +7096,12 @@ T###
   ^^
   FF
 
+
+
+F-->J------->l8
+
+F-->J    J--]l8
+
 0"# Off"
 
 0"In this section, the LED on the right of each contraption must be OFF. If"
@@ -7157,6 +7248,12 @@ S---------->o
 
 
 F-->(       )l8
+
+
+F-->J####---]l8
+
+F-->J    J-->l8
+
 
 0"# Toggle"
 
@@ -7633,9 +7730,9 @@ s-->e             s-->#i#             s-->kQ-->l    s-->#-->l
                                         ssSssSss           ssssssss
 
 
-s-->J-->l
+s-->N-->l
 
-s-->J-->l
+s-->N-->l
 s-->#
 s-->#
 s-->#800
@@ -7792,6 +7889,20 @@ a e   a e   a |   | ;    . ;
 s s   s s   s s
 
 
+0"# Patch Panel Wires"
+                                       J   J   J   J
+
+
+
+s>J   J>O>J    J>O>J    J>L            J   J   J   J
+        #        #
+s>J   J>#      J>#      J>L
+
+                                       J   J   J   J
+
+
+
+                                       J   J   J   J
 
 0"# Error color"
 
@@ -7857,7 +7968,7 @@ r
 T###############################
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ||||||||||||||||||||||||||||||||
-U25##############################################################
+U17##############################################################
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 |||||||||||||||||||||||||||||||| ||||||||||||||||||||||||||||||||
 U88############################# U88#############################
@@ -8026,6 +8137,144 @@ s         s
 0"INSERT:link:unexisting"
 
 `, 'drawtest');
+
+
+
+registerCircuit('Update Algorithm Test', `
+
+0"This tests the algorithmic update order of components. E.g. if an update algorithm is not working"
+0"correctly, some things that should update in one tick, may instead propagate slowly due to updating"
+0"components in the wrong order."
+
+0"Most tests behave differently in immediate mode and electron mode. The behavior for each is described"
+0"above each circuit."
+
+0"MODE:immediate"
+
+
+
+
+0"Below, press the left switch, and the right switch."
+
+0"In immediate mode, for both the left and right one, the LED must be updated immediately, not multiple ticks."
+0"--> typically if there would be a bug and the updates would go in scanline order rather than correct device dependency order,"
+0"it will be the second one, the right to left case, going wrong."
+
+0"In electron mode, it must propagate slowly, and at the same speed in the left to right and right"
+0"to left case."
+
+s>e>e>e>e>e>e>e>e>l
+
+l<e<e<e<e<e<e<e<e<s
+
+
+
+
+0"Test with input jacks update order. Connect the jacks with horizontal empty gab of distance 1 between them together."
+0"When pressing the switch:"
+
+0"in immediate mode, the LED must update immediately, for both directions."
+0"in electron mode, similarly as for the e's above, slower propagation is expected."
+
+s>J J>J J>J J>l
+
+l<J J<J J<J J<s
+
+
+
+
+
+0"Below, there *should* be a slow propagation in both immediate and electron mode, since this are delays. The right to left and left to right ones"
+0"should have same speed. Electron and immediate should have the same speed, and the speed should be the same as the 'e' case above for electron mode."
+
+s>d>d>d>d>d>d>d>d>l
+
+l<d<d<d<d<d<d<d<d<s
+
+
+
+
+
+0"Below, there should be no propagation delay im immediate mode: flip-flop clocks and counters should update immediately, in immediate mode."
+0"Clicking each switch the first time should immediately light the LED. A second and more times should not affect the LED"
+0"since this are binary counters."
+
+0"In electron, as usual, slower propagation is expected."
+
+s>c>c>c>c>c>c>c>c>l
+
+l<c<c<c<c<c<c<c<c<s
+
+
+
+
+
+0"The JK flip-flop below must work correctly as a JK flip-flop in immediate mode and electron mode."
+0"This circuit depends a lot on correct update algorithm."
+0"In reality, this is not a robust JK flip-flop since it depends on the clock pulse being very short."
+0"That's also why there's a q pulse after the clock input here, and a few delays. But it must be emulated correctly"
+0"and work with those timing tweaks in both modes."
+
+
+"J" S----->#A->d->A--.->l "Q"
+      2  .-^^--d<-^-.|
+"C" p>q--.-vv--d<-v-+.
+"K" S----->#A->d->A-.-->l "Q'"
+
+0"This mirrored version should also work"
+
+ "Q "l<-.--A<-d<-A#<-----S "J"
+        |.-^->d--^^-.  2
+        .+-v->d--vv-.--q<p "C"
+ "Q'"l<--.-A<-d<-A#<-----S "K"
+
+
+
+
+0"In the circuits below, the 2 LEDs of one of the gates should blink"
+0"alternatingly, not be on or off at the same time. If they do in one or more"
+0"of the different orientation variants below, that's related to a bad update order."
+
+0"Set speed to slow to see this best."
+
+0"However, it is in fact broken in some orientations in immediate mode. That's hard"
+0"to fix because there's a loop, and immediate mode must choose *some* point where"
+0"to start computing each tick. If it updates the regular LED first, then the o"
+0"gate, then the inverted LED, then you get exactly that issue, and it does happen"
+0"in some orientations below in immediate mode."
+
+0"In electron mode, it must work for all oritations: Electron mode is the mode"
+0"to use to correctly emulate gates with loop-backs."
+
+  ...         ...                 ...            ...
+l l .    o>l  . v   ...... ...... . l l  l<o     v .
+^ m .    #    . ##o .    . .    . . m ^    #   o## .
+o## .  .>#]l. . w v .l[#<. .>#]l. . ##o .l[#<. v w .
+  ^ .  .    . . l l    #     #    . ^   .    . l l .
+  ...  ...... ...    l<o     o>l  ...   ......   ...
+
+
+
+
+
+
+
+
+0"Also test the 4-bit CPU circuit: the order of updates based on dependencies of clock, registers, ... is"
+0"important there. Expected is that it'll copy inputs and (after running a good while) sort from lowest to highest."
+
+0"INSERT:link:cpu"
+
+
+
+
+
+
+0"Also test the Langton's Ant circuit:"
+
+0"INSERT:link:langtons_ant"
+
+`, 'ordertest');
 
 
 registerCircuit('All supported ALU ops (2-input)', `

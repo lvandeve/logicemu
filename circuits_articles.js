@@ -2255,6 +2255,26 @@ s....>e..>l
 "1"F..>#....>#....>#....>#....>#....>l2
 
 
+0"## Patch Panel"
+
+0"This allows experimenting with fredkin gates yourself. Connected jacks (J)"
+0"together to connect switches to fredkin gates and/or LEDs and make anything"
+0"you like."
+
+f>J  s>J  J>i>J  J>i>J  J>i>J  J>l  J>l2
+            #      #      #
+f>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+            #      #      #
+f>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+
+F>J  s>J  J>i>J  J>i>J  J>i>J  J>l  J>l2
+            #      #      #
+F>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+            #      #      #
+F>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+
+
+
 
 `, 'fredkin');
 
@@ -2289,11 +2309,11 @@ registerCircuit('Toffoli gate', `
 0"It's defined as a chip above so we can use it as follows now (with the"
 0"controlled input/output always at bottom):"
 
+s..>#..>l
+    #
+s..>#..>l
+    #
 s..>i..>l
-    #
-s..>#..>l
-    #
-s..>#..>l
 
 
 0"It can make all regular gates, but there are 'garbage' input and output"
@@ -2301,46 +2321,46 @@ s..>#..>l
 
 0"## NOT"
 
-"1"F..>i..>l2
+"1"F..>#..>l2
        #
 "1"F..>#..>l2
        #
-"a"s..>#..>l 0"NOT a"
+"a"s..>i..>l 0"NOT a"
 
 
 0"## AND"
 
-"a"s..>i..>l2
+"a"s..>#..>l2
        #
 "b"s..>#..>l2
        #
-"0"f..>#..>l 0"a AND b"
+"0"f..>i..>l 0"a AND b"
 
 
 0"## NAND"
 
-"a"s..>i..>l2
+"a"s..>#..>l2
        #
 "b"s..>#..>l2
        #
-"1"F..>#..>l 0"a NAND b"
+"1"F..>i..>l 0"a NAND b"
 
 
 0"## OR"
 
-"a"s..>i...>i...>l2
+"a"s..>#...>#...>l2
        #    #
 "b"s..>#. .>#...>l2
        # x  #
-"1"F..>#. .>#...>l 0"a OR b"
+"1"F..>i. .>i...>l 0"a OR b"
 
 0"Nicer version if NOT can be used (with Morgan's law):"
 
-"a"s..>O..>i..>l2
+"a"s..>O..>#..>l2
            #
 "b"s..>O..>#..>l2
            #
-"1"F......>#..>l 0"a OR b"
+"1"F......>i..>l 0"a OR b"
 
 
 0"## NOR"
@@ -2349,29 +2369,29 @@ s..>#..>l
 
 "a"s..... ..... .......>l2
          x    . .
-"b"s..>i. .>i.-*-.>i...>l2
+"b"s..>#. .>#.-*-.>#...>l2
        #    # . .  #
 "1"F..>#...>#.. ..>#...>l2
        #    #      #
-"1"F..>#...>#.....>#...>l 0"a NOR b"
+"1"F..>i...>i.....>i...>l 0"a NOR b"
 
 0"Nicer version if NOT can be used (with Morgan's law):"
 
 0"Nicer if we allow NOT gates:"
 
-"a"s..>O..>i......>l2
+"a"s..>O..>#......>l2
            #
 "b"s..>O..>#......>l2
            #
-"1"F......>#..>O..>l 0"a NOR b"
+"1"F......>i..>O..>l 0"a NOR b"
 
 0"## XOR"
 
-"a"s..>i..>l2
+"a"s..>#..>l2
        #
 "1"F..>#..>l2
        #
-"b"s..>#..>l 0"a XOR b"
+"b"s..>i..>l 0"a XOR b"
 
 
 0"## XNOR"
@@ -2379,21 +2399,40 @@ s..>#..>l
 0"NOTE: 'antennas', a form of backplane connection, are used to make some"
 0"wires cross the chip."
 
-"1"F......>i...>l2
+"1"F......>#...>l2
            #
-"a"s..>i..(#)..>l2
+"a"s..>#..(#)..>l2
        #   #
 "1"F..>#..>#...>l2
        #   #
-"b"s..>#..>#...>l 0"a XNOR b"
+"b"s..>i..>i...>l 0"a XNOR b"
 
 0"Nicer version if NOT can be used:"
 
-"a"s..>i......>l2
+"a"s..>#......>l2
        #
 "1"F..>#......>l2
        #
-"b"s..>#..>O..>l 0"a XNOR b"
+"b"s..>i..>O..>l 0"a XNOR b"
+
+
+0"## Patch Panel"
+
+0"This allows experimenting with toffoli gates yourself. Connected jacks (J)"
+0"together to connect switches to toffoli gates and/or LEDs and make anything"
+0"you like."
+
+f>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+            #      #      #
+f>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+            #      #      #
+f>J  s>J  J>i>J  J>i>J  J>i>J  J>l  J>l2
+
+F>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+            #      #      #
+F>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+            #      #      #
+F>J  s>J  J>i>J  J>i>J  J>i>J  J>l  J>l2
 
 
 
@@ -2690,6 +2729,24 @@ s.    w                    w .>l
  s>i>l
    3
  s>3>l
+
+
+0"## Experimenting with relays"
+
+0"Here you can build test circuits with the relays by connecting patch panel"
+0"jacks (J): click two jacks to connect them."
+
+
+s>J      J        J        J        J      J>l
+         v        v        v        v
+s>J      #>J    J>#        #>J    J>#      J>l
+       J>#        #>J    J>#        #>J
+s>J      #>J    J>#        #>J    J>#      J>l
+         #        #        #        #
+s>J      i>J    J>i        i>J    J>i      J>l
+       J>2        4>J    J>2        4>J
+s>J      4>J    J>2        4>J    J>2      J>l
+
 
 
 

@@ -1311,7 +1311,7 @@ var math = LogicEmuMath;
 var maindiv = undefined;
 
 /*
-UPDATE_ALGORITHM info:
+UPDATE_ALGORITHM values:
 0: "scanline": Components updated in scanline order and could read inputs from sometimes already-updated, some not-yet-updated components. This has problems such as shape of circuit affects result, so is only included for completeness, not used.
 1: "fast recursive": components recursively update their inputs before themselves, for faster propagation. This breaks JK flipflops, round-and-round blinking led loops and most other things with loops.
 This algorithm is good for immediate perfect full update in a single tick of final outputs based on user niputs in an asynchronic circuit like a 16-bit adder or multiplier, without any clocks, flipflops or loops
@@ -1319,8 +1319,7 @@ This algorithm is good for immediate perfect full update in a single tick of fin
 This algorithm allows the "on" led in the roundabout circuit to travel around circularly, always 1 led is on
 3: "twiddled slow": like slow, but with some random probability (customizable, e.g. 10%), a gate does not update [or alternatively uses the previous-previous instead of just previous as input.] This may randomly fix some metastable flipflops..
 */
-
-var UPDATE_ALGORITHM = 2; // values described below
+var UPDATE_ALGORITHM = 2;
 
 // search words: autochoose auto_choose autoalgo auto_algo
 var AUTO_CHOOSE_MODE = true; // automatically choose AUTOUPDATE and UPDATE_ALGORITHM based on the circuit
@@ -1403,6 +1402,7 @@ var TYPE_TRISTATE = TYPE_index++;
 var TYPE_TRISTATE_INV = TYPE_index++;
 var TYPE_RANDOM = TYPE_index++;
 var TYPE_MUSIC_NOTE = TYPE_index++; // music, speaker, sound, audio
+var TYPE_JACK = TYPE_index++; // jack for patch cables
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
 // number types (higher value/nearer to bottom = higher priority) [numbertype number_type number priority number order numbers priority numbers order]
@@ -1426,7 +1426,7 @@ var NUMBER_COMMENT = NUMBER_index++;
 /*
 How things like ROM, VTE and FLIPFLOP are parsed: each of their cells are seen as individual components rather than one whole, because we support only 1 output per component, but
 each of these things can have multiple different outputs. Then at a later stage a class implementation for the FF, ROM or VTE is instantiated, and those loose components are
-connected together with a "master".
+connected together with a "parent".
 */
 
 // this is mainly for the "change type" dropdown.
@@ -1442,13 +1442,13 @@ typesymbols[TYPE_ONEHOT] = 'h'; typesymbols[TYPE_NONEHOT] = 'H';
 typesymbols[TYPE_CONSTANT_OFF] = 'f'; typesymbols[TYPE_CONSTANT_ON] = 'F';
 typesymbols[TYPE_FLIPFLOP] = 'c'; typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd';
 typesymbols[TYPE_TRISTATE] = 'z'; typesymbols[TYPE_TRISTATE_INV] = 'Z';
-typesymbols[TYPE_MUSIC_NOTE] = 'N';
+typesymbols[TYPE_MUSIC_NOTE] = 'N'; typesymbols[TYPE_JACK] = 'J';
 
 
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'h':true, 'H':true, 'f':true, 'F':true,
                  's':true, 'S':true, 'l':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
-                 'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true, '?':true, 'N':true};
+                 'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true, '?':true, 'N':true, 'J':true};
 // all "large" devices with slightly different parsing rules, where different cells can be different types of inputs/outputs
 // the "start" cells allow starting the parsing there. The extra ones can only be used once having started from one of the others
 // characters NOT included here but that can be part of large device once parsing: 'c' (can be standalone gate), '#', digits
@@ -1477,7 +1477,7 @@ var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x'
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true, 'U':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
                 '#':true, '=':true, 'i':true, 'T':true, 'D':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
-                'z':true, 'Z':true, '?':true, 'N':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#N':true};
+                'z':true, 'Z':true, '?':true, 'N':true, 'J':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#N':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true, '$':true};
 var puredigitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
@@ -1702,7 +1702,7 @@ function CallSub(id) {
       component.previnputs = util.clone(v.previnputs);
       component.ff_cycle = v.ff_cycle;
       component.ff_cycle_time = v.ff_cycle_time;
-      component.master = null; // handled further
+      component.parent = null; // handled further
       component.rom = null; // handled further
       component.mux = null; // handled further
       component.vte = null; // handled further
@@ -1722,8 +1722,8 @@ function CallSub(id) {
         if(!input) input = v.inputs[j]; // NOT a special sub input, but e.g. a global wire
         component.inputs[j] = input;
       }
-      if(v.master) {
-        component.master = this.components[defsub.translateindex[v.master.index]];
+      if(v.parent) {
+        component.parent = this.components[defsub.translateindex[v.parent.index]];
       }
       if(v.rom) {
         var rom = new ROM();
@@ -1735,9 +1735,7 @@ function CallSub(id) {
         rom.y0 = v.rom.y0;
         rom.x1 = v.rom.x1;
         rom.y1 = v.rom.y1;
-        rom.master = component;
-        rom.master_orig_x = v.rom.master_orig_x;
-        rom.master_orig_y = v.rom.master_orig_y;
+        rom.parent = component;
         rom.error = v.rom.error;
         rom.errormessage = v.rom.errormessage;
         rom.addressdir = v.rom.addressdir;
@@ -1761,7 +1759,7 @@ function CallSub(id) {
       if(v.mux) {
         var mux = new Mux();
         component.mux = mux;
-        mux.master = component;
+        mux.parent = component;
         mux.error = v.mux.error;
         mux.errormessage = v.mux.errormessage;
         mux.dataindir = v.mux.dataindir;
@@ -1820,7 +1818,7 @@ function CallSub(id) {
       if(v.alu) {
         var alu = new Alu();
         component.alu = alu;
-        alu.master = component;
+        alu.parent = component;
         alu.error = v.alu.error;
         alu.errormessage = v.alu.errormessage;
         alu.adir = v.alu.adir;
@@ -1948,8 +1946,8 @@ function CallSub(id) {
           component = parent.components[parent.defsub.translateindex[component.index]];
         }
         if(component) {
-          if(!this.master) {
-            this.master = component;
+          if(!this.parent) {
+            this.parent = component;
             component.callsub = this;
           }
           this.wcomponents.push(component);
@@ -2108,7 +2106,7 @@ i[0]: inputs for north side. {n:num, a:[array], ai:[array], ng:numgroups, ga:[gr
       v is computed from x or y component as distance from: i[0]:left, i[1]:top, i[2]:right, i[3]:bottom, o[0]:right, o[1]:bottom, o[2]:left, o[3]:top
       --> note: the LSB sides are rotationally invariant, and the order is reversed for input and output because if you have LSB on one side on an input, then for an output on the opposing side, the LSB should be on the same side on screen.
       p is x for N/S, y for E/W
-      i is index of this input in the given master, and is only present for inputs, not for outputs
+      i is index of this input in the given component, and is only present for inputs, not for outputs
     ai is array that matches the i values from a, and is only present for inputs, not for outputs
     groups is array of {n:num, f:[x,y,v,p,i], l:[x,y,v,p,i], d:[x,y,v,p], dn:[x,y,v,p], ai:[array]} with:
       f = first
@@ -2116,7 +2114,7 @@ i[0]: inputs for north side. {n:num, a:[array], ai:[array], ng:numgroups, ga:[gr
       first and last are in the same order as described for "v" in array and the order of array a.
       d: each value is 0, 1 or -1: how to increment each field of f to reach l.
       dn: negated version of d: for reaching f from l, to go from MSB to LSB instead
-      ai is array of indices of this input in the given master, and is only present for inputs, not for outputs
+      ai is array of indices of this input in the given component, and is only present for inputs, not for outputs
       nspecial: amount of special inputs/outputs matching the direction of this side. Doesn't have to actually touch this side, but same incoming direction to the device as a regular input going to this side. Special input = y, q, Q, c or C.
     A group is a consecutive streak of inputs.
     num == a.length, numgroups == ga.length
@@ -2157,7 +2155,7 @@ for n/e/s/w outputs: for N left to right, E: top to bottom, S: right to left, W:
 The sides to use to detect inputs/outputs are given by x0, y0, x1, y1
 The values x0s, y0s, x1s, y1s are used for an additional extra check for special inputs. These values can be the same as x0, y0, x1, y1 (in that case nothing more is done), or possibly 1 larger on one or more sides. See getIO for info.
 */
-function getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, master) {
+function getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, component) {
   var r = {};
   r.i = [];
   r.o = [];
@@ -2182,11 +2180,11 @@ function getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, master) {
   r.nispecial = 0;
   r.nospecial = 0;
 
-  for(var i = 0; i < master.inputs.length; i++) {
-    var x = master.inputs_x[i];
-    var y = master.inputs_y[i];
-    var x2 = master.inputs_x2[i];
-    var y2 = master.inputs_y2[i];
+  for(var i = 0; i < component.inputs.length; i++) {
+    var x = component.inputs_x[i];
+    var y = component.inputs_y[i];
+    var x2 = component.inputs_x2[i];
+    var y2 = component.inputs_y2[i];
     var c = world[y2][x2].circuitsymbol;
     if(c == 'y') {
       var d = getInputDir(x, y, x2, y2);
@@ -2519,9 +2517,7 @@ function ROM() {
   this.y0 = 0;
   this.x1 = 0;
   this.y1 = 0;
-  this.master = null;
-  this.master_orig_x = 0;
-  this.master_orig_y = 0;
+  this.parent = null;
   this.error = false;
   this.errormessage = null;
   this.addressdir = -1;
@@ -2728,7 +2724,7 @@ function ROM() {
     var x1b = this.x1b;
     var y1b = this.y1b;
 
-    this.master = null; // the master component for this ROM
+    this.parent = null; // the parent component for this ROM
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var mainbb = (x >= x0b && x < x1b && y >= y0b && y < y1b);
@@ -2736,25 +2732,23 @@ function ROM() {
         if(mainbb && !(rommap[c.circuitsymbol] || c.circuitsymbol == '#b')) { this.setError('can only have b, B or # in the main rectangular region'); return false; }
         if(!mainbb && rommap[c.circuitsymbol])  { this.setError('cannot have b or B outside of the main rectangular region'); return false; }
         var component = c.components[0] || c.components[1];
-        if(!this.master && mainbb && component) {
-          this.master = component;
-          this.master_orig_x = x;
-          this.master_orig_y = y;
+        if(!this.parent && mainbb && component) {
+          this.parent = component;
         }
       };
     }
-    if(!this.master) { this.setError('didn\'t find a master component'); return false; }
+    if(!this.parent) { this.setError('didn\'t find a parent component'); return false; }
 
     for(var i = 0; i < array.length; i++) {
       var x = array[i][0];
       var y = array[i][1];
       var c = world[y][x];
-      if(c.components[0]) c.components[0].master = this.master;
-      if(c.components[1]) c.components[1].master = this.master;
-      if(!c.components[0] && !c.components[1]) c.components[0] = this.master;
+      if(c.components[0]) c.components[0].parent = this.parent;
+      if(c.components[1]) c.components[1].parent = this.parent;
+      if(!c.components[0] && !c.components[1]) c.components[0] = this.parent;
     }
-    this.master.rom = this;
-    this.master.type = TYPE_ROM; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with #
+    this.parent.rom = this;
+    this.parent.type = TYPE_ROM; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with #
     return true;
   };
 
@@ -3046,7 +3040,7 @@ function ROM() {
 
 
 
-    if(!newOrderInputs(this.master, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
+    if(!newOrderInputs(this.parent, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
 
     // outputs
     var rompos = 0;
@@ -3096,9 +3090,9 @@ function ROM() {
     var x1s = this.x1s;
     var y1s = this.y1s;
 
-    if(!this.master) return false;
+    if(!this.parent) return false;
 
-    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.master);
+    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.parent);
     if(!io) return false;
 
     if(!this.processIO(io)) return false;
@@ -3130,7 +3124,7 @@ function Mux() {
 
   When it's mux and not enough inputs, selecting missing address outputs 0.
   */
-  this.master = null;
+  this.parent = null;
   this.error = false;
   this.errormessage = null;
   this.dataindir = -1; // out dir is always opposite side
@@ -3219,38 +3213,38 @@ function Mux() {
     var x1 = this.x1;
     var y1 = this.y1;
 
-    this.master = null; // the master component for this Mux
+    this.parent = null; // the parent component for this Mux
 
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
         if(c.circuitsymbol == 'M' || c.circuitsymbol == '#M') {
-          this.master = c.components[0] || c.components[1];
+          this.parent = c.components[0] || c.components[1];
           break;
         }
       }
-      if(this.master) break;
+      if(this.parent) break;
     }
 
-    if(!this.master) {
-      this.setError('no master component found');
+    if(!this.parent) {
+      this.setError('no parent component found');
       return false;
     }
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
-        //if(c.components[0] == this.master) continue;
+        //if(c.components[0] == this.parent) continue;
         /*if(!c.components[0]) {
-          c.components[0] = this.master;
+          c.components[0] = this.parent;
         } else {
-          c.components[0].master = this.master;
+          c.components[0].parent = this.parent;
         }*/
-        if(c.components[0]) c.components[0].master = this.master;
-        if(c.components[1]) c.components[1].master = this.master;
+        if(c.components[0]) c.components[0].parent = this.parent;
+        if(c.components[1]) c.components[1].parent = this.parent;
       }
     }
-    this.master.mux = this;
-    this.master.type = TYPE_MUX; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with #
+    this.parent.mux = this;
+    this.parent.type = TYPE_MUX; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with #
     return true;
   };
 
@@ -3437,13 +3431,13 @@ function Mux() {
     };
 
     var array = [];
-    for(var i = 0; i < this.master.inputs.length; i++) array[i] = i;
+    for(var i = 0; i < this.parent.inputs.length; i++) array[i] = i;
     var self = this;
     array = array.sort(function(a, b) {
-      var xa =  self.master.inputs_x[a];
-      var ya =  self.master.inputs_y[a];
-      var xb =  self.master.inputs_x[b];
-      var yb =  self.master.inputs_y[b];
+      var xa =  self.parent.inputs_x[a];
+      var ya =  self.parent.inputs_y[a];
+      var xb =  self.parent.inputs_x[b];
+      var yb =  self.parent.inputs_y[b];
       var da = getDir(xa, ya);
       var db = getDir(xb, yb);
       if(da != db) {
@@ -3458,7 +3452,7 @@ function Mux() {
       if(lsbpos) return yb - ya;
       return ya - yb;
     });
-    if(!newOrderInputs(this.master, array)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
+    if(!newOrderInputs(this.parent, array)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
 
     // now assign the outputs
 
@@ -3520,9 +3514,9 @@ function Mux() {
     var x1 = this.x1;
     var y1 = this.y1;
 
-    if(!this.master) return false;
+    if(!this.parent) return false;
 
-    var io = getIO(x0, y0, x1, y1, x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, x0, y0, x1, y1, this.parent);
     if(!io) { this.setError('getting io error'); return false; }
 
     var dirs = this.getDirs(io);
@@ -3554,7 +3548,7 @@ function Mux() {
 
 // Arithmetic Logic Unit ('U')
 function Alu() {
-  this.master = null;
+  this.parent = null;
   this.error = false;
   this.errormessage = null;
   // input A
@@ -4546,7 +4540,7 @@ function Alu() {
   // init before inputs are resolved
   // returns true if ok, false if error
   this.init1 = function(array) {
-    this.master = null; // the master component for this Mux
+    this.parent = null; // the parent component for this Mux
 
     largeComponentBB(array, false, this);
     var x0 = this.x0;
@@ -4558,28 +4552,28 @@ function Alu() {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
         if(c.circuitsymbol == 'U' || c.circuitsymbol == '#U') {
-          this.master = c.components[0] || c.components[1];
+          this.parent = c.components[0] || c.components[1];
           break;
         }
       }
-      if(this.master) break;
+      if(this.parent) break;
     }
 
-    if(!this.master) {
-      this.setError('no master component found');
+    if(!this.parent) {
+      this.setError('no parent component found');
       return false;
     }
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
-        //if(c.components[0] == this.master) continue;
+        //if(c.components[0] == this.parent) continue;
         /*if(!c.components[0]) {
-          c.components[0] = this.master;
+          c.components[0] = this.parent;
         } else {
-          c.components[0].master = this.master;
+          c.components[0].parent = this.parent;
         }*/
-        if(c.components[0]) c.components[0].master = this.master;
-        if(c.components[1]) c.components[1].master = this.master;
+        if(c.components[0]) c.components[0].parent = this.parent;
+        if(c.components[1]) c.components[1].parent = this.parent;
       }
     }
 
@@ -4603,8 +4597,8 @@ function Alu() {
       }
     }
 
-    this.master.alu = this;
-    this.master.type = TYPE_ALU; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with #
+    this.parent.alu = this;
+    this.parent.type = TYPE_ALU; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with #
     return true;
   };
 
@@ -4784,13 +4778,13 @@ function Alu() {
     };
 
     var array = [];
-    for(var i = 0; i < this.master.inputs.length; i++) array[i] = i;
+    for(var i = 0; i < this.parent.inputs.length; i++) array[i] = i;
     var self = this;
     array = array.sort(function(a, b) {
-      var xa =  self.master.inputs_x[a];
-      var ya =  self.master.inputs_y[a];
-      var xb =  self.master.inputs_x[b];
-      var yb =  self.master.inputs_y[b];
+      var xa =  self.parent.inputs_x[a];
+      var ya =  self.parent.inputs_y[a];
+      var xb =  self.parent.inputs_x[b];
+      var yb =  self.parent.inputs_y[b];
       var da = getDir(xa, ya);
       var db = getDir(xb, yb);
       if(da != db) {
@@ -4809,7 +4803,7 @@ function Alu() {
       if(lsbdir) return yb - ya;
       return ya - yb;
     });
-    if(!newOrderInputs(this.master, array)) { throw 'must use *all* inputs for newOrderInputs'; }
+    if(!newOrderInputs(this.parent, array)) { throw 'must use *all* inputs for newOrderInputs'; }
 
     // now assign the outputs
 
@@ -4865,9 +4859,9 @@ function Alu() {
     var x1 = this.x1;
     var y1 = this.y1;
 
-    if(!this.master) return false;
+    if(!this.parent) return false;
 
-    var io = getIO(x0, y0, x1, y1, x0, y0, x1, y1, this.master);
+    var io = getIO(x0, y0, x1, y1, x0, y0, x1, y1, this.parent);
     if(!io) { this.setError('getting io error'); return false; }
 
     var dirs = this.getDirs(io);
@@ -5416,7 +5410,7 @@ function VTE() {
     var x1 = this.x1;
     var y1 = this.y1;
 
-    this.master = null; // the master component for this VTE
+    this.parent = null; // the parent component for this VTE
 
     for(var i = 0; i < array.length; i++) {
       var x = array[i][0];
@@ -5424,25 +5418,23 @@ function VTE() {
       var c = world[y][x];
       var component = c.components[0] || c.components[1];
       if(component) {
-        this.master = component;
-        this.master_orig_x = x;
-        this.master_orig_y = y;
+        this.parent = component;
         break;
       }
     }
 
-    if(!this.master) { this.setError('no master found'); return false; }
+    if(!this.parent) { this.setError('no parent found'); return false; }
 
     for(var i = 0; i < array.length; i++) {
       var x = array[i][0];
       var y = array[i][1];
       var c = world[y][x];
       if(c.number == 1) this.signeddisplay = true;
-      if(c.components[0]) c.components[0].master = this.master;
-      if(c.components[1]) c.components[1].master = this.master;
-      if(!c.components[0] && !c.components[1]) c.components[0] = this.master;
+      if(c.components[0]) c.components[0].parent = this.parent;
+      if(c.components[1]) c.components[1].parent = this.parent;
+      if(!c.components[0] && !c.components[1]) c.components[0] = this.parent;
     }
-    this.master.vte = this;
+    this.parent.vte = this;
     return true;
   };
 
@@ -5581,7 +5573,7 @@ function VTE() {
       }
     }
 
-    if(!newOrderInputs(this.master, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
+    if(!newOrderInputs(this.parent, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
 
     var rompos = 0;
     var outa = [];
@@ -5603,8 +5595,8 @@ function VTE() {
       var y = outa[i][1];
       var z = outa[i][2];
       var c = world[y][x];
-      // TODO: investigate: is the "!= this.master" check needed? The ROM does it. But in the case here, it prevents outputting the "EOF" signal if it happens to be connected to the cell that happens to be the core cell!
-      if(c.components[z] /*&& c.components[z] != this.master*/) {
+      // TODO: investigate: is the "!= this.parent" check needed? The ROM does it. But in the case here, it prevents outputting the "EOF" signal if it happens to be connected to the cell that happens to be the core cell!
+      if(c.components[z] /*&& c.components[z] != this.parent*/) {
         var component = c.components[z];
         component.rom_out_pos = rompos++;
       }
@@ -5624,9 +5616,9 @@ function VTE() {
     var x1s = this.x1s;
     var y1s = this.y1s;
 
-    if(!this.master) { this.setError('no master present'); return false; }
+    if(!this.parent) { this.setError('no parent present'); return false; }
 
-    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.master);
+    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.parent);
     if(!io) { this.setError('getting io failed'); return false; }
 
     /*var dirs = this.getDirs(io);
@@ -5697,7 +5689,7 @@ function DotMatrix() {
   this.oarray2 = []; // only used if oscilloscope.
   this.opointer = 0; // ringbuffer into oscilloscope array
 
-  this.master = null;
+  this.parent = null;
 
 
   this.rgbled = false; // if true, is not a dot matrix screen but a single RGB led with up to 3 inputs
@@ -5875,11 +5867,11 @@ function DotMatrix() {
   // init before inputs are resolved
   // returns true if ok, false if error
   this.init1 = function(array, component) {
-    // unlike other large components, the master component is the only single
+    // unlike other large components, the parent component is the only single
     // component here, since this component has only inputs, and multiple
     // components is only needed if multiple different output values must be
     // supported.
-    this.master = component;
+    this.parent = component;
     largeComponentBB(array, true, this);
 
     this.w = this.x1b - this.x0b;
@@ -5993,7 +5985,7 @@ function DotMatrix() {
 
     if(this.numc > 9) { this.setError('too many RGB color inputs, supports up to 9'); return false; }
 
-    if(!newOrderInputs(this.master, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
+    if(!newOrderInputs(this.parent, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
 
     return true;
   };
@@ -6014,9 +6006,9 @@ function DotMatrix() {
     var w = x1 - x0;
     var h = y1 - y0;
 
-    if(!this.master) return false;
+    if(!this.parent) return false;
 
-    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.master);
+    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.parent);
     if(!io) { this.setError('getIO failed'); return false; }
 
     if(!this.processIO(io)) { this.setError('processIO failed'); return false; }
@@ -6086,7 +6078,7 @@ var suspendAudioContext = function() {
 };
 
 // Sound, speaker, music, audio
-// has same single output everywhere, so no master needed
+// has same single output everywhere, so no parent needed
 function MusicNote() {
   this.x0 = 0;
   this.y0 = 0;
@@ -6324,17 +6316,17 @@ function MusicNote() {
     this.basefrequency = 440;
     this.baseshape = 0;
     this.basevolume = 0.2;
-    this.master = component;
+    this.parent = component;
   };
 
   // init before inputs are resolved
   // returns true if ok, false if error
   this.init1 = function(array, component) {
-    // unlike other large components, the master component is the only single
+    // unlike other large components, the parent component is the only single
     // component here, since there's only one output value, and multiple
     // components is only needed if multiple different output values must be
     // supported.
-    this.master = component;
+    this.parent = component;
 
     largeComponentBB(array, false, this);
 
@@ -6410,7 +6402,7 @@ function MusicNote() {
       if(g.length > 2) { this.setError('too many input groups'); return false; }
     }
 
-    if(!newOrderInputs(this.master, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
+    if(!newOrderInputs(this.parent, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
 
     return true;
   };
@@ -6427,12 +6419,12 @@ function MusicNote() {
     var w = x1 - x0;
     var h = y1 - y0;
 
-    if(!this.master) return false;
+    if(!this.parent) return false;
 
-    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.master);
+    var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.parent);
     if(!this.processIO(io)) { this.setError('processIO failed'); return false; }
 
-    /*var io = getIO(x0, y0, x1, y1, this.master);
+    /*var io = getIO(x0, y0, x1, y1, this.parent);
     if(!io) { this.setError('getIO failed'); return false; }
 
     var dirs = this.getDirs(io);
@@ -6535,12 +6527,12 @@ function FF() {
 
     if(num.numC) this.value = true;
 
-    this.master = array2[0].components[0];
+    this.parent = array2[0].components[0];
     for(var i = 0; i < array2.length; i++) {
-      array2[i].components[0].master = this.master;
+      array2[i].components[0].parent = this.parent;
       array2[i].components[0].type = TYPE_FLIPFLOP;
     }
-    this.master.ff = this;
+    this.parent.ff = this;
     this.cells = array2;
 
     return true;
@@ -6675,6 +6667,317 @@ function Bus() {
 
 var highlightedcomponent = null;
 
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+var jackclick = null; // previously clicked jack, when clicking two jacks to connect them
+var jackclickdiv = null; // div which indicates which starting jack you clicked
+var jackcolor = 0;
+
+// for jacks
+function rempartner(c, i) {
+  var old = c.partner[i];
+  c.partner[i] = null;
+  if(c.partnerdiv[i]) {
+    util.removeElement(c.partnerdiv[i]);
+    c.partnerdiv[i] = null;
+  }
+  if(old) {
+    for(var j = 0; j < old.partner.length; j++) {
+      if(old.partner[j] == c) rempartner(old, j);
+    }
+  }
+};
+
+// temporarily removes this connection, but does not remove the divs and returns
+// info that you can use either to restore the connection, or fully complete
+// the removal
+function temprempartner(c, i) {
+  // p = list of partner connections (list of all one-sided elements+index of each pair), d = list of divs that should be removed
+  var result = {p:[], d:[]};
+  var old = c.partner[i];
+  if(!old) return result;
+  result.p.push([c, i, old]);
+  c.partner[i] = null;
+  if(c.partnerdiv[i]) {
+    result.d.push([c, i, old]);
+  }
+  if(old) {
+    for(var j = 0; j < old.partner.length; j++) {
+      if(old.partner[j] == c) {
+        result.p.push([old, j, c]);
+        old.partner[j] = null;
+        if(old.partnerdiv[j]) {
+          result.d.push([old, j, c]);
+        }
+      }
+    }
+  }
+  return result;
+}
+
+// for jacks
+// make room for a new partner, shift out the oldest one if necessary
+function shiftpartner(c) {
+  // first close any gaps, move older ones upwards to any available gaps
+  var partner = [];
+  var partnerdiv = [];
+  for(var i = 0; i < c.partner.length; i++) {
+    if(c.partner[i]) {
+      partner.push(c.partner[i]);
+      partnerdiv.push(c.partnerdiv[i]);
+    }
+  }
+  for(var i = 0; i < c.partner.length; i++) {
+    if(i < partner.length) {
+      c.partner[i] = partner[i];
+      c.partnerdiv[i] = partnerdiv[i];
+    } else {
+      c.partner[i] = null;
+      c.partnerdiv[i] = null;
+    }
+  }
+  if(c.partner[c.partner.length - 1]) {
+    drawpatchcable(c, c.partner[c.partner.length - 1], 0, true); // temporarily indicate the removed patch cable
+    rempartner(c, c.partner.length - 1);
+  }
+  // move all upward to open up the partner[0] spot
+  for(var i = c.partner.length - 1; i > 0; i--) {
+    c.partner[i] = c.partner[i - 1];
+    c.partnerdiv[i] = c.partnerdiv[i - 1];
+  }
+  c.partner[i] = null;
+  c.partnerdiv[i] = null;
+}
+
+function removeallpatchcables() {
+  // clear jacks
+  for(var i = 0; i < components.length; i++) {
+    var p = components[i].partner;
+    if(!p) continue;
+    var d = components[i].partnerdiv;
+    for(var j = 0; j < p.length; j++) {
+      p[j] = null;
+      if(d[j]) {
+        util.removeElement(d[j]);
+        d[j] = null;
+      }
+    }
+  }
+}
+
+// remember even through loading different circuits to reapply to similarly shaped circuit later
+var jackstate0 = [];
+var jackstate1 = [];
+var jackstate2 = [];
+var jackstate3 = [];
+var jackstate4 = [];
+
+function storepatchcablestate() {
+  var state = [];
+  for(var i = 0; i < components.length; i++) {
+    var p = components[i].partner;
+    if(!p) continue;
+    for(var j = 0; j < p.length; j++) {
+      if(!p[j]) continue;
+      if(components[i].index > p[j].index) continue; // only store once per pair
+      state.push([components[i].index, p[j].index]);
+    }
+  }
+  return state;
+}
+
+function restorepatchcablestate(state) {
+  // first check if the patch applies.
+  for(var i = 0; i < state.length; i++) {
+    var a = state[i][0];
+    var b = state[i][1];
+    if(a >= components.length) return false;
+    if(b >= components.length) return false;
+    if(components[a].type != TYPE_JACK) return false;
+    if(components[b].type != TYPE_JACK) return false;
+  }
+  // apply the patch
+  removeallpatchcables();
+  for(var i = 0; i < state.length; i++) {
+    var a = state[i][0];
+    var b = state[i][1];
+    connectjacks(components[a], components[b]);
+  }
+  return true;
+}
+
+function drawpatchcable(a, b, index, error) {
+  var thickness = 4;
+  var x0 = a.corecell.x * tw;
+  var y0 = a.corecell.y * th;
+  var x1 = b.corecell.x * tw;
+  var y1 = b.corecell.y * th;
+  // randomize the start and end coordinate, they then twiddle different each time, which diversifies the diagonality a bit better for more visual distinction between patch wires
+  if((((a.corecell.x * 19) % 13) ^ ((b.corecell.x * 37) % 7)) & 1) {
+    var temp = x0;
+    x0 = x1;
+    x1 = temp;
+    temp = y0;
+    y0 = y1;
+    y1 = temp;
+  }
+  // now twiddle their positions a bit so they'll be slightly diagonal, makes it easier to distinguish overlapping ones
+  if(x0 < x1) {
+    x0 += tw;
+  } else {
+    x1 += tw;
+  }
+  if(y0 < y1) {
+    y0 += th - thickness - 2;
+    y1 += thickness + 2;
+  } else {
+    y0 += thickness + 2;
+    y1 += th - thickness - 2;
+  }
+  var color = error ? 'red' : BUSCOLORS[jackcolor];
+  jackcolor = (jackcolor + 1) % BUSCOLORS.length;
+  if(error) {
+    var tempdiv = drawLine(x0, y0, x1, y1, color, thickness, worldDiv);
+    window.setTimeout(function() {
+      util.removeElement(tempdiv);
+    }, 500);
+  } else {
+    a.partnerdiv[index] = drawLine(x0, y0, x1, y1, color, thickness, worldDiv);
+  }
+}
+
+function drawstartjack(a) {
+  var x0 = a.corecell.x * tw;
+  var y0 = a.corecell.y * th;
+  jackclickdiv = util.makeDiv(x0, y0, tw, th, worldDiv);
+  jackclickdiv.style.border = '2px solid red';
+}
+
+// redraw all jacks, e.g. for after worldDiv changed
+function redrawjacks() {
+  for(var i = 0; i < components.length; i++) {
+    var d = components[i].partnerdiv;
+    if(!d) continue;
+    for(var j = 0; j < d.length; j++) {
+      if(d[j]) {
+        util.removeElement(d[j]);
+        d[j] = null;
+        drawpatchcable(components[i], components[i].partner[j], j, false);
+      }
+    }
+  }
+}
+
+// either connects them, or removes connections if e.g. a and b are the same (the behavior when clicking jacks)
+function connectjacks(a, b) {
+  // click already existing connection to remove it instead of adding a new connection
+  var DISALLOWCONFLICT = true; // disallow multiple jacks with different component input, which would be a conflict and can cause an electrical short in real life.
+  var already = false;
+  for(var i = 0; i < a.partner.length; i++) {
+    if(a.partner[i] == b) {
+      rempartner(a, i);
+      already = true;
+    }
+  }
+  if(a == b) {
+    // click twice same jack to remove all its partners
+    for(var i = 0; i < a.partner.length; i++) {
+      rempartner(a, i);
+    }
+  } else if(DISALLOWCONFLICT && a.inputs.length && b.inputs.length) {
+    // do nothing, refuse to connect two components with inputs together
+    drawpatchcable(a, b, 0, true); // temporarily indicate error
+  } else if(!already) {
+    if(DISALLOWCONFLICT && (a.inputs.length || b.inputs.length)) {
+      var group = getalljacks2(a, b);
+      var removed = []; // store temporary-completed removals
+      for(var i = 0; i < group.length; i++) {
+        var c = group[i];
+        if(c == a || c == b) continue;
+        if(c.inputs.length) {
+          // c has inputs, but a or b too, break the original connections of c with the group, now use a or b as the group's input instead
+          // TODO: the loop below deletes more cables than necessary, some could stay and form a new group, instead find the smallest set of cables that can be removed to have the new input and old input in a different group.
+          for(var j = 0; j < c.partner.length; j++) {
+            var c2 = c.partner[j];
+            if(!c2) continue;
+            removed.push([temprempartner(c, j), c2]);
+          }
+        }
+      }
+
+      // a and b now form a new smaller group. Now, put back any connections from input-jacks that were not actually connecting to
+      // this new group: there was no reason to remove them.
+      group = getalljacks2(a, b);
+      var seen = [];
+      for(var i = 0; i < group.length; i++) seen[group[i].index] = true;
+      for(var i = 0; i < removed.length; i++) {
+        var p = removed[i][0]; // commands to either restore or complete removal
+        var b2 = removed[i][1];
+        if(seen[b2.index]) {
+          // stay removed, complete the removal: remove the divs
+          for(var j = 0; j < p.d.length; j++) {
+            util.removeElement(p.d[j][0].partnerdiv[p.d[j][1]]);
+            p.d[j][0].partnerdiv[p.d[j][1]] = null;
+            drawpatchcable(p.d[j][0], p.d[j][2], 0, true); // temporarily indicate the removed patch cable
+          }
+        } else {
+          // add it back
+          for(var j = 0; j < p.p.length; j++) {
+            p.p[j][0].partner[p.p[j][1]] = p.p[j][2];
+          }
+        }
+      }
+    }
+    shiftpartner(a);
+    shiftpartner(b);
+    a.partner[0] = b;
+    b.partner[0] = a;
+    drawpatchcable(a, b, 0, false);
+  }
+}
+
+// get all jacks connected together to the same group, including the given component
+function getalljacks(component) {
+  var jacks = [];
+  var seen = [];
+  var stack = [component];
+  while(stack.length) {
+    var c = stack.pop();
+    seen[c.index] = true;
+    jacks.push(c);
+    for(var i = 0; i < c.partner.length; i++) {
+      if(c.partner[i] && !seen[c.partner[i].index]) stack.push(c.partner[i]);
+    }
+  }
+  return jacks;
+}
+
+// get all jacks part of both a's group and b's group (but not outputting double if a and b are part of the same group)
+function getalljacks2(a, b) {
+  var group = getalljacks(a);
+  var hasb = false; // it is possible that b is in the same group as a, the connection is then redundant but it's made anyway, no problem with that
+  for(var i = 0; i < group.length; i++) { if(group[i] == b) { hasb = true; break; }}
+  if(!hasb) {
+    // b not part of same group, so must also add its components to the list that will be the new group formed after connecting a and b
+    var group = group.concat(getalljacks(b));
+  }
+  return group;
+}
+
+
+function updateJacks() {
+  // the order in which components must be updated depends on the jack connections
+  computeComponentsOrder();
+  update();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 function Component() {
   this.value = false;
   this.prevvalue = false; // used for the slow algorithms, plus also for flipflops (to support shift registers with D flipflops made from counters...)
@@ -6691,14 +6994,14 @@ function Component() {
   this.ff_cycle = false;
   this.ff_cycle_time = 0;
   this.input_ff_types = []; // only used by flipflops. 0=c, 1=j, 2=k, 3=d, 4=t, 5=q, 6=Q, 7=y
-  this.master = null; // master component for rom, vte, ...
-  this.rom = null; // used if this is a master of rom
-  this.mux = null; // used if this is a master of mux
-  this.alu = null; // used if this is a master of alu
+  this.parent = null; // parent component for rom, vte, ...
+  this.rom = null; // used if this is a parent of rom
+  this.mux = null; // used if this is a parent of mux
+  this.alu = null; // used if this is a parent of alu
   this.vte = null;
   this.ff = null;
   this.tristate = null;
-  this.rom_out_pos = -1; // used not only for ROM outputs but also for other big components like flip-flops and mux, to know which output value of the master this one belongs to
+  this.rom_out_pos = -1; // used not only for ROM outputs but also for other big components like flip-flops and mux, to know which output value of the parent this one belongs to
   // location of the input symbol >, v, ... of incoming component
   this.inputs_x = [];
   this.inputs_y = [];
@@ -6723,6 +7026,8 @@ function Component() {
   this.changedticks = 0; // for keeping track of 'changed' for delay
   this.lasttimerticks = 0; // for timers to keep track when they should tick
   this.changein = 0; // if non-0, indicates this component will change again in changein ticks. E.g. timer/delay.
+  this.partner = null; // for patch panel jack: which other component it is connected with
+  this.partnerdiv = null;
 
   this.markError = function(message) {
     this.error = true;
@@ -6840,7 +7145,9 @@ function Component() {
     } else if(this.type == TYPE_RANDOM) {
       return (Math.random() < 0.5);
     } else if(this.type == TYPE_MUSIC_NOTE) {
-      return numon > 0;
+      return numon > 0;  // TODO: do not output if not enabled (if it has 'y' input)
+    } else if(this.type == TYPE_JACK) {
+      return numon != 0; // not implemented in this function, but elsewhere, but behave like OR initially when not yet connected to another jack
     }
     return false;
   };
@@ -6858,7 +7165,7 @@ function Component() {
 
     if(this.type == TYPE_FLIPFLOP) {
       if(this.ff) value = this.ff.value;
-      if(this.master && this.master.ff) value = this.master.ff.value;
+      if(this.parent && this.parent.ff) value = this.parent.ff.value;
       for(var i = 0; i < this.inputs.length; i++) {
         //this.previnputs[i] = true; // this ensures we will NOT have inputs counted as going from low to high initially
         this.previnputs[i] = this.inputs_negated[i]; // treat as if input was 0 before loading, but 1 in case of negated input. For non-negated input, this means a positive value will create a positive edge on loading the circuit.
@@ -6882,7 +7189,7 @@ function Component() {
   this.update = function() {
     if(this.updated) return;
     this.updated = true;
-    if(this.master) this.master.update();
+    if(this.parent) this.parent.update();
     var numon = 0;
     var numoff = 0;
 
@@ -6959,7 +7266,7 @@ function Component() {
       if(value2) numon++;
       else numoff++;
 
-      // The this.ff check ensures this only happens for the flipflop master component
+      // The this.ff check ensures this only happens for the flipflop parent component
       if(this.type == TYPE_FLIPFLOP && this.ff) {
         var prevvalue2 = (this.previnputs[i] == undefined) ? value2 : this.previnputs[i];
         this.previnputs[i] = value2;
@@ -7005,27 +7312,27 @@ function Component() {
     }
 
     if(this.type == TYPE_ROM) {
-      if(this.master) {
+      if(this.parent) {
         if(this.rom) this.rom.update(rom_inputs);
-        var rom = this.rom || this.master.rom;
+        var rom = this.rom || this.parent.rom;
         this.value = rom.output[this.rom_out_pos];
       }
     } else if(this.type == TYPE_MUX) {
-      if(this.master) {
+      if(this.parent) {
         if(this.mux) this.mux.update(rom_inputs);
-        var mux = this.mux || this.master.mux;
+        var mux = this.mux || this.parent.mux;
         this.value = mux.output[this.rom_out_pos];
       }
     } else if(this.type == TYPE_ALU) {
-      if(this.master) {
+      if(this.parent) {
         if(this.alu) this.alu.update(rom_inputs);
-        var alu = this.alu || this.master.alu;
+        var alu = this.alu || this.parent.alu;
         this.value = alu.output[this.rom_out_pos];
       }
     } else if(this.type == TYPE_VTE) {
-      if(this.master || this.vte) {
-        if(this.vte) this.vte.update(rom_inputs); // only if this.vte, don't do this on this.vte || this.master.vte to avoid multiple updates to it
-        var vte = this.vte || this.master.vte;
+      if(this.parent || this.vte) {
+        if(this.vte) this.vte.update(rom_inputs); // only if this.vte, don't do this on this.vte || this.parent.vte to avoid multiple updates to it
+        var vte = this.vte || this.parent.vte;
         this.value = vte.output[this.rom_out_pos];
       }
     } else if(this.type == TYPE_DOTMATRIX) {
@@ -7037,6 +7344,32 @@ function Component() {
         this.musicnote.update(rom_inputs);
       }
       this.value = this.getNewValue(numon, numoff);
+    } else if(this.type == TYPE_JACK) {
+      // compute numon and numoff from *all* connected jacks
+      // NOTE: getting the input values from the other jacks like this may be out-of-order compared to what the UPDATE_ALGORITHM normally requires, but the user can connect jacks in any possible order so this is hard to avoid. This can give a delay of one tick per group of jacks in the worst case.
+      var jacks = getalljacks(this);
+      numon = 0;
+      numoff = 0;
+      for(var i = 0; i < jacks.length; i++) {
+        for(var j = 0; j < jacks[i].inputs.length; j++) {
+          // the algorithm must match how it's done in the main numon/numoff for loop above!
+          var v = (UPDATE_ALGORITHM == 0 || UPDATE_ALGORITHM == 1) ? jacks[i].inputs[j].value : jacks[i].inputs[j].prevvalue;
+          if(jacks[i].inputs_negated[j]) v = !v;
+          if(v) numon++;
+          else numoff++;
+        }
+      }
+      this.value = this.getNewValue(numon, numoff);
+      // also update all the connected jacks, to avoid doing the same computation over all jacks for every jack
+      // beware: ensure to play correctly with the updated, changed, changein, and so on variables! we emulate
+      // their update function without actually calling it on the others!
+      // NOTE: we know for sure that all other jacks are not yet updated, because if one was, then this would have been updated and we wouldn't end up this far in this function
+      for(var i = 0; i < jacks; i++) {
+        if(jacks[i] == this) continue; // self is already done
+        jacks[i].value = this.value;
+        if(jacks[i].value != jacks[i].prevvalue) jacks[i].changed = true;
+        jacks[i].updated = true;
+      }
     } else if(this.type == TYPE_IC) {
       // a component of this type in theory should do nothing and not be connected with anything, it's just
       this.value = false;
@@ -7049,11 +7382,11 @@ function Component() {
       //we do not take the positive edge of the xor "e", but instead the xor of the positive edges. Otherwise while one input is high, a second input would be negative edge triggered. So we use num instead of e here.
       var clocked = (numc_pos_edge & 1);
 
-      var ff = (this.ff || (this.master && this.master.ff));
+      var ff = (this.ff || (this.parent && this.parent.ff));
 
       // flip flops are made from multiple components (d, c, ...), but only one of them
-      // is designated as master component.
-      // Only the master component has its own ff. So it's updated only once, as intended.
+      // is designated as parent component.
+      // Only the parent component has its own ff. So it's updated only once, as intended.
       if(this.ff) { // this.ff on purpose, not ff from above
         // change whether clocked if there are 'enable' inputs
         var ffenable = numy1; // explicitely enabled
@@ -7277,7 +7610,7 @@ function Component() {
         this.value = !this.value;
       } else if(this.type == TYPE_FLIPFLOP) {
         //this.value = !this.value;
-        var ff = this.ff ? this.ff : (this.master ? this.master.ff : null);
+        var ff = this.ff ? this.ff : (this.parent ? this.parent.ff : null);
         if(ff) ff.value = !ff.value;
       } else {
         didsomething = false;
@@ -7340,7 +7673,7 @@ function Component() {
       }
       if(!e.ctrlKey && !e.shiftKey) changeMode = null;
       // Do not support changing large devices, it breaks them irreversably during this circuit run
-      if(this.master || this.dotmatrix || this.type == TYPE_IC) return;
+      if(this.parent || this.dotmatrix || this.type == TYPE_IC) return;
       this.type = type;
       this.value = value;
       if(!symbol) return;
@@ -7377,7 +7710,7 @@ function Component() {
     }
     if(this.type == TYPE_VTE) {
       var vte = this.vte;
-      if(!vte && this.master) vte = this.master.vte;
+      if(!vte && this.parent) vte = this.parent.vte;
       if(vte && vte.allowstyping && !vte.invisible) {
         vte.getKeyboardFocus();
       }
@@ -7385,7 +7718,7 @@ function Component() {
     if(this.type == TYPE_ROM) {
       //throw 'todo: must reimplement this, to not use x/y coords directly but the true line/bit pos';
       var rom = this;
-      if(this.master) rom = this.master;
+      if(this.parent) rom = this.parent;
       if(rom.rom) rom = rom.rom;
       if(!rom.array) return;
       if(rom.decoder || rom.encoder) return;
@@ -7404,6 +7737,20 @@ function Component() {
 
       rom.array[line][bit] = !rom.array[line][bit];
       rom.updateRamDisplay(bit, line);
+    }
+    if(this.type == TYPE_JACK) {
+      if(jackclick) {
+        connectjacks(this, jackclick);
+        jackclick = null;
+        util.removeElement(jackclickdiv);
+        updateJacks();
+      } else {
+        jackclick = this;
+        drawstartjack(this);
+      }
+    } else {
+      jackclick = null;
+      util.removeElement(jackclickdiv);
     }
     if(!paused) update();
   };
@@ -7428,6 +7775,24 @@ function Component() {
   };
 }
 
+// draw a line in plain HTML/CSS, not on canvas. Returns the created element.
+function drawLine(x0, y0, x1, y1, color, thickness, opt_parent) {
+  var parent = opt_parent || document.body;
+  var dist = Math.floor(Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0)));
+  var angle = Math.atan2(y1 - y0, x1 - x0);
+  var div = document.createElement('div');
+  div.style.backgroundColor = color;
+  div.style.position = 'absolute';
+  div.style.width = '' + dist + 'px';
+  div.style.height = '' + thickness + 'px';
+  div.style.top = y0 + 'px';
+  div.style.left = x0 + 'px';
+  div.style.transformOrigin = 'top left';
+  div.style.transform = 'rotate(' + angle + 'rad)';
+  div.style.zIndex = '2';
+  parent.appendChild(div);
+  return div;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -8006,10 +8371,10 @@ function Cell() {
   // Update the style based on current value in the component
   this.setValue = function(value) {
     if(this.circuitsymbol == 'b' || this.circuitsymbol == 'B') {
-      var master = this.components[0] || this.components[1];
-      if(!master) return;
-      if(master.master) master = master.master;
-      var rom = master.rom;
+      var parent = this.components[0] || this.components[1];
+      if(!parent) return;
+      if(parent.parent) parent = parent.parent;
+      var rom = parent.rom;
       if(!rom) return;
       var co = rom.wordshor ? (this.y - rom.y0) : (this.x - rom.x0);
       var index = rom.lines_inv[co];
@@ -8029,10 +8394,10 @@ function Cell() {
     }
 
     if(this.isvte) {
-      var master = this.components[0] || this.components[1];
-      if(!master) return;
-      if(master.master) master = master.master;
-      var vte = master.vte;
+      var parent = this.components[0] || this.components[1];
+      if(!parent) return;
+      if(parent.parent) parent = parent.parent;
+      var vte = parent.vte;
       if(!vte || !vte.text) return;
       if(vte.invisible) return; //inside chip so don't render
       if(this.x < vte.x0b || this.x >= vte.x1b) return;
@@ -8061,7 +8426,7 @@ function Cell() {
   this.getErrorText = function() {
     if(this.components[0]) {
       var result = this.components[0].errormessage;
-      if(!result && this.components[0].master) result = this.components[0].master.errormessage;
+      if(!result && this.components[0].parent) result = this.components[0].parent.errormessage;
       return result;
     }
     return 'unknown error';
@@ -8157,10 +8522,13 @@ function Cell() {
       if(tc == 'H') title = 'inverted one-hot detector (same as XNOR if 2 inputs)';
       if(tc == 'f') title = 'constant off (fixed off)';
       if(tc == 'F') title = 'constant on (fixed on)';
+      if(tc == 'J' && component) {
+        title = 'jack for patch panel. Click this jack, then another jack, to connect them together with a patch wire. To remove a wire, click both its jacks again. To remove all wires from one jack, click that jack twice. To remove all jacks of the board, see one of the dropdowns in the main menu. You cannot connect multiple jacks that have an input (an arrow pointing to it) together in one group, if you try an older input connection may be removed, or it may refuse to connect and indicate a temporary red line. This is because multiple inputs to the same connected jacks gives a conflict (we could OR them, but instead we choose the realistic approach where this can cause an electric short). A jack supports a maximum of ' + component.partner.length + ' wires, adding more will remove the oldest one.';
+      }
       if(devicemaparea[tc]) {
         if(type == TYPE_FLIPFLOP) {
           var ff = component.ff;
-          if(!ff && component.master) ff = component.master.ff;
+          if(!ff && component.parent) ff = component.parent.ff;
           var name = 'flipflop';
           if(ff) {
             if(ff.numc && ff.numd && !ff.numj && !ff.numk && !ff.numt) name = 'D flipflop';
@@ -8191,8 +8559,8 @@ function Cell() {
         } else if(type == TYPE_VTE) {
           title = 'terminal';
           if(component) {
-            var master = component.master;
-            var vte = master ? master.vte : component.vte;
+            var parent = component.parent;
+            var vte = parent ? parent.vte : component.vte;
             if(vte) {
               if(tc == 'y') {
                 if(vte.counter) {
@@ -8272,8 +8640,8 @@ function Cell() {
           }
         } else if(type == TYPE_MUX) {
           title = 'mux';
-          var master = component.master;
-          var mux = master ? master.mux : component.mux;
+          var parent = component.parent;
+          var mux = parent ? parent.mux : component.mux;
           if(mux) {
             if(mux.demux) {
               title = 'demux';
@@ -8323,8 +8691,8 @@ function Cell() {
             title += ' numselout: ' + mux.numselout + '. ';*/
           }
         } else if(type == TYPE_ALU) {
-          var master = component.master;
-          var alu = master ? master.alu : component.alu;
+          var parent = component.parent;
+          var alu = parent ? parent.alu : component.alu;
           if(alu) {
             var numinputs = (alu.numc ? 3 : (alu.numb ? 2 : 1));
             if(alu.numselect) {
@@ -8348,8 +8716,8 @@ function Cell() {
         } else if(type == TYPE_ROM) {
           title = 'ROM/RAM bit (b=0, B=1)';
           if(component) {
-            var master = component.master;
-            var rom = master ? master.rom : component.rom;
+            var parent = component.parent;
+            var rom = parent ? parent.rom : component.rom;
             if(rom) {
               if(tc == 'c') {
                 title = 'clock input (write/store) for RAM';
@@ -8457,7 +8825,7 @@ function Cell() {
 
     if(!this.comment) {
       // TODO: use component type instead?
-      var pointer = (c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R' || c == 'b' || c == 'B');
+      var pointer = (c == 's' || c == 'S' || c == 'p' || c == 'P' || c == 'r' || c == 'R' || c == 'b' || c == 'B' || c == 'J');
       // currently cursor pointer not enabled for wires etc... that are part of the switch (even though pressing them actually works... but it would look a bit too messy)
       if(c == '#') {
         if(type == TYPE_SWITCH_OFF || type == TYPE_SWITCH_ON || type == TYPE_PUSHBUTTON_OFF || type == TYPE_PUSHBUTTON_ON || type == TYPE_TIMER_OFF || type == TYPE_TIMER_ON) {
@@ -8505,7 +8873,7 @@ function Cell() {
           var compo = w.components[i];
           if(!compo) continue;
           console.log('component ' + i + ': index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y + ' number: ' + compo.number + ' | rom_out_pos: ' + compo.rom_out_pos + ' ff_cycle: ' + compo.ff_cycle + ',' + compo.ff_cycle_time);
-          if(compo.master) console.log('master: index: ' + compo.master.index + ',  type: ' + compo.master.type + ', corecell: ' + compo.master.corecell.circuitsymbol + ', corecell.x: ' + compo.master.corecell.x + ', corecell.y: ' + compo.master.corecell.y);
+          if(compo.parent) console.log('parent: index: ' + compo.parent.index + ',  type: ' + compo.parent.type + ', corecell: ' + compo.parent.corecell.circuitsymbol + ', corecell.x: ' + compo.parent.corecell.x + ', corecell.y: ' + compo.parent.corecell.y);
           for(var j = 0; j < compo.inputs.length; j++) {
             var corecellinfo = (compo.inputs[j].corecell) ? (compo.inputs[j].corecell.circuitsymbol + ', corecell.x: ' + compo.inputs[j].corecell.x + ', corecell.y: ' + compo.inputs[j].corecell.y) : ('' + compo.inputs[j].corecell);
             console.log('input ' + j + ': index: ' +  compo.inputs[j].index + ', type: ' + compo.inputs[j].type + ', corecell: ' +  corecellinfo);
@@ -8903,7 +9271,7 @@ function RendererText() {
         var outside = specialmap[symbol];
         var dotmatrix = null;
         if(cell.components[0] && cell.components[0].type == TYPE_DOTMATRIX) dotmatrix = cell.components[0].dotmatrix;
-        if(!dotmatrix && cell.components[0] && cell.components[0].master) dotmatrix = cell.components[0].master.dotmatrix;
+        if(!dotmatrix && cell.components[0] && cell.components[0].parent) dotmatrix = cell.components[0].parent.dotmatrix;
         if(dotmatrix && (cell.x < dotmatrix.x0b || cell.x >= dotmatrix.x1b || cell.y < dotmatrix.y0b || cell.y >= dotmatrix.y1b)) outside = true;
 
         if(outside) {
@@ -8954,7 +9322,7 @@ function RendererText() {
         var outside = specialmap[symbol];
         var vte = null;
         if(cell.components[0] && cell.components[0].type == TYPE_VTE) vte = cell.components[0].vte;
-        if(!vte && cell.components[0] && cell.components[0].master) vte = cell.components[0].master.vte;
+        if(!vte && cell.components[0] && cell.components[0].parent) vte = cell.components[0].parent.vte;
         if(vte && (cell.x < vte.x0b || cell.x >= vte.x1b || cell.y < vte.y0b || cell.y >= vte.y1b)) outside = true;
 
         this.div1.style.boxSizing = 'border-box'; // have the border not make the total size bigger, have it go inside
@@ -8988,7 +9356,7 @@ function RendererText() {
         }
         if(vte) {
           var comp = cell.components[0];
-          if(vte.master == comp && vte.supportsTyping() && comp.corecell.x == cell.x && comp.corecell.y == cell.y) {
+          if(vte.parent == comp && vte.supportsTyping() && comp.corecell.x == cell.x && comp.corecell.y == cell.y) {
             // set at position where this terminal is, because otherwise the browser will scroll the screen towards where the element is placed when focusing it
             vte.initTextArea(worldDiv, cell.x * tw, cell.y * th);
           }
@@ -9132,7 +9500,7 @@ function hasDevice(x, y, dir) {
 // very similar to connected, but with a few tweaks for graphics.
 // if connected to a % or & double corner and that double corner is not
 // connected with its other end, returns false instead of true
-function connected2g(x, y, dir) {
+function connected2g(x, y, dir) {;
   if(!connected2(x, y, dir)) return false;
   if(dir > 3) return true;
   var n = getNeighbor(x, y, dir);
@@ -9203,8 +9571,8 @@ function sameDevice(x, y, dir) {
   if(ffmap[c] && ffmap[c2]) {
     var co1 = world[y][x].components[0];
     var co2 = world[y2][x2].components[0];
-    var ff1 = co1.master ? co1.master.ff : co1.ff;
-    var ff2 = co2.master ? co2.master.ff : co2.ff;
+    var ff1 = co1.parent ? co1.parent.ff : co1.ff;
+    var ff2 = co2.parent ? co2.parent.ff : co2.ff;
     return !!ff1 && ff1 == ff2;
   }
   if(devicemap[c] && devicemap[c2]) return false;
@@ -10165,6 +10533,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       this.text0.title = opt_title;
       if(this.text1) this.text1.title = opt_title;
     }
+
     // This avoids blurry lines that take up other amounts of pixels with lighter colors than desired
     //this.ctx0.translate(0.5, 0.5);
     //this.ctx1.translate(0.5, 0.5);
@@ -10699,6 +11068,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.4);
       } else if(cell.comment) {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
+      //} else if(c == 'J') {
+      //
       } else if(c == 'toc') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else {
@@ -10747,7 +11118,14 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
             //textel.style.backgroundColor = currentColor;
           }
         }
-        if(devicemaparea[c]) {
+        if(c == 'J') {
+          //drawer.drawCircle_(ctx, 0.5, 0.5, 0.5);
+          ctx.fillStyle = currentColor;
+          textel.style.color = GATEBGCOLOR;
+          //ctx.strokeStyle = 'blue';
+          drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.45);
+          drawer.drawCircle_(ctx, 0.5, 0.5, 0.45);
+        } else if(devicemaparea[c]) {
           if(!alreadybg) {
             drawer.fillBg_(ctx, GATEBGCOLOR);
             // if alreadybg is set, also a specific fg/border color has already been set, don't override those either (so, this is not for switches/LEDs, but for AND gates and other plain colored devices)
@@ -11137,10 +11515,10 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   this.setValue = function(cell, value, type) {
     if(this.norender) return;
 
-    if(this.usefallbackonly) {
-      this.fallback.setValue(cell, value, type);
-      return;
-    }
+      if(this.usefallbackonly) {
+        this.fallback.setValue(cell, value, type);
+        return;
+      }
 
     if(value != this.prevvalue) { // changing visibility is slow in case of lots of elements, so only do if it changed
       var dest = rglobal.maincanvas.getContextForCell(cell);
@@ -11397,7 +11775,6 @@ var updateTimeoutId = null;
 function update() {
   //console.log('update ' + (+new Date() / 1000.0));
   var changein = updateComponents((UPDATE_ALGORITHM == 1) ? components_order : components);
-
   if(changein && !paused && !updateTimeoutId) {
     timerticks += changein;
     var time = AUTOSECONDS * 1000 * changein;
@@ -12706,7 +13083,6 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   var a = antennamap[c];
   var a2 = antennamap[c2];
   if(a || a2) {
-
     if(a && ce == 1) return false; // wrap-around antenna does not participate
     if(a2 && ce2 == 1) return false; // wrap-around antenna does not participate
     if(a && a2) return false; // antennas do not interact with each other
@@ -12787,25 +13163,25 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
       !(z == 2 && (todir == 5 || todir == 7)) &&
       !(z == 3 && (todir == 4 || todir == 6))) return false;
 
-  if(dinputmap[c] && ce != 2) {
-    // nothing interacts with the front side if device inputs here, that is resolved only later
-    if((c == '^' || c == 'm') && todir == 0) return false;
-    if((c == '>' || c == ']') && todir == 1) return false;
-    if((c == 'v' || c == 'w') && todir == 2) return false;
-    if((c == '<' || c == '[') && todir == 3) return false;
+  if(dinputmap[c]) {
+    if(ce == 2) {
+      if(todir < 4) return false;
+      if((c == '^' || c == 'm') && !(todir == 5 && z == 0) && !(todir == 6 && z == 1)) return false;
+      if((c == '>' || c == ']') && !(todir == 6 && z == 0) && !(todir == 7 && z == 1)) return false;
+      if((c == 'v' || c == 'w') && !(todir == 7 && z == 0) && !(todir == 4 && z == 1)) return false;
+      if((c == '<' || c == '[') && !(todir == 4 && z == 0) && !(todir == 5 && z == 1)) return false;
+    } else {
+      // nothing interacts with the front side if device inputs here, that is resolved only later
+      if((c == '^' || c == 'm') && todir == 0) return false;
+      if((c == '>' || c == ']') && todir == 1) return false;
+      if((c == 'v' || c == 'w') && todir == 2) return false;
+      if((c == '<' || c == '[') && todir == 3) return false;
 
-    if((c == '^' || c == 'm') && ce == 1 && devicemaparea[c2] && (todir == 1 || todir == 3)) return false;
-    if((c == '>' || c == ']') && ce == 1 && devicemaparea[c2] && (todir == 0 || todir == 2)) return false;
-    if((c == 'v' || c == 'w') && ce == 1 && devicemaparea[c2] && (todir == 1 || todir == 3)) return false;
-    if((c == '<' || c == '[') && ce == 1 && devicemaparea[c2] && (todir == 0 || todir == 2)) return false;
-  }
-
-  if(dinputmap[c] && ce == 2) {
-    if(todir < 4) return false;
-    if((c == '^' || c == 'm') && !(todir == 5 && z == 0) && !(todir == 6 && z == 1)) return false;
-    if((c == '>' || c == ']') && !(todir == 6 && z == 0) && !(todir == 7 && z == 1)) return false;
-    if((c == 'v' || c == 'w') && !(todir == 7 && z == 0) && !(todir == 4 && z == 1)) return false;
-    if((c == '<' || c == '[') && !(todir == 4 && z == 0) && !(todir == 5 && z == 1)) return false;
+      if((c == '^' || c == 'm') && ce == 1 && devicemaparea[c2] && (todir == 1 || todir == 3)) return false;
+      if((c == '>' || c == ']') && ce == 1 && devicemaparea[c2] && (todir == 0 || todir == 2)) return false;
+      if((c == 'v' || c == 'w') && ce == 1 && devicemaparea[c2] && (todir == 1 || todir == 3)) return false;
+      if((c == '<' || c == '[') && ce == 1 && devicemaparea[c2] && (todir == 0 || todir == 2)) return false;
+    }
   }
 
 
@@ -12845,13 +13221,21 @@ function connected2(x, y, todir) {
   var x2 = n.x;
   var y2 = n.y;
 
-  var c = world[y][x].circuitsymbol;
   var c2 = world[y2][x2].circuitsymbol;
+  if(c2 == ' ') return false; // early return for efficiency given how common this is and how often this fucntion is called
+  var c = world[y][x].circuitsymbol;
   var ce = world[y][x].circuitextra;
   var ce2 = world[y2][x2].circuitextra;
   var fromdir = (todir <= 3) ? ((todir + 2) & 3) : (4 + ((todir - 2) & 3));
 
-  for(var z = 0; z < 8; z++) {
+  // 'connected2' and 'connected' are relatively expensive, given how often they are called,
+  // the theoretical max z is 8, but avoid using higher than 2, avoiding unneeded connected() calls, if the cell doesn't use such high z
+  var maxz = 2;
+  if(c == '-' || c == '|' || c == '.') maxz = 1;
+  if(c == 'X' || c == 'Y' || c == '*') maxz = 4;
+  if(c == 'i' || c == '#i') maxz = ((todir > 3) ? 8 : 4);
+
+  for(var z = 0; z < maxz; z++) {
     var z2 = getZ2(c, c2, ce, ce2, todir, z); // z coordinate for the neighbor
     if(connected(c, c2, ce, ce2, todir, z, z2) &&
        connected(c2, c, ce2, ce, fromdir, z2, z)) return true;
@@ -12863,8 +13247,6 @@ function connected2(x, y, todir) {
 // coming from a c at z towards c2, what z2 of c2 is needed to connect them?
 // todir: 0=N, 1=E, 2=S, 3=W ; 4=NE, 5=SE, 6=SW, 7=NW
 function getZ2(c, c2, ce, ce2, todir, z) {
-  var z2 = 0;
-
   // see comment at similar code in function connected
   var todir2 = todir;
   if(ce == 2) {
@@ -12874,23 +13256,23 @@ function getZ2(c, c2, ce, ce2, todir, z) {
     if(c == '<' && (todir == 4 || todir == 5)) todir2 = 1;
   }
 
-  if(c2 == '+' && (todir2 == 0 || todir2 == 2)) z2 = 1;
+  if(c2 == '+' && (todir2 == 0 || todir2 == 2)) return 1;
   if(c2 == '*' || c2 == 'X' || c2 == 'Y') {
     // *'s meaning for z coordinate: z=0:-, z=1:|, z=2:/, z=3:\ (backspace)
-    if(todir == 0 || todir == 2) z2 = 1;
-    else if(todir == 4 || todir == 6) z2 = 3;
-    else if(todir == 5 || todir == 7) z2 = 2;
+    if(todir == 0 || todir == 2) return 1;
+    else if(todir == 4 || todir == 6) return 3;
+    else if(todir == 5 || todir == 7) return 2;
   }
-  if(c2 == '%' && (todir2 == 1 || todir2 == 2)) z2 = 1;
-  if(c2 == '&' && (todir2 == 3 || todir2 == 2)) z2 = 1;
-  if(c2 == 'x' && (todir == 5 || todir == 7)) z2 = 1;
+  if(c2 == '%' && (todir2 == 1 || todir2 == 2)) return 1;
+  if(c2 == '&' && (todir2 == 3 || todir2 == 2)) return 1;
+  if(c2 == 'x' && (todir == 5 || todir == 7)) return 1;
   if(c2 == 'i' || c2 == '#i') {
-    if(todir < 4) z2 = ((todir + 2) & 3);
-    else z2 = 4 + ((todir + 2) & 3);
+    if(todir < 4) return ((todir + 2) & 3);
+    else return 4 + ((todir + 2) & 3);
   }
   // large devices where outputs from the same cell can be different depending on direction use z cooridnate to distinguish them
   if(c2 == 'M' || c2 == '#M' || c2 == 'U' || c2 == '#U' || c2 == 'T' || c2 == '#T' || c2 == 'b' || c2 == 'B' || c2 == '#b') {
-    if(todir == 0 || todir == 2) z2 = 1;
+    if(todir == 0 || todir == 2) return 1;
   }
   if(dinputmap[c2] && ce2 == 2) {
     if(c2 == '^' || c2 == 'm') return todir == 4 ? 1 : 0;
@@ -12898,7 +13280,7 @@ function getZ2(c, c2, ce, ce2, todir, z) {
     if(c2 == 'v' || c2 == 'w') return todir == 6 ? 1 : 0;
     if(c2 == '<' || c2 == '[') return todir == 7 ? 1 : 0;
   }
-  return z2;
+  return 0;
 }
 
 function resetForParse() {
@@ -12920,6 +13302,8 @@ function resetForParse() {
   timerticks = -1;
   showingLinkIds = false;
   stopAudioContext();
+  jackclick = null;
+  highlightedcomponent = null;
 }
 
 // 3D version, for wire crossings etc...
@@ -13443,6 +13827,7 @@ function parseComponents() {
               if(c == 'Z') type2 = TYPE_TRISTATE_INV;
               if(c == '?') type2 = TYPE_RANDOM;
               if(c == 'N' || c == '#N') type2 = TYPE_MUSIC_NOTE;
+              if(c == 'J') type2 = TYPE_JACK;
               if(ffmap[c] || c == '#c') type2 = TYPE_FLIPFLOP;
             }
 
@@ -13588,6 +13973,11 @@ function parseComponents() {
           }
           if(type == TYPE_TIMER_OFF) {
             component.clocked = false;
+          }
+          if(type == TYPE_JACK) {
+            // the array size here defines how many patch wires per jack are maximum supported
+            component.partner = [null, null, null, null];
+            component.partnerdiv = [null, null, null, null];
           }
 
           for(var i = 0; i < array.length; i++) {
@@ -13851,7 +14241,7 @@ function parseComponents() {
         var component2 = cell2.components[0]; // component outputs to component2 (component is the input, component2 is the output)
         if(!component2) component2 = cell2.components[1];
         if(!component2) continue;
-        if(component2.master) component2 = component2.master;
+        if(component2.parent) component2 = component2.parent;
         var negated2 = negated;
         component2.inputs.push(component);
         component2.inputs_negated.push(negated2);
@@ -13919,7 +14309,7 @@ function parseComponents() {
         var y = array[i][1];
         if(!inputused[y][x]) continue;
         var component = world[y][x].components[0];
-        if(component.master) component = component.master;
+        if(component.parent) component = component.parent;
         for(var j = 0; j < component.inputs.length; j++) {
           if(component.input_ff_types[j] == ffinputtype) {
             newinputs.push([component.inputs[j], component.inputs_negated[j], component.inputs_x[j], component.inputs_y[j], component.input_ff_types[j]]);
@@ -13932,7 +14322,7 @@ function parseComponents() {
         var y = array[i][1];
         if(inputused[y][x]) continue;
         var component = world[y][x].components[0];
-        if(component.master) component = component.master;
+        if(component.parent) component = component.parent;
         for(var j = 0; j < newinputs.length; j++) {
           component.inputs.push(newinputs[j][0]);
           component.inputs_negated.push(newinputs[j][1]);
@@ -14001,29 +14391,29 @@ function parseComponents() {
 
   for(var i = 0; i < components.length; i++) {
     var component = components[i];
-    if(component.master && component.master.rom && component.master.rom.error) {
-      component.markError(component.master.rom.errormessage);
+    if(component.parent && component.parent.rom && component.parent.rom.error) {
+      component.markError(component.parent.rom.errormessage);
     }
-    if(component.type == TYPE_ROM && (!component.master && !component.rom)) {
-      component.markError('is rom but has no master');
+    if(component.type == TYPE_ROM && (!component.parent && !component.rom)) {
+      component.markError('is rom but has no parent');
     }
-    if(component.master && component.master.mux && component.master.mux.error) {
-      component.markError(component.master.mux.errormessage);
+    if(component.parent && component.parent.mux && component.parent.mux.error) {
+      component.markError(component.parent.mux.errormessage);
     }
-    if(component.type == TYPE_MUX && (!component.master && !component.mux)) {
-      component.markError('is mux but has no master');
+    if(component.type == TYPE_MUX && (!component.parent && !component.mux)) {
+      component.markError('is mux but has no parent');
     }
-    if(component.master && component.master.alu && component.master.alu.error) {
-      component.markError(component.master.alu.errormessage);
+    if(component.parent && component.parent.alu && component.parent.alu.error) {
+      component.markError(component.parent.alu.errormessage);
     }
-    if(component.type == TYPE_ALU && (!component.master && !component.alu)) {
-      component.markError('is ALU but has no master');
+    if(component.type == TYPE_ALU && (!component.parent && !component.alu)) {
+      component.markError('is ALU but has no parent');
     }
-    if(component.master && component.master.vte && component.master.vte.error) {
-      component.markError(component.master.vte.errormessage);
+    if(component.parent && component.parent.vte && component.parent.vte.error) {
+      component.markError(component.parent.vte.errormessage);
     }
-    if(component.type == TYPE_VTE && (!component.master && !component.vte)) {
-      component.markError('is vte but has no master');
+    if(component.type == TYPE_VTE && (!component.parent && !component.vte)) {
+      component.markError('is vte but has no parent');
     }
     if(component.type == TYPE_DOTMATRIX && component.dotmatrix && component.dotmatrix.error) {
       component.markError(component.dotmatrix.errormessage);
@@ -14046,7 +14436,7 @@ function parseComponents() {
   for(var i = 0; i < callsubs.length; i++) {
     var error = !callsubs[i].init(null);
     if(error) {
-      if(callsubs[i].master) callsubs[i].master.error = error;
+      if(callsubs[i].parent) callsubs[i].parent.error = error;
     }
   }
 
@@ -14068,7 +14458,7 @@ function parseComponents() {
   }
 
   // NOTE: this currently will not detect some cycles through flip-flops
-  // I think that is because I'm using only components.inputs here and maybe I also have to look at component.master
+  // I think that is because I'm using only components.inputs here and maybe I also have to look at component.parent
   // but it does not matter really, because this cycle_detected is used only for auto-choosing mode, and
   // if there are flipflops present, it will already choose mode "sequential"
   var cycle_detected = false;
@@ -14131,13 +14521,23 @@ function parseComponents() {
     components[i].setInitialValue();
   }
 
+  computeComponentsOrder();
+
+  logPerformance('parseComponents done');
+
+  return true; // success
+}
+
+function computeComponentsOrder() {
+  //components_order = components; return;
+
   // calculate update order for UPDATE_ALGORITHM=1 to avoid reaching stack limit by using recursion for UPDATE_ALGORITHM = 1 (JS only has a max stack depth of 5000 or so, this can get reached with a 32-bit division circuit)
   // not using toposort here, because we still want to do something meaningful in case of cycles
   components_order = [];
   for(var i = 0; i < components.length; i++) {
     components[i].updated = false;
     /*
-    added due to the way master is added, and also because otherwise components_order will be larger than components in the following circuit where a gets parsed before s:
+    added due to the way parent is added, and also because otherwise components_order will be larger than components in the following circuit where a gets parsed before s:
     a<-s
     ^--*
     */
@@ -14160,33 +14560,41 @@ function parseComponents() {
       }
       if(t.updated) {
         t.added = true;
-        if(t.master && !t.master.added) {
-          components_order.push(t.master);
-          t.master.added = true;
-          t.master.updated = true;
+        if(t.parent && !t.parent.added) {
+          components_order.push(t.parent);
+          t.parent.added = true;
+          t.parent.updated = true;
         }
         components_order.push(t);
         stack.pop();
         continue;
       }
       t.updated = true;
-      // order inverted here because our stack emulates the function stack, but the order in which the inputs is called should be like a queue, inverting the order does that
-      for(var j = t.inputs.length - 1; j >= 0; j--) {
-        if(!t.inputs[j].updated) stack.push(t.inputs[j]);
-      }
-      if(t.master && !t.master.updated) {
-        var m = t.master;
-        for(var j = m.inputs.length - 1; j >= 0; j--) {
-          if(!m.inputs[j].updated) stack.push(m.inputs[j]);
+
+      var deps = [];
+      if(t.parent && !t.parent.updated) {
+        var m = t.parent;
+        deps.push(m);
+        for(var j = 0; j < m.inputs.length; j++) {
+          if(!m.inputs[j].updated) deps.push(m.inputs[j]);
         }
-        stack.push(t.master);
+      }
+      for(var j = 0; j < t.inputs.length; j++) {
+        if(!t.inputs[j].updated) deps.push(t.inputs[j]);
+      }
+      if(t.partner) {
+        // for patch panel jacks, which can have arbitrary user order
+        var jacks = getalljacks(t);
+        for(var j = 0; j < jacks.length; j++) {
+          if(!jacks[j].updated) deps.push(jacks[j]);
+        }
+      }
+      // order inverted here because our stack emulates the function stack, but the order in which the inputs is called should be like a queue, inverting the order does that
+      for(var j = deps.length - 1; j >= 0; j--) {
+        stack.push(deps[j]);
       }
     }
   }
-
-  logPerformance('parseComponents done');
-
-  return true; // success
 }
 
 // initial render
@@ -14209,6 +14617,8 @@ function initDivs() {
   makeDiv(w * tw, h * th, 1, 1, worldDiv);
   worldDiv.style.display = 'block';
   renderingMessageDiv.innerText = '';
+
+  redrawjacks();
 }
 
 // this is for divs that create canvases (non-empty and non-comment ones), for the slow firefox
@@ -14600,6 +15010,7 @@ function unpause() {
   autopaused = false;
   paused = false;
   highlightedcomponent = null;
+  jackclick = null;
 
   if(USEAUTOPAUSE && !autopauseinterval) {
     setAutoPauseInterval();
@@ -14644,6 +15055,7 @@ registerChangeDropdownElement('C');
 registerChangeDropdownElement(TYPE_DELAY);
 registerChangeDropdownElement(TYPE_MUSIC_NOTE);
 registerChangeDropdownElement(TYPE_RANDOM);
+registerChangeDropdownElement(TYPE_JACK);
 //registerChangeDropdownElement('rem_inputs');
 
 

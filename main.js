@@ -261,7 +261,7 @@ function getStatsText() {
     var ffGates = 13;
     var dffGates = 9;
     // to count flip-flops, VTE, ... that use multiple components internally only once, skip sub-components
-    var isSubComponent = c.master && (c.master != c);
+    var isSubComponent = c.parent && (c.parent != c);
     // Estimate total amount of transitors, assuming NMOS
     if(t == TYPE_AND || t == TYPE_NAND) {
       numTransistors += (ni > 1) ? ((ni - 1) * 3) : 0;
@@ -704,7 +704,70 @@ function createMenuUI() {
     var text = (typesymbols[type] == undefined) ? '[change]' : typesymbols[type];
     //if(type == 'rem_inputs') text = 'disconnect inputs';
     if(type == 'c' || type == 'C') text = type;
-    var el = util.makeElement('option', changeDropdown).innerText = text;
+    var el = util.makeElement('option', changeDropdown);
+    el.innerText = text;
+  }
+
+  jackDropdown = util.makeUIElement('select', menuRow2El);
+  jackDropdown.title = 'Utilities for circuits with patch panel jacks. Only relevant if the circuit has jacks (J) that you can connect with patch cables.';
+  jackDropdown.onchange = function() {
+    if(jackDropdown.selectedIndex == 0) return;
+    if(jackDropdown.selectedIndex == 1) {
+      // clear jacks
+      var state = storepatchcablestate();
+      if(state.length > 0) jackstate0 = state;
+      removeallpatchcables();
+      updateJacks();
+    }
+    if(jackDropdown.selectedIndex == 2) {
+      // undo clear
+      var state = storepatchcablestate();
+      if(jackstate0.length > 0) restorepatchcablestate(jackstate0);
+      if(state.length > 0) jackstate0 = state;
+      updateJacks();
+    }
+    if(jackDropdown.selectedIndex == 3) {
+      if(jackstate1.length) jackstate4 = jackstate1;
+      jackstate1 = storepatchcablestate();
+    }
+    if(jackDropdown.selectedIndex == 4) {
+      if(jackstate3.length) jackstate4 = jackstate3;
+      jackstate2 = storepatchcablestate();
+    }
+    if(jackDropdown.selectedIndex == 5) {
+      if(jackstate3.length) jackstate4 = jackstate3;
+      jackstate3 = storepatchcablestate();
+    }
+    if(jackDropdown.selectedIndex == 6) {
+      var state = storepatchcablestate();
+      if(jackstate1.length > 0) restorepatchcablestate(jackstate1);
+      if(state.length > 0) jackstate0 = state;
+      updateJacks();
+    }
+    if(jackDropdown.selectedIndex == 7) {
+      var state = storepatchcablestate();
+      if(jackstate2.length > 0) restorepatchcablestate(jackstate2);
+      if(state.length > 0) jackstate0 = state;
+      updateJacks();
+    }
+    if(jackDropdown.selectedIndex == 8) {
+      var state = storepatchcablestate();
+      if(jackstate3.length > 0) restorepatchcablestate(jackstate3);
+      if(state.length > 0) jackstate0 = state;
+      updateJacks();
+    }
+    if(jackDropdown.selectedIndex == 9) {
+      var state = storepatchcablestate();
+      if(jackstate4.length > 0) restorepatchcablestate(jackstate4);
+      if(state.length > 0) jackstate0 = state;
+      updateJacks();
+    }
+    jackDropdown.selectedIndex = 0;
+  };
+  var jackDropdownElements = ['[patch panel]', 'clear jacks', 'undo clear/load', 'save to slot A', 'save to slot B', 'save to slot C', 'load slot A', 'load slot B', 'load slot C', 'recover overwritten'];
+  for(var i = 0; i < jackDropdownElements.length; i++) {
+    var el = util.makeElement('option', jackDropdown);
+    el.innerText = jackDropdownElements[i];
   }
 
   util.makeUISpacer(16, menuRow2El);
@@ -1684,7 +1747,7 @@ function printComponentsDebug() {
     var c = components[i];
     var s = 'comp ' + i + ': ' + c.corecell.symbol + ' t:' + c.type + ' @' + c.corecell.x + ',' + c.corecell.y;
     if(c.rom) s += ' rom';
-    if(c.master) s += ' master:' + c.master.index;
+    if(c.parent) s += ' parent:' + c.parent.index;
     if(c.ff) s += ' ff';
     console.log(s);
     for(var tempi = 0; tempi < c.inputs.length; tempi++) {
