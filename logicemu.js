@@ -1298,6 +1298,72 @@ var LogicEmuMath = (function() {
   };
   result.binomial = binomial;
 
+  // does not use BigInt, for now
+  // uses IEEE rules
+  var createfloat = function(sign, exp, mantissa, expbits, mantissabits) {
+    var subnormal = (exp == 0);
+    var special = (exp == (1 << expbits) - 1);
+    if(special) {
+      if(sign) return mantissa ? -NaN : -Infinity;
+      return mantissa ? NaN : Infinity;
+    }
+    var bias = (1 << (expbits - 1)) - 1;
+    exp -= bias;
+    if(subnormal) exp++;
+    mantissa /= Math.pow(2, mantissabits);
+    if(!subnormal) mantissa += 1;
+
+    var result = mantissa;
+    result *= Math.pow(2, exp);
+    if(sign) result = -result;
+    return result;
+  };
+  result.createfloat = createfloat;
+
+  // returns [sign, mantissa, exponent] all as unsigned binary integers
+  var dissectfloat = function(f, expbits, mantissabits) {
+    var sign = 0;
+    if(f < 0) {
+      f = -f;
+      sign = 1;
+    }
+    var maxexp = (1 << expbits) - 1;
+    if(f == Infinity) {
+      return [sign, maxexp, 0];
+    }
+    if(isNaN(f)) {
+      return [sign, maxexp, 1];
+    }
+    if(f == 0) {
+      // TODO: support negative 0?
+      return [0, 0, 0];
+    }
+
+    var exp = 0;
+    while(f >= 2) {
+      f /= 2;
+      exp++;
+    }
+    while(f < 1) {
+      f *= 2;
+      exp--;
+    }
+    var bias = (1 << (expbits - 1)) - 1;
+    exp += bias;
+    if(exp < 1) {
+      // subnormal number
+      var mantissa = Math.floor(f * Math.pow(2, mantissabits + exp - 1));
+      return [sign, 0, mantissa];
+    }
+    if(exp >= maxexp) {
+      // overflow, return infinity
+      return [sign, maxexp, 0];
+    }
+    var mantissa = Math.floor(f * Math.pow(2, mantissabits));
+    return [sign, exp, mantissa];
+  };
+  result.dissectfloat = dissectfloat;
+
   return result;
 }());
 
@@ -1788,7 +1854,9 @@ function CallSub(id) {
         vte.y1 = v.vte.y1;
         vte.text = util.clone(v.vte.text);
         vte.numinputs = v.vte.numinputs;
+        vte.numinputs2 = v.vte.numinputs2;
         vte.numoutputs = v.vte.numoutputs;
+        vte.numoutputs2 = v.vte.numoutputs2;
         vte.numwrite = v.vte.numwrite;
         vte.has_enable = v.vte.has_enable;
         vte.has_read = v.vte.has_read;
@@ -1804,6 +1872,7 @@ function CallSub(id) {
         vte.output = util.clone(v.vte.output);
         vte.decimaldisplay = v.vte.decimaldisplay;
         vte.signeddisplay = v.vte.signeddisplay;
+        vte.floatdisplay = v.vte.floatdisplay;
         vte.passthrough = v.vte.passthrough;
         vte.decimalinput = v.vte.decimalinput;
         vte.counter = v.vte.counter;
@@ -1824,15 +1893,19 @@ function CallSub(id) {
         alu.adir = v.alu.adir;
         alu.alsbpos = v.alu.alsbpos;
         alu.numa = v.alu.numa;
+        alu.numa_exp = v.alu.numa_exp;
         alu.bdir = v.alu.bdir;
         alu.blsbpos = v.alu.blsbpos;
         alu.numb = v.alu.numb;
+        alu.numb_exp = v.alu.numb_exp;
         alu.cdir = v.alu.cdir;
         alu.clsbpos = v.alu.clsbpos;
         alu.numc = v.alu.numc;
+        alu.numc_exp = v.alu.numc_exp;
         alu.odir = v.alu.odir;
         alu.olsbpos = v.alu.olsbpos;
         alu.numo = v.alu.numo;
+        alu.numo_exp = v.alu.numo_exp;
         alu.miscindir = v.alu.miscindir;
         alu.miscoutdir = v.alu.miscoutdir;
         alu.miscinlsbpos = v.alu.miscinlsbpos;
@@ -1845,6 +1918,7 @@ function CallSub(id) {
         alu.output = util.clone(v.alu.output);
         alu.opindex = v.alu.opindex;
         alu.signed = v.alu.signed;
+        alu.floating = v.alu.floating;
         alu.x0 = v.alu.x0;
         alu.y0 = v.alu.y0;
         alu.x1 = v.alu.x1;
@@ -2108,7 +2182,7 @@ i[0]: inputs for north side. {n:num, a:[array], ai:[array], ng:numgroups, ga:[gr
       p is x for N/S, y for E/W
       i is index of this input in the given component, and is only present for inputs, not for outputs
     ai is array that matches the i values from a, and is only present for inputs, not for outputs
-    groups is array of {n:num, f:[x,y,v,p,i], l:[x,y,v,p,i], d:[x,y,v,p], dn:[x,y,v,p], ai:[array]} with:
+    ga (groups) is array of {n:num, f:[x,y,v,p,i], l:[x,y,v,p,i], d:[x,y,v,p], dn:[x,y,v,p], ai:[array]} with:
       f = first
       l = last (*inclusive*!)
       first and last are in the same order as described for "v" in array and the order of array a.
@@ -2373,6 +2447,60 @@ function getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, component) {
 
   return r;
 }
+
+// returns array, wich first element null or an error message, and each next element a subarray: [n, mantissa, exp]
+// here n = #inputs for this float (mantissa+exp+1), mantissas = #mantissa bits, exp = #exp bits (there is also always 1 sign bit, the MSB)
+// output: if false, gets inputs from that side, otherwise outputs.
+function extractfloatio(io, dir, output) {
+  var result = [null]; // null for first element means no error
+  var s = output ? io.o[dir] : io.i[dir]; // the relevant input/output side
+  var ng = s.ng;
+  // whether floats are given as separate input groups for sign, exp, mantissa, or as single bitgroups
+  // if separate, sign must be size 1. if single bitgroups, an exponent size is automatically computed using an IEEE like formula.
+  var separate = ((ng % 3) == 0);
+  if(separate) {
+    for(var i = 2; i < s.ng; i += 3) {
+      if(s.ga[i].n != 1) {
+        separate = false;
+        break;
+      }
+    }
+  }
+  if(separate) {
+    for(var i = 0; i < s.ng; i += 3) {
+      var mantissa = s.ga[i + 0].n;
+      var exp = s.ga[i + 1].n;
+      if(exp < 2) return ['floating point exponent bits too small'];
+      // more than double precision not supported: JS Number can't represent them
+      if(exp > 11) return ['floating point exponent bits > 11 not supported'];
+      if(mantissa > 52) return ['floating point mantissa bits > 52 not supported'];
+      result.push([mantissa + exp + 1, mantissa, exp]);
+    }
+  } else {
+    for(var i = 0; i < s.ng; i++) {
+      var n = s.ga[i].n;
+      if(n < 4) return ['too few bits for floating point value'];
+      // compute amount of exponent bits. IEEE gives a formula Math.round(4 * Math.log2(n)) - 13, however this
+      // formula only holds starting from 64, so here a few extra formulas are improvides to make it match good
+      // values (and the correct ones for 16, 32) for lower bits.
+      // we know (with the cases for n=4 and n=8 not IEEE but sensible): n:exp pairs:
+      // 4:2, 8:3, 16:5, 32:8, 64:11, 128:15, 256:19, ...
+      var exp;
+      if(n >= 64) exp = Math.round(4 * Math.log2(n)) - 13;
+      else if(n >= 16) exp = Math.round(3 * Math.log2(n)) - 7; // designed to smoothly go from 16:5 to 32:8 to 64:11
+      else if(n >= 8) exp = Math.round(2 * Math.log2(n)) - 3;
+      else exp = Math.round(Math.log2(n));
+      var mantissa = n - exp - 1;
+      if(exp < 2) return ['floating point exponent bits too small'];
+      // more than double precision not supported: JS Number can't represent them
+      if(exp > 11) return ['floating point exponent bits > 11 not supported'];
+      if(mantissa > 52) return ['floating point mantissa bits > 52 not supported'];
+      result.push([mantissa + exp + 1, mantissa, exp]);
+    }
+  }
+  return result;
+}
+
 
 // find largest rectangle of 1's in array of 0's and 1's. Returned as [x0, y0, x1, y1] with x1, y1 exclusive end coordinates
 // modifies arr while it works
@@ -3555,18 +3683,22 @@ function Alu() {
   this.adir = -1;
   this.alsbinv = false;  // true means lsb is on other side than the usual (usual = the rule of 'v' in getIO)
   this.numa = 0;
+  this.numa_exp = 0; // used if this.floating, then total amount of a inputs is this.numa+this.numa_exp+1 (1 is the sign bit)
   // input B
   this.bdir = -1;
   this.blsbinv = false;
   this.numb = 0;
+  this.numb_exp = 0; // similar to numa_exp
   // input C
   this.cdir = -1;
   this.clsbinv = false;
   this.numc = 0;
+  this.numc_exp = 0; // similar to numa_exp
   // output
   this.odir = -1;
   this.olsbinv = false;
   this.numo = 0;
+  this.numo_exp = 0; // similar to numa_exp, but for the ouptut
   // misc side: carry in, carry or overflow out
   this.miscindir = -1;
   this.miscoutdir = -1;
@@ -3579,7 +3711,8 @@ function Alu() {
   this.selectlsbinv = false;
   this.numselect = 0;
 
-  this.signed = false;
+  this.signed = false; // signed instead of unsigned integer
+  this.floating = false; // floating point instead of integer
   this.opindex = 16; // default (without number), the operation is 'add'
   // not used by all ops
   this.preva = undefined;
@@ -3625,6 +3758,8 @@ function Alu() {
         case 26: return 'neg';
         case 27: return 'abs';
         case 28: return this.numb ? 'csgn' : 'sign';
+        case 29: return 'fexp';
+        case 30: return 'fman';
         case 32: return this.numb ? 'eq' : 'eq0';
         case 33: return this.numb ? 'lt' : 'lt0';
         case 34: return this.numb ? 'lte' : 'lte0';
@@ -3677,6 +3812,14 @@ function Alu() {
         case 99: return 'ushf';
         case 100: return 'grp';
         case 101: return 'ugrp';
+        case 104: return '2uin';
+        case 105: return 'uin2';
+        case 106: return '2int';
+        case 107: return 'int2';
+        case 108: return 'flr'; // floor
+        case 109: return 'ceil';
+        case 110: return 'rnd'; // round
+        case 111: return 'trun'; // truncate
         default: return 'unk';
     }
   };
@@ -3716,6 +3859,8 @@ function Alu() {
         case 26: return 'negate';
         case 27: return 'absolute value';
         case 28: return this.numb ? 'copysign' : 'sign';
+        case 29: return 'floating point exponent raw bits (only for float, opcode ' + (opindex + 256) + ')';
+        case 30: return 'floating point mantissa raw bits (only for float, opcode ' + (opindex + 256) + ')';
         case 32: return this.numc ? 'equals modulo third input' : (this.numb ? 'equals' : 'equals 0');
         case 33: return (this.numb ? 'lesser than' : 'lesser than 0');
         case 34: return (this.numb ? 'lesser than or equals' : 'lesser than or equals 0');
@@ -3728,9 +3873,9 @@ function Alu() {
         case 41: return 'right shift';
         case 42: return 'rotating left shift';
         case 43: return 'rotating right shift';
-        case 48: return this.numc ? 'integer power modulo third input' : 'integer power';
-        case 49: return this.numb ? 'integer log' : 'log2';
-        case 50: return this.numb ? 'integer root' : 'sqrt';
+        case 48: return this.floating ? 'power' : (this.numc ? 'integer power modulo third input' : 'integer power');
+        case 49: return this.numb ? (this.floating ? 'log' : 'integer log') : 'log2';
+        case 50: return this.numb ? (this.floating ? 'root' : 'integer root') : 'sqrt';
         case 54: return this.numb ? 'binary to base b (b bitsize = output digit bitgroup size; if carry input true, instead uses base b + 1)' : 'binary to bcd (binary coded decimal)';
         case 55: return this.numb ? 'base b to binary (b bitsize = input digit bitgroup size; if carry input true, instead uses base b + 1)' : 'bcd to binary (bcd = binary coded decimal)';
         case 56: return this.numb ? 'modular inverse (modulo output size)' : 'modular inverse';
@@ -3768,6 +3913,14 @@ function Alu() {
         case 99: return 'perfect unshuffle bits';
         case 100: return 'group bits (GRP): select input bits with mask, bits matching mask one go to low order bits of result, others to high order bits of result';
         case 101: return 'ungroup bits (UNGRP): select output bits with mask, deposit contiguous low order bits of input to output positions where mask is one, remaining input bits to where mask is zero';
+        case 104: return 'convert to unsigned integer (useful for float, opcode ' + (opindex + 256) + ')';
+        case 105: return 'convert from unsigned integer (useful for float, opcode ' + (opindex + 256) + ')';
+        case 106: return 'convert to signed integer (useful for float, opcode ' + (opindex + 256) + ')';
+        case 107: return 'convert from signed integer (useful for float, opcode ' + (opindex + 256) + ')';
+        case 108: return 'floor (useful for float, opcode ' + (opindex + 256) + ')';
+        case 109: return 'ceil (useful for float, opcode ' + (opindex + 256) + ')';
+        case 110: return 'round (useful for float, opcode ' + (opindex + 256) + ')';
+        case 111: return 'truncate towards 0 (useful for float, opcode ' + (opindex + 256) + ')';
         default: return 'unknown';
     }
   };
@@ -3777,8 +3930,18 @@ function Alu() {
   };
 
 
-  // first inputs are the data, last the select
   this.update = function(inputs) {
+    if(this.floating) {
+      this.updateFloating(inputs);
+    } else {
+      this.updateInteger(inputs);
+    }
+  }
+
+
+  // first inputs are the data, last the select
+  // can handle both signed and unsigned integer case
+  this.updateInteger = function(inputs) {
     if(inputs.length != this.numa + this.numb + this.numc + this.nummiscin + this.numselect) return false;
 
     for(var i = 0; i < this.output.length; i++) this.output[i] = 0;
@@ -4011,6 +4174,12 @@ function Alu() {
         // sign
         o = (a == 0) ? math.n0 : ((a > 0) ? math.n1 : -math.n1);
       }
+    } else if(op == 29) {
+      // floating point exponent is 0 for integers
+      o = math.n0;
+    } else if(op == 30) {
+      // mantissa is the bits itself for integer (for signed int, just return bits as well, even though they're twos complement)
+      o = a;
     } else if(op == 32) {
       // equals
       if(this.numc) {
@@ -4062,6 +4231,7 @@ function Alu() {
         o = (a >> b) | (a << (this.numa - b));
       }
     } else if(op == 48) {
+      if(!this.numb) b = math.n2;
       if((b < 0 && a == 0) || (this.numc && c == 0)) {
         overflow = true;
         o = math.n0;
@@ -4494,6 +4664,20 @@ function Alu() {
           s++;
         }
       }
+    } else if(op == 104) {
+      // to uint: designed for float, just return value
+      o = a;
+    } else if(op == 105) {
+      // from uint: designed for float, just return value
+      o = a;
+    } else if(op == 106) {
+      // to int: designed for float, just return value
+      o = a;
+    } else if(op == 107) {
+      // from int: designed for float, just return value
+      o = a;
+    } else if(op == 108 || op == 109 || op == 110 || op == 111) {
+      o = a; // round, floor, truncate, etc...: for int, the result is equal to the input
     } else {
       o = math.n0;
     }
@@ -4529,7 +4713,293 @@ function Alu() {
       }
       if((o != 0 || overflow) && this.nummiscout) this.output[this.numo] = 1; // overflow. In case of add, this can serve as carry if you have exactly 1 output too short.
     }
+  };
 
+  this.updateFloating = function(inputs) {
+    var read = function(inputs, pos, mantissabits, expbits) {
+      var mantissa = 0;
+      var exponent = 0;
+      var sign = 1;
+      var mul = 1; // can't use shift due to JS only supporting that up to 32 bits (when not using BigInt) and mantissa can go up to 52
+      for(var i = 0; i < mantissabits; i++) {
+        mantissa += inputs[pos + i] * mul;
+        mul *= 2;
+      }
+      for(var i = 0; i < expbits; i++) {
+        exponent |= (inputs[pos + mantissabits + i] << i);
+      }
+      sign = inputs[pos + mantissabits + expbits] ? 1 : 0;
+      return math.createfloat(sign, exponent, mantissa, expbits, mantissabits);
+    };
+
+    var readint = function(inputs, pos, bits, signed) {
+      var mul = 1;
+      var result = 0;
+      for(var i = 0; i < bits; i++) {
+        result += inputs[pos + i] * mul;
+        mul *= 2;
+      }
+      if(signed) {
+        var s = Math.pow(2, bits - 1);
+        if(result >= s) result = (s - result - 1);
+      }
+      return result;
+    };
+
+    var write = function(f, output, pos, mantissabits, expbits) {
+      var p = math.dissectfloat(f, expbits, mantissabits);
+      var conv = p[2].toString(2); // can't use shift due to JS only supporting that up to 32 bits (when not using BigInt) and mantissa can go up to 52
+      for(var i = 0; i < mantissabits; i++) {
+        output[pos + i] = (i < conv.length) ? (conv[conv.length - i - 1] == '1' ? 1 : 0) : 0;
+      }
+      for(var i = 0; i < expbits; i++) {
+        output[pos + mantissabits + i] = ((p[1] & (1 << i)) ? 1 : 0);
+      }
+      output[pos + mantissabits + expbits] = p[0];
+    };
+
+    var a = 0, b = 0, c = 0, o = 0;
+    var pos = 0;
+    var posa = 0;
+    if(this.numc) {
+      c = read(inputs, pos, this.numc, this.numc_exp);
+      pos += this.numc + this.numc_exp + 1;
+    }
+    if(this.numb) {
+      b = read(inputs, pos, this.numb, this.numb_exp);
+      pos += this.numb + this.numb_exp + 1;
+    }
+    if(this.numa) {
+      posa = pos;
+      a = read(inputs, pos, this.numa, this.numa_exp);
+      pos += this.numa + this.numa_exp + 1;
+    }
+
+    var miscin = 0;
+    if(this.nummiscin) {
+      miscin = inputs[pos];
+      pos++;
+    }
+
+
+    var op = this.opindex;
+    var select = 0;
+    for(var i = 0; i < this.numselect; i++) {
+      if(inputs[pos++]) {
+        select += (1 << i);
+      }
+    }
+    op += select;
+
+    var out_int = false; // use output as integer bits
+
+    if(op < 16) {
+      o = 0; // bitwise ops not supported for float
+    } else if(op == 16) {
+      o = a + b;
+    } else if(op == 17) {
+      o = a - b;
+    } else if(op == 18) {
+      o = a * b;
+    } else if(op == 19) {
+      o = a / b;
+    } else if(op == 20) {
+      // fmod
+      o = a % b;
+    } else if(op == 21) {
+      // floordiv actually designed for int, but simply do as the name imples
+      o = Math.floor(a / b);
+    } else if(op == 22) {
+      o = (a - b * Math.floor(a / b));
+    } else if(op == 23) {
+      return 0; // carryless mul not supported for float
+    } else if(op == 24) {
+      o = a + 1;
+      if(miscin) o++;
+    } else if(op == 25) {
+      o = a - 1;
+      if(miscin) o--;
+    } else if(op == 26) {
+      o = -a;
+    } else if(op == 27) {
+      o = (a < 0) ? -a : a;
+    } else if(op == 28) {
+      if(this.numb) {
+        // copysign
+        o = a;
+        if((b < 0) != (a < 0)) o = -a;
+        if(b == 0) o = 0;
+      } else {
+        // sign
+        o = (a == 0) ? 0 : ((a > 0) ? 1 : -1);
+      }
+    } else if(op == 29) {
+      // extract exponent bits (raw, keep bias)
+      o = readint(inputs, posa + this.numa, this.numa_exp, false);
+      out_int = true;
+    } else if(op == 30) {
+      // extract mantissa bits
+      o = readint(inputs, posa, this.numa, false);
+      out_int = true;
+    } else if(op == 32) {
+      o = (a == b) ? 1 : 0;
+    } else if(op == 33) {
+      o = (a < b) ? 1 : 0;
+    } else if(op == 34) {
+      o = (a <= b) ? 1 : 0;
+    } else if(op == 35) {
+      o = (a != b) ? 1 : 0;
+    } else if(op == 36) {
+      o = (a >= b) ? 1 : 0;
+    } else if(op == 37) {
+      o = (a > b) ? 1 : 0;
+    } else if(op == 39) {
+      o = (a < b) ? a : b;
+    } else if(op == 39) {
+      o = (a > b) ? a : b;
+    } else if(op == 40) {
+      if(!this.numb) b = 1;
+      o = a * Math.pow(2, b);
+    } else if(op == 41) {
+      if(!this.numb) b = 1;
+      o = a * Math.pow(0.5, b);
+    } else if(op == 42) {
+      o = 0; // left rotating shift not supported for float
+    } else if(op == 43) {
+      o = 0; // right rotating shift not supported for float
+    } else if(op == 48) {
+      o = this.numb ? Math.pow(a, b) : (a * a);
+    } else if(op == 49) {
+      o = this.numb ? (Math.log(a) / Math.log(b)) : (Math.log(a) / Math.log(2));
+    } else if(op == 50) {
+      o = this.numb ? Math.pow(a, 1 / b) : Math.sqrt(o);
+    } else if(op == 54) {
+      o = 0;  // binary to bcd / base conversion not supported for float
+    } else if(op == 55) {
+      o = 0;  // bcd to binary / base conversion not supported for float
+    } else if(op == 56) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 57) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 58) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 59) {
+      // approximation of factorial
+      var gamma_ = function(z) {
+        if(z <= 0 && z == Math.round(z)) return Infinity;
+        if(z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gamma_(1 - z));
+        var p = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+        z -= 1;
+        var x = p[0];
+        for(var i = 1; i < 7 + 2; i++) {
+          x += p[i] / (z + i);
+        }
+        var t = z + 7 + 0.5;
+        return Math.sqrt(Math.PI * 2) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+      };
+      o = gamma_(a + 1);
+    } else if(op == 60) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 61) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 64) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 65) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 66) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 67) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 68) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 69) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 70) {
+      o = 0; // number theory integer ops not supported for float
+    } else if(op == 72) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 73) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 74) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 76) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 77) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 80) {
+      o = Math.sin(a);
+    } else if(op == 81) {
+      o = Math.asin(a);
+    } else if(op == 82) {
+      o = Math.cos(a);
+    } else if(op == 83) {
+      o = Math.acos(a);
+    } else if(op == 84) {
+      o = Math.tan(a);
+    } else if(op == 85) {
+      if(this.numb) {
+        o = Math.atan2(a, b);
+      } else {
+        o = Math.atan(a);
+      }
+    } else if(op == 86) {
+      o = Math.log(a);
+    } else if(op == 87) {
+      o = Math.exp(a);
+    } else if(op == 89) {
+      o = 0; // time/date ops not supported for float
+    } else if(op == 90) {
+      o = 0; // time/date ops not supported for float
+    } else if(op == 96) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 97) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 98) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 99) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 100) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 101) {
+      o = 0; // bit ops not supported for float
+    } else if(op == 104) {
+      // to uint
+      o = Math.round(a);
+      out_int = true;
+    } else if(op == 105) {
+      // from uint
+      o = readint(inputs, posa, this.numa, false);
+    } else if(op == 106) {
+      // to uint
+      o = Math.round(a);
+      out_int = true;
+    } else if(op == 107) {
+      // from int
+      o = readint(inputs, posa, this.numa, true);
+    } else if(op == 108) {
+      o = Math.floor(a);
+    } else if(op == 109) {
+      o = Math.ceil(a);
+    } else if(op == 110) {
+      o = Math.round(a);
+    } else if(op == 111) {
+      o = (a < 0) ? Math.ceil(a) : Math.floor(a);
+    } else {
+      o = 0;
+    }
+
+    var outflag = 0;
+    if(out_int) {
+      var conv = o.toString(2);
+      var bits = this.numo + this.numo_exp + 1;
+      for(var i = 0; i < bits; i++) {
+        this.output[i] = (i < conv.length) ? (conv[conv.length - i - 1] == '1' ? 1 : 0) : 0;
+      }
+      if(conv.length > bits) outflag = 1;
+    } else {
+      write(o, this.output, 0, this.numo, this.numo_exp);
+    }
+    this.output[this.numo + this.numo_exp + 1] = outflag;
   };
 
   this.setError = function(text) {
@@ -4578,7 +5048,7 @@ function Alu() {
     }
 
 
-    var found = 0;
+    var found = -1;
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
@@ -4588,7 +5058,10 @@ function Alu() {
         if(c.number > found) {
           //if(found > 0 && c.number != found) { this.setError('ambiguous: multiple different numbers'); return false; }
           this.opindex = c.number;
-          if(c.number >= 128) {
+          if(c.number >= 256) {
+            this.opindex -= 256;
+            this.floating = true;
+          } else if(c.number >= 128) {
             this.opindex -= 128;
             this.signed = true;
           }
@@ -4603,25 +5076,7 @@ function Alu() {
   };
 
 
-  /*
-  given the array returned by getIO,
-  returns object of {
-    a [heading, lsbinv, num]: input A's heading, and lsbinv
-    b [heading, lsbinv, num]: input B's heading, and lsbinv (or heading -1 and num 0 if none)
-    c [heading, lsbinv, num]: input C's heading, and lsbinv (or heading -1 and num 0 if none)
-    o [heading, lsbinv, num]: output's heading, and lsbinv
-    miscin [heading, num]: misc in side heading, num is 0 or 1 (heading -1 and num 0 if none)
-    miscout [heading, num]: misc out side heading, num is 0 or 1 (heading -1 and num 0 if none)
-    select [heading, lsbinv, num]: select operation input side heading (heading -1 and num 0 if none)
-  }
-  with
-  heading: wind direction of side with this inputs/outputs (NESW), for input is where it comes from, for output is where it goes to
-  lsbinv: see info at class fields
-  num: the amount
-  }
-  returns null on error.
-  */
-  this.getDirs = function(io) {
+  this.processIO = function(io) {
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
@@ -4629,10 +5084,10 @@ function Alu() {
     var numinputsides = 0;
     var numoutputsides = 0;
 
-    var a = [-1, -1, 0];
-    var b = [-1, -1, 0];
-    var c = [-1, -1, 0];
-    var o = [-1, -1, 0];
+    var a = [-1, -1, 0, 0]; // dir, lsbpos, num, num_exp. TODO: use "lsbinv" system some other large components use instead, to align better with getIO's clockwise/counterclockwise system
+    var b = [-1, -1, 0, 0];
+    var c = [-1, -1, 0, 0];
+    var o = [-1, -1, 0, 0];
     var miscin = [-1, 0];
     var miscout = [-1, 0];
     var select = [-1, -1, 0];
@@ -4654,67 +5109,114 @@ function Alu() {
     -more than 2 groups of wires on the input side is an error
     -more than 1 group of wires on any other side is an error
     */
-    if(io.nios) { this.setError('mixed inputs and outputs on a side'); return null; }
+    if(io.nios) { this.setError('mixed inputs and outputs on a side'); return false; }
 
     // find main output
     var num = 0;
     var outdir = -1;
     for(var i = 0; i < 4; i++) {
-      if(io.o[i].ng == 0) continue;
-      if(io.o[i].ng > 1) { this.setError('too many output series on one side'); return null; }
-      var arr = io.o[i].ga;
-      if(arr[0].n > num) {
-        num = arr[0].n;
+      if(!this.floating && io.o[i].ng > 1) { this.setError('too many output series on one side'); return false; }
+      if(io.o[i].n > num) {
         outdir = i;
-        o[0] = outdir;
-        o[1] = false; // TODO: use optional '0' symbol to indicate its LSB position
-        o[2] = num;
+        num = io.o[i].n;
       }
     }
-    if(outdir == -1) { this.setError('output side not found'); return null; }
+    if(outdir == -1) { this.setError('output side not found'); return false; }
+
+    if(this.floating) {
+      var f = extractfloatio(io, outdir, true);
+      if(f[0]) { this.setError(f[0]); return false; }
+      var numf = f.length - 1;
+      if(numf != 1) { this.setError('max 1 floating point input supported, either as 1 whole group or 3 separate parts'); return false; }
+      o[0] = outdir;
+      o[1] = false; // TODO: use optional '0' symbol to indicate its LSB position
+      o[2] = f[1][1];
+      o[3] = f[1][2];
+    } else {
+      o[0] = outdir;
+      o[1] = false; // TODO: use optional '0' symbol to indicate its LSB position
+      o[2] = num;
+    }
+
+    // get the inputs from opposite side of output
+    var indir = (outdir + 2) & 3;
+    if(this.floating) {
+      var f = extractfloatio(io, indir, false);
+      if(f[0]) { this.setError(f[0]); return false; }
+      var numf = f.length - 1;
+      if(numf == 1) {
+        a[0] = indir;
+        a[1] = inlsbinv;
+        a[2] = f[1][1];
+        a[3] = f[1][2];
+      } else if(numf == 2) {
+        a[0] = indir;
+        a[1] = inlsbinv;
+        a[2] = f[2][1];
+        a[3] = f[2][2];
+        b[0] = indir;
+        b[1] = inlsbinv;
+        b[2] = f[1][1];
+        b[3] = f[1][2];
+      } else if(numf == 3) {
+        a[0] = indir;
+        a[1] = inlsbinv;
+        a[2] = f[3][1];
+        a[3] = f[3][2];
+        b[0] = indir;
+        b[1] = inlsbinv;
+        b[2] = f[2][1];
+        b[3] = f[2][2];
+        c[0] = indir;
+        c[1] = inlsbinv;
+        c[2] = f[1][1];
+        c[3] = f[1][2];
+      } else {
+        if(numf == 0) { this.setError('must have input side opposite of output side'); return false; }
+        if(numf > 3) { this.setError('too many inputs'); return false; }
+      }
+    } else {
+      var arr = io.i[indir].ga;
+      var inlsbinv = false; // TODO: use optional '0' symbol to indicate its LSB position
+      if(arr.length == 1) {
+        a[0] = indir;
+        a[1] = inlsbinv;
+        a[2] = arr[0].n;
+      } else if(arr.length == 2) {
+        a[0] = indir;
+        a[1] = inlsbinv;
+        a[2] = arr[1].n; // a is the leftmost one if at bottom side (last one in clockwise order from output)
+        b[0] = indir;
+        b[1] = inlsbinv;
+        b[2] = arr[0].n;
+      } else if(arr.length == 3) {
+        a[0] = indir;
+        a[1] = inlsbinv;
+        a[2] = arr[2].n;
+        b[0] = indir;
+        b[1] = inlsbinv;
+        b[2] = arr[1].n;
+        c[0] = indir;
+        c[1] = inlsbinv;
+        c[2] = arr[0].n;
+      } else {
+        if(arr.length == 0) { this.setError('must have input side opposite of output side'); return false; }
+        if(arr.length > 3) { this.setError('too many inputs'); return false; }
+      }
+    }
 
     // find misc out, if any
     var miscoutdir = -1;
     for(var i = 0; i < 4; i++) {
       if(i == outdir) continue;
       if(io.o[i].ng == 0) continue;
-      if(io.o[i].ng > 1) { this.setError('too many misc-output series on one side'); return null; }
-      if(miscoutdir != -1) { this.setError('multiple misc out sides'); return null; }
+      if(io.o[i].ng > 1) { this.setError('too many misc-output series on one side'); return false; }
+      if(miscoutdir != -1) { this.setError('multiple misc out sides'); return false; }
       var arr = io.o[i].ga;
-      if(arr[0].n != 1) { this.setError('too many bits in misc output side'); return null; }
+      if(arr[0].n != 1) { this.setError('too many bits in misc output side'); return false; }
       miscoutdir = i;
       miscout[0] = miscoutdir;
       miscout[1] = 1;
-    }
-
-    // get the inputs from opposite side of output
-    var indir = (outdir + 2) & 3;
-    var arr = io.i[indir].ga;
-    var inlsbinv = false; // TODO: use optional '0' symbol to indicate its LSB position
-    if(arr.length == 1) {
-      a[0] = indir;
-      a[1] = inlsbinv;
-      a[2] = arr[0].n;
-    } else if(arr.length == 2) {
-      a[0] = indir;
-      a[1] = inlsbinv;
-      a[2] = arr[1].n; // a is the leftmost one if at bottom side (last one in clockwise order from output)
-      b[0] = indir;
-      b[1] = inlsbinv;
-      b[2] = arr[0].n;
-    } else if(arr.length == 3) {
-      a[0] = indir;
-      a[1] = inlsbinv;
-      a[2] = arr[2].n;
-      b[0] = indir;
-      b[1] = inlsbinv;
-      b[2] = arr[1].n;
-      c[0] = indir;
-      c[1] = inlsbinv;
-      c[2] = arr[0].n;
-    } else {
-      if(arr.length == 0) { this.setError('must have input side opposite of output side'); return null; }
-      if(arr.length > 2) { this.setError('too many inputs'); return null; }
     }
 
     // find misc in, if any
@@ -4723,7 +5225,7 @@ function Alu() {
       if(i == outdir || i == indir || i == miscoutdir) continue;
       var arr = io.i[i].ga;
       if(arr.length == 0) continue;
-      if(miscindir != -1) { this.setError('multiple misc in sides'); return null; }
+      if(miscindir != -1) { this.setError('multiple misc in sides'); return false; }
       if(arr.length == 1) {
         if(arr[0].n == 1) {
           miscindir = i;
@@ -4736,7 +5238,7 @@ function Alu() {
           select[2] = arr[0].n;
         }
       } else if(arr.length == 2) {
-        if(arr[0].n != 1) { this.setError('misc in must have 1 bit'); return null; }
+        if(arr[0].n != 1) { this.setError('misc in must have 1 bit'); return false; }
         miscindir = i;
         miscin[0] = miscindir;
         miscin[1] = 1;
@@ -4751,23 +5253,50 @@ function Alu() {
       //if(arr[0][1] != 1) { this.setError('too many bits in misc input side'); return null; }
     }
 
-    var result = [a, b, c, o, miscin, miscout, select];
+    // TODO: work without this temporary object, a leftover from when this was split across 2 functions
+    var dirs = [a, b, c, o, miscin, miscout, select];
 
-    return result;
-  };
+    this.adir = dirs[0][0];
+    this.alsbinv = dirs[0][1];
+    this.bdir = dirs[1][0];
+    this.blsbinv = dirs[1][1];
+    this.cdir = dirs[2][0];
+    this.clsbinv = dirs[2][1];
+    this.odir = dirs[3][0];
+    this.olsbinv = dirs[3][1];
+    this.miscindir = dirs[4][0];
+    this.miscoutdir = dirs[5][0];
+    this.selectdir = dirs[6][0];
+    this.selectlsbinv = dirs[6][1];
+    this.output = []; // current ouput values (first data output(s), then the select passthrough)
+    this.numa = dirs[0][2];
+    this.numb = dirs[1][2];
+    this.numc = dirs[2][2];
+    this.numo = dirs[3][2];
+    this.numa_exp = dirs[0][3];
+    this.numb_exp = dirs[1][3];
+    this.numc_exp = dirs[2][3];
+    this.numo_exp = dirs[3][3];
+    this.nummiscin = dirs[4][1];
+    this.nummiscout = dirs[5][1];
+    this.numselect = dirs[6][2];
 
-  /*
-  Sorts as follows:
-  -data inputs from lsb to msb
-  -misc input bit (carry, ...)
-  -select operation inputs from lsb to msb
-  The given dirs are headings (NESW)
-  */
-  this.sortIO = function(io) {
-    var x0 = this.x0;
-    var y0 = this.y0;
-    var x1 = this.x1;
-    var y1 = this.y1;
+
+    if(this.floating) {
+      this.output.length = this.numo + this.numo_exp + 1 + this.nummiscout;
+    } else {
+      this.output.length = this.numo + this.nummiscout;
+    }
+
+
+
+    /*
+    Sort inputs as follows:
+    -data inputs from lsb to msb
+    -misc input bit (carry, ...)
+    -select operation inputs from lsb to msb
+    The given dirs are headings (NESW)
+    */
 
     var getDir = function(x, y) {
       if(y < y0) return 0;
@@ -4824,16 +5353,18 @@ function Alu() {
 
     var rompos = 0;
 
-    var o = io.o[this.odir].ga[0];
-    var f = this.olsbinv ? o.l : o.f;
-    var d = this.olsbinv ? o.dn : o.d;
-    for(var i = 0; i < o.n; i++) {
-      var x = f[0] + d[0] * i;
-      var y = f[1] + d[1] * i;
-      var z = (this.odir & 1) ? 0 : 1;
-      var c = world[y][x];
-      if(c.circuitsymbol != 'U' && c.circuitsymbol != '#U') continue;
-      if(c.components[z]) c.components[z].rom_out_pos = rompos++;
+    for(var j = 0; j < io.o[this.odir].ng; j++) {
+      var o = io.o[this.odir].ga[j];
+      var f = this.olsbinv ? o.l : o.f;
+      var d = this.olsbinv ? o.dn : o.d;
+      for(var i = 0; i < o.n; i++) {
+        var x = f[0] + d[0] * i;
+        var y = f[1] + d[1] * i;
+        var z = (this.odir & 1) ? 0 : 1;
+        var c = world[y][x];
+        if(c.circuitsymbol != 'U' && c.circuitsymbol != '#U') continue;
+        if(c.components[z]) c.components[z].rom_out_pos = rompos++;
+      }
     }
 
     if(this.miscoutdir >= 0) {
@@ -4849,7 +5380,10 @@ function Alu() {
         if(c.components[z]) c.components[z].rom_out_pos = rompos++;
       }
     }
+
+    return true;
   };
+
 
   // init after inputs are resolved
   // returns true if ok, false if error (e.g. no rectangle or inputs not all on one side)
@@ -4864,34 +5398,7 @@ function Alu() {
     var io = getIO(x0, y0, x1, y1, x0, y0, x1, y1, this.parent);
     if(!io) { this.setError('getting io error'); return false; }
 
-    var dirs = this.getDirs(io);
-    if(!dirs) { this.setError('getting dirs error'); return false; }
-
-
-    this.adir = dirs[0][0];
-    this.alsbinv = dirs[0][1];
-    this.bdir = dirs[1][0];
-    this.blsbinv = dirs[1][1];
-    this.cdir = dirs[2][0];
-    this.clsbinv = dirs[2][1];
-    this.odir = dirs[3][0];
-    this.olsbinv = dirs[3][1];
-    this.miscindir = dirs[4][0];
-    this.miscoutdir = dirs[5][0];
-    this.selectdir = dirs[6][0];
-    this.selectlsbinv = dirs[6][1];
-    this.output = []; // current ouput values (first data output(s), then the select passthrough)
-    this.numa = dirs[0][2];
-    this.numb = dirs[1][2];
-    this.numc = dirs[2][2];
-    this.numo = dirs[3][2];
-    this.nummiscin = dirs[4][1];
-    this.nummiscout = dirs[5][1];
-    this.numselect = dirs[6][2];
-
-    this.output.length = this.numo + this.nummiscout;
-
-    this.sortIO(io);
+    if(!this.processIO(io)) { this.setError('processIO failed'); return false; }
 
 
     // make label with operation name
@@ -4973,7 +5480,9 @@ function VTE() {
   this.y1b = 0;
   this.text = null; // not as string but as 2D array of characters
   this.numinputs = 0; // num data inputs
+  this.numinputs2 = 0; // exponent bits, if this.floatdisplay, for floating point. Note that there is implicitely one more bit, the sign bit, not included in numinputs or numinputs2.
   this.numoutputs = -1; // num data outputs
+  this.numoutputs2 = -1; // exponent bits for output float, similar in function to this.numinputs2
   this.numwrite = 0; // num write control bits
   this.cursorx = 0;
   this.cursory = 0;
@@ -5002,6 +5511,7 @@ function VTE() {
   */
   this.decimaldisplay = false;
   this.signeddisplay = false;
+  this.floatdisplay = false;
   this.passthrough = false; // whether it passes through the input (in case of decimal display)
   this.decimalinput = false;
   this.counter = false;
@@ -5035,6 +5545,7 @@ function VTE() {
   // Assumes the component has already updated all inputs according to the UPDATE_ALGORITHM and gotten the input values from it
   // Inputs are MSB to LSB
   this.update = function(inputs) {
+    if(this.error) return;
     var enable = true;
     var do_read = false;
     var do_write = false;
@@ -5136,23 +5647,47 @@ function VTE() {
       return;
     }
     if(this.decimaldisplay) {
-      var index = math.n0;
-      var mul = math.n1;
-      for(var i = 0; i < this.numinputs; i++) {
-        var j = i + pos;
-        var ip = math.supportbigint ? BigInt(inputs[j]) : inputs[j];
-        index += ip * mul;
-        mul *= math.n2;
+      var s = '';
+      var rendersize = 0;
+      if(this.floatdisplay) {
+        var mantissa = 0;
+        var exponent = 0;
+        var sign = 1;
+        var mul = 1; // can't use shift due to JS only supporting that up to 32 bits (when not using BigInt) and mantissa can go up to 52
+        for(var i = 0; i < this.numinputs; i++) {
+          mantissa += inputs[i] * mul;
+          mul *= 2;
+        }
+        for(var i = 0; i < this.numinputs2; i++) {
+          exponent |= (inputs[this.numinputs + i] << i);
+        }
+        sign = inputs[this.numinputs + this.numinputs2] ? 1 : 0;
+        //s = '' + sign + '.' + exponent + '.' + mantissa;
+        s = '' + math.createfloat(sign, exponent, mantissa, this.numinputs2, this.numinputs);
+        rendersize = Math.max(this.x1b - this.x0b, this.y1b - this.y0b);
+        if(s == 'Infinity' && rendersize < 8) s = 'Inf';
+        if(s == '-Infinity' && rendersize < 9) s = '-Inf';
+        if(s[0] == '-' && s.length > rendersize) s = s.substr(0, s.length - 1);
+      } else {
+        var index = math.n0;
+        var mul = math.n1;
+        for(var i = 0; i < this.numinputs; i++) {
+          var j = i + pos;
+          var ip = math.supportbigint ? BigInt(inputs[j]) : inputs[j];
+          index += ip * mul;
+          mul *= math.n2;
+        }
+        if(this.signeddisplay) {
+          var max = math.n1 << math.B(this.numinputs);
+          var half = math.n1 << (math.B(this.numinputs) - math.n1);
+          if(index >= half) index = -(max - index);
+        }
+        s = '' + index;
+        rendersize = this.numinputs;
       }
       var x = this.x1b - this.x0b - 1;
       var y = this.y1b - this.y0b - 1;
-      if(this.signeddisplay) {
-        var max = math.n1 << math.B(this.numinputs);
-        var half = math.n1 << (math.B(this.numinputs) - math.n1);
-        if(index >= half) index = -(max - index);
-      }
-      var s = '' + index;
-      for(var i = 0; i < this.numinputs; i++) {
+      for(var i = 0; i < rendersize; i++) {
         //if(x >= this.x1b - this.x0b) { x = 0; y++; }
         if(x < 0) { x = this.x1b - this.x0b - 1; y--; }
         if(x < 0) break;
@@ -5166,14 +5701,20 @@ function VTE() {
         for(var i = 0; i < this.numoutputs; i++) {
           this.output[i] = i < this.numinputs ? inputs[i] : false;
         }
+        if(this.floatdisplay) {
+          for(var i = 0; i <= this.numoutputs2; i++) {
+            this.output[this.numoutputs + i] = (i < this.numinputs + this.numinputs2 + 1) ? inputs[this.numinputs + i] : false;
+          }
+        }
       }
       return;
     }
     if(this.decimalinput) {
+      var rendersize = this.floatdisplay ? Math.max(this.x1b - this.x0b, this.y1b - this.y0b) : this.numoutputs;
       var s = '';
       var x = math.n0;
       var y = math.n0;
-      for(var i = 0; i < this.numoutputs; i++) {
+      for(var i = 0; i < rendersize; i++) {
         var c = this.text[y][x];
         s += c;
         x++;
@@ -5181,59 +5722,76 @@ function VTE() {
       }
       s = s.trim();
 
-      // If a negative number is entered, support it using twos complement
-      var neg = false;
-      if(s[0] == '-') {
-        neg = true;
-        s = s.substr(1);
-      }
 
-      // avoid typing non-digit characters (exception for hex)
-      if(s.length > 0) {
-        var c = s[s.length - 1];
-        var hex = (s.length >= 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X'));
-        if(!hex && !(c >= '0' && c <= '9')) {
+      if(this.floatdisplay) {
+        var f = parseFloat(s);
+        if(s == 'Inf' || s == 'inf' || s == 'infinity') f = Infinity;
+        if(s == '-Inf' || s == '-inf' || s == '-infinity') f = -Infinity;
+        if(s == '') f = 0; // empty string parses as nan otherwise, which does not look nice when starting to type
+        var p = math.dissectfloat(f, this.numoutputs2, this.numoutputs);
+        var conv = p[2].toString(2); // can't use shift due to JS only supporting that up to 32 bits (when not using BigInt) and mantissa can go up to 52
+        for(var i = 0; i < this.numoutputs; i++) {
+          this.output[i] = (i < conv.length) ? (conv[conv.length - i - 1] == '1' ? 1 : 0) : 0;
+        }
+        for(var i = 0; i < this.numoutputs2; i++) {
+          this.output[this.numoutputs + i] = ((p[1] & (1 << i)) ? 1 : 0);
+        }
+        this.output[this.numoutputs + this.numoutputs2] = p[0];
+      } else {
+        // If a negative number is entered, support it using twos complement
+        var neg = false;
+        if(s[0] == '-') {
+          neg = true;
+          s = s.substr(1);
+        }
+
+        // avoid typing non-digit characters (exception for hex)
+        if(s.length > 0) {
+          var c = s[s.length - 1];
+          var hex = (s.length >= 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X'));
+          if(!hex && !(c >= '0' && c <= '9')) {
+            this.doBackspace();
+            s = s.substr(0, s.length - 1);
+          }
+        }
+
+        var index = math.n0;
+        for(;;) {
+          if(s.length == 0) break;
+          var hex = s[0] == '0' && (s[1] == 'x' || s[1] == 'X');
+          if(math.supportbigint) {
+            // BigInt throws exception if string contains invalid characters so extract a valid number part.
+            if(hex) {
+              s = s.match(/..[0-9a-fA-F]+/);
+            } else {
+              s = s.match(/[0-9]+/);
+            }
+
+            s = (s == null) ? 0 : s[0];
+            if(!s || s == '' || s == '0x') s = '0';
+            index = BigInt(s);
+          } else {
+            // parse hex or decimal, not octal (note that whether or not it parses octal if radix not given is browser dependent)
+            if(hex) index = parseInt(s);
+            else index = parseInt(s, 10);
+          }
+          var ni = math.supportbigint ? BigInt(this.numoutputs) : this.numoutputs;
+          var maxval = (ni == 31) ? math.B(2147483647) : ((math.n1 << ni) - math.n1);
+          if(index <= maxval) break;
+
+          // typed number too high, remove last character typed
           this.doBackspace();
           s = s.substr(0, s.length - 1);
         }
-      }
 
-      var index = math.n0;
-      for(;;) {
-        if(s.length == 0) break;
-        var hex = s[0] == '0' && (s[1] == 'x' || s[1] == 'X');
-        if(math.supportbigint) {
-          // BigInt throws exception if string contains invalid characters so extract a valid number part.
-          if(hex) {
-            s = s.match(/..[0-9a-fA-F]+/);
-          } else {
-            s = s.match(/[0-9]+/);
-          }
-
-          s = (s == null) ? 0 : s[0];
-          if(!s || s == '' || s == '0x') s = '0';
-          index = BigInt(s);
-        } else {
-          // parse hex or decimal, not octal (note that whether or not it parses octal if radix not given is browser dependent)
-          if(hex) index = parseInt(s);
-          else index = parseInt(s, 10);
+        if(neg) index = ~index + math.n1;
+        var mul = math.n1;
+        for(var i = 0; i < this.numoutputs; i++) {
+          var bit = ((index & mul) ? 1 : 0);
+          if(index < 0 && (1 << i) > -index) bit = 1; // also supports negative numbers with twos complement
+          this.output[i] = bit;
+          mul *= math.n2;
         }
-        var ni = math.supportbigint ? BigInt(this.numoutputs) : this.numoutputs;
-        var maxval = (ni == 31) ? math.B(2147483647) : ((math.n1 << ni) - math.n1);
-        if(index <= maxval) break;
-
-        // typed number too high, remove last character typed
-        this.doBackspace();
-        s = s.substr(0, s.length - 1);
-      }
-
-      if(neg) index = ~index + math.n1;
-      var mul = math.n1;
-      for(var i = 0; i < this.numoutputs; i++) {
-        var bit = ((index & mul) ? 1 : 0);
-        if(index < 0 && (1 << i) > -index) bit = 1; // also supports negative numbers with twos complement
-        this.output[i] = bit;
-        mul *= math.n2;
       }
       return;
     }
@@ -5429,7 +5987,8 @@ function VTE() {
       var x = array[i][0];
       var y = array[i][1];
       var c = world[y][x];
-      if(c.number == 1) this.signeddisplay = true;
+      if(c.number == 1 && !this.floatdisplay) this.signeddisplay = true;
+      if(c.number == 2) this.floatdisplay = true;
       if(c.components[0]) c.components[0].parent = this.parent;
       if(c.components[1]) c.components[1].parent = this.parent;
       if(!c.components[0] && !c.components[1]) c.components[0] = this.parent;
@@ -5573,6 +6132,44 @@ function VTE() {
       }
     }
 
+    if(this.floatdisplay) {
+      if(this.counter) { this.setError('floating point, indicated by "2" not supported for counter'); return false; }
+      if(!this.decimalinput && !this.decimaldisplay) { this.setError('floating point, indicated by "2", can only be used for decimal input or decimal output'); return false; }
+      if(io.nis > 0) {
+        // we want, if it has iputs, 3 inputs on one side
+        if(io.nis > 1) { this.setError('floating point input requires all its inputs on 1 side'); return false; }
+        for(var i = 0; i < 4; i++) {
+          if(io.i[i].n) {
+            var f = extractfloatio(io, i, false);
+            if(f[0]) { this.setError(f[0]); return false; }
+            var numf = f.length - 1;
+            if(numf != 1) { this.setError('max 1 floating point input supported, either as 1 whole group or 3 separate parts'); return false; }
+            this.numinputs = f[1][1];
+            this.numinputs2 = f[1][2];
+            break;
+          }
+        }
+      }
+      if(io.nos > 0) {
+        // we want, if it has iputs, 3 inputs on one side
+        if(io.nos > 1) { this.setError('floating point output requires all its outputs on 1 side'); return false; }
+        for(var i = 0; i < 4; i++) {
+          if(io.o[i].n) {
+            var f = extractfloatio(io, i, true);
+            if(f[0]) { this.setError(f[0]); return false; }
+            var numf = f.length - 1;
+            if(numf != 1) { this.setError('max 1 floating point output supported, either as 1 whole group or 3 separate parts'); return false; }
+            this.numoutputs = f[1][1];
+            this.numoutputs2 = f[1][2];
+            break;
+          }
+        }
+      }
+
+      if(this.passthrough && this.numinputs != this.numoutputs) { this.setError('floating point passthrough requires equal input and output mantissa size'); return false; }
+      if(this.passthrough && this.numinputs2 != this.numoutputs2) { this.setError('floating point passthrough requires equal input and output exponent size'); return false; }
+    }
+
     if(!newOrderInputs(this.parent, arr)) { this.setError('must use *all* inputs for newOrderInputs'); return false; }
 
     var rompos = 0;
@@ -5620,14 +6217,6 @@ function VTE() {
 
     var io = getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, this.parent);
     if(!io) { this.setError('getting io failed'); return false; }
-
-    /*var dirs = this.getDirs(io);
-    if(!dirs) { this.setError('getting dirs failed'); return false; }
-
-    this.numinputs = dirs.input[3];
-    this.numoutputs = dirs.output[3];
-    this.numwrite = dirs.write[3];
-    this.sortIO(dirs);*/
 
     if(!this.processIO(io)) { this.setError('processIO failed'); return false; }
 
@@ -8613,11 +9202,17 @@ function Cell() {
                 if(vte.decimaldisplay && !vte.counter) {
                   title += ((vte.numinputs == 1) ? ' (as 1-bit display)' : ' (as decimal display)');
                   if(vte.passthrough) title += ' (passes through the input to the output)';
-                  if(vte.signeddisplay) title += ' (signed two\'s complement)';
+                  if(vte.floatdisplay) title += ' (using floating point: num mantissa bits: ' + vte.numinputs + ', num exponent bits: ' + vte.numinputs2 + ', num sign bits: 1, num total bits: ' + (vte.numinputs + vte.numinputs2 + 1) + ')';
+                  else if(vte.signeddisplay) title += ' (signed two\'s complement)';
                 }
                 if(vte.decimalinput && !vte.counter) {
-                  title += ' (as decimal input, click to put cursor here, and type decimal digits, or hex digits preceded with 0x).';
-                  title += ' max value, given the ' + vte.numoutputs + ' output wires: ' + (Math.pow(2, vte.numoutputs) - 1);
+                  if(vte.floatdisplay) {
+                    title += ' (as floating point decimal input. Type floating point values such as 0.5, -8.25, 2e3, 1e-15 or Infinity. Invalid values such as text will be interepreted as NaN. Too large or too small values will give Infinity or -Infinity.)';
+                    title += ' (num mantissa bits: ' + vte.numoutputs + ', num exponent bits: ' + vte.numoutputs2 + ', num sign bits: 1, num total bits: ' + (vte.numoutputs + vte.numoutputs2 + 1) + ')';
+                  } else {
+                    title += ' (as decimal input, click to put cursor here, and type decimal digits, or hex digits preceded with 0x).';
+                    title += ' max value, given the ' + vte.numoutputs + ' output wires: ' + (Math.pow(2, vte.numoutputs) - 1);
+                  }
                 }
 
                 if(vte.supportsTyping()) this.renderer.setCursorPointer(true);
@@ -10423,7 +11018,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   this.drawonly = 0;
   this.dynamicdraw = false;
   this.dynamicdrawcode = 0;
-  this.norender = false;
+  this.norender = false; // don't do anything in setValue
+  this.falserender = false; // only do something in setValue the first time
 
   this.globalInit = function() {
     this.fallback.globalInit();
@@ -11068,12 +11664,11 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.4);
       } else if(cell.comment) {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
-      //} else if(c == 'J') {
-      //
       } else if(c == 'toc') {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else {
         var alreadybg = error;
+        var numborder = 0;
         if(!error) {
           if(cell.components[0] && cell.components[0].type == TYPE_CONSTANT_OFF) symbol = '0';
           if(cell.components[0] && cell.components[0].type == TYPE_CONSTANT_ON) symbol = '1';
@@ -11132,7 +11727,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
             textel.style.color = currentGateColor;
             ctx.strokeStyle = gateBorderColor;
           }
-          this.drawBorder(cell, drawer, ctx);
+          numborder = this.drawBorder(cell, drawer, ctx);
         }
         var okdraw = true;
         if(c == '#' || largeextendmap[c]) {
@@ -11151,6 +11746,10 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           ctx.font = '' + tw + 'px serif';
           ctx.fillText(symbol, tw >> 1, th >> 1);*/
           textel.innerText = symbol;
+        } else if((numborder == 0 && virtualsymbol == '#') || symbol == '#i') {
+          // it's a plain surface of a large logic gate, without borders so nothing can change color when going on/off
+          // in case of chip, even if it has border, the border there doesn't change color
+          this.staticrender = true;
         }
       }
     }
@@ -11161,10 +11760,12 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
   // box drawing for components; must already set the color styles on the ctx beforehand
   this.drawBorder = function(cell, drawer, ctx) {
-    if(!sameDevice(cell.x, cell.y, 0)) drawer.drawLine_(ctx, 0, 0, 1, 0);
-    if(!sameDevice(cell.x, cell.y, 1)) drawer.drawLine_(ctx, 1, 0, 1, 1);
-    if(!sameDevice(cell.x, cell.y, 2)) drawer.drawLine_(ctx, 1, 1, 0, 1);
-    if(!sameDevice(cell.x, cell.y, 3)) drawer.drawLine_(ctx, 0, 1, 0, 0);
+    var num = 0;
+    if(!sameDevice(cell.x, cell.y, 0)) { drawer.drawLine_(ctx, 0, 0, 1, 0); num++; }
+    if(!sameDevice(cell.x, cell.y, 1)) { drawer.drawLine_(ctx, 1, 0, 1, 1); num++; }
+    if(!sameDevice(cell.x, cell.y, 2)) { drawer.drawLine_(ctx, 1, 1, 0, 1); num++; }
+    if(!sameDevice(cell.x, cell.y, 3)) { drawer.drawLine_(ctx, 0, 1, 0, 0); num++; }
+    return num;
   };
 
   /*
@@ -11514,11 +12115,12 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
   this.setValue = function(cell, value, type) {
     if(this.norender) return;
+    if(this.staticrender && this.prevvalue != -1) return;
 
-      if(this.usefallbackonly) {
-        this.fallback.setValue(cell, value, type);
-        return;
-      }
+    if(this.usefallbackonly) {
+      this.fallback.setValue(cell, value, type);
+      return;
+    }
 
     if(value != this.prevvalue) { // changing visibility is slow in case of lots of elements, so only do if it changed
       var dest = rglobal.maincanvas.getContextForCell(cell);
@@ -11776,9 +12378,11 @@ function update() {
   //console.log('update ' + (+new Date() / 1000.0));
   var changein = updateComponents((UPDATE_ALGORITHM == 1) ? components_order : components);
   if(changein && !paused && !updateTimeoutId) {
-    timerticks += changein;
+    var nexttimerticks = timerticks + changein;
     var time = AUTOSECONDS * 1000 * changein;
     updateTimeoutId = util.setTimeoutSafe(function() {
+      // this assigns the timerticks the next value expected to be once this function triggers, note that during the delay of this function, user pressed switches could have caused updates in-between, those could have changed timerticks, but that's overriden here
+      timerticks = nexttimerticks;
       updateTimeoutId = null;
       if(paused) return;
       update();

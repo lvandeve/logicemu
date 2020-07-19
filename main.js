@@ -538,7 +538,7 @@ function createMenuUI() {
   tickButton.innerText = 'tick';
   tickButton.title = 'Tick once. This allows ticking the circuit when paused, to investigate the signal. Especially useful in paused electron mode, or paused immediate mode if there are flip-flops or other sequential parts.';
   tickButton.onclick = function() {
-    if(!isPaused()) pause();
+    //if(!isPaused()) pause();
     update();
   }
 
