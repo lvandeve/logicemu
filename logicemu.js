@@ -8459,7 +8459,7 @@ var TERMINALBGCOLOR;
 var TERMINALFGCOLOR;
 var TERMINALMIDCOLOR; // used to indicate cursor can be placed here
 var OUTSIDESCREENBGCOLOR;
-var OUTSIDESCREENGFGOLOR;
+var OUTSIDESCREENFGCOLOR;
 
 var BUSCOLORS;
 
@@ -8476,6 +8476,8 @@ function setColorScheme(index) {
   ERRORBGCOLOR = '#ff0';
   ERRORFGCOLOROFF = '#f00';
   ERRORFGCOLORON = '#f88';
+  OUTSIDESCREENBGCOLOR = '#444';
+  OUTSIDESCREENFGCOLOR = '#fff';
 
   rgb_led_bg_colors = [
       // 0-1: 1-bit palette: 2 colors, black and white. Slightly different values instead of #000 #fff to be subtly visible against white/black main background
@@ -8806,6 +8808,9 @@ function setColorScheme(index) {
     GATEFGONCOLOR = ONCOLOR;
     GATEFGOFFCOLOR = OFFCOLOR;
 
+    OUTSIDESCREENBGCOLOR = BGCOLOR;
+    OUTSIDESCREENFGCOLOR = OFFCOLOR;
+
     LINKCOLOR = 'blue';
     TITLECOLOR = ONCOLOR;
 
@@ -8963,7 +8968,7 @@ function Cell() {
   this.callsubindex = -2; // use sub (small i)
   this.callsub = null; // the CallSub
   this.commentalign = -1; // -1=none (fullwidth only), 0=left, 1=center, 2=right
-  this.commentstyle = 0; // 0=full width, 1=narrow width monospace, 2=formatted, 3=horizontal rule
+  this.commentstyle = 0; // 0=full width, 1=narrow width monospace, 2=formatted, 3=horizontal rule, 9=hidden source code comment
   this.commentchapter = -1;
   this.commentanchor = ''; // only used if this is chapter title
   this.commentlength = 0; // the text itself
@@ -9462,7 +9467,7 @@ function Cell() {
   this.initDiv = function(x, y) {
     // do not make unneeded divs, large rendering speedup
     // make one on the last row though, if user added empty rows they want some scrolling space there
-    if(this.displaysymbol == ' ' && !(x == 0 && y == h - 1)) return;
+    if(this.displaysymbol == ' ' && !(x == 0 && y == h - 1) && !this.verticalcommentspace) return;
 
     if(this.renderer) {
       this.renderer.cleanup();
@@ -9742,7 +9747,7 @@ function RendererText() {
 
   // specific initialization, can be re-done if cell changed on click
   this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
-    if(symbol == ' ' && virtualsymbol == ' ') return;
+    if(symbol == ' ' && virtualsymbol == ' ' && !cell.verticalcommentspace) return;
 
     if (!this.init2done) {
       this.div0.style.color = OFFCOLOR;
@@ -9773,16 +9778,22 @@ function RendererText() {
       var fgcolor = TEXTFGCOLOR;
       var bgcolor = TEXTBGCOLOR;
       //this.div0.style.fontWeight = 'bold';
+      var hidden = (cell.commentstyle == 9); // 9 is a hidden source-code only comment
 
-      this.div0.style.color = fgcolor;
-      this.div0.style.backgroundColor = bgcolor;
+
+      if(!hidden) {
+        this.div0.style.color = fgcolor;
+        this.div0.style.backgroundColor = bgcolor;
+      }
 
       // no need to affect div1, it's never shown for comments
 
       var textel = this.div0;
 
       // allow the text to go to the right
-      if(/*cell.commentalign >= 0 && cell.commentalign <= 2*/cell.commentstyle != 0) {
+      if(hidden) {
+        // do nothing, do not add the text:
+      } else if(/*cell.commentalign >= 0 && cell.commentalign <= 2*/cell.commentstyle != 0) {
         var align = cell.commentalign;
         if(cell.commentstyle == 2) {
           this.div0.style.fontFamily = 'unset'; // remove monospace
@@ -10110,6 +10121,7 @@ function RendererText() {
     }
   };
 }
+
 
 // checks if neighbor at given direction from x,y is device
 function hasDevice(x, y, dir) {
@@ -12998,7 +13010,7 @@ function parseCells(text) {
       cell.x = x;
       cell.y = y;
       // disable numbers that affected comments
-      if(!comment && (cell.symbol == '0' || cell.symbol == '1' || cell.symbol == '2' || cell.symbol == '3' || cell.symbol == '4' || cell.symbol == '5' || cell.symbol == '6' || cell.symbol == '7' || cell.symbol == '8')) {
+      if(!comment && puredigitmap[cell.symbol]) {
         if((x > 0 && lines[y][x - 1] == '"') || (x + 1 < w && lines[y][x + 1] == '"')) {
           cell.displaysymbol = ' ';
           cell.circuitsymbol = ' ';
@@ -13099,6 +13111,7 @@ function parseCells(text) {
           else if(x2 >= 0 && (lines[y][x2] == '6')) commentalign = 3;
           else if(x2 >= 0 && (lines[y][x2] == '7')) commentalign = 4;
           else if(x2 >= 0 && (lines[y][x2] == '8')) commentalign = 5;
+          else if(x2 >= 0 && (lines[y][x2] == '9')) commentstyle = 9;
           else {
             numberleft = false;
             for(x2 = x + 1; x2 < w; x2++) {
@@ -13126,11 +13139,12 @@ function parseCells(text) {
           else if(xe < w && lines[y][xe] == '6') commentalign = 3;
           else if(xe < w && lines[y][xe] == '7') commentalign = 4;
           else if(xe < w && lines[y][xe] == '8') commentalign = 5;
+          else if(xe < w && lines[y][xe] == '9') commentstyle = 9;
           else {
             numberright = false;
           }
 
-          commentstyle = narrowmono ? 1 : (markdown ? 2 : 0);
+          if(commentstyle != 9) commentstyle = narrowmono ? 1 : (markdown ? 2 : 0);
 
           // markdown header support
           if(markdown) {
@@ -13193,6 +13207,9 @@ function parseCells(text) {
           thincommentcell.commentlength++;
           thincommentcell.commentlength2++;
         }
+        if(commentstyle == 9) {
+          cell.commentstyle = 9;
+        }
         cell.circuitsymbol = ' ';
       }
 
@@ -13231,18 +13248,20 @@ function parseCells(text) {
         if(number0 == '0' || number0 == '1' || number0 == '2') commentstyle = 2;
         else if(number0 == '3' || number0 == '4' || number0 == '5') commentstyle = 1;
         else if(number0 == '6' || number0 == '7' || number0 == '8') ; // keep as-is, style >0 overrides this
+        else if(number0 == '9') commentstyle = 9; // hidden source-code only comment
         else rem0 = false;
 
         var rem1 = true;
         if(number1 == '0' || number1 == '1' || number1 == '2') { if(commentstyle != 1) commentstyle = 2; }
         else if(number1 == '3' || number1 == '4' || number1 == '5') commentstyle = 1;
         else if(number1 == '6' || number1 == '7' || number1 == '8') ; // keep as-is, style >0 overrides this
+        else if(number1 == '9') commentstyle = 9; // hidden source-code only comment
         else rem1 = false;
 
         if(commentstyle != 0) commentalign = 1;
 
         // disable numbers that affect comments so they don't affect LED colors etc...
-        if(rem0) {
+        if(rem0 && y >= 1) {
           var cell2 = world[y - 1][x];
           if(!cell2.comment) { // do not disable if it's already marked comment, may contain content of a horizontal comment
             cell2.displaysymbol = ' ';
@@ -13251,7 +13270,7 @@ function parseCells(text) {
             cell2.comment = true;
           }
         }
-        if(rem1) {
+        if(rem1 && y2 + 1 < h) {
           var cell2 = world[y2 + 1][x];
           if(!cell2.comment) { // do not disable if it's already marked comment, may contain content of a horizontal comment
             cell2.displaysymbol = ' ';
@@ -13263,6 +13282,11 @@ function parseCells(text) {
         for(var y3 = y; y3 <= y2; y3++) {
           if(y3 >= h) break; // there may be no final colon if at bottom
           var cell2 = world[y3][x];
+          if(commentstyle == 1 && !cell2.comment && cell2.symbol == ' ') { // not if it's already horizontal comment
+            cell2.verticalcommentspace = true; // we sometimes want the spaces of vertical comments to render, for e.g. style 3. Without this flag, spaces get skipped for rendering as optimization.
+            if(line0[y3] > x) line0[y3] = x;
+            if(line1[y3] <= x) line1[y3] = x + 1;
+          }
           cell2.comment = true;
           cell2.circuitsymbol = ' ';
           cell2.metasymbol = '"';

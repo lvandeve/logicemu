@@ -3849,7 +3849,7 @@ s--(-->l  l<--)-->l
 
 0"The antenna can also connect some non-wire-like connections, such as be"
 0"in-between an input and a device (this with the standard rule, the limited"
-0"exceptions above would not allow this)":
+0"exceptions above would not allow this)"
 
 
 0"Antennas can be nested recursively:"
@@ -3956,7 +3956,7 @@ s-->#
 
 3"$: automatic numbering"
 
-0"Instead of manually giving each connection of a bus (or a bundle of global wires)
+0"Instead of manually giving each connection of a bus (or a bundle of global wires)"
 0"a unique number, you can use $ to automatically number:"
 
 
@@ -4314,6 +4314,9 @@ s   s   s
 3"7: standard full width text, same as not using any number at all"
 3"8: full width text, shifted right a bit"
 
+0"hidden text: source-code only comments, will not show up when rendering the circuit"
+3"9: hidden text, source-code only comment"
+
 0"The formatted text styles support a small subset of markdown features:"
 3"# : main chapter (heading 1)"
 3"## : sub-chapter (heading 2)"
@@ -4368,6 +4371,8 @@ s   s   s
 |0"7    "|7"hello world"| 0"standard full width, same as no number"
 .--------.--------------.
 |0"8    "|8"hello world"| 0"full width shifted right (ends at quote/number)"
+.--------.--------------.
+|0"9    "|9"hello world"| 0"hidden source-code only comment"
 .--------.--------------.
 |0"0 #  "|0"# head H1  "| 0"chapter (heading 1)"
 .--------.--------------.
@@ -4431,16 +4436,16 @@ s   s   s
 0"A number above the first or below the last colon can affect style, but this"
 0"supports less options than horizontal strings and no alignment options."
 
-  0     3     6
-  :     :     :
-  s     s     s
-  t     t     t
-  y     y     y
-  l     l     l
-  e     e     e
+  0     3     6     9
+  :     :     :     :
+  s     s     s     s
+  t     t     t     t
+  y     y     y     y
+  l     l     l     l
+  e     e     e     e
 
-  0     3     6
-  :     :     :
+  0     3     6     9
+  :     :     :     :
 
 0"Note: It's safe to use a colon in a horizontal comment, but you can't use a"
 0"quote in a vertical comment, it'll be used to comment a line horizontally."
@@ -8318,14 +8323,16 @@ s         s
   v  v  v  v  v  v  v  v  v  v
   e  e  e  e  e  e  e  e  e  e
   r  r  r  r  r  r  r  r  r  r
-     0  1  2  3  4  5  6  7  8
+
+  n  0  1  2  3  4  5  6  7  8
   :  :  :  :  :  :  :  :  :  :
 
   :  :  :  :  :  :  :  :  :  :
   v  v  v  v  v  v  v  v  v  v
   e  e  e  e  e  e  e  e  e  e
   r  r  r  r  r  r  r  r  r  r
-     0  1  2  3  4  5  6  7  8
+
+  n  0  1  2  3  4  5  6  7  8
   :  :  :  :  :  :  :  :  :  :
      0  1  2  3  4  5  6  7  8
 
@@ -9378,4 +9385,4 @@ registerCircuit('Main Index', `
 
 "INSERT:links_main"
 
-`, 'helpindex');
+`, 'mainindex');
