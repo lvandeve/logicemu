@@ -172,6 +172,7 @@ function createEditorMenuUI(cancelFun, finishFun) {
   menuRows.style.display = 'block';
   menuRows.style.width = '100%';
   menuRows.style.height = '100px';
+  menuRows.style.zIndex = '100';
 
   menuRow0El = util.makeElementAt('span', 0, 0, menuRows);
   menuRow0El.style.background = '#f8f8f8';
@@ -461,6 +462,7 @@ function getStatsText() {
   return text;
 }
 
+var muted = false;
 
 function createMenuUI() {
   if(menuRows) util.removeElement(menuRows);
@@ -534,7 +536,7 @@ function createMenuUI() {
   }
 
 
-  var tickButton = util.makeUIElement('button', menuRow2El);
+  var tickButton = util.makeUIElement('button', menuRow2El, 2);
   tickButton.innerText = 'tick';
   tickButton.title = 'Tick once. This allows ticking the circuit when paused, to investigate the signal. Especially useful in paused electron mode, or paused immediate mode if there are flip-flops or other sequential parts.';
   tickButton.onclick = function() {
@@ -553,14 +555,13 @@ function createMenuUI() {
       unpause();
     } else {
       pause();
-      suspendAudioContext();
     }
     updateTimeButtonBorders();
   };
   updatePauseButtonText();
 
 
-  var slowerButton = util.makeUIElement('button', menuRow2El, 3);
+  var slowerButton = util.makeUIElement('button', menuRow2El, 2);
   slowerButton.title = 'slows down simulation';
   slowerButton.innerText = 'slow';
   slowerButton.onclick = function() {
@@ -572,7 +573,7 @@ function createMenuUI() {
     updateTimeButtonBorders();
   };
 
-  var normalButton = util.makeUIElement('button', menuRow2El, 3);
+  var normalButton = util.makeUIElement('button', menuRow2El, 2);
   normalButton.title = 'set to standard speed';
   normalButton.innerText = 'norm';
   normalButton.onclick = function() {
@@ -584,7 +585,7 @@ function createMenuUI() {
     updateTimeButtonBorders();
   };
 
-  var boostButton = util.makeUIElement('button', menuRow2El, 3);
+  var boostButton = util.makeUIElement('button', menuRow2El, 2);
   boostButton.title = 'speeds up simulation, if possible within the computational resources of the web browser';
   boostButton.innerText = 'fast';
   boostButton.onclick = function() {
@@ -655,8 +656,10 @@ function createMenuUI() {
   util.makeElement('option', colorDropdown).innerText = 'light';
   util.makeElement('option', colorDropdown).innerText = 'dark';
   util.makeElement('option', colorDropdown).innerText = 'gray';
-  util.makeElement('option', colorDropdown).innerText = 'blue';
+  util.makeElement('option', colorDropdown).innerText = 'red';
   util.makeElement('option', colorDropdown).innerText = 'green';
+  util.makeElement('option', colorDropdown).innerText = 'blue';
+  util.makeElement('option', colorDropdown).innerText = 'brown';
   util.makeElement('option', colorDropdown).innerText = 'candy';
   util.makeElement('option', colorDropdown).innerText = 'inverted';
   util.makeElement('option', colorDropdown).innerText = 'contrast';
@@ -688,6 +691,23 @@ function createMenuUI() {
     if(th > 64) th = 64;
     initDivs();
     render();
+  };
+
+  util.makeUISpacer(16, menuRow2El);
+
+  var muteButton = util.makeUIElement('button', menuRow2El, 3);
+  muteButton.innerText = muted ? 'unmute' : 'mute';
+  muteButton.title = 'Mute sound';
+  muteButton.onclick = function() {
+    if(muted) {
+      unmuteAudioContext(2);
+      muteButton.innerText = 'mute';
+      muted = false;
+    } else {
+      muteAudioContext(2);
+      muteButton.innerText = 'unmute';
+      muted = true;
+    }
   };
 
   util.makeUISpacer(16, menuRow2El);
@@ -776,21 +796,33 @@ function createMenuUI() {
   statsButton.title = 'show circuit statistics and parameters. The estimated num transistors assumes NMOS logic, gives exact value when only using basic 2-input logic gates (AND, NAND, XOR, ...), but will use some arbitrary large amount of transistors per big built-in device (ALU, terminal emulator, ...)';
   statsButton.onclick = function() {
     if(dialogDiv) return;
+    var docwidth = /*document.body.clientWidth*/window.innerWidth - 24 - 80;
+    var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8 - 80;
+    overlay = makeDiv(0, 0, window.innerWidth, window.innerHeight);
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
+    overlay.style.position = 'fixed';
+    overlay.style.zIndex = '99';
+
     dialogDiv = util.makeAbsElement('div', 200, 200, 500, 500);
     dialogDiv.style.backgroundColor = 'white';
     dialogDiv.style.position = 'fixed';
+    dialogDiv.style.top = '50%';
+    dialogDiv.style.left = '50%';
+    dialogDiv.style.transform = 'translate(-50%, -50%)';
     dialogDiv.style.border = '1px solid black';
-    dialogDiv.style.zIndex = '100';
+    dialogDiv.style.zIndex = '101';
     dialogDiv.style.padding = '10px';
 
 
     var text = getStatsText();
     dialogDiv.innerText = text;
     var hide = function() {
+      util.removeElement(overlay);
       util.removeElement(dialogDiv);
       dialogDiv = undefined;
     };
-    util.makeInternalButton('ok', dialogDiv, (400 - 100), (500 - 30), hide);
+    util.makeInternalButton('ok', dialogDiv, (500 - 90), (500 - 20), hide);
+    overlay.onclick = hide;
   };
 
   circuitDropdownSpan = util.makeElement('span', menuRow1El);
@@ -831,30 +863,42 @@ function createMenuUI() {
   importButton.title = 'Import a circuit from its ASCII diagram copypasted from elsewhere. Paste it into the field that appears and use the buttons to import or cancel. To export a circuit instead, use the "export" button (or "edit" to change it), or create your own circuit in a text editor (see the editing help).';
   importButton.onclick = function() {
     if(!editmode) {
+      var docwidth = /*document.body.clientWidth*/window.innerWidth - 24 - 80;
+      var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8 - 80;
       var fontsize = 10;
       var ewidth = 60;
       var eheight = 60;
-      editdiv = makeDiv(30-5, 128-5, 400+15, 400+15+30);
-      editdiv.style.backgroundColor = '#888';
+      overlay = makeDiv(0, 0, window.innerWidth, window.innerHeight);
+      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
+      overlay.style.position = 'fixed';
+      overlay.style.zIndex = '99';
+
+      var ew = Math.floor(docwidth * 0.7);
+      var eh = Math.floor(docwidth * 0.7);
+      editdiv = makeDiv(0, 0, ew, eh);
+      editdiv.style.backgroundColor = '#bbb';
       editdiv.style.position = 'fixed';
-      editarea = util.makeAbsElement('textarea', 5, 5, 400, 400, editdiv);
+      editdiv.style.top = '50%';
+      editdiv.style.left = '50%';
+      editdiv.style.transform = 'translate(-50%, -50%)';
+      editarea = util.makeAbsElement('textarea', 5, 5, ew - 15, eh - 45, editdiv);
       editarea.rows = 40;
       editarea.cols = 40;
       editarea.value = '';
       editarea.style.fontSize = fontsize + 'px';
-      editdiv.style.zIndex = '100';
+      editdiv.style.zIndex = '101';
       editarea.focus();
 
-      util.makeInternalButton('import', editdiv, 330, 415, importButton.onclick);
-      util.makeInternalButton('cancel', editdiv, 245, 415, function() {
+      util.makeInternalButton('import', editdiv, ew - 90, eh - 30, importButton.onclick);
+      util.makeInternalButton('cancel', editdiv, ew - 200, eh - 30, function() {
         editModeCancelFun();
       });
 
       pause();
       importButton.innerText = 'done';
-      window.scrollTo(0, 0);
       editmode = true;
       editModeCancelFun = function() {
+        util.removeElement(overlay);
         document.body.removeChild(editdiv);
         importButton.innerText = 'import';
         editmode = false;
@@ -862,6 +906,7 @@ function createMenuUI() {
         unpause();
       };
       editModeFinishFun = function() {
+        util.removeElement(overlay);
         var newtext = editarea.value;
         document.body.removeChild(editdiv);
         importButton.innerText = 'import';
@@ -870,6 +915,7 @@ function createMenuUI() {
         if(newtext.length > 0) parseText(newtext, 'imported circuit', undefined, 1);
       };
       createEditorMenuUI(editModeCancelFun, editModeFinishFun);
+      overlay.onclick = editModeCancelFun;
     } else {
       editModeFinishFun();
     }
@@ -880,30 +926,42 @@ function createMenuUI() {
   exportButton.title = 'Export circuit ASCII diagram, to easily store it elsewhere in text format or share. Note: an alternative but less good looking way is to share the URL, if it has a code (not if the circuit is too large; the actual circuit itself is encoded and compressed in the URL code, it is not stored anywhere)';
   exportButton.onclick = function() {
     if(!editmode) {
+      var docwidth = /*document.body.clientWidth*/window.innerWidth - 24 - 80;
+      var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8 - 80;
       var fontsize = 10;
       var ewidth = 60;
       var eheight = 60;
-      editdiv = makeDiv(30-5, 128-5, 400+15, 400+15+30);
-      editdiv.style.backgroundColor = '#888';
+      overlay = makeDiv(0, 0, window.innerWidth, window.innerHeight);
+      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
+      overlay.style.position = 'fixed';
+      overlay.style.zIndex = '99';
+
+      var ew = Math.floor(docwidth * 0.7);
+      var eh = Math.floor(docwidth * 0.7);
+      editdiv = makeDiv(0, 0, ew, eh);
+      editdiv.style.backgroundColor = '#bbb';
       editdiv.style.position = 'fixed';
-      editarea = util.makeAbsElement('textarea', 5, 5, 400, 400, editdiv);
+      editdiv.style.top = '50%';
+      editdiv.style.left = '50%';
+      editdiv.style.transform = 'translate(-50%, -50%)';
+      editdiv.style.zIndex = '101';
+      editarea = util.makeAbsElement('textarea', 5, 5, ew - 15, eh - 45, editdiv);
       editarea.rows = 40;
       editarea.cols = 40;
       editarea.value = origtext;
       editarea.style.fontSize = fontsize + 'px';
-      editdiv.style.zIndex = '100';
       editarea.select();
       editarea.focus();
 
-      util.makeInternalButton('cancel', editdiv, 330, 415, function() {
+      util.makeInternalButton('done', editdiv, ew - 90, eh - 30, function() {
         editModeCancelFun();
       });
 
       pause();
       exportButton.innerText = 'done';
-      window.scrollTo(0, 0);
       editmode = true;
       editModeCancelFun = function() {
+        util.removeElement(overlay);
         document.body.removeChild(editdiv);
         importButton.innerText = 'import';
         editmode = false;
@@ -912,10 +970,20 @@ function createMenuUI() {
       };
       editModeFinishFun = editModeCancelFun;
       createEditorMenuUI(editModeCancelFun, editModeFinishFun);
+      overlay.onclick = editModeCancelFun;
     } else {
       editModeFinishFun();
     }
   };
+
+  var reloadButton = util.makeUIElement('button', menuRow1El);
+  reloadButton.innerText = 'reload';
+  reloadButton.title = 'Reloads the current circuit, resetting all current state';
+  reloadButton.onclick = function() {
+    parseText(origtext, origtitle, undefined, 1, paused);
+  };
+
+
 
   util.makeUISpacer(16, menuRow1El)
 
@@ -923,20 +991,30 @@ function createMenuUI() {
   settingsButton.innerText = 'settings';
   settingsButton.title = 'settings';
   settingsButton.onclick = function() {
+    var docwidth = /*document.body.clientWidth*/window.innerWidth - 24 - 80;
+    var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8 - 80;
+    overlay = makeDiv(0, 0, window.innerWidth, window.innerHeight);
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
+    overlay.style.position = 'fixed';
+    overlay.style.zIndex = '99';
     editdiv = makeDiv(30-5, worldstartheight, 400+15, 400+15+30);
     editdiv.style.backgroundColor = '#888';
     editdiv.style.position = 'fixed';
+    editdiv.style.top = '50%';
+    editdiv.style.left = '50%';
+    editdiv.style.transform = 'translate(-50%, -50%)';
     window.scrollTo(0, 0);
     editmode = true;
     editModeFinishFun = function() {
+      util.removeElement(overlay);
+      document.body.removeChild(editdiv);
+      editmode = false;
       createMenuUI();
     };
     editModeCancelFun = editModeFinishFun;
     createEditorMenuUI(undefined, editModeFinishFun);
     editdiv.style.zIndex = 100;
-    util.makeInternalButton('ok', editdiv, 300, 415, function() {
-      document.body.removeChild(editdiv);
-      editmode = false;
+    util.makeInternalButton('ok', editdiv, 320, 415, function() {
       editModeCancelFun();
     });
     var cb = util.makeElementAt('input', 20, 20, editdiv);
@@ -947,6 +1025,7 @@ function createMenuUI() {
     };
     var text = util.makeElementAt('span', 50, 20, editdiv);
     text.innerText = 'enable experimental possible new editor';
+    overlay.onclick = editModeCancelFun;
   };
 
 

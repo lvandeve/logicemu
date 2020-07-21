@@ -7897,6 +7897,9 @@ s s s s s s s s s s   S S S S S S S S S S
  ssss sssS ssSs ssSS sSss sSsS sSSs sSSS Ssss SssS SsSs SsSS SSss SSsS SSSs SSSS
 "IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB IRGB"
 
+ D#### D##### D###### D####### D########
+ ^^^^^ ^^^^^^ ^^^^^^^ ^^^^^^^^ ^^^^^^^^^
+ sssss ssssss sssssss ssssssss sssssssss
 
 
 0"# Devices"
@@ -8140,11 +8143,11 @@ p#
 
 0"Test all parameters:"
 
-  J#####################2000
-  ^^^      ^^^^    ^^^^
-  |||      ||||    ||||
-  sss      sSss    ssss
-1"shape" 1"freq"  1"vol"
+  N########################y#2000
+  ^^^      ^^^^    ^^^^    ^
+  |||      ||||    ||||    |
+  sss      sSss    Ssss    s
+1"shape" 1"freq"  1"vol""enable"1
 
 
 0"# Time"

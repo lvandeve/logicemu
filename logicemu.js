@@ -1472,7 +1472,7 @@ var TYPE_DOTMATRIX = TYPE_index++;
 var TYPE_TRISTATE = TYPE_index++;
 var TYPE_TRISTATE_INV = TYPE_index++;
 var TYPE_RANDOM = TYPE_index++;
-var TYPE_MUSIC_NOTE = TYPE_index++; // music, speaker, sound, audio
+var TYPE_MUSIC_NOTE = TYPE_index++; // music, speaker, sound, audio, jukebox. type_note type_musicnote
 var TYPE_JACK = TYPE_index++; // jack for patch cables
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 
@@ -1975,6 +1975,7 @@ function CallSub(id) {
         musicnote.basevolume = v.musicnote.basevolume;
         musicnote.error = v.musicnote.error;
         musicnote.errormessage = v.musicnote.errormessage;
+        musicnote.output = v.musicnote.output;
       }
 
       if(v.type == TYPE_SWITCH_OFF || v.type == TYPE_SWITCH_ON) {
@@ -6666,36 +6667,57 @@ var audioContext = null;
 var whiteNoiseBuffer = null;
 
 var ensureAudioContext = function() {
-  if(audioContext) {
-    if(audioContext.state == 'suspended') audioContext.resume();
-    return;
-  }
+  if(audioContext) return;
   if(!supportsAudio) return;
 
   audioContext = new(window.AudioContext || window.webkitAudioContext)();
-
   var num = 2 * audioContext.sampleRate;
   whiteNoiseBuffer = audioContext.createBuffer(1, num, audioContext.sampleRate);
-  data = whiteNoiseBuffer.getChannelData(0);
+  pinkNoiseBuffer = audioContext.createBuffer(1, num, audioContext.sampleRate);
+  whiteNoise = whiteNoiseBuffer.getChannelData(0);
+  pinkNoise = pinkNoiseBuffer.getChannelData(0);
+  var b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
   for(var i = 0; i < num; i++) {
-    data[i] = Math.random();
+    var r = Math.random() * 2 - 1;
+    whiteNoise[i] = r;
+    // Paul Kellet's refined method for pink noise
+    b0 = 0.99886 * b0 + r * 0.0555179;
+    b1 = 0.99332 * b1 + r * 0.0750759;
+    b2 = 0.96900 * b2 + r * 0.1538520;
+    b3 = 0.86650 * b3 + r * 0.3104856;
+    b4 = 0.55000 * b4 + r * 0.5329522;
+    b5 = -0.7616 * b5 - r * 0.0168980;
+    pinkNoise[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + r * 0.5362) * 0.2;
+    b6 = r * 0.115926;
   }
 };
 
+var mutevalue = 0; // set bitmasks like 1, 2, 4 for different mute channels. auto only plays if value is 0
+
 // also removes all nodes
-var stopAudioContext = function() {
+var destroyAudioContext = function() {
   if(audioContext) audioContext.close();
   audioContext = null;
 };
 
-// just pauses it for now, but if resumed, existing nodes will still be playing
-var suspendAudioContext = function() {
-  if(audioContext) audioContext.suspend();
+// mute for given bit. If any bit is muted, suspends (but can continue once fully unmuted)
+var muteAudioContext = function(bit) {
+  mutevalue |= bit;
+  if(audioContext && mutevalue) audioContext.suspend();
 };
 
-// Sound, speaker, music, audio
+// unmute for the given bit, or use 0 to just ensure play if not muted by other bits. Only if all bits are unmuted, it'll actually play.
+var unmuteAudioContext = function(bit) {
+  mutevalue &= ~bit;
+  if(!mutevalue) {
+    ensureAudioContext();
+    if(audioContext && audioContext.state == 'suspended') audioContext.resume();
+  }
+};
+
+// Sound, speaker, music, audio, jukebox,
 // has same single output everywhere, so no parent needed
-function MusicNote() {
+function MusicNote() { // function Note()
   this.x0 = 0;
   this.y0 = 0;
   this.x1 = 0;
@@ -6726,6 +6748,8 @@ function MusicNote() {
 
   this.error = false;
   this.errormessage = null;
+
+  this.output = false; // whether it should give component output value: true if volume > 0, enabled, and other valid values; computed in update()
 
   this.setError = function(text) {
     this.error = true;
@@ -6770,6 +6794,7 @@ function MusicNote() {
 
   this.update = function(inputs) {
     if(!supportsAudio) return;
+    this.output = true;
 
     var numenableinputs = this.has_enable ? 1 : 0;
 
@@ -6779,10 +6804,19 @@ function MusicNote() {
       var j = i + numenableinputs;
       volvalue += (inputs[j] << i);
     }
-    var vol = volvalue / ((1 << this.numvolinputs) - 1);
+    var vol = 0;
+    if(this.numvolinputs) {
+      vol = volvalue / ((1 << this.numvolinputs) - 1);
+    } else if(this.has_enable) {
+      vol = volvalue = inputs[0] ? 1 : 0;
+    }
     var outvol = vol * this.basevolume * this.getVolumeMul();
+    if(outvol == 0) this.output = false;
 
-    if(this.has_enable && !inputs[0]) vol = outvol = volvalue = 0;
+    if(this.has_enable && !inputs[0]) {
+      vol = outvol = volvalue = 0;
+      this.output = false;
+    }
 
     var freqvalue = 0;
     for(var i = 0; i < this.numfreqinputs; i++) {
@@ -6797,6 +6831,8 @@ function MusicNote() {
       shapevalue += (inputs[j] << i);
     }
     var shape = this.numshapeinputs ? shapevalue : this.baseshape;
+
+    if(freq == 0 && !(shape == 4 || shape == 5)) this.output = false; // can't hear 0-Hz wave (except the noise ones)
 
     if(freqvalue != this.prevfreqvalue && this.numfreqinputs) {
       this.currentfreq = freq;
@@ -6820,7 +6856,8 @@ function MusicNote() {
       this.prevfreqvalue = freqvalue;
       this.prevfreq = freq;
 
-      if(audioContext && audioContext.state == 'suspended') audioContext.resume();
+
+      unmuteAudioContext(0);
     }
 
 
@@ -6835,7 +6872,7 @@ function MusicNote() {
       this.prevshapevalue = shapevalue;
       this.prevshape = shape;
 
-      if(audioContext && audioContext.state == 'suspended') audioContext.resume();
+      unmuteAudioContext(0);
     }
 
     if(volvalue != this.prevvolvalue) {
@@ -6869,6 +6906,7 @@ function MusicNote() {
     if(this.baseshape == 2) return 'triangle';
     if(this.baseshape == 3) return 'sawtooth';
     if(this.baseshape == 4) return 'white noise';
+    if(this.baseshape == 5) return 'pink noise';
     return 'unknown';
   };
 
@@ -6877,8 +6915,9 @@ function MusicNote() {
     // let's keep the sounds pleasant to use and not make the volume too high
     // the square wave sounds even louder so make that one even softer
     var shape = opt_shape == undefined ? this.getCurrentShape() : opt_shape;
+    if(shape > 5) shape = 0;
     if(shape == 0 || shape == 2) return 0.2;
-    if(shape == 4 && this.getPlayFreq(0) != 0) return 0.3;
+    if((shape == 4 || shape == 5) && this.getPlayFreq(0) != 0) return 0.3;
     return 0.1;
   };
 
@@ -6895,9 +6934,9 @@ function MusicNote() {
   this.setShape = function(shape) {
     if(this.oscillator && shape == this.prevshape) return;
     this.stop();
-    if(shape == 4) {
+    if(shape == 4 || shape == 5) {
       this.oscillator = audioContext.createBufferSource();
-      this.oscillator.buffer = whiteNoiseBuffer;
+      this.oscillator.buffer = (shape == 4) ? whiteNoiseBuffer : pinkNoiseBuffer;
       this.oscillator.loop = true;
       if(this.getPlayFreq(0) == 0) {
         this.oscillator.connect(this.volume);
@@ -6955,7 +6994,7 @@ function MusicNote() {
     if(component.number >= 100000) {
       var shape = Math.floor(freq / 100000);
       freq %= 100000;
-      if(shape > 4) shape = 0;
+      if(shape > 7) shape = 0;
     }
     if(freq < 20) freq = 0;
     if(freq > 20000) freq = 20000;
@@ -7292,6 +7331,8 @@ var jackclick = null; // previously clicked jack, when clicking two jacks to con
 var jackclickdiv = null; // div which indicates which starting jack you clicked
 var jackcolor = 0;
 
+var maxjacks = 4;
+
 // for jacks
 function rempartner(c, i) {
   var old = c.partner[i];
@@ -7366,6 +7407,13 @@ function shiftpartner(c) {
   }
   c.partner[i] = null;
   c.partnerdiv[i] = null;
+}
+
+function removepatchcables(component) {
+  var p = component.partner;
+  for(var i = 0; i < p.length; i++) {
+    rempartner(component, i);
+  }
 }
 
 function removeallpatchcables() {
@@ -7507,42 +7555,58 @@ function connectjacks(a, b) {
     // do nothing, refuse to connect two components with inputs together
     drawpatchcable(a, b, 0, true); // temporarily indicate error
   } else if(!already) {
-    if(DISALLOWCONFLICT && (a.inputs.length || b.inputs.length)) {
+    if(DISALLOWCONFLICT) {
       var group = getalljacks2(a, b);
-      var removed = []; // store temporary-completed removals
+      var inputs = {};
+      var numunique = 0;
       for(var i = 0; i < group.length; i++) {
         var c = group[i];
-        if(c == a || c == b) continue;
         if(c.inputs.length) {
-          // c has inputs, but a or b too, break the original connections of c with the group, now use a or b as the group's input instead
-          // TODO: the loop below deletes more cables than necessary, some could stay and form a new group, instead find the smallest set of cables that can be removed to have the new input and old input in a different group.
-          for(var j = 0; j < c.partner.length; j++) {
-            var c2 = c.partner[j];
-            if(!c2) continue;
-            removed.push([temprempartner(c, j), c2]);
+          if(!inputs[c.index]) {
+            numunique++;
+            inputs[c.index] = true;
           }
         }
       }
 
-      // a and b now form a new smaller group. Now, put back any connections from input-jacks that were not actually connecting to
-      // this new group: there was no reason to remove them.
-      group = getalljacks2(a, b);
-      var seen = [];
-      for(var i = 0; i < group.length; i++) seen[group[i].index] = true;
-      for(var i = 0; i < removed.length; i++) {
-        var p = removed[i][0]; // commands to either restore or complete removal
-        var b2 = removed[i][1];
-        if(seen[b2.index]) {
-          // stay removed, complete the removal: remove the divs
-          for(var j = 0; j < p.d.length; j++) {
-            util.removeElement(p.d[j][0].partnerdiv[p.d[j][1]]);
-            p.d[j][0].partnerdiv[p.d[j][1]] = null;
-            drawpatchcable(p.d[j][0], p.d[j][2], 0, true); // temporarily indicate the removed patch cable
+      // there's only a conflict starting from 2 different inputs present in the new group
+      if(numunique >= 2) {
+        var removed = []; // store temporary-completed removals
+        for(var i = 0; i < group.length; i++) {
+          var c = group[i];
+          if(c == a || c == b) continue;
+          if(c.inputs.length) {
+            // c has inputs, but a or b too, break the original connections of c with the group, now use a or b as the group's input instead
+            // TODO: the loop below deletes more cables than necessary, some could stay and form a new group, instead find the smallest set of cables that can be removed to have the new input and old input in a different group.
+            for(var j = 0; j < c.partner.length; j++) {
+              var c2 = c.partner[j];
+              if(!c2) continue;
+              removed.push([temprempartner(c, j), c2]);
+            }
           }
-        } else {
-          // add it back
-          for(var j = 0; j < p.p.length; j++) {
-            p.p[j][0].partner[p.p[j][1]] = p.p[j][2];
+        }
+
+        // a and b now form a new smaller group. Now, put back any connections from input-jacks that were not actually connecting to
+        // this new group: there was no reason to remove them.
+        // if none of the jacks involved in the current add have inputs, then only one of the two groups has to be disconnected. Otherwise both (getalljacks2)
+        group = ((a.inputs.length || b.inputs.length)) ? getalljacks2(a, b) : getalljacks(a);
+        var seen = {};
+        for(var i = 0; i < group.length; i++) seen[group[i].index] = true;
+        for(var i = 0; i < removed.length; i++) {
+          var p = removed[i][0]; // commands to either restore or complete removal
+          var b2 = removed[i][1];
+          if(seen[b2.index]) {
+            // stay removed, complete the removal: remove the divs
+            for(var j = 0; j < p.d.length; j++) {
+              util.removeElement(p.d[j][0].partnerdiv[p.d[j][1]]);
+              p.d[j][0].partnerdiv[p.d[j][1]] = null;
+              drawpatchcable(p.d[j][0], p.d[j][2], 0, true); // temporarily indicate the removed patch cable
+            }
+          } else {
+            // add it back
+            for(var j = 0; j < p.p.length; j++) {
+              p.p[j][0].partner[p.p[j][1]] = p.p[j][2];
+            }
           }
         }
       }
@@ -7761,7 +7825,7 @@ function Component() {
     } else if(this.type == TYPE_RANDOM) {
       return (Math.random() < 0.5);
     } else if(this.type == TYPE_MUSIC_NOTE) {
-      return numon > 0;  // TODO: do not output if not enabled (if it has 'y' input)
+      return numon > 0;  // NOTE: not correct in case volume is off or not enabled, this is just initial value
     } else if(this.type == TYPE_JACK) {
       return numon != 0; // not implemented in this function, but elsewhere, but behave like OR initially when not yet connected to another jack
     }
@@ -7958,8 +8022,10 @@ function Component() {
     } else if(this.type == TYPE_MUSIC_NOTE) {
       if(this.musicnote) {
         this.musicnote.update(rom_inputs);
+        this.value = this.musicnote.output;
+      } else {
+        this.value = this.getNewValue(numon, numoff);
       }
-      this.value = this.getNewValue(numon, numoff);
     } else if(this.type == TYPE_JACK) {
       // compute numon and numoff from *all* connected jacks
       // NOTE: getting the input values from the other jacks like this may be out-of-order compared to what the UPDATE_ALGORITHM normally requires, but the user can connect jacks in any possible order so this is hard to avoid. This can give a delay of one tick per group of jacks in the worst case.
@@ -8286,6 +8352,14 @@ function Component() {
           this.musicnote = new MusicNote();
           this.musicnote.initDefault(this);
         }
+      }
+      if(type == TYPE_JACK && !this.partner) {
+        this.partner = [];
+        this.partnerdiv = [];
+        for(var i = 0; i < maxjacks; i++) this.partner[i] = this.partnerdiv[i] = null;
+      }
+      if(this.type == TYPE_JACK && type != TYPE_JACK) {
+        removepatchcables(this);
       }
       if(!e.ctrlKey && !e.shiftKey) changeMode = null;
       // Do not support changing large devices, it breaks them irreversably during this circuit run
@@ -8639,40 +8713,40 @@ function setColorScheme(index) {
 
     BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
 
-  } else if(index == 3) { // blue
+  } else if(index == 3) { // red
     setColorScheme(0);
-
-    BGCOLOR = '#008';
-
-    ONCOLOR = '#fff';
-    OFFCOLOR = '#aaf';
-    TEXTFGCOLOR = '#aaa';
+    BGCOLOR = '#500';
+    TEXTBGCOLOR = '#720';
 
     var offbg = BGCOLOR;
-    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', 'white'];
+    led_off_fg_colors = ['#f22', '#f80', '#dd0', '#0d0', '#88f', '#f0f', '#f99', '#eee', 'white'];
     led_off_bg_colors = [offbg, offbg, offbg, offbg, offbg, offbg, offbg, offbg, '#f00'];
     led_off_border_colors = led_off_fg_colors;
     led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
     led_on_bg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', '#0f0'];
     led_on_border_colors = led_on_fg_colors;//led_off_border_colors
 
+    ONCOLOR = '#fff';
+    OFFCOLOR = '#f44';
+    TEXTFGCOLOR = ONCOLOR;
+
+    GATEBGCOLOR = '#800';
+    GATEFGONCOLOR = ONCOLOR;
+    GATEFGOFFCOLOR = OFFCOLOR;
+
+    OUTSIDESCREENBGCOLOR = GATEBGCOLOR;
+    OUTSIDESCREENFGCOLOR = GATEFGOFFCOLOR;
+
     SWITCHON_FGCOLOR = 'white';
     SWITCHON_BGCOLOR = '#0e0';
     SWITCHOFF_FGCOLOR = '#0e0';
-    SWITCHOFF_BGCOLOR = '#028';
+    SWITCHOFF_BGCOLOR = GATEBGCOLOR;
     //TODO: use switch border colors, and use them to not have invisible border around swithc in gray color scheme switch on
     SWITCHON_BORDERCOLOR = 'white';
     SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
-    BUSCOLORS = ['#aaf', '#caf', '#acf', '#ccf', '#aaa', '#caa', '#aca', '#cca'];
-
-    TEXTBGCOLOR = 'none';
-    GATEBGCOLOR = '#228';
-    GATEFGONCOLOR = ONCOLOR;
-    GATEFGOFFCOLOR = OFFCOLOR;
-
-    LINKCOLOR = '#880';
-    TITLECOLOR = TEXTFGCOLOR;
+    LINKCOLOR = '#88f';
+    TITLECOLOR = ONCOLOR;
   } else if(index == 4) { // green
     setColorScheme(0);
 
@@ -8708,7 +8782,75 @@ function setColorScheme(index) {
 
     LINKCOLOR = '#ff0';
     TITLECOLOR = TEXTFGCOLOR;
-  } else if(index == 5) { // candy
+  } else if(index == 5) { // blue
+    setColorScheme(0);
+
+    BGCOLOR = '#008';
+
+    ONCOLOR = '#fff';
+    OFFCOLOR = '#aaf';
+    TEXTFGCOLOR = '#aaa';
+
+    var offbg = BGCOLOR;
+    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', 'white'];
+    led_off_bg_colors = [offbg, offbg, offbg, offbg, offbg, offbg, offbg, offbg, '#f00'];
+    led_off_border_colors = led_off_fg_colors;
+    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
+    led_on_bg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', '#0f0'];
+    led_on_border_colors = led_on_fg_colors;//led_off_border_colors
+
+    SWITCHON_FGCOLOR = 'white';
+    SWITCHON_BGCOLOR = '#0e0';
+    SWITCHOFF_FGCOLOR = '#0e0';
+    SWITCHOFF_BGCOLOR = '#028';
+    //TODO: use switch border colors, and use them to not have invisible border around swithc in gray color scheme switch on
+    SWITCHON_BORDERCOLOR = 'white';
+    SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
+
+    BUSCOLORS = ['#aaf', '#caf', '#acf', '#ccf', '#aaa', '#caa', '#aca', '#cca'];
+
+    TEXTBGCOLOR = '#22a';
+    GATEBGCOLOR = '#228';
+    GATEFGONCOLOR = ONCOLOR;
+    GATEFGOFFCOLOR = OFFCOLOR;
+
+    LINKCOLOR = '#880';
+    TITLECOLOR = TEXTFGCOLOR;
+  } else if(index == 6) { // brown
+    setColorScheme(0);
+    BGCOLOR = '#950';
+    TEXTBGCOLOR = '#720';
+
+    var offbg = '#000';
+    led_off_fg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#f0f', '#f99', '#eee', 'white'];
+    led_off_bg_colors = [offbg, offbg, offbg, offbg, offbg, offbg, offbg, offbg, '#f00'];
+    led_off_border_colors = led_off_fg_colors;
+    led_on_fg_colors = ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white'];
+    led_on_bg_colors = ['#f00', '#f80', '#dd0', '#0d0', '#88f', '#a0d', '#f99', '#eee', '#0f0'];
+    led_on_border_colors = led_on_fg_colors;//led_off_border_colors
+
+    ONCOLOR = '#fe0';
+    OFFCOLOR = '#000';
+    TEXTFGCOLOR = '#ff0';
+
+    GATEBGCOLOR = '#a60';
+    GATEFGONCOLOR = ONCOLOR;
+    GATEFGOFFCOLOR = OFFCOLOR;
+
+    OUTSIDESCREENBGCOLOR = GATEBGCOLOR;
+    OUTSIDESCREENFGCOLOR = GATEFGOFFCOLOR;
+
+    SWITCHON_FGCOLOR = 'white';
+    SWITCHON_BGCOLOR = '#0e0';
+    SWITCHOFF_FGCOLOR = '#0e0';
+    SWITCHOFF_BGCOLOR = GATEBGCOLOR;
+    //TODO: use switch border colors, and use them to not have invisible border around swithc in gray color scheme switch on
+    SWITCHON_BORDERCOLOR = 'white';
+    SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
+
+    LINKCOLOR = '#88f';
+    TITLECOLOR = ONCOLOR;
+  } else if(index == 7) { // candy
     setColorScheme(0);
 
     BGCOLOR = '#fbf';
@@ -8746,10 +8888,10 @@ function setColorScheme(index) {
 
     TERMINALBGCOLOR = '#88f';
     TERMINALFGCOLOR = '#fff';
-  } else if(index == 6) { // inverted
+  } else if(index == 8) { // inverted
     setColorScheme(0);
     negateColorScheme(); // this only looks decent for inverting the 'light' color scheme.
-  } else if(index == 7) { // contrast
+  } else if(index == 9) { // contrast
     setColorScheme(2); //gray
     BGCOLOR = '#999';
     ONCOLOR = 'white';
@@ -8768,10 +8910,10 @@ function setColorScheme(index) {
     TEXTFGCOLOR = '#000';
     TEXTBGCOLOR = '#fff';
     LINKCOLOR = '#22f';
-  } else if(index == 8 || index == 9) { // monochrome
-    ONCOLOR = (index == 8 ? 'black' : 'white');
+  } else if(index == 10 || index == 11) { // monochrome
+    ONCOLOR = (index == 10 ? 'black' : 'white');
     OFFCOLOR = ONCOLOR;
-    BGCOLOR = (index == 8 ? 'white' : 'black');
+    BGCOLOR = (index == 10 ? 'white' : 'black');
     TEXTFGCOLOR = ONCOLOR; // '#940';
     TEXTBGCOLOR = BGCOLOR;
 
@@ -8826,7 +8968,7 @@ function setColorScheme(index) {
 
   TERMINALMIDCOLOR = util.averageColor(TERMINALFGCOLOR, TERMINALBGCOLOR);
 
-  if(index != 8 && index != 9) {
+  if(index != 10 && index != 11) {
     // the "LCD" LED color; its off background color must match the main BGCOLOR.
 
     // variant A: ON LCD uses the wire ON color
@@ -9133,14 +9275,14 @@ function Cell() {
         else title += ' (unknown color)';
       }
       if(tc == '?') title = 'random generator: random bit';
-      if(tc == 'a') title = 'AND gate';
-      if(tc == 'A') title = 'NAND gate';
-      if(tc == 'o') title = 'OR gate';
-      if(tc == 'O') title = 'NOR gate';
-      if(tc == 'e') title = 'XOR gate (odd parity detector)';
-      if(tc == 'E') title = 'XNOR gate (even parity detector)';
-      if(tc == 'h') title = 'one-hot detector (same as XOR if 2 inputs)';
-      if(tc == 'H') title = 'inverted one-hot detector (same as XNOR if 2 inputs)';
+      if(tc == 'a') title = 'AND gate. Truth table for 2 inputs: 00:0, 01:0, 10:0, 11:1';
+      if(tc == 'A') title = 'NAND gate. Truth table for 2 inputs: 00:1, 01:1, 10:1, 11:0';
+      if(tc == 'o') title = 'OR gate. Truth table for 2 inputs: 00:0, 01:1, 10:1, 11:1';
+      if(tc == 'O') title = 'NOR gate. Truth table for 2 inputs: 00:1, 01:0, 10:0, 11:0. With 1 input, serves as NOT gate.';
+      if(tc == 'e') title = 'XOR gate (odd parity detector). Truth table for 2 inputs: 00:0, 01:1, 10:1, 11:0';
+      if(tc == 'E') title = 'XNOR gate (even parity detector). Truth table for 2 inputs: 00:1, 01:0, 10:0, 11:1';
+      if(tc == 'h') title = 'one-hot detector (same as XOR if 2 inputs). Truth table for 2 inputs: 00:0, 01:1, 10:1, 11:0';
+      if(tc == 'H') title = 'inverted one-hot detector (same as XNOR if 2 inputs). Truth table for 2 inputs: 00:1, 01:0, 10:0, 11:1';
       if(tc == 'f') title = 'constant off (fixed off)';
       if(tc == 'F') title = 'constant on (fixed on)';
       if(tc == 'J' && component) {
@@ -11753,6 +11895,13 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           }
         }
         if(c == 'J') {
+          numborder = this.drawBorder(cell, drawer, ctx, true); // dryrun
+          if(numborder != 4) {
+            // this jack is larger, so drawing just the sphere without border looks ugly,
+            // as the extension has borders
+            drawer.fillBg_(ctx, GATEBGCOLOR);
+            this.drawBorder(cell, drawer, ctx, false);
+          }
           //drawer.drawCircle_(ctx, 0.5, 0.5, 0.5);
           ctx.fillStyle = currentColor;
           textel.style.color = GATEBGCOLOR;
@@ -11798,12 +11947,12 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   };
 
   // box drawing for components; must already set the color styles on the ctx beforehand
-  this.drawBorder = function(cell, drawer, ctx) {
+  this.drawBorder = function(cell, drawer, ctx, opt_dryrun) {
     var num = 0;
-    if(!sameDevice(cell.x, cell.y, 0)) { drawer.drawLine_(ctx, 0, 0, 1, 0); num++; }
-    if(!sameDevice(cell.x, cell.y, 1)) { drawer.drawLine_(ctx, 1, 0, 1, 1); num++; }
-    if(!sameDevice(cell.x, cell.y, 2)) { drawer.drawLine_(ctx, 1, 1, 0, 1); num++; }
-    if(!sameDevice(cell.x, cell.y, 3)) { drawer.drawLine_(ctx, 0, 1, 0, 0); num++; }
+    if(!sameDevice(cell.x, cell.y, 0)) { if(!opt_dryrun) drawer.drawLine_(ctx, 0, 0, 1, 0); num++; }
+    if(!sameDevice(cell.x, cell.y, 1)) { if(!opt_dryrun) drawer.drawLine_(ctx, 1, 0, 1, 1); num++; }
+    if(!sameDevice(cell.x, cell.y, 2)) { if(!opt_dryrun) drawer.drawLine_(ctx, 1, 1, 0, 1); num++; }
+    if(!sameDevice(cell.x, cell.y, 3)) { if(!opt_dryrun) drawer.drawLine_(ctx, 0, 1, 0, 0); num++; }
     return num;
   };
 
@@ -12451,18 +12600,18 @@ function parseNumbers() {
       var c = world[y][x].metasymbol;
       var type = NUMBER_NONE;
       if(c == '=') type = NUMBER_BUS;
-      if(c == '"' && world[y][x].symbol == '"') type = NUMBER_COMMENT;
-      if(c == 'l') type = NUMBER_LED;
-      if(c == 'r' || c == 'R') type = NUMBER_TIMER;
-      if(c == 'q' || c == 'Q') type = NUMBER_PULSE;
-      if(c == 'N') type = NUMBER_NOTE;
-      if(c == 'I') type = NUMBER_ICDEF;
-      if(c == 'i') type = NUMBER_ICCALL;
-      if(c == 'g') type = NUMBER_GLOBAL;
-      if(c == 'U') type = NUMBER_ALU; // TODO: this is not yet working: NUMBER_ALU should trump NUMBER_LED, but it looks like it does not in practice, at least for multidigit number
-      if(c == 'T') type = NUMBER_VTE; // TODO: same problem as NUMBER_ALU: does not actually use the priority order at all, and in addition this number should work next to # too and this code here doesn't know when the # belongs to a T
+      else if(c == '"' && world[y][x].symbol == '"') type = NUMBER_COMMENT;
+      else if(c == 'l') type = NUMBER_LED;
+      else if(c == 'r' || c == 'R') type = NUMBER_TIMER;
+      else if(c == 'q' || c == 'Q') type = NUMBER_PULSE;
+      else if(c == 'N') type = NUMBER_NOTE;
+      else if(c == 'I') type = NUMBER_ICDEF;
+      else if(c == 'i') type = NUMBER_ICCALL;
+      else if(c == 'g') type = NUMBER_GLOBAL;
+      else if(c == 'U') type = NUMBER_ALU; // TODO: this is not yet working: NUMBER_ALU should trump NUMBER_LED, but it looks like it does not in practice, at least for multidigit number
+      else if(c == 'T') type = NUMBER_VTE; // TODO: same problem as NUMBER_ALU: does not actually use the priority order at all, and in addition this number should work next to # too and this code here doesn't know when the # belongs to a T
       // TODO: the above doesn't work with device extenders # for T and N (for U, i it works because those numbers are required to be next to the i/U)
-      if(antennamap[c]) type = NUMBER_ANTENNA;
+      else if(antennamap[c]) type = NUMBER_ANTENNA;
       // todo: rom corner (is diagonal, currently not handled in this code...)
 
       if (type != NUMBER_NONE) {
@@ -13956,7 +14105,7 @@ function resetForParse() {
   numticks = -1; // -1 because the first implicit tick after parse should not be counted
   timerticks = -1;
   showingLinkIds = false;
-  stopAudioContext();
+  destroyAudioContext();
   jackclick = null;
   highlightedcomponent = null;
 }
@@ -14104,19 +14253,6 @@ function mergeComponents(component, oldcomponent) {
 }
 
 
-// UNUSED: WORK IN PROGRESS
-// constructor
-function LargeDevice() {
-  // array of all cell coordinates included in this large device (only device main area itself, not output wires etc...)
-  this.array = [];
-
-  // component type matching this large device (note: a large device may be made out of multiple components,
-  // but usually they'll have all the same type, or there'll be one clearly defining type)
-  // can be (after TYPE_NULL): TYPE_IC, TYPE_FLIPFLOP, TYPE_MUX, TYPE_VTE, TYPE_DOTMATRIX, TYPE_ALU, TYPE_ROM, TYPE_MUSIC_NOTE
-  this.type = TYPE_NULL;
-};
-
-// UNUSED: WORK IN PROGRESS
 // returns if two cells connect for forming the area of a large device (such as flip-flops, T and L, but not simple devices like a, s and l) (excluding wires, but only the letters and # extenders)
 // for reference, the involved symbols are: jkdtqQcCybBMUiTDJ#
 // device symbols that are not large devices, such as aeoAEOsSpPrRl, are also involved, since this is also used for clustering non-large devices with extenders, or treating mix of large and non large device in a cluster as error
@@ -14209,7 +14345,7 @@ function parseLargeDevices() {
           var c2 = world[y2][x2].circuitsymbol;
           var ce2 = world[y2][x2].circuitextra;
 
-          if(!largeDeviceConnected(c, c2)) continue; // WORK IN PROGRESS
+          if(!largeDeviceConnected(c, c2)) continue;
 
           stack.push([x2, y2]);
           used[y2][x2] = true;
@@ -14456,34 +14592,34 @@ function parseComponents() {
               type2 = world[y][x].largedevicetype;
             } else {
               if(c == 's') type2 = TYPE_SWITCH_OFF;
-              if(c == 'S') type2 = TYPE_SWITCH_ON;
-              if(c == 'l') type2 = TYPE_LED;
-              if(c == 'p') type2 = TYPE_PUSHBUTTON_OFF;
-              if(c == 'P') type2 = TYPE_PUSHBUTTON_ON;
-              if(c == 'r') type2 = TYPE_TIMER_OFF;
-              if(c == 'R') type2 = TYPE_TIMER_ON;
-              if(c == 'a') type2 = TYPE_AND;
-              if(c == 'A') type2 = TYPE_NAND;
-              if(c == 'o') type2 = TYPE_OR;
-              if(c == 'O') type2 = TYPE_NOR;
-              if(c == 'e') type2 = TYPE_XOR;
-              if(c == 'E') type2 = TYPE_XNOR;
-              if(c == 'h') type2 = TYPE_ONEHOT;
-              if(c == 'H') type2 = TYPE_NONEHOT;
-              if(c == 'f') type2 = TYPE_CONSTANT_OFF;
-              if(c == 'F') type2 = TYPE_CONSTANT_ON;
-              if(c == 'b' || c == 'B' || c == '#b') type2 = TYPE_ROM;
-              if(c == 'i' || c == '#i') type2 = TYPE_IC;
-              if(c == 'M' || c == '#M') type2 = TYPE_MUX;
-              if(c == 'U' || c == '#U') type2 = TYPE_ALU;
-              if(c == 'T' || c == '#T') type2 = TYPE_VTE;
-              if(c == 'D' || c == '#D') type2 = TYPE_DOTMATRIX;
-              if(c == 'z') type2 = TYPE_TRISTATE;
-              if(c == 'Z') type2 = TYPE_TRISTATE_INV;
-              if(c == '?') type2 = TYPE_RANDOM;
-              if(c == 'N' || c == '#N') type2 = TYPE_MUSIC_NOTE;
-              if(c == 'J') type2 = TYPE_JACK;
-              if(ffmap[c] || c == '#c') type2 = TYPE_FLIPFLOP;
+              else if(c == 'S') type2 = TYPE_SWITCH_ON;
+              else if(c == 'l') type2 = TYPE_LED;
+              else if(c == 'p') type2 = TYPE_PUSHBUTTON_OFF;
+              else if(c == 'P') type2 = TYPE_PUSHBUTTON_ON;
+              else if(c == 'r') type2 = TYPE_TIMER_OFF;
+              else if(c == 'R') type2 = TYPE_TIMER_ON;
+              else if(c == 'a') type2 = TYPE_AND;
+              else if(c == 'A') type2 = TYPE_NAND;
+              else if(c == 'o') type2 = TYPE_OR;
+              else if(c == 'O') type2 = TYPE_NOR;
+              else if(c == 'e') type2 = TYPE_XOR;
+              else if(c == 'E') type2 = TYPE_XNOR;
+              else if(c == 'h') type2 = TYPE_ONEHOT;
+              else if(c == 'H') type2 = TYPE_NONEHOT;
+              else if(c == 'f') type2 = TYPE_CONSTANT_OFF;
+              else if(c == 'F') type2 = TYPE_CONSTANT_ON;
+              else if(c == 'b' || c == 'B' || c == '#b') type2 = TYPE_ROM;
+              else if(c == 'i' || c == '#i') type2 = TYPE_IC;
+              else if(c == 'M' || c == '#M') type2 = TYPE_MUX;
+              else if(c == 'U' || c == '#U') type2 = TYPE_ALU;
+              else if(c == 'T' || c == '#T') type2 = TYPE_VTE;
+              else if(c == 'D' || c == '#D') type2 = TYPE_DOTMATRIX;
+              else if(c == 'z') type2 = TYPE_TRISTATE;
+              else if(c == 'Z') type2 = TYPE_TRISTATE_INV;
+              else if(c == '?') type2 = TYPE_RANDOM;
+              else if(c == 'N' || c == '#N') type2 = TYPE_MUSIC_NOTE;
+              else if(c == 'J') type2 = TYPE_JACK;
+              else if(ffmap[c] || c == '#c') type2 = TYPE_FLIPFLOP;
             }
 
             if(type != TYPE_NULL && type != TYPE_UNKNOWN_DEVICE) {
@@ -14631,8 +14767,9 @@ function parseComponents() {
           }
           if(type == TYPE_JACK) {
             // the array size here defines how many patch wires per jack are maximum supported
-            component.partner = [null, null, null, null];
-            component.partnerdiv = [null, null, null, null];
+            component.partner = [];
+            component.partnerdiv = [];
+            for(var i = 0; i < maxjacks; i++) component.partner[i] = component.partnerdiv[i] = null;
           }
 
           for(var i = 0; i < array.length; i++) {
@@ -15298,7 +15435,8 @@ function setDocumentTitle(text) {
 var firstParse = true; // to keep scrolled down if you were scrolled down before refresh
 
 //opt_fragmentAction: 0=use id if possible else clear, 1=set from code if possible else clear, 2=keep as-is (e.g. if it's already #code). Default: 0
-function parseText(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
+//opt_paused: if true, is paused at start
+function parseText(text, opt_title, opt_registeredCircuit, opt_fragmentAction, opt_paused) {
   if(editmode) return;
 
   var titleindex = text.indexOf('"TITLE:');
@@ -15313,7 +15451,7 @@ function parseText(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
 
   setDocumentTitle(opt_title || 'unnamed circuit');
   if(firstParse) {
-    parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction);
+    parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction, opt_paused);
     return;
   }
   renderingMessageDiv.innerText = 'rendering';
@@ -15323,7 +15461,7 @@ function parseText(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
   // may force a redraw
   var dummy = worldDiv.offsetHeight;
   worldDiv.style.display = 'none';
-  window.setTimeout(bind(parseText2, text, opt_title, opt_registeredCircuit, opt_fragmentAction), 0);
+  window.setTimeout(bind(parseText2, text, opt_title, opt_registeredCircuit, opt_fragmentAction, opt_paused), 0);
 }
 
 
@@ -15391,7 +15529,7 @@ function makeTocRoom(text, tocPos, tocType, codelen, outCoords) {
   return text;
 }
 
-function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) {
+function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction, opt_paused) {
   // for the very first parse, do NOT scroll up, it is handy if you have
   // a big edited circuit open and refresh the browser to still see the
   // same one
@@ -15625,7 +15763,11 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction) 
   worldDiv.style.display = 'block';
 
   logPerformance('initial update start');
-  unpause(); // this also calls update
+  if(opt_paused) {
+    update();
+  } else {
+    unpause(); // this also calls update
+  }
   logPerformance('initial update done');
 
   return true; // success
@@ -15639,7 +15781,6 @@ if(USEAUTOPAUSE) setAutoPauseInterval();
 
 function setAutoPauseInterval() {
   autopauseinterval = util.setIntervalSafe(function(){
-    suspendAudioContext();
     pause();
     autopaused = true;
   }, AUTOPAUSESECONDS * 1000);
@@ -15659,6 +15800,7 @@ function pause() {
   paused = true;
   updatePauseButtonText();
   updateTimeButtonBorders();
+  muteAudioContext(1);
 }
 
 function unpause() {
@@ -15672,6 +15814,7 @@ function unpause() {
   }
   updatePauseButtonText();
   updateTimeButtonBorders();
+  unmuteAudioContext(1);
   update(); // unpause must call update, becuase update starts the timing look again (especially relevant if there are timers)
 }
 

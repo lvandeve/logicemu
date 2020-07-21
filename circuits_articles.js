@@ -570,7 +570,7 @@ s...>A..>A>A...>l     .>A..>A          . . v
                                            l
 
 0"wire crossing with 8 NANDs, of which 2 are 1-input and one is 3-input"
-0"(that one is expanded in in version on the right)"
+0"(that one is expanded into two-input ones in the version on the right)"
 
 s...>A..>A>A..>l       s...>A......>A>A..>l
    v ^ v ^                v ^     v ^
