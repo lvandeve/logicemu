@@ -262,6 +262,21 @@ f....>l    s....>f....>l
 
 F....>l    s....>F....>l
 
+0"A fixed value with a decimal number can also output a decimal number in"
+0"binary:"
+
+llllllllll
+^^^^^^^^^^
+f500######
+
+0"They can also come in a form where all the output bits are inverted. The border"
+0"color of the entire component is lit up to indicate this (in text mode, you"
+0"can instead see a small f for normal fixed value, capital F for inverted)"
+
+llllllllll
+^^^^^^^^^^
+F500######
+
 0"There also exist negated inputs. Normal inputs are indicated with an"
 0"arrow head, negated inputs instead with a little circle (or in text"
 0"mode, that is m]w[ for NESW respectively):"
@@ -1380,13 +1395,13 @@ s-->e<--S
 
 0"Next to that is the full fledged edit button which allows to edit existing"
 0"circuits or create new ones (similar to 'import')."
-0"For more on that, see the 'Editing Help' help circuit. Depending on whether"
-0"you used editing, there may also appear a 'forget' button to bring everything"
-0"back to the normal state before you edited, and a 'restore' button to go back"
-0"to the edited circuit (if not forgotten). Note that if you care about a"
-0"circuit you edited or created, you should back it up to your disk in a text"
-0"editor, since logicemu only stores it in local storage of your browser, where"
-0"it can easily get lost (it does not store it online), and only stores one."
+0"For more on that, see the 'Editing Help' help circuit."
+0"Next to that is a save dropdown, that allows to save the current edited"
+0"(or any, really) circuit to save slots A-F. These can be loaded with the 'my'"
+0"dropdown at the circuit dropdowns to the left. These are saved locally on your"
+0"machine, in local storage. Note that if you care about a circuit you edited"
+0"or created, you should export it and back it up to your disk in a text"
+0"editor, since local storage can easily get lost (it does not store it online)."
 
 0"## User Interface - Second Row"
 
@@ -1789,14 +1804,10 @@ s....
 0"Note how not only that logic gate but also this text itself was in there."
 0"That is because this whole page including all text is a circuit you can edit!"
 
-0"Once you edited a map with the 'edit' button, it is saved in the local"
-0"storage of the browser (but not sent to the internet nor shared, it's just"
-0"local on your machine). If you reload the page, at least without any hash"
-0"tags (#id or #code) in the URL, you will get back the edited circuit instead"
-0"of the regular welcome page. Use the 'forget' button to remove it."
-
-0"Note that local storage is unreliable, save circuits for example to your disk"
-0"with a text editor instead to safely keep them (or use version control, ...)."
+0"Edited circuits can be saved with the [save] dropdown to a few local save"
+0"slots. But Local storage is unreliable (and not online), it's safer to export"
+0" andsave circuits for example to your disk with a text editor instead to"
+0"safely keep them (or use version control, ...)."
 
 0"In addition, when you edited a map, there may be a '#code=...' code in the"
 0"URL. This is a local-only (not on a server) base64 code containing the entire"
@@ -2576,6 +2587,33 @@ l<b#######<s
   ||||||||
   ssssssss
  "76543210"
+
+0"## Fixed Values"
+
+0"Another method of providing some data, are fixed values, given in decimal"
+0"but outputting the value in binary. The least significant bit will be on the"
+0"most clockwise end of a side, so at the right side if the outputs are at the"
+0"top but at the left side if at the bottom. The decimal value is always read"
+0"from left to right or top to bottom though."
+
+
+llllllllll   f12#######
+^^^^^^^^^^   vvvvvvvvvv
+f12#######   llllllllll
+
+llllllllll   llllllllll
+^^^^^^^^^^   ^^^^^^^^^^
+f500######   f3########
+
+0"A capital F inverts the output bits"
+
+llllllllll
+^^^^^^^^^^
+F12#######
+
+0"NOTE: the letter f and F are not rendered in graphical mode, only in text mode."
+0"In graphics mode, just the decimal value is shown, with a different border"
+0"color around the component in case of inverted bits with capital F."
 
 0"# SECTION IV: Integrated Circuits"
 
@@ -3990,7 +4028,9 @@ llllllllllll
 ^^^^^^^^^^^^
 ||||||||||||
 4$$$$$$$$$$$
+gggggggggggg
 
+gggggggggggg
 4$$$$$$$$$$$
 ||||||||||||
 ssssssssssss
@@ -4087,6 +4127,31 @@ llll ll  l
 7$$$
 ||||
 ssss
+
+0"Different groups can also be placed next to each other, and parse correctly"
+0"(left to right or right to left) even when mirrored:"
+
+ "HGFEDCBA"
+  llllllll
+  ^^^^^^^^
+  ||||||||
+  $$$2$$$1
+  ========
+  1$$$2$$$
+  ||||||||
+  ssssssss
+ "ABCDEFGH"
+
+ "EFGHABCD"
+  llllllll
+  ^^^^^^^^
+  ||||||||
+  2$$$1$$$
+  ========
+  1$$$2$$$
+  ||||||||
+  ssssssss
+ "ABCDEFGH"
 
 0"NOTE: the automatic numbering only works for consecutive connections that"
 0"touch each other, no gaps in between. Each gap restarts the count and would"
@@ -5185,6 +5250,18 @@ f-->l
 
 registerCircuit('Constant On (F)', `
 F-->l
+`, 'component' + componentid++);
+
+registerCircuit('Fixed Value (f)', `
+llllllllll
+^^^^^^^^^^
+f20#######
+`, 'component' + componentid++);
+
+registerCircuit('Fixed Value Inverted (F)', `
+llllllllll
+^^^^^^^^^^
+F20#######
 `, 'component' + componentid++);
 
 registerCircuit('Random Generator (?)', `
@@ -7208,6 +7285,27 @@ s-$= ||.----]l8
 S-$= |.----->l8
 S-$= .------>l8
 
+s-0=0-------]l8
+S-$=$------->l8
+s-$=$-------]l8
+s-1=1-------]l8
+S-$=$------->l8
+S-$=$------->l8
+   =
+   =1-------]l8
+   =$------->l8
+   =$------->l8
+   =0-------]l8
+   =$------->l8
+   =$-------]l8
+   =
+   =$-------]l8
+   =$------->l8
+   =0-------]l8
+   =$------->l8
+   =$------->l8
+   =1-------]l8
+
 
 S-g321   $g-]l8
 s-g$     $g-]l8
@@ -7298,6 +7396,26 @@ s>#---------]l8
 S>#---------]l8
 s>#---------]l8
 
+
+f-----------]l8
+2----------->l8
+0-----------]l8
+#----------->l8
+#-----------]l8
+#-----------]l8
+
+
+F----------->l8
+2-----------]l8
+0----------->l8
+#-----------]l8
+#----------->l8
+#----------->l8
+
+
+f-----------]l8
+1-----------]l8
+f----------->l8
 
 0"# Off"
 
@@ -7808,6 +7926,8 @@ s-->Z
       ^v
 s-->U####----->l
 
+f25###F------->l
+
 0"# IC input order"
 
 0"Each input must activate the correct LED in the IC usage on the right"
@@ -7936,6 +8056,14 @@ s-->N-->l
 s-->#
 s-->#
 s-->#800
+
+
+0"Fixed value: the f should be hidden in graphics mode and number aligned to side. In text mode, the f must be visible."
+
+llllllllll
+^^^^^^^^^^
+||||||||||
+f500######
 
 
 0"# Wire Shapes"
@@ -9373,7 +9501,10 @@ registerTitle('Front Page');
 registerCircuit('Welcome', introText, introId);
 
 registerCircuit('Help Index', `
-0"List of help circuits."
+0"# Logicemu Help"
+
+0"Logicemu is a cell-based logic emulator. To learn more details, see the"
+0"various help-circuits below."
 
 0"If this is your first time, the first one ('Main Help') is recommended."
 

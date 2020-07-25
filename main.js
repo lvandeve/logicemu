@@ -127,6 +127,7 @@ function finishEdit() {
 
   if(newtext != textbeforeedit) {
     util.setLocalStorage(newtext, 'circuit_text');
+    autoSaveCircuit[0] = newtext;
     parseText(newtext, 'edited circuit', undefined, 1);
   } else {
     parseText(newtext, 'edited circuit', undefined, 2);
@@ -213,6 +214,37 @@ function createEditorMenuUI(cancelFun, finishFun) {
   githubLink.style.paddingRight = '10px';
 }
 
+function makeDialog(w, h, text, cancelbuttonname, cancelfun) {
+  var docwidth = /*document.body.clientWidth*/window.innerWidth - 24 - 80;
+  var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8 - 80;
+  var overlay = makeDiv(0, 0, window.innerWidth, window.innerHeight);
+  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
+  overlay.style.position = 'fixed';
+  overlay.style.zIndex = '99';
+
+  var dialogDiv = util.makeAbsElement('div', 0, 0, w, h);
+  dialogDiv.style.backgroundColor = 'white';
+  dialogDiv.style.position = 'fixed';
+  dialogDiv.style.top = '50%';
+  dialogDiv.style.left = '50%';
+  dialogDiv.style.transform = 'translate(-50%, -50%)';
+  dialogDiv.style.border = '1px solid black';
+  dialogDiv.style.zIndex = '101';
+  dialogDiv.style.padding = '10px';
+
+
+  dialogDiv.innerText = text;
+  var hide = function() {
+    util.removeElement(overlay);
+    util.removeElement(dialogDiv);
+    dialogDiv = undefined;
+  };
+  util.makeInternalButton(cancelbuttonname, dialogDiv, (w - 90), (h - 20), function() {
+    hide();
+    if(cancelfun) cancelfun();
+  });
+  overlay.onclick = hide;
+}
 
 function getStatsText() {
   var numVisibleComponents = 0;
@@ -462,6 +494,7 @@ function getStatsText() {
   return text;
 }
 
+
 var muted = false;
 
 function createMenuUI() {
@@ -700,11 +733,11 @@ function createMenuUI() {
   muteButton.title = 'Mute sound';
   muteButton.onclick = function() {
     if(muted) {
-      unmuteAudioContext(2);
+      unmuteAudioContext(4);
       muteButton.innerText = 'mute';
       muted = false;
     } else {
-      muteAudioContext(2);
+      muteAudioContext(4);
       muteButton.innerText = 'unmute';
       muted = true;
     }
@@ -796,33 +829,9 @@ function createMenuUI() {
   statsButton.title = 'show circuit statistics and parameters. The estimated num transistors assumes NMOS logic, gives exact value when only using basic 2-input logic gates (AND, NAND, XOR, ...), but will use some arbitrary large amount of transistors per big built-in device (ALU, terminal emulator, ...)';
   statsButton.onclick = function() {
     if(dialogDiv) return;
-    var docwidth = /*document.body.clientWidth*/window.innerWidth - 24 - 80;
-    var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8 - 80;
-    overlay = makeDiv(0, 0, window.innerWidth, window.innerHeight);
-    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
-    overlay.style.position = 'fixed';
-    overlay.style.zIndex = '99';
-
-    dialogDiv = util.makeAbsElement('div', 200, 200, 500, 500);
-    dialogDiv.style.backgroundColor = 'white';
-    dialogDiv.style.position = 'fixed';
-    dialogDiv.style.top = '50%';
-    dialogDiv.style.left = '50%';
-    dialogDiv.style.transform = 'translate(-50%, -50%)';
-    dialogDiv.style.border = '1px solid black';
-    dialogDiv.style.zIndex = '101';
-    dialogDiv.style.padding = '10px';
-
-
-    var text = getStatsText();
-    dialogDiv.innerText = text;
-    var hide = function() {
-      util.removeElement(overlay);
-      util.removeElement(dialogDiv);
+    dialogDiv = makeDialog(500, 500, getStatsText(), 'ok', function() {
       dialogDiv = undefined;
-    };
-    util.makeInternalButton('ok', dialogDiv, (500 - 90), (500 - 20), hide);
-    overlay.onclick = hide;
+    });
   };
 
   circuitDropdownSpan = util.makeElement('span', menuRow1El);
@@ -836,7 +845,7 @@ function createMenuUI() {
       currentSelectedCircuit--;
       if(!allRegisteredCircuits[currentSelectedCircuit].istitle) break;
     }
-    parseText(allRegisteredCircuits[currentSelectedCircuit].text,
+    parseText(allRegisteredCircuits[currentSelectedCircuit].getText(),
         allRegisteredCircuits[currentSelectedCircuit].title,
         allRegisteredCircuits[currentSelectedCircuit]);
   };
@@ -850,13 +859,27 @@ function createMenuUI() {
       currentSelectedCircuit++;
       if(!allRegisteredCircuits[currentSelectedCircuit].istitle) break;
     }
-    parseText(allRegisteredCircuits[currentSelectedCircuit].text,
+    parseText(allRegisteredCircuits[currentSelectedCircuit].getText(),
+        allRegisteredCircuits[currentSelectedCircuit].title,
+        allRegisteredCircuits[currentSelectedCircuit]);
+  };
+
+  var randomCircuitButton = util.makeUIElement('button', menuRow1El, 1);
+  randomCircuitButton.innerText = 'R';
+  randomCircuitButton.title = 'Load a random built-in circuit';
+  randomCircuitButton.onclick = function() {
+    var i = Math.floor(Math.random() * allRegisteredCircuits.length);
+    while(allRegisteredCircuits[i].istitle) {
+      i = Math.floor(Math.random() * allRegisteredCircuits.length);
+    }
+    currentSelectedCircuit = i;
+    parseText(allRegisteredCircuits[currentSelectedCircuit].getText(),
         allRegisteredCircuits[currentSelectedCircuit].title,
         allRegisteredCircuits[currentSelectedCircuit]);
   };
 
 
-  util.makeUISpacer(16, menuRow1El)
+  util.makeUISpacer(16, menuRow1El);
 
   var importButton = util.makeUIElement('button', menuRow1El);
   importButton.innerText = 'import';
@@ -1067,26 +1090,69 @@ function createMenuUI() {
     }
   };
 
-  if(util.getLocalStorage('circuit_text')) {
-    var restoreButton = util.makeUIElement('button', menuRow1El, 3);
-    restoreButton.innerText = 'restore';
-    restoreButton.title = 'Restore circuit you created before with edit. Only works if an actual circuit was found in local storage.';
-    restoreButton.onclick = function() {
-      if(maybeLoadFromLocalStorage()) {
-        parseText(initialCircuitText, initialTitle, initialId ? linkableCircuits[initialId] : null, 1);
-      }
-    };
 
-    var forgetButton = util.makeUIElement('button', menuRow1El, 3);
-    forgetButton.innerText = 'forget';
-    forgetButton.title = 'If you have edited a circuit, this removes the saved circuit from local storage. If you refresh after pressing this button ' +
-                         'and also remove URL fragments (#id=... or #code=...), you will no longer see the last circuit you edited, but the default introduction. WARNING! ' +
-                         'if you want to keep your circuit, make sure you save it to disk first! That can be done by ' +
-                         'using the export button, or copypasting it from the edit field, into a text editor and saving to your disk, e.g. as a .txt file.';
-    forgetButton.onclick = function() {
-      util.setLocalStorage('', 'circuit_text');
-      util.clearFragment();
-    };
+
+
+
+  saveDropdown = util.makeUIElement('select', menuRow1El, 3);
+  saveDropdown.title = 'Save edited circuits. They can be loaded from the "my" dropdown further left. These circuits are saved in local storage, and are not guaranteed to stay. Use "export" and save in a text file on your computer for longer lasting storage.';
+  saveDropdown.onchange = function() {
+    var index = saveDropdown.selectedIndex;
+    saveDropdown.selectedIndex = 0;
+    if(index == 0) return;
+    if(index == 1) {
+      savedCircuits[0][0] = origtext;
+      util.setLocalStorage(origtext, 'saved_circuit_0');
+    }
+    if(index == 2) {
+      savedCircuits[1][0] = origtext;
+      util.setLocalStorage(origtext, 'saved_circuit_1');
+    }
+    if(index == 3) {
+      savedCircuits[2][0] = origtext;
+      util.setLocalStorage(origtext, 'saved_circuit_2');
+    }
+    if(index == 4) {
+      savedCircuits[3][0] = origtext;
+      util.setLocalStorage(origtext, 'saved_circuit_3');
+    }
+    if(index == 5) {
+      savedCircuits[4][0] = origtext;
+      util.setLocalStorage(origtext, 'saved_circuit_4');
+    }
+    if(index == 6) {
+      savedCircuits[5][0] = origtext;
+      util.setLocalStorage(origtext, 'saved_circuit_5');
+    }
+    if(index == 7) {
+      for(var i = 0; i < 6; i++) {
+        savedCircuits[i][0] = undefined;
+        util.setLocalStorage(undefined, 'saved_circuit_' + i);
+      }
+      util.setLocalStorage(undefined, 'circuit_text');
+    }
+    if(index == 8) {
+      if(dialogDiv) return;
+      var text = '';
+      var fromLocalStorage = maybeLoadFromLocalStorage();
+      text += 'autosaved circuit found: ' + ((fromLocalStorage && fromLocalStorage[0] && fromLocalStorage[0].length > 0) ? 'yes' : 'no') + '\n';
+      text += 'slot A: ' + ((savedCircuits[0][0] && savedCircuits[0][0].length > 0) ? ('yes, ' + savedCircuits[0][0].length + ' bytes') : 'empty') + '\n';
+      text += 'slot B: ' + ((savedCircuits[1][0] && savedCircuits[1][0].length > 0) ? ('yes, ' + savedCircuits[1][0].length + ' bytes') : 'empty') + '\n';
+      text += 'slot C: ' + ((savedCircuits[2][0] && savedCircuits[2][0].length > 0) ? ('yes, ' + savedCircuits[2][0].length + ' bytes') : 'empty') + '\n';
+      text += 'slot D: ' + ((savedCircuits[3][0] && savedCircuits[3][0].length > 0) ? ('yes, ' + savedCircuits[3][0].length + ' bytes') : 'empty') + '\n';
+      text += 'slot E: ' + ((savedCircuits[4][0] && savedCircuits[4][0].length > 0) ? ('yes, ' + savedCircuits[4][0].length + ' bytes') : 'empty') + '\n';
+      text += 'slot F: ' + ((savedCircuits[5][0] && savedCircuits[5][0].length > 0) ? ('yes, ' + savedCircuits[5][0].length + ' bytes') : 'empty') + '\n';
+      text += '\nsaved circuits can be loaded with the circuits dropdown on the left labeled "my"\n';
+      text += '\nautosave happens when editing a circuit\n';
+      dialogDiv = makeDialog(500, 500, text, 'ok', function() {
+        dialogDiv = undefined;
+      });
+    }
+  };
+  var saveDropdownElements = ['[save]', 'save to slot A', 'save to slot B', 'save to slot C', 'save to slot D', 'save to slot E', 'save to slot F', 'delete all', 'info'];
+  for(var i = 0; i < saveDropdownElements.length; i++) {
+    var el = util.makeElement('option', saveDropdown);
+    el.innerText = saveDropdownElements[i];
   }
 
 
@@ -1117,7 +1183,7 @@ function createMenuUI() {
   helpLink.onclick = function() {
     var circuit = linkableCircuits['helpindex'];
 
-    parseText(circuit.text, circuit.id, circuit);
+    parseText(circuit.getText(), circuit.id, circuit);
   };
 
 
@@ -1189,58 +1255,85 @@ function createMenuUI() {
 //go to editor on load, for easy development on it
 //NEWEDIT=true;window.setTimeout(function(){tw = Math.ceil(tw * 0.75); th = Math.ceil(th * 0.75); editButton.click();}, 300);
 
+var savedCircuits = [];
+
+function loadSavedCircuits() {
+  savedCircuits[0] = [util.getLocalStorage('saved_circuit_0')];
+  savedCircuits[1] = [util.getLocalStorage('saved_circuit_1')];
+  savedCircuits[2] = [util.getLocalStorage('saved_circuit_2')];
+  savedCircuits[3] = [util.getLocalStorage('saved_circuit_3')];
+  savedCircuits[4] = [util.getLocalStorage('saved_circuit_4')];
+  savedCircuits[5] = [util.getLocalStorage('saved_circuit_5')];
+}
+
+var autoSaveCircuit = [undefined];
 
 // called by footer.js
 function maybeLoadFromLocalStorage() {
   // the text you last edited is remembered. To remove the memory, use the edit button, clear the string, and save
   var stored_text = util.getLocalStorage('circuit_text');
-  if(!stored_text) return false;
+  if(!stored_text) return undefined;
   if (stored_text != '' && !!stored_text) {
-    initialCircuitText = stored_text;
-    initialTitle = 'stored circuit';
-    initialId = null;
+    autoSaveCircuit[0] = stored_text;
+    var result = [];
+    result[0] = stored_text;
+    result[1] = 'stored circuit';
+    result[2] = null;
+    result[3] = -1;
+    return result;
   }
 
-  return true;
+  return undefined;
 }
 
 // called by footer.js
 function maybeLoadFromLinkId() {
   var link_id = util.getFragmentParameterByName('id');
-  if(!link_id) return false;
+  if(!link_id) return undefined;
 
   var linkableCircuit = linkableCircuits[link_id];
   if(linkableCircuit) {
-    initialCircuitText = linkableCircuit.text;
-    initialTitle = linkableCircuit.title;
-    initialId = link_id;
-    currentSelectedCircuit = linkableCircuit.index;
+    var result = [];
+    result[0] = linkableCircuit.getText();
+    result[1] = linkableCircuit.title;
+    result[2] = link_id;
+    result[3] = linkableCircuit.index;
+    return result;
   } else {
-    initialCircuitText = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
-    initialTitle = introTitle;
-    initialId = introId;
+    var result = [];
+    result[0] = 'R>l 1"Circuit with id \'' + link_id + '\' not found, loading intro instead." l<R\n\n' + introText;
+    result[1] = introTitle;
+    result[2] = introId;
+    result[3] = -1;
+    return result;
   }
 
-  return true;
+  return undefined;
 }
 
 // called by footer.js
 function maybeLoadFromUrlCode() {
   var code = util.getFragmentParameterByName('code');
-  if(!code) return false;
+  if(!code) return undefined;
   var text = decodeBoard(code);
 
   if(text) {
-    initialCircuitText = text;
-    initialTitle = 'Decoded circuit';
-    initialId = undefined;
+    var result = [];
+    result[0] = text;
+    result[1] = 'URL-code circuit';
+    result[2] = undefined;
+    result[3] = -1;
+    return result;
   } else {
-    initialCircuitText = 'R>l 1"Invalid #code in the URL" l<R\n\n' + introText;
-    initialTitle = introTitle;
-    initialId = introId;
+    var result = [];
+    result[0] = 'R>l 1"Invalid #code in the URL" l<R\n\n' + introText;
+    result[1] = introTitle;
+    result[2] = introId;
+    result[3] = -1;
+    return result;
   }
 
-  return true;
+  return undefined;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1699,8 +1792,9 @@ var allRegisteredCircuits = [];
 var linkableCircuits = {};
 var linkableCircuitsOrder = [];
 
-function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
-  if(!opt_link_id) opt_link_id = 'circuit' + allRegisteredCircuits.length;
+// opt_dynamic: if true, then text is a pointer [text] where the content can change
+function registerCircuit(name, circuit, opt_link_id, opt_is_title, opt_dynamic) {
+  //if(!opt_link_id) opt_link_id = 'circuit' + allRegisteredCircuits.length;
   var dropdownname = name;
   if(opt_is_title && name != '--------') dropdownname = '--- ' + name + ' ---';
   var index = allRegisteredCircuits.length;
@@ -1708,6 +1802,10 @@ function registerCircuit(name, circuit, opt_link_id, opt_is_title) {
   c.name = name;
   c.dropdownname = dropdownname;
   c.text = circuit;
+  c.dynamic = !!opt_dynamic;
+  c.getText = function() {
+    return c.dynamic ? ((c.text[0] && c.text[0].length > 0) ? c.text[0] : '0"[empty]"') : c.text;
+  };
   c.title = name;
   c.linkid = opt_link_id;
   c.istitle = opt_is_title;
@@ -1741,12 +1839,17 @@ function fillRegisteredCircuits() {
     util.makeElement('br', g.main);
     g.dropdown = util.makeUIElement('select', g.main);
     g.dropdown.style.width = '120px';
-    g.dropdown.title = 'Built-in circuit selector dropdown "' + name + '"';
+    if(g.name == 'my') {
+      g.dropdown.title = 'Circuit selector dropdown for edited circuits. Circuits only appear here if you edit and save them to save slots. These are saved in local storage only and are not guaranteed to stay saved, export to a text file and save it on your computer to guarantee keep a circuit for longer.';
+    } else {
+      g.dropdown.title = 'Built-in circuit selector dropdown "' + g.name + '"';
+    }
     g.dropdown.onchange = bind(function(g) {
       var index = g.dropdown.selectedIndex - 1;
+      if(index < 0 || index >= g.circuits.length) return;
       var c = g.circuits[index];
       currentSelectedCircuit = c.index;
-      parseText(c.text, c.title, c);
+      parseText(c.getText(), c.title, c);
     }, g);
 
     var el = util.makeElement('option', g.dropdown);

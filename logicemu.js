@@ -280,7 +280,7 @@ var LogicEmuUtils = (function() {
   //remember user settings locally (note that this is all fully local, nothing gets sent to any server)
   var setLocalStorage = function(data, name) {
     if(!localStorageSupported()) return;
-    localStorage[name] = data;
+    localStorage[name] = data ? data : '';
   };
   result.setLocalStorage = setLocalStorage;
 
@@ -1461,6 +1461,7 @@ var TYPE_FLIPFLOP = TYPE_index++; // "c", "C" when combined with other FF parts
 var TYPE_COUNTER = TYPE_index++; // standalone "c", "C". TODO: this does not need a separate type, since the TYPE_FLIPFLOP's programming can also handle its behaviour (it handles the c+y combination, which does the same if y is on, for example)
 var TYPE_CONSTANT_OFF = TYPE_index++; // 'f' and 'F' from fixed, since letter c is already for counter and clock
 var TYPE_CONSTANT_ON = TYPE_index++;
+var TYPE_FIXED = TYPE_index++; // uses f and F like constant, but version that outputs a binary value from decimal number in circuit
 var TYPE_DELAY = TYPE_index++;
 var TYPE_ROM = TYPE_index++;
 var TYPE_MUX = TYPE_index++;
@@ -1479,6 +1480,7 @@ var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
 // number types (higher value/nearer to bottom = higher priority) [numbertype number_type number priority number order numbers priority numbers order]
 var NUMBER_index = 0;
 var NUMBER_NONE = NUMBER_index++;
+var NUMBER_FIXED = NUMBER_index++; // very low priority, to ensure f and F can be used standalone when desired
 var NUMBER_LED = NUMBER_index++;
 var NUMBER_TIMER = NUMBER_index++;
 var NUMBER_PULSE = NUMBER_index++;
@@ -1527,7 +1529,7 @@ var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'h'
 var largedevicestartmap = {'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'y':true,
                       'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'N':true};
 var largedevicemap = util.mergeMaps(largedevicestartmap, {'c':true, 'C':true});
-var largeextendmap = {'#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#N':true}; // special extenders for large devices (not all of those are used yet)
+var largeextendmap = {'#i':true, '#c':true, '#f':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#N':true}; // special extenders for large devices (not all of those are used yet)
 var extendmap = util.mergeMaps(largeextendmap, {'#':true});
 // devicemap as well as # (with extends devices)
 var devicemaparea = util.mergeMaps(devicemap, largeextendmap); devicemaparea['#'] = true;
@@ -1548,7 +1550,7 @@ var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x'
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true, 'U':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
                 '#':true, '=':true, 'i':true, 'T':true, 'D':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
-                'z':true, 'Z':true, '?':true, 'N':true, 'J':true, 'toc':true, '#i':true, '#c':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#N':true};
+                'z':true, 'Z':true, '?':true, 'N':true, 'J':true, 'toc':true, '#i':true, '#c':true, '#f':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#N':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true, '$':true};
 var puredigitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
@@ -1774,6 +1776,7 @@ function CallSub(id) {
       component.ff_cycle = v.ff_cycle;
       component.ff_cycle_time = v.ff_cycle_time;
       component.parent = null; // handled further
+      component.fixed = null; // handled further
       component.rom = null; // handled further
       component.mux = null; // handled further
       component.vte = null; // handled further
@@ -1795,6 +1798,17 @@ function CallSub(id) {
       }
       if(v.parent) {
         component.parent = this.components[defsub.translateindex[v.parent.index]];
+      }
+      if(v.fixed) {
+        var fixed = new Fixed();
+        component.fixed = fixed;
+        fixed.x0 = v.fixed.x0;
+        fixed.y0 = v.fixed.y0;
+        fixed.x1 = v.fixed.x1;
+        fixed.y1 = v.fixed.y1;
+        fixed.inverted = v.fixed.fixed;
+        fixed.value = v.fixed.value;
+        fixed.output = util.clone(v.fixed.output);
       }
       if(v.rom) {
         var rom = new ROM();
@@ -2643,6 +2657,194 @@ function largeComponentBB(array, special_controls, component) {
     component.x1b = x0 + r[2];
     component.y1b = y0 + r[3];
   }
+}
+
+
+function Fixed() { // function FixedValue()
+  this.x0 = 0;
+  this.y0 = 0;
+  this.x1 = 0;
+  this.y1 = 0;
+  this.parent = null;
+  this.error = false;
+  this.errormessage = null;
+
+  this.inverted = false;
+  this.value = -1;
+  this.output = []; // binary ouput values
+
+
+  this.setError = function(text) {
+    this.error = true;
+    if(!this.errormessage) this.errormessage = text;
+  };
+
+  this.init1 = function(array) {
+    largeComponentBB(array, false, this);
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
+    this.parent = null; // the parent component for this fixed value
+    this.inverted = false;
+
+    for(var i = 0; i < array.length; i++) {
+      var x = array[i][0];
+      var y = array[i][1];
+      var c = world[y][x];
+      var s = c.circuitsymbol;
+      var component = c.components[0] || c.components[1];
+      if(component) {
+        if(s == 'f' || s == 'F') {
+          if(this.parent) {
+            if(s == 'f' && this.inverted) { this.setError('conflict: f and F in same fixed value'); return false; }
+            if(s == 'F' && !this.inverted) { this.setError('conflict: f and F in same fixed value'); return false; }
+          } else {
+            var component = c.components[0] || c.components[1];
+            this.parent = component;
+            if(s == 'F') this.inverted = true;
+          }
+        }
+      }
+    }
+    if(!this.parent) { this.setError('no parent found'); return false; }
+
+    for(var i = 0; i < array.length; i++) {
+      var x = array[i][0];
+      var y = array[i][1];
+      var c = world[y][x];
+      if(c.numbertype == NUMBER_FIXED && c.number > this.value) {
+        this.value = c.number;
+      }
+      if(c.components[0]) c.components[0].parent = this.parent;
+    }
+    this.parent.fixed = this;
+
+
+    var fixedmap = {'f':true, 'F':true};
+    var move = true; //!this.inverted;
+    if(move) {
+      // compute potential better location to put the number. Only if a f or F
+      // symbol is present on a side, otherwise assume the number is deliberately
+      // placed off the side. (only used by the graphics mode, not the text mode)
+      var numberx0 = -1, numbery0 = -1;
+      var numberx1 = -1, numbery1 = -1;
+      var dir = -1; // -1 = single digit, 0 = vertical, 1 = horizontal
+      for(var i = 0; i < array.length; i++) {
+        var x = array[i][0];
+        var y = array[i][1];
+        var c = world[y][x].displaysymbol;
+        if(puredigitmap[c]) {
+          var initial = (numberx0 == -1);
+          if(!initial) {
+            if(x != numberx0) dir = 1;
+            else if(y != numbery0) dir = 0;
+          }
+          if(x < numberx0 || y < numbery0 || initial) {
+            numberx0 = x;
+            numbery0 = y;
+          }
+          if(x > numberx1 || y > numbery1 || initial) {
+            // inclusive coordinates (unlike x1, y1 which are exclusive end coordinates)
+            numberx1 = x;
+            numbery1 = y;
+          }
+        }
+      }
+      move = ((numberx0 == numberx1) || (numbery0 == numbery1)) && (numberx0 != -1);
+    }
+    if(move) {
+      // turn dir into direction to move, or -1 to not move; e.g. 3 to move 1 west
+      if(dir != 0 && numberx0 == x0 + 1 && fixedmap[world[numbery0][x0].circuitsymbol]) dir = 1;
+      else if(dir != 0 && numberx1 + 1 == x1 - 1 && fixedmap[world[numbery0][x1 - 1].circuitsymbol]) dir = 3;
+      else if(dir != 1 && numbery0 == y0 + 1 && fixedmap[world[y0][numberx0].circuitsymbol]) dir = 2;
+      else if(dir != 1 && numbery1 + 1 == y1 - 1 && fixedmap[world[y1 - 1][numberx0].circuitsymbol]) dir = 0;
+      else move = false;
+    }
+    if(move) {
+      for(var i = 0; i < array.length; i++) {
+        var x = array[i][0];
+        var y = array[i][1];
+        var n = getNeighborNoAntennas(x, y, dir);
+        var s = n ? n.displaysymbol : ' ';
+        if(!puredigitmap[s]) s = ' ';
+        world[y][x].fixedvaluesymbol = s;
+      }
+    } else {
+      for(var i = 0; i < array.length; i++) {
+        var x = array[i][0];
+        var y = array[i][1];
+        var s = world[y][x].displaysymbol;
+        //if(this.inverted && s == 'F') s = '~'; // indicate the bits are negated
+        //else if(!puredigitmap[s]) s = ' ';
+        if(!puredigitmap[s]) s = ' ';
+        world[y][x].fixedvaluesymbol = s;
+      }
+    }
+    return true;
+  }
+
+  this.processIO = function(io) {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
+    // inputs are not an error but are completely ignored, it's a fixed value
+
+    // outputs
+    if(io.nos > 1) { this.setError('only one output side supported'); return false; }
+
+
+    var ontype = this.inverted ? TYPE_CONSTANT_OFF : TYPE_CONSTANT_ON;
+    var offtype = this.inverted ? TYPE_CONSTANT_ON : TYPE_CONSTANT_OFF;
+
+    var rompos = 0;
+    for(var dir = 0; dir < 4; dir++) {
+      if(io.o[dir].n) {
+        var o = io.o[dir];
+
+        var bits = [];
+        var v = math.B(this.value);
+        for(var i = 0; i < o.n; i++) {
+          bits[i] = (v & math.n1) ? 1 : 0;
+          v >>= math.n1;
+        }
+
+
+        for(var i = 0; i < o.n; i++) {
+          var x = o.a[i][0];
+          var y = o.a[i][1];
+          var c = world[y][x];
+          if(c.components[0]) {
+            //c.components[z].rom_out_pos = rompos++;
+            c.components[0].type = bits[i] ? ontype : offtype;
+          }
+        }
+      }
+    }
+
+    return true;
+  };
+
+  // init after inputs are resolved
+  // returns true if ok, false if error (e.g. no rectangle or inputs not all on one side)
+  this.init2 = function() {
+    var x0 = this.x0;
+    var y0 = this.y0;
+    var x1 = this.x1;
+    var y1 = this.y1;
+
+    if(!this.parent) return false;
+
+    var io = getIO(x0, y0, x1, y1, x0, y0, x1, y1, this.parent);
+    if(!io) return false;
+
+    if(!this.processIO(io)) return false;
+
+    return true;
+  };
 }
 
 // actually also RAM! but it started out with only rom functionality.
@@ -6857,7 +7059,7 @@ function MusicNote() { // function Note()
       this.prevfreq = freq;
 
 
-      unmuteAudioContext(0);
+      unmuteAudioContext(1);
     }
 
 
@@ -6872,7 +7074,7 @@ function MusicNote() { // function Note()
       this.prevshapevalue = shapevalue;
       this.prevshape = shape;
 
-      unmuteAudioContext(0);
+      unmuteAudioContext(1);
     }
 
     if(volvalue != this.prevvolvalue) {
@@ -7778,6 +7980,8 @@ function Component() {
       return false;
     } else if(this.type == TYPE_CONSTANT_ON) {
       return true;
+    } else if(this.type == TYPE_FIXED) {
+      return true; // not implemented here, and normally can't exist at this point, being replaced by CONSTANT_ON or OFF
     } else if(this.type == TYPE_SWITCH_OFF) {
       return false;
     } else if(this.type == TYPE_SWITCH_ON) {
@@ -7986,12 +8190,18 @@ function Component() {
         if(!value2 && prevvalue2) numc_neg_edge++;
       }
 
-      if(this.type == TYPE_ROM || this.type == TYPE_MUX || this.type == TYPE_ALU || this.type == TYPE_VTE || this.type == TYPE_DOTMATRIX || this.type == TYPE_MUSIC_NOTE) {
+      if(this.type == TYPE_ROM || this.type == TYPE_MUX || this.type == TYPE_ALU || this.type == TYPE_VTE || this.type == TYPE_DOTMATRIX || this.type == TYPE_MUSIC_NOTE || this.type == TYPE_FIXED) {
         rom_inputs[i] = value2;
       }
     }
 
-    if(this.type == TYPE_ROM) {
+    if(this.type == TYPE_FIXED && this.parent) {
+      if(this.parent) {
+        // nothing to update for this one, it's constant and ignores inputs
+        var fixed = this.fixed || this.parent.fixed;
+        this.value = fixed.output[this.rom_out_pos];
+      }
+    } else if(this.type == TYPE_ROM) {
       if(this.parent) {
         if(this.rom) this.rom.update(rom_inputs);
         var rom = this.rom || this.parent.rom;
@@ -8612,8 +8822,8 @@ function setColorScheme(index) {
 
 
   if(index == 0) { // light
-    ONCOLOR = 'black';
-    OFFCOLOR = '#888';
+    ONCOLOR = '#200';
+    OFFCOLOR = '#aaa';
     BGCOLOR = 'white';
     TEXTFGCOLOR = '#000'; // '#940';
     TEXTBGCOLOR = '#eef';
@@ -9225,6 +9435,7 @@ function Cell() {
     if(!this.comment) {
       var tc = c;
       if(digitmap[this.metasymbol]) {
+        if(this.numbertype == NUMBER_FIXED) title = 'digit affecting decimal to binary fixed value';
         if(this.numbertype == NUMBER_LED) title = 'digit affecting LED color';
         if(this.numbertype == NUMBER_TIMER) title = 'digit indicating timer speed';
         if(this.numbertype == NUMBER_PULSE) title = 'digit indicating pulse speed';
@@ -9283,8 +9494,14 @@ function Cell() {
       if(tc == 'E') title = 'XNOR gate (even parity detector). Truth table for 2 inputs: 00:1, 01:0, 10:0, 11:1';
       if(tc == 'h') title = 'one-hot detector (same as XOR if 2 inputs). Truth table for 2 inputs: 00:0, 01:1, 10:1, 11:0';
       if(tc == 'H') title = 'inverted one-hot detector (same as XNOR if 2 inputs). Truth table for 2 inputs: 00:1, 01:0, 10:0, 11:1';
-      if(tc == 'f') title = 'constant off (fixed off)';
-      if(tc == 'F') title = 'constant on (fixed on)';
+      if(tc == 'f' || tc == 'F') {
+        if(component && component.parent) {
+          if(component.parent.fixed && component.parent.fixed.inverted) title = 'constant binary value given as decimal (output bits inverted)';
+          else title = 'constant binary value given as decimal';
+        }
+        else if(tc == 'f') title = 'constant off (fixed off)';
+        else if(tc == 'F') title = 'constant on (fixed on)';
+      }
       if(tc == 'J' && component) {
         title = 'jack for patch panel. Click this jack, then another jack, to connect them together with a patch wire. To remove a wire, click both its jacks again. To remove all wires from one jack, click that jack twice. To remove all jacks of the board, see one of the dropdowns in the main menu. You cannot connect multiple jacks that have an input (an arrow pointing to it) together in one group, if you try an older input connection may be removed, or it may refuse to connect and indicate a temporary red line. This is because multiple inputs to the same connected jacks gives a conflict (we could OR them, but instead we choose the realistic approach where this can cause an electric short). A jack supports a maximum of ' + component.partner.length + ' wires, adding more will remove the oldest one.';
       }
@@ -11327,13 +11544,18 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       // for big devices like IC and FlipFlop with multiple possible output values, it's
       // ugly if borders get different colors for 'on' and 'off' sub-parts of it, so set to
       // off (the letter character will still get on color)
-      if(i == 1 && (cell.components[0] || cell.components[1])) {
+      if(cell.components[0] || cell.components[1]) {
         var component = cell.components[0] || cell.components[1];
         var type = component.type;
-        if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM || type == TYPE_MUX || type == TYPE_ALU) {
+        if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM || type == TYPE_MUX ||
+            type == TYPE_ALU || ((type == TYPE_CONSTANT_OFF || type == TYPE_CONSTANT_ON || type == TYPE_FIXED) && (component.parent || component.fixed))) {
           // only for the solid parts, wires part of this component must still use on color
           if(devicemaparea[c]) {
             gateBorderColor = GATEFGOFFCOLOR;
+            if(component && (type == TYPE_CONSTANT_OFF || type == TYPE_CONSTANT_ON || type == TYPE_FIXED) && component.parent && component.parent.fixed.inverted) {
+              gateBorderColor = GATEFGONCOLOR;
+            }
+
             ctx.strokeStyle = gateBorderColor;
             ctx.fillStyle = OFFCOLOR;
           }
@@ -11851,8 +12073,17 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         var alreadybg = error;
         var numborder = 0;
         if(!error) {
-          if(cell.components[0] && cell.components[0].type == TYPE_CONSTANT_OFF) symbol = '0';
-          if(cell.components[0] && cell.components[0].type == TYPE_CONSTANT_ON) symbol = '1';
+          var type = TYPE_NULL;
+          if(cell.components[0]) type = cell.components[0].type;
+
+          // Replace constant f and F to 0 or 1, but not if they have a parent component, then their decimal number should show
+          if(cell.components[0] && type == TYPE_CONSTANT_OFF && !cell.components[0].parent) symbol = '0';
+          if(cell.components[0] && type == TYPE_CONSTANT_ON && !cell.components[0].parent) symbol = '1';
+
+          if(cell.components[0] && (type == TYPE_CONSTANT_OFF || type == TYPE_CONSTANT_ON || type == TYPE_FIXED) && cell.components[0].parent) {
+            if(cell.fixedvaluesymbol) symbol = cell.fixedvaluesymbol;
+          }
+
           if(virtualsymbol == 's' || virtualsymbol == 'S' || virtualsymbol == 'p' || virtualsymbol == 'P' || virtualsymbol == 'r' || virtualsymbol == 'R') {
             alreadybg = true;
             drawer.fillBg_(ctx, i == 0 ? SWITCHOFF_BGCOLOR : SWITCHON_BGCOLOR);
@@ -11920,7 +12151,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         var okdraw = true;
         if(c == '#' || largeextendmap[c]) {
           okdraw = false;
-          if((c == '#i' || c == '#U') && digitmap[cell.metasymbol]) okdraw = true; // do still draw chip/ALU numbers
+          if((c == '#i' || c == '#U' || c == '#f') && digitmap[cell.metasymbol]) okdraw = true; // do still draw chip/ALU/fixed numbers
 
           if(c == '#U' && cell.labelsymbol != null) {
             okdraw = true; // text label on ALU
@@ -12602,6 +12833,7 @@ function parseNumbers() {
       if(c == '=') type = NUMBER_BUS;
       else if(c == '"' && world[y][x].symbol == '"') type = NUMBER_COMMENT;
       else if(c == 'l') type = NUMBER_LED;
+      else if(c == 'f' || c == 'F') type = NUMBER_FIXED;
       else if(c == 'r' || c == 'R') type = NUMBER_TIMER;
       else if(c == 'q' || c == 'Q') type = NUMBER_PULSE;
       else if(c == 'N') type = NUMBER_NOTE;
@@ -12769,6 +13001,9 @@ function parseNumbers() {
       if(world[y][x].numbertype == NUMBER_ICCALL && puredigitmap[world[y][x].metasymbol]) {
         world[y][x].circuitsymbol = '#';
       }
+      if(world[y][x].numbertype == NUMBER_FIXED && puredigitmap[world[y][x].metasymbol]) {
+        world[y][x].circuitsymbol = '#';
+      }
     }
   }
 
@@ -12804,7 +13039,7 @@ function parseNumbers() {
     for(var x = line0[y]; x < line1[y]; x++) {
       var c = world[y][x].metasymbol;
       if(c == '$') {
-        if(world[y][x].number != -1) continue;
+        if(world[y][x].number != -1) continue; // already processed here
         var vertical = true;
         if(x > 0 && digitmap[world[y][x - 1].metasymbol]) vertical = false;
         if(x + 1 < line1[y] && digitmap[world[y][x + 1].metasymbol]) vertical = false;
@@ -12812,47 +13047,79 @@ function parseNumbers() {
         var number2 = 1;
         var range = 4096;
 
+        // The parsing is done such that we go left to right or right to left depending on the bigger structure:
+        // In case of 0$$$1$$$2$$$, we go left to right, while in case of $$$0$$$1$$$2 we go right to left.
+        // This allows attaching multiple auto-numbered sections together in a reliable way, even when mirrored.
+        // In case of 0$$$1$$$2$$$3 or $$$0$$$1$$$ this is ambiguous, that is currently ignored (should be treated as error)
+        // Similar for the vertical case.
+        // TODO: also have method for the opposite, splitting an auto numbered section with gaps in between but continue numbering
+
         if(vertical) {
+          var ttb = true;
           var y1 = y + 1;
-          while(y1 < h && x < line1[y1] && world[y1][x].metasymbol == '$') y1++;
-          var top = true;
-
-
-          if(y > 0 && x < line1[y - 1] && puredigitmap[world[y - 1][x].metasymbol]) {
-            //number2 = 2 + parseInt(world[y - 1][x].metasymbol);
-            number2 = 2 + world[y - 1][x].number;
-          } else if(y1 < h && x < line1[y1] && puredigitmap[world[y1][x].metasymbol]) {
-            //number2 = 2 + parseInt(world[y1][x].metasymbol);
-            number2 = 2 + world[y1][x].number;
-            top = false;
-          }
-          var base = -number2 * range;
-          for(var y2 = y; y2 < y1; y2++) {
-            var dist = top ? (y2 - y) : (y1 - y2 - 1);
-            world[y2][x].number = base - dist;
-            //world[y2][x].numberv = world[y2][x].number;
-            //world[y2][x].numberh = world[y2][x].number;
+          while(y1 < h && digitmap[world[y1][x].metasymbol]) y1++;
+          if(puredigitmap[world[y1 - 1][x].metasymbol]) ttb = false;
+          var base = -range;
+          var y0 = y;
+          while(y0 > 0 && digitmap[world[y0][x].metasymbol]) y0--;
+          if(ttb) {
+            // top to bottom
+            for(y2 = y0; y2 < y1; y2++) {
+              if(y2 >= h) break;
+              if(puredigitmap[world[y2][x].metasymbol]) {
+                base = -(2 + world[y2][x].number) * range;
+                y0 = y2; // new start for dist computation
+              } else {  // $
+                var dist = y2 - y0;
+                world[y2][x].number = base - dist;
+              }
+            }
+          } else {
+            // bottom to top
+            for(y2 = y1 - 1; y2 >= y0; y2--) {
+              if(y2 < 0) break;
+              if(puredigitmap[world[y2][x].metasymbol]) {
+                base = -(2 + world[y2][x].number) * range;
+                y1 = y2; // new start for dist computation
+              } else {  // $
+                var dist = y1 - y2;
+                world[y2][x].number = base - dist;
+              }
+            }
           }
         } else {
+          var ltr = true;
           var x1 = x + 1;
-          while(x1 < line1[y] && world[y][x1].metasymbol == '$') x1++;
-          var left = true;
-
-          if(x > 0 && puredigitmap[world[y][x - 1].metasymbol]) {
-            //number2 = 2 + parseInt(world[y][x - 1].metasymbol);
-            number2 = 2 + world[y][x - 1].number;
-          } else if(x1 < line1[y] && puredigitmap[world[y][x1].metasymbol]) {
-            //number2 = 2 + parseInt(world[y][x1].metasymbol);
-            number2 = 2 + world[y][x1].number;
-            left = false;
-          }
-          var base = -number2 * range;
+          while(x1 < line1[y] && digitmap[world[y][x1].metasymbol]) x1++;
+          if(puredigitmap[world[y][x1 - 1].metasymbol]) ltr = false;
+          var base = -range;
           var x0 = x;
-          for(x = x0; x < x1; x++) {
-            var dist = left ? (x - x0) : (x1 - x - 1);
-            world[y][x].number = base - dist;
-            //world[y][x].numberv = world[y][x].number;
-            //world[y][x].numberh = world[y][x].number;
+          while(x0 > line0[y] && digitmap[world[y][x0].metasymbol]) x0--;
+          if(ltr) {
+            // left to right
+            for(x = x0; x < x1; x++) {
+              if(x >= line1[y]) break;
+              if(puredigitmap[world[y][x].metasymbol]) {
+                base = -(2 + world[y][x].number) * range;
+                x0 = x; // new start for dist computation
+              } else {  // $
+                var dist = x - x0;
+                world[y][x].number = base - dist;
+              }
+            }
+          } else {
+            // right to left
+            for(x = x1 - 1; x >= x0; x--) {
+              if(x < line0[y]) break;
+              if(puredigitmap[world[y][x].metasymbol]) {
+                base = -(2 + world[y][x].number) * range;
+                x1 = x; // new start for dist computation
+              } else {  // $
+                var dist = x1 - x;
+                world[y][x].number = base - dist;
+              }
+            }
+            x = x1;
           }
         }
       }
@@ -14108,6 +14375,7 @@ function resetForParse() {
   destroyAudioContext();
   jackclick = null;
   highlightedcomponent = null;
+  muteAudioContext(1);
 }
 
 // 3D version, for wire crossings etc...
@@ -14281,8 +14549,8 @@ function largeDeviceConnected(c, c2) { // largeConnected connectedLarge isLargeC
   if((c == 'c' || c == 'C') && (c2 == 'c' || c2 == 'C')) return false;
 
   // if they are from uniquely distinct device types, they do not interact. E.g. a N and a D are completely different devices so don't interact. But a j and a k would interact since they can be part of one device with mixed letters, the flip-flop. And y (the enable input) can be part of almost anything so always interacts.
-  var c_unique = (c == 'N' || c == 'i' || c == 'T' || c == 'b' || c == 'B' || c == 'M' || c == 'U' || c == 'D');
-  var c2_unique = (c2 == 'N' || c2 == 'i' || c2 == 'T' || c2 == 'b' || c2 == 'B' || c2 == 'M' || c2 == 'U' || c2 == 'D');
+  var c_unique = (c == 'N' || c == 'i' || c == 'T' || c == 'b' || c == 'B' || c == 'M' || c == 'U' || c == 'D' || c == 'f' || c == 'F');
+  var c2_unique = (c2 == 'N' || c2 == 'i' || c2 == 'T' || c2 == 'b' || c2 == 'B' || c2 == 'M' || c2 == 'U' || c2 == 'D' || c2 == 'f' || c2 == 'F');
   if(c_unique && c2_unique) return false;
   // some mix of symbols, e.g. y connecting to a T, forming the enable input of the T
   // note that a few nonsensical combinations can happen here anyway, e.g. a j with a D, but for simplicity of rules (e.g. treat almost all symbols involved in flip-flops the same) those will connect, but should result in error (handled elsewhere)
@@ -14353,6 +14621,7 @@ function parseLargeDevices() {
       }
 
       var type = TYPE_NULL;
+      var seen_fixed_number = false;
       for(var i = 0; i < array.length; i++) {
         var x = array[i][0];
         var y = array[i][1];
@@ -14368,6 +14637,14 @@ function parseLargeDevices() {
         else if(c == 'U') type2 = TYPE_ALU;
         else if(c == 'D') type2 = TYPE_DOTMATRIX;
         else if(c == 'N') type2 = TYPE_MUSIC_NOTE;
+        else if(c == 'f') {
+          type2 = TYPE_CONSTANT_OFF;
+          if(world[y][x].numbertype == NUMBER_FIXED && world[y][x].number >= 0) seen_fixed_number = true;
+        }
+        else if(c == 'F') {
+          type2 = TYPE_CONSTANT_ON;
+          if(world[y][x].numbertype == NUMBER_FIXED && world[y][x].number >= 0) seen_fixed_number = true;
+        }
         else if(devicemap[c]) type2 = TYPE_SMALL;
 
         if(type2 != TYPE_NULL && type2 != TYPE_SPECIAL && type != TYPE_NULL && type != TYPE_SPECIAL && type != type2) {
@@ -14378,6 +14655,11 @@ function parseLargeDevices() {
         if(type2 != TYPE_NULL) {
           if(type == TYPE_NULL || type == TYPE_SPECIAL) type = type2;
         }
+      }
+
+      if(type == TYPE_CONSTANT_OFF || type == TYPE_CONSTANT_ON) {
+        if(seen_fixed_number) type = TYPE_FIXED;
+        else type = TYPE_SMALL;
       }
 
       // in that case it's a flipflop instead
@@ -14396,6 +14678,7 @@ function parseLargeDevices() {
               if(type == TYPE_ALU) world[y][x].circuitsymbol = '#U';
               if(type == TYPE_VTE) world[y][x].circuitsymbol = '#T';
               if(type == TYPE_ROM) world[y][x].circuitsymbol = '#b';
+              if(type == TYPE_FIXED) world[y][x].circuitsymbol = '#f';
               // Don't do this for D and N, it splits up its one component into one component per cell, unlike alu, rom, ..., dotmatrix and musicnote aren't designed for that (and don't need it due to not having outputs).
               //if(type == TYPE_DOTMATRIX) world[y][x].circuitsymbol = '#D';
               //if(type == TYPE_MUSIC_NOTE) world[y][x].circuitsymbol = '#N';
@@ -14606,8 +14889,9 @@ function parseComponents() {
               else if(c == 'E') type2 = TYPE_XNOR;
               else if(c == 'h') type2 = TYPE_ONEHOT;
               else if(c == 'H') type2 = TYPE_NONEHOT;
-              else if(c == 'f') type2 = TYPE_CONSTANT_OFF;
-              else if(c == 'F') type2 = TYPE_CONSTANT_ON;
+              else if(c == 'f') type2 = (world[y][x].numbertype == NUMBER_FIXED && world[y][x].number >= 0) ? TYPE_FIXED : TYPE_CONSTANT_OFF;
+              else if(c == 'F') type2 = (world[y][x].numbertype == NUMBER_FIXED && world[y][x].number >= 0) ? TYPE_FIXED : TYPE_CONSTANT_ON;
+              else if(c == '#f') type2 = TYPE_FIXED;
               else if(c == 'b' || c == 'B' || c == '#b') type2 = TYPE_ROM;
               else if(c == 'i' || c == '#i') type2 = TYPE_IC;
               else if(c == 'M' || c == '#M') type2 = TYPE_MUX;
@@ -14638,6 +14922,9 @@ function parseComponents() {
                 // NOTE: large devices like T, N, ... are treated separately elsewhere
                 ok = true;
               }
+              // allowed to mix, if e.g. f with number and f without number are part of same group with #, they're all fixed.
+              if(type == TYPE_FIXED && (type2 == TYPE_CONSTANT_ON || type2 == TYPE_CONSTANT_OFF)) ok = true;
+              if(type2 == TYPE_FIXED && (type == TYPE_CONSTANT_ON || type == TYPE_CONSTANT_OFF)) ok = true;
               if(!ok) {
                 if((type == TYPE_TRISTATE && c == 'Z') || (type == TYPE_TRISTATE_INV && c == 'z')) {
                   errormessage = 'error: cannot mix low and high tristate buffers (z and Z)';
@@ -14810,6 +15097,7 @@ function parseComponents() {
       else if(c0 == 'T' && component && component.type == TYPE_VTE) type = TYPE_VTE;
       else if(c0 == 'D' && component && component.type == TYPE_DOTMATRIX) type = TYPE_DOTMATRIX;
       else if(c0 == 'N' && component && component.type == TYPE_MUSIC_NOTE) type = TYPE_MUSIC_NOTE;
+      else if((c0 == 'f' || c0 == 'F') && component && component.type == TYPE_FIXED) type = TYPE_FIXED;
       else continue;
 
       array = world[y0][x0].largedevicearray;
@@ -14823,6 +15111,14 @@ function parseComponents() {
         var y = array[i][1];
         var z = array[i][2];
         used[y][x][z] = true;
+      }
+
+      if(type == TYPE_FIXED) {
+        var o = new Fixed();
+        if(!o.init1(array)) {
+          console.log('fixed value error @' + array[0][0] + ' ' + array[0][1]);
+          o.error = true;
+        }
       }
 
       if(type == TYPE_ROM) {
@@ -15130,6 +15426,15 @@ function parseComponents() {
 
   for(var i = 0; i < components.length; i++) {
     var component = components[i];
+    if(component.fixed) {
+      if(!component.fixed.error && !component.fixed.init2()) {
+        component.fixed.error = true;
+        console.log('fixed value error with component ' + i);
+      }
+      if(component.fixed.error) {
+        component.markError(component.fixed.errormessage);
+      }
+    }
     if(component.rom) {
       if(!component.rom.error && !component.rom.init2()) {
         component.rom.error = true;
@@ -15800,7 +16105,7 @@ function pause() {
   paused = true;
   updatePauseButtonText();
   updateTimeButtonBorders();
-  muteAudioContext(1);
+  muteAudioContext(2);
 }
 
 function unpause() {
@@ -15814,7 +16119,7 @@ function unpause() {
   }
   updatePauseButtonText();
   updateTimeButtonBorders();
-  unmuteAudioContext(1);
+  unmuteAudioContext(2);
   update(); // unpause must call update, becuase update starts the timing look again (especially relevant if there are timers)
 }
 
@@ -16055,7 +16360,7 @@ function applyTransform(op) {
 function applyAllTransforms() {
   var text = '';
   for(var i = 0; i < 8; i++) {
-    text += transform(origtext, i) + '\n';
+    text += transform(origtext, i) + '\n\n';
   }
   parseText(text, 'transformed circuit', undefined, 1);
 }
