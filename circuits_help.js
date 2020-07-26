@@ -631,6 +631,125 @@ p-->N400000 0"white noise"
 
 
 
+0"Kinetic output comes in various forms, depending on a number"
+
+0"These have various symbols in graphical mode, or use letter 'K' in text mode."
+
+0"Numbers 0 (or none), 1, 2 and 3 represent different output devices"
+
+s--->K  0"no number: same as 0."
+
+s--->K0 0"fan / wind / cooling"
+
+s--->K1 0"motor / gear"
+
+s--->K2 0"electromagnet"
+
+s--->K3 0"pump / sprinkler / liquid"
+
+s--->K4 0"heating / incandescent"
+
+0"for completeness: other simple output types not using 'K' (excludes dot matrix screen, ascii, ...):"
+
+s--->l  0"light / lamp / LED"
+
+s--->l9 0"LCD"
+
+s--->N  0"speaker"
+
+s--->T  0"binary"
+
+0"These outputs such as fan, electromagnet, ... have no other effect other than"
+0"showing a different icon if enabled. It's no different than what an LED does,"
+0"displaying output. But it can be used to indicate that this output represents"
+0"some particular type of action."
+
+0"Further variants of K do have actions:"
+
+0"Numbers 5-9 represent TNT of different strengths which can permanently disable devices in a certain radius"
+
+    l<S
+    l<S
+s-->K5
+    l<S
+    l<S
+
+
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+      l<Sl<S
+s---->K6 l<S
+      l<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+
+
+0"The effect can also propagate to others, and be detected if a detector is at safe distance:"
+
+    K   K   K   K   K   K
+    6   6   6   6   6   6
+
+s-->K   K   K   K   K   K------>c>l
+    6   6   6   6   6   6
+
+    K   K   K   K   K   K
+    6   6   6   6   6   6
+
+0"Note: size 7..9 are larger and not shown here to not affect the other circuits around here."
+
+
+0"Numbers 10-14 represent EMP of different strengths which can temporarily disable devices in a certain radius"
+
+    l<S
+    l<S
+s-->K10
+    l<S
+    l<S
+
+
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+      l<Sl<S
+s---->K11l<S
+      l<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+
+0"If the EMP disables its own input switch, it will cause flickering:"
+
+
+s-->K11
+
+
+0"Note: size 12..14 are larger and not shown here to not affect the other circuits around here."
+
+
+0"Numbers 15-19 represent jamming signal of different strengths which can temporarily randomize devices in a certain radius"
+
+    l<S
+    l<S
+s-->K15
+    l<S
+    l<S
+
+
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+      l<Sl<S
+s---->K16l<S
+      l<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+
+0"Note: size 17..19 are larger and not shown here to not affect the other circuits around here."
+
+
 0"An RGB LED 'D' takes a red, green and blue input:"
 
 8"R"s--->D<---s"B"6
@@ -1255,10 +1374,25 @@ registerCircuit('Glossary', `
 0"and available automatically, built into this program itself, as opposed to"
 0"user-created and edited circuits. This glossary itself is one of them."
 
+0"- Built-in device: A type of device that has complex behavior but doesn't"
+0"need to be made from individual logic gates since it's provided as a feature by"
+0"the emulator. For example: a mathematical multiplier can be made from"
+0"purely NAND gates alone in a circuit, then it is not a built-in multipler"
+0"but a multiplier made from scratch. But logicemu also provudes the built-in"
+0"ALU component 'U', which can do various operations including multiply,"
+0"using that one means using a built-in device as multiplier."
+
 0"- Cell: a single square on the grid, on which the circuits are built with one"
 0"letter or other ASCII character per cell."
 
 0"- Chip: see Integrated Circuit."
+
+0"- Circuit: One of the pages in LogicEmu, like this glossary itself here is."
+0"There are built-in circuits, like this one, or it's possible to create and"
+0"edit your own circuits. Circuits can contain various devices, wires, gates,"
+0"text comments, etc... and can focus on a single topic, or contain a mix of"
+0"many different topics, things, etc... They can either fit on a single screen,"
+0"or be large and have a scrollbar."
 
 0"- Component: a device, such as an AND gate, a switch, an LED, an interactive"
 0"terminal, and so on. A component can occupy multiple cells, and all its"
@@ -1267,14 +1401,24 @@ registerCircuit('Glossary', `
 0"- Counter Gate: A 'gate' that acts as a single-input T flip-flop or frequency"
 0"halver: it flips its state each time the input goes from low to high."
 0"Example:"
+
 s-->c-->l
 
+0"- Device: see Component"
+
+0"- Device input: see Input"
+
+0"- Dropdown: the various menus in the menu bar at the top, in which various"
+0"options and/or circuits can be selected."
+
 0"- Electron Mode: emulation mode that works gate per gate, slower but lower"
-0"level than immediate mode. Chooseable with one of the top dropdowns. See:"
+0"level than immediate mode. Chooseable with one of the top dropdowns"
+0"See also this other help-circuit:"
 0"INSERT:link:algohelp"
 
 0"- Graphical Mode: Rendering where things are drawn with boxes, arrows and"
 0"generally look more graphical than the text mode."
+0"See also this other help-circuit:"
 0"INSERT:link:renderhelp"
 
 0"- Graphics Mode: see Graphical Mode"
@@ -1283,27 +1427,70 @@ s-->c-->l
 
 0"- Immediate Mode: emulation mode that works globally and faster than electron"
 0"mode, for sequential circuits or combinational circuits without loops."
-0"Chooseable with one of the top dropdowns. See:"
+0"Chooseable with one of the top dropdowns."
+0"See also this other help-circuit:"
 0"INSERT:link:algohelp"
+
+0"- Input: this can mean two things:"
+0" - Inputs of some circuit, such as the switches 's', pushbuttons 'p' or"
+0"   keyboard/decimal input with an interactive terminal"
+0" - As device input: the arrows (or circles if negated) that enter some device"
+0"   or logic gate. Example: the arrow that enters the LED 'l' here:"
+
+s-->l
+
 
 0"- Integrated Circuit: the ability to define a circuit and reuse it multiple"
 0" times elsewhere on the board. The definition or template is indicated with"
 0"a capital 'I' and a usage or instance with a small 'i'"
 
+0"- Large Device: built-in devices that can have multiple differently"
+0"interpreted inputs and/or outputs. E.g. the Terminal which interprets"
+0"inputs differently based on their location (ASCII input bits, 'read' signal,"
+0"and so on). This as opposed to simple logic gates, LEDs, ... which interpret"
+0"all inputs according to the same simple rules. Large devices typically also"
+0"have larger surface area to allow all those inputs and ouptuts."
+
+0"- Logic Gate: one of the basic logic gates such as OR, NOR, AND, NAND, XOR,"
+0"XNOR. This is a type of device, other devices such as LED, switch or"
+0"interactive terminal are not logic gates."
+
+0"- LSB: least significant bit: if bits represent a number, which of the bits"
+0"has the value '1' (with the bit next to it having value '2', then '4', and"
+0"so on). For some built-in devices in logicemu, it matters on which side of"
+0"an input the LSB is (and the MSB, most significant bit, is on the other side).
+
 0"- Mode: this can refer to algorithm mode (immediate mode or electron mode)"
 0"or to rendering mode (text mode or graphical mode), see their respective"
 0"entries."
 
+0"- MSB: most significant bit, the bit farthest away from the LSB, see: LSB"
+
 0"- Part: a character on a single cell (see Cell), as opposed to a Component"
 0"which is made from one or more parts (or cells)."
+
+0"- Rendering Mode: either graphics mode or text mode, see their definitions."
+
+0"- Terminal: see VTE."
 
 0"- Text Mode: Rendering where things are drawn with individual letter characters"
 0"and other ASCII characters. Less nice looking than graphical mode, but more"
 0"similar to the source code, and may be faster in some browsers."
+0"See also this other help-circuit:"
 0"INSERT:link:renderhelp"
 
 0"- Ticks: The amount of emulation steps done so far. Individual ticks can"
 0"be seen by using the tick button when the circuit is paused."
+
+0"- VTE: Interactive Terminal, either as keyboard and/or as screen, made with 'T'."
+0"The abbreviation VTE stands for Virtual Terminal Emulator, normally software"
+0"emulated terminals are called such, and the one here represents actual"
+0"hardware, so this may be a slight misnomer."
+
+0"- Wire: Anything that connects devices together. The wires will have the"
+0"logic value of the devices they are outputting from, and give that value"
+0"to device inputs. Buses, backplane connections and patch cables in jacks"
+0"are also forms of wires."
 
 `, 'glossary');
 
@@ -1768,7 +1955,7 @@ registerCircuit('Editing Help', `
 0"parts that exist, and the cells they are made from."
 
 0"Table of contents:"
-0"INSERT:toc"
+0"INSERT:toc1"
 
 0"# Introduction"
 
@@ -2967,6 +3154,127 @@ p-->N400000 0"white noise"
   |||      ||||    ||||    |
   sss      sSss    ssss    S
 1"shape" 1"freq"  1"vol""enable"1
+
+
+0"## Kinetic Output"
+
+3"K: kinetic output, comes in various forms, depending on a number"
+
+0"These have various symbols in graphical mode, or use letter 'K' in text mode."
+
+0"Numbers 0 (or none), 1, 2 and 3 represent different output devices"
+
+s--->K  0"no number: same as 0."
+
+s--->K0 0"fan / wind / cooling"
+
+s--->K1 0"motor / gear"
+
+s--->K2 0"electromagnet"
+
+s--->K3 0"pump / sprinkler / liquid"
+
+s--->K4 0"heating / incandescent"
+
+0"for completeness: other simple output types not using 'K' (excludes dot matrix screen, ascii, ...):"
+
+s--->l  0"light / lamp / LED"
+
+s--->l9 0"LCD"
+
+s--->N  0"speaker"
+
+s--->T  0"binary"
+
+0"These outputs such as fan, electromagnet, ... have no other effect other than"
+0"showing a different icon if enabled (in graphics mode at least). It's no"
+0"different than what an LED does, displaying output. But it can be used to"
+0"indicate that this output represents some particular type of action."
+
+0"Further variants of K do have actions:"
+
+0"Numbers 5-9 represent TNT of different strengths which can permanently disable devices in a certain radius"
+
+    l<S
+    l<S
+s-->K5
+    l<S
+    l<S
+
+
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+      l<Sl<S
+s---->K6 l<S
+      l<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+
+
+0"The effect can also propagate to others, and be detected if a detector is at safe distance:"
+
+    K   K   K   K   K   K
+    6   6   6   6   6   6
+
+s-->K   K   K   K   K   K------>c>l
+    6   6   6   6   6   6
+
+    K   K   K   K   K   K
+    6   6   6   6   6   6
+
+0"Note: size 7..9 are larger and not shown here to not affect the other circuits around here."
+
+
+0"Numbers 10-14 represent EMP of different strengths which can temporarily disable devices in a certain radius"
+
+    l<S
+    l<S
+s-->K10
+    l<S
+    l<S
+
+
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+      l<Sl<S
+s---->K11l<S
+      l<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+
+0"If the EMP disables its own input switch, it will cause flickering:"
+
+
+s-->K11
+
+
+0"Note: size 12..14 are larger and not shown here to not affect the other circuits around here."
+
+
+0"Numbers 15-19 represent jamming signal of different strengths which can temporarily randomize devices in a certain radius"
+
+    l<S
+    l<S
+s-->K15
+    l<S
+    l<S
+
+
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+      l<Sl<S
+s---->K16l<S
+      l<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+   l<Sl<Sl<S
+
+0"Note: size 17..19 are larger and not shown here to not affect the other circuits around here."
 
 
 
@@ -4533,6 +4841,9 @@ s   s   s
 3"INSERT;toc        : inserts a table of contents to chapters in this circuit.        "
 3"                    Clicking a link will scroll towards that chapter title. Chapter "
 3"                    titles are made with markdown as explained earlier.             "
+3"INSERT;toc1       : Similar to toc but only shows heading 1 chapters                "
+3"INSERT;toc2       : Similar to toc but only shows up to heading 2 chapters          "
+3"INSERT;toc3       : Same as toc since it shows up to heading 3 chapters, the maximum"
 3"INSERT;links      : inserts a table of links to all built-in circuits. The links    "
 3"                    will open the clicked circuit and thus close the current one.   "
 3"INSERT;links_help : similar to links, but only the subset of help articles.         "
@@ -4634,6 +4945,7 @@ registerCircuit('ASCII symbol summary', `
 3"D: dot matrix display, RGB LED, oscilloscope"
 3"rR: real-time timer"
 3"N: music note (speaker for audio/music/noise)"
+3"K: kinetic, various misc output devices"
 3"?: random bit generator"
 
 3"bB: ROM/RAM bits"
@@ -6314,6 +6626,38 @@ registerCircuit('Music Note (audio speaker) with multiple controls and Enable (N
 
 `, 'component' + componentid++);
 
+registerCircuit('Fan (K)', `
+s-->K
+`, 'component' + componentid++);
+
+registerCircuit('Motor / Gear (K)', `
+s-->K1
+`, 'component' + componentid++);
+
+registerCircuit('Electromagnet (K)', `
+s-->K2
+`, 'component' + componentid++);
+
+registerCircuit('Pump / Sprinkler (K)', `
+s-->K3
+`, 'component' + componentid++);
+
+registerCircuit('Heater', `
+s-->K4
+`, 'component' + componentid++);
+
+registerCircuit('TNT (K)', `
+s-->K9
+`, 'component' + componentid++);
+
+registerCircuit('EMP (K)', `
+s-->K14
+`, 'component' + componentid++);
+
+registerCircuit('JAM (K)', `
+s-->K19
+`, 'component' + componentid++);
+
 registerCircuit('Bus (=)', `
 
 s---0=              =4-->l
@@ -6322,6 +6666,7 @@ s---2================2-->l
 s---3=              =1-->l
 s---4=              =0-->l
 `, 'component' + componentid++);
+
 
 registerCircuit('Bus crossing (=+)', `
 
@@ -7417,6 +7762,14 @@ f-----------]l8
 1-----------]l8
 f----------->l8
 
+
+F------v
+       K10
+S----->o----]l8
+S----->o---->l8
+
+S--->K------>l8
+
 0"# Off"
 
 0"In this section, the LED on the right of each contraption must be OFF. If"
@@ -7569,6 +7922,15 @@ F-->J####---]l8
 
 F-->J    J-->l8
 
+
+F------v
+       K5
+F----->o---->l8
+
+
+F------v
+       K10
+F----->o---->l8
 
 0"# Toggle"
 
@@ -8231,6 +8593,24 @@ s>J   J>#      J>#      J>L
 
 
                                        J   J   J   J
+
+0"# K-outputs"
+
+s-->K
+
+s-->K0       s-->K5       s-->K10      s-->K15
+
+s-->K1       s-->K6       s-->K11      s-->K16
+
+s-->K2       s-->K7       s-->K12      s-->K17
+
+s-->K3       s-->K8       s-->K13      s-->K18
+
+s-->K4       s-->K9       s-->K14      s-->K19
+
+
+
+
 
 0"# Error color"
 

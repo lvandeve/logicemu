@@ -750,13 +750,11 @@ function createMenuUI() {
       ' This is a very limited form of editing. It doesn\'t support creating or removing wire connections. It can only change a device that has one of the types in the list to another type in the list. On other devices it may either do nothing, or cause' +
       ' unexpected behavior. Changes in IC templates have no effect on instances. Changes are not saved. Use the full editor or import for more complete features intstead.';
   changeDropdown.onchange = function() {
-    changeMode = changeDropdownElements[changeDropdown.selectedIndex];
+    if(changeDropdown.selectedIndex == 0) return;
+    changeMode = changeDropdownElements[changeDropdown.selectedIndex - 1];
   };
-  for(var i = 0; i < changeDropdownElements.length; i++) {
-    var type = changeDropdownElements[i];
-    var text = (typesymbols[type] == undefined) ? '[change]' : typesymbols[type];
-    //if(type == 'rem_inputs') text = 'disconnect inputs';
-    if(type == 'c' || type == 'C') text = type;
+  for(var i = -1; i < changeDropdownElements.length; i++) {
+    var text = (i == -1) ? '[change]' : changeDropdownElements[i][1];
     var el = util.makeElement('option', changeDropdown);
     el.innerText = text;
   }
@@ -865,7 +863,7 @@ function createMenuUI() {
   };
 
   var randomCircuitButton = util.makeUIElement('button', menuRow1El, 1);
-  randomCircuitButton.innerText = 'R';
+  randomCircuitButton.innerText = '?';
   randomCircuitButton.title = 'Load a random built-in circuit';
   randomCircuitButton.onclick = function() {
     var i = Math.floor(Math.random() * allRegisteredCircuits.length);

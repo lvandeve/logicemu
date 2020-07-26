@@ -1476,6 +1476,7 @@ var TYPE_RANDOM = TYPE_index++;
 var TYPE_MUSIC_NOTE = TYPE_index++; // music, speaker, sound, audio, jukebox. type_note type_musicnote
 var TYPE_JACK = TYPE_index++; // jack for patch cables
 var TYPE_TOC = TYPE_index++; // table of contents, a type of comment
+var TYPE_KINETIC = TYPE_index++;
 
 // number types (higher value/nearer to bottom = higher priority) [numbertype number_type number priority number order numbers priority numbers order]
 var NUMBER_index = 0;
@@ -1488,6 +1489,7 @@ var NUMBER_NOTE = NUMBER_index++;
 var NUMBER_ROM = NUMBER_index++;
 var NUMBER_ALU = NUMBER_index++;
 var NUMBER_VTE = NUMBER_index++;
+var NUMBER_KINETIC = NUMBER_index++;
 var NUMBER_ICCALL = NUMBER_index++;
 var NUMBER_ICDEF = NUMBER_index++;
 var NUMBER_GLOBAL = NUMBER_index++; // for global wire g
@@ -1515,13 +1517,14 @@ typesymbols[TYPE_ONEHOT] = 'h'; typesymbols[TYPE_NONEHOT] = 'H';
 typesymbols[TYPE_CONSTANT_OFF] = 'f'; typesymbols[TYPE_CONSTANT_ON] = 'F';
 typesymbols[TYPE_FLIPFLOP] = 'c'; typesymbols[TYPE_RANDOM] = '?'; typesymbols[TYPE_DELAY] = 'd';
 typesymbols[TYPE_TRISTATE] = 'z'; typesymbols[TYPE_TRISTATE_INV] = 'Z';
-typesymbols[TYPE_MUSIC_NOTE] = 'N'; typesymbols[TYPE_JACK] = 'J';
+typesymbols[TYPE_MUSIC_NOTE] = 'N'; typesymbols[TYPE_JACK] = 'J'; typesymbols[TYPE_KINETIC] = 'K';
 
 
 var devicemap = {'a':true, 'A':true, 'o':true, 'O':true, 'e':true, 'E':true, 'h':true, 'H':true, 'f':true, 'F':true,
                  's':true, 'S':true, 'l':true, 'r':true, 'R':true, 'p':true, 'P':true,
                  'j':true, 'k':true, 'd':true, 't':true, 'q':true, 'Q':true, 'c':true, 'C':true, 'y':true,
-                 'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true, '?':true, 'N':true, 'J':true};
+                 'b':true, 'B':true, 'M':true, 'U':true, 'i':true, 'T':true, 'D':true, 'z':true, 'Z':true,
+                 '?':true, 'N':true, 'J':true, 'K':true};
 // all "large" devices with slightly different parsing rules, where different cells can be different types of inputs/outputs
 // the "start" cells allow starting the parsing there. The extra ones can only be used once having started from one of the others
 // characters NOT included here but that can be part of large device once parsing: 'c' (can be standalone gate), '#', digits
@@ -1550,7 +1553,8 @@ var knownmap = {'-':true, '|':true, '+':true, '.':true, '/':true, '\\':true, 'x'
                 'c':true, 'C':true, 'y':true, 'j':true, 'k':true, 't':true, 'd':true, 'q':true, 'Q':true, 'b':true, 'B':true, 'M':true, 'U':true,
                 '^':true, '>':true, 'v':true, '<':true, 'm':true, ']':true, 'w':true, '[':true, 'V':true, 'W':true, 'X':true, 'Y':true,
                 '#':true, '=':true, 'i':true, 'T':true, 'D':true, '(':true, ')':true, 'n':true, 'u':true, ',':true, '%':true, '&':true, '*':true,
-                'z':true, 'Z':true, '?':true, 'N':true, 'J':true, 'toc':true, '#i':true, '#c':true, '#f':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#N':true};
+                'z':true, 'Z':true, '?':true, 'N':true, 'J':true, 'K':true, 'toc':true,
+                '#i':true, '#c':true, '#f':true, '#b':true, '#M':true, '#U':true, '#T':true, '#D':true, '#N':true};
 var digitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true, '$':true};
 var puredigitmap = {'0':true, '1':true, '2':true, '3':true, '4':true, '5':true, '6':true, '7':true, '8':true, '9':true};
 
@@ -7864,6 +7868,7 @@ function Component() {
   this.value = false;
   this.prevvalue = false; // used for the slow algorithms, plus also for flipflops (to support shift registers with D flipflops made from counters...)
   this.type = TYPE_NULL;
+  this.disabled = 0; // mask 1: fully disabled, mask 2: temp disabled, mask 4: activated, 8: jammed (random value)
   this.inputs = []; // input components. The same one may appear multiple times, that is fine (if same component wired to different inputs of this one)
   this.inputs_negated = []; // true if this input is negated (using m]w[ instead of ^>v<)
   this.cells = []; //x,y,z coordinates of world cells
@@ -8032,6 +8037,8 @@ function Component() {
       return numon > 0;  // NOTE: not correct in case volume is off or not enabled, this is just initial value
     } else if(this.type == TYPE_JACK) {
       return numon != 0; // not implemented in this function, but elsewhere, but behave like OR initially when not yet connected to another jack
+    } else if(this.type == TYPE_KINETIC) {
+      return numon != 0;
     }
     return false;
   };
@@ -8073,6 +8080,14 @@ function Component() {
   this.update = function() {
     if(this.updated) return;
     this.updated = true;
+    if(this.disabled & 11) {
+      this.value = false;
+      if(this.value != this.prevvalue) this.changed = true;
+      if(this.musicnote) this.musicnote.stop();
+      if(this.disabled & 8) this.value = Math.random() > 0.5;
+      this.disabled &= ~10; // flag 2/8 are temporary
+      return;
+    }
     if(this.parent) this.parent.update();
     var numon = 0;
     var numoff = 0;
@@ -8262,6 +8277,86 @@ function Component() {
         if(jacks[i].value != jacks[i].prevvalue) jacks[i].changed = true;
         jacks[i].updated = true;
       }
+    } else if(this.type == TYPE_KINETIC) {
+      this.value = this.getNewValue(numon, numoff);
+      if(this.number >= 5 && this.number <= 19) {
+        var emp = (this.number >= 10 && this.number <= 14);
+        var jam = (this.number >= 15 && this.number <= 19);
+        var activate = false;
+        if(emp || jam) {
+          activate = this.value;
+        } else {
+          if(this.value || this.prevvalue) activate = true;
+          if(!emp && !jam && (this.disabled & 4)) {
+            this.value = true;
+            if(Math.random() < 0.2) {
+              activate = true;
+            } else {
+              this.changein = 1;
+            }
+          }
+        }
+        if(activate) {
+          if(!emp && !jam) this.disabled |= 1;
+          var radius = 1;
+          if((this.number % 5) == 0) radius = 1;
+          if((this.number % 5) == 1) radius = 4;
+          if((this.number % 5) == 2) radius = 8;
+          if((this.number % 5) == 3) radius = 16;
+          if((this.number % 5) == 4) radius = 32;
+          var x0 = this.corecell.x - radius;
+          var x1 = this.corecell.x + radius;
+          var y0 = this.corecell.y - radius;
+          var y1 = this.corecell.y + radius;
+          for(var y = y0; y <= y1; y++) {
+            if(y < 0) y = 0;
+            if(y >= h) break;
+            for(var x = x0; x <= x1; x++) {
+              if(x < line0[y]) x = line0[y];
+              if(x > line1[y]) break;
+              var dx = this.corecell.x - x;
+              var dy = this.corecell.y - y;
+              if(radius > 1) {
+                if(dx * dx + dy * dy > radius * radius) continue;
+                if(!emp && !jam && radius > 4 && Math.random() > 0.5 && dx * dx + dy * dy > radius * radius * 0.8) continue; // slightly randomize the shape
+              } else {
+                if(Math.abs(dx) + Math.abs(dy) > 1) continue;
+              }
+              var c = world[y][x];
+              if(!c) continue;
+              if(devicemaparea[c.circuitsymbol]) {
+                var type = TYPE_NULL;
+                for(var i = 0; i < c.components.length; i++) {
+                  if(c.components[i]) {
+                    type = c.components[i].type;
+                    if(emp) {
+                      if(type == TYPE_KINETIC && c.components[i].number >= 10 && c.components[i].number <= 14) {
+                        // emp is immune to emp
+                      } else {
+                        c.components[i].disabled |= 2;
+                      }
+                    } else if(jam) {
+                      if(type == TYPE_KINETIC && c.components[i].number >= 15 && c.components[i].number <= 19) {
+                        // jam is immune to jam
+                      } else {
+                        c.components[i].disabled |= 8;
+                        this.changein = 1;
+                      }
+                    } else {
+                      if(type == TYPE_KINETIC && c.components[i].number >= 5 && c.components[i].number <= 9) {
+                        c.components[i].disabled |= 4;
+                      } else {
+                        c.components[i].disabled |= 1;
+                      }
+                    }
+                  }
+                }
+                c.renderer.setLook(c, type);
+              }
+            }
+          }
+        }
+      }
     } else if(this.type == TYPE_IC) {
       // a component of this type in theory should do nothing and not be connected with anything, it's just
       this.value = false;
@@ -8433,6 +8528,11 @@ function Component() {
   };
 
   this.mousedown = function(e, x, y) {
+    // repair if CTRL key down
+    if(this.disabled && e.ctrlKey) {
+      this.disabled = 0;
+      return;
+    }
     if(e.shiftKey && !e.ctrlKey && !changeMode) {
       if(isPaused() && highlightedcomponent == this) {
         highlightedcomponent = null;
@@ -8530,23 +8630,14 @@ function Component() {
     if(changeMode) {
       changeDropdown.selectedIndex = 0; // so that "onchange" works again even if choosing the same one ...
       var value = this.value;
-      var type = changeMode;
+      var type = changeMode[0];
       var symbol = typesymbols[type];
+      // Do not support changing large devices, it breaks them irreversably during this circuit run
+      if(!(type == TYPE_KINETIC && changeMode[2] > 0) && (this.parent || this.dotmatrix || this.type == TYPE_IC)) return;
       if(this.musicnote) this.musicnote.stop();
-      /*if(changeMode == 'rem_inputs') {
-        this.inputs = [];
-        changeMode = null;
-        return;
-      }*/
-      if(changeMode == 'c') {
-        value = false;
-        symbol = 'c';
-        type = TYPE_COUNTER;
-      }
-      if(changeMode == 'C') {
-        value = true;
-        symbol = 'C';
-        type = TYPE_COUNTER;
+      if(type == TYPE_COUNTER) {
+        value = !!changeMode[2];
+        symbol = value ? 'C' : 'c';
       }
       if(type == TYPE_TIMER_OFF) {
         this.clocked = false;
@@ -8563,6 +8654,9 @@ function Component() {
           this.musicnote.initDefault(this);
         }
       }
+      if(type == TYPE_KINETIC) {
+        this.number = changeMode[2] || 0;
+      }
       if(type == TYPE_JACK && !this.partner) {
         this.partner = [];
         this.partnerdiv = [];
@@ -8572,8 +8666,6 @@ function Component() {
         removepatchcables(this);
       }
       if(!e.ctrlKey && !e.shiftKey) changeMode = null;
-      // Do not support changing large devices, it breaks them irreversably during this circuit run
-      if(this.parent || this.dotmatrix || this.type == TYPE_IC) return;
       this.type = type;
       this.value = value;
       if(!symbol) return;
@@ -8585,6 +8677,7 @@ function Component() {
         cell.circuitsymbol = symbol;
         cell.initDiv(cell.x, cell.y);
       }
+      this.disabled = 0; // also repair the component
       if(!paused) update();
       else render();
       return;
@@ -9058,7 +9151,7 @@ function setColorScheme(index) {
     SWITCHON_BORDERCOLOR = 'white';
     SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
-    LINKCOLOR = '#88f';
+    LINKCOLOR = '#008';
     TITLECOLOR = ONCOLOR;
   } else if(index == 7) { // candy
     setColorScheme(0);
@@ -9163,7 +9256,7 @@ function setColorScheme(index) {
     OUTSIDESCREENBGCOLOR = BGCOLOR;
     OUTSIDESCREENFGCOLOR = OFFCOLOR;
 
-    LINKCOLOR = 'blue';
+    LINKCOLOR = (index == 11) ? '#88f' : 'blue';
     TITLECOLOR = ONCOLOR;
 
     TERMINALBGCOLOR = ONCOLOR;
@@ -9443,6 +9536,8 @@ function Cell() {
         if(this.numbertype == NUMBER_ROM) title = 'digit indicating least significant bit position of ROM address';
         if(this.numbertype == NUMBER_ALU) title = 'digit affecting ALU operation';
         if(this.numbertype == NUMBER_VTE && this.metasymbol == '1') title = 'digit indicating decimal display is signed';
+        if(this.numbertype == NUMBER_VTE && this.metasymbol == '2') title = 'digit indicating decimal display is floating point';
+        if(this.numbertype == NUMBER_KINETIC) title = 'number defining type of kinetic device';
         if(this.numbertype == NUMBER_ICCALL) title = 'IC usage numeric code, matches an IC definition';
         if(this.numbertype == NUMBER_ICDEF) title = 'IC definition numeric code';
         if(this.numbertype == NUMBER_GLOBAL) title = 'backplane numbered connection';
@@ -9494,6 +9589,21 @@ function Cell() {
       if(tc == 'E') title = 'XNOR gate (even parity detector). Truth table for 2 inputs: 00:1, 01:0, 10:0, 11:1';
       if(tc == 'h') title = 'one-hot detector (same as XOR if 2 inputs). Truth table for 2 inputs: 00:0, 01:1, 10:1, 11:0';
       if(tc == 'H') title = 'inverted one-hot detector (same as XNOR if 2 inputs). Truth table for 2 inputs: 00:1, 01:0, 10:0, 11:1';
+      if(tc == 'K') {
+        title = 'kinetic device';
+        if(component) {
+          title += ': ';
+          if(!component.number) title += 'fan / wind / cooling';
+          if(component.number == 1) title += 'motor / gear';
+          if(component.number == 2) title += 'electromagnet';
+          if(component.number == 3) title += 'pump / sprinkler / liquid';
+          if(component.number == 4) title += 'heating / incandescent';
+          if(component.number >= 5 && component.number <= 9) title += 'TNT: destroys devices around it';
+          if(component.number >= 10 && component.number <= 14) title += 'EMP: temporarily disables devices around it';
+          if(component.number >= 15 && component.number <= 19) title += 'JAM: temporarily randomizes devices around it';
+        }
+
+      }
       if(tc == 'f' || tc == 'F') {
         if(component && component.parent) {
           if(component.parent.fixed && component.parent.fixed.inverted) title = 'constant binary value given as decimal (output bits inverted)';
@@ -9858,7 +9968,7 @@ function Cell() {
         for(var i = 0; i < w.components.length; i++) {
           var compo = w.components[i];
           if(!compo) continue;
-          console.log('component ' + i + ': index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y + ' number: ' + compo.number + ' | rom_out_pos: ' + compo.rom_out_pos + ' ff_cycle: ' + compo.ff_cycle + ',' + compo.ff_cycle_time);
+          console.log('component ' + i + ': index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y + ' number: ' + compo.number + ' | rom_out_pos: ' + compo.rom_out_pos + ' ff_cycle: ' + compo.ff_cycle + ',' + compo.ff_cycle_time + ', disabled: ' + compo.disabled);
           if(compo.parent) console.log('parent: index: ' + compo.parent.index + ',  type: ' + compo.parent.type + ', corecell: ' + compo.parent.corecell.circuitsymbol + ', corecell.x: ' + compo.parent.corecell.x + ', corecell.y: ' + compo.parent.corecell.y);
           for(var j = 0; j < compo.inputs.length; j++) {
             var corecellinfo = (compo.inputs[j].corecell) ? (compo.inputs[j].corecell.circuitsymbol + ', corecell.x: ' + compo.inputs[j].corecell.x + ', corecell.y: ' + compo.inputs[j].corecell.y) : ('' + compo.inputs[j].corecell);
@@ -9918,7 +10028,7 @@ var chapters = [];
 
 // the element must already have enough room in the circuit from makeTocRoom
 // linkid only used for tocType == 4
-function setTocHTML(tocType, linkid, el) {
+function setTocHTML(tocType, tocDepth, linkid, el) { // gettochhtml
   el.innerText = '';
   el.style.fontFamily = 'unset'; // remove monospace
   var html = '';
@@ -9927,10 +10037,12 @@ function setTocHTML(tocType, linkid, el) {
     /*var div = makeDiv(0, 0, 800, th, el);
     div.innerText = 'Table of Contents (in this article):';
     div.style.textAlign = 'left';*/
+    var j = 0;
     for(var i = 0; i < chapters.length; i++) {
+      if(tocDepth > 0 && chapters[i][2] > tocDepth) continue;
       var text = chapters[i][0] || '';
       if(text.length > 80) text = text.substr(0, 80) + '...';
-      var div = makeDiv(0, i * th, tw, th, el);
+      var div = makeDiv(0, j * th, tw, th, el);
       var indent = (chapters[i][2] - 1) * tw;
       var width = Math.floor(text.length * tw * 0.66 + indent + tw * 4);
       div.style.width = width + 'px';
@@ -9948,6 +10060,7 @@ function setTocHTML(tocType, linkid, el) {
       span.style.fontWeight = 'bold';
       span.style.cursor = 'pointer';
       span.style.whiteSpace = 'nowrap';
+      j++;
     }
   }
   if(tocType == 1 || tocType == 2 || tocType == 3) {
@@ -10051,6 +10164,7 @@ function RendererText() {
   this.div1 = null; // div for on style
   this.init2done = false;
   this.clickDiv = null;
+  this.componentdisabled = false;
 
   this.globalInit = function() {
     document.body.style.backgroundColor = BGCOLOR;
@@ -10082,6 +10196,7 @@ function RendererText() {
 
   // one time initialization of a cell
   this.init = function(cell, x, y, clickfun) {
+    this.componentdisabled = false;
     this.div0 = makeDiv(x * tw, y * th, tw, th, worldDiv);
     this.div0.onmousedown = clickfun;
     //this.div0.ontouchstart = clickfun;
@@ -10238,7 +10353,7 @@ function RendererText() {
       this.div0.onmousedown = null;
       //this.div0.ontouchstart = null;
     } else if(symbol == 'toc') {
-      setTocHTML(cell.circuitextra, cell.toclink, this.div0);
+      setTocHTML(cell.circuitextra, cell.tocdepth, cell.toclink, this.div0);
     } else {
       if(symbol == '.' || symbol == ',') {
         // shift the wire '.' and ',' up a bit so it is better centered in the div,
@@ -10376,6 +10491,11 @@ function RendererText() {
       this.div1.title = opt_title;
     }
 
+    //if(cell.components[0] && cell.components[0].disabled && devicemaparea[cell.circuitsymbol]) {
+    if(cell.components[0] && devicemaparea[cell.circuitsymbol]) {
+      this.setLook(cell, cell.components[0].type);
+    }
+
     this.init2done = true;
   };
 
@@ -10429,6 +10549,18 @@ function RendererText() {
   };
 
   this.setLook = function(cell, type) {
+    if(!this.div0) return;
+
+    if(cell.components[0] && (cell.components[0].disabled & 1)) {
+      if(this.componentdisabled) return;
+      this.componentdisabled = true;
+      //util.removeElement(this.div0);
+      util.removeElement(this.div1);
+      this.div0.style.visibility = 'visible';
+      this.div0.innerHTML = '';
+      this.div0.style.backgroundColor = OFFCOLOR;
+      return;
+    }
     /*
     For switch: user click toggles it between TYPE_SWITCH_ON and TYPE_SWITCH_OFF. The
     on type uses div1 and capital S, the off type uses div0 and small s. div1 comes with green bg, div0 with 'off' bg.
@@ -10443,6 +10575,8 @@ function RendererText() {
     // Reading from .innerText turns out to be very slow in JavaScript (for the comparisons with 'R', 'r', etc...),
     // even if there are just a few hundreds switches/timers/... in a large map, and for that reason, the separate
     // fields look0 and look1 are used instead.
+    if(!this.div1) return;
+    if(!cell.components[0] || cell != cell.components[0].corecell) return;
     if(type == TYPE_TIMER_ON || type == TYPE_TIMER_OFF) {
       var clocked = cell.components[0].clocked;
       if(clocked && this.look0 != 'R') this.div0.innerText = this.look0 = 'R';
@@ -10707,6 +10841,35 @@ function RendererDrawer() {
     ctx.stroke();
   };
 
+  this.drawFilledTriangle_ = function(ctx, x0, y0, x1, y1, x2, y2) {
+    var x0b = this.tx + Math.floor(x0 * tw);
+    var y0b = this.ty + Math.floor(y0 * th);
+    var x1b = this.tx + Math.floor(x1 * tw);
+    var y1b = this.ty + Math.floor(y1 * th);
+    var x2b = this.tx + Math.floor(x2 * tw);
+    var y2b = this.ty + Math.floor(y2 * th);
+
+    ctx.beginPath();
+    ctx.moveTo(x0b, y0b);
+    ctx.lineTo(x1b, y1b);
+    ctx.lineTo(x2b, y2b);
+    ctx.fill();
+  };
+
+  this.drawFilledRectangle_ = function(ctx, x0, y0, x1, y1) {
+    var x0b = this.tx + Math.floor(x0 * tw);
+    var y0b = this.ty + Math.floor(y0 * th);
+    var x1b = this.tx + Math.floor(x1 * tw);
+    var y1b = this.ty + Math.floor(y1 * th);
+
+    ctx.beginPath();
+    ctx.moveTo(x0b, y0b);
+    ctx.lineTo(x1b, y0b);
+    ctx.lineTo(x1b, y1b);
+    ctx.lineTo(x0b, y1b);
+    ctx.fill();
+  };
+
   // arrow head will be at x1, y1
   this.drawArrowCore_ = function(ctx, x0, y0, x1, y1, opt_w) {
     var w = opt_w || 0.3;
@@ -10809,6 +10972,16 @@ function RendererDrawer() {
   this.drawCircle_ = function(ctx, x, y, radius) {
     ctx.beginPath();
     this.drawCircleCore_(ctx, x, y, radius);
+    ctx.stroke();
+  };
+
+  this.drawEllipse_ = function(ctx, x, y, radiusx, radiusy) {
+    var xb = Math.floor(x * tw);
+    var yb = Math.floor(y * th);
+    var rxb = Math.floor(radiusx * th);
+    var ryb = Math.floor(radiusy * th);
+    ctx.beginPath();
+    ctx.ellipse(this.tx + xb, this.ty + yb, rxb, ryb, 0, 0, Math.PI * 2, true);
     ctx.stroke();
   };
 
@@ -11418,6 +11591,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   this.dynamicdrawcode = 0;
   this.norender = false; // don't do anything in setValue
   this.falserender = false; // only do something in setValue the first time
+  this.componentdisabled = false;
 
   this.globalInit = function() {
     this.fallback.globalInit();
@@ -11435,6 +11609,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
 
   // one time initialization of a cell
   this.init = function(cell, x, y, clickfun) {
+    this.componentdisabled = false;
     var c = cell.circuitsymbol;
     if(digitmap[cell.metasymbol] && (cell.numbertype == NUMBER_LED /*|| cell.numbertype == NUMBER_ANTENNA*/)) {
       // Don't render the LED numbers in the graphical render mode (note: in text mode, they are rendered)
@@ -12052,7 +12227,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           ctx.fillText(symbol, drawer.tx + (tw >> 1), drawer.ty + (th >> 1));
         }
       } else if(c == '@') {
-        drawer.fillBg_(ctx, TEXTFGCOLOR);
+        //drawer.fillBg_(ctx, TEXTFGCOLOR);
+        drawer.fillBg_(ctx, OFFCOLOR);
       } else if(c == 'I' || (cell.numbertype == NUMBER_ICDEF && digitmap[c])) {
         this.fallback.init2(cell, symbol, virtualsymbol); this.usefallbackonly = true; break;
       } else if(virtualsymbol == 'T') {
@@ -12158,6 +12334,121 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
             symbol = cell.labelsymbol;
           }
         }
+        if(c == 'K') { // TYPE_KINETIC
+          okdraw = false;
+          if(!component.number) {
+            // draw a fan-icon
+            drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.15);
+            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.1, 0.1, 0.3, 0.1);
+            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.9, 0.1, 0.9, 0.3);
+            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.9, 0.9, 0.7, 0.9);
+            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.1, 0.9, 0.1, 0.7);
+            if(i == 1) {
+              // draw stripes that indicate the fan is spinning
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15, 1.0/8, 0.25);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15, 1.0/8, 0.35);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.25, 1.0/8+0.25, 0.25);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.25, 1.0/8+0.25, 0.35);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.5, 1.0/8+0.5, 0.25);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.5, 1.0/8+0.5, 0.35);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.75, 1.0/8+0.75, 0.25);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.75, 1.0/8+0.75, 0.35);
+            }
+          } else if(component.number == 1) {
+            // draw a gear-icon
+            drawer.drawCircle_(ctx, 0.5, 0.5, 0.15);
+            var num = (tw < 32) ? 6 : 8;
+            var r0 = 0.25;
+            var r1 = 0.35;
+            for(var j = 0; j < num; j++) {
+              var t0 = j / num;
+              var t1 = (j + 0.5) / num;
+              var t2 = (j + 1) / num;
+              var s0 = Math.sin(t0 * Math.PI * 2);
+              var s1 = Math.sin(t1 * Math.PI * 2);
+              var s2 = Math.sin(t2 * Math.PI * 2);
+              var c0 = Math.cos(t0 * Math.PI * 2);
+              var c1 = Math.cos(t1 * Math.PI * 2);
+              var c2 = Math.cos(t2 * Math.PI * 2);
+              drawer.drawLine_(ctx, 0.5 + s0 * r0, 0.5 + c0 * r0, 0.5 + s0 * r1, 0.5 + c0 * r1);
+              drawer.drawLine_(ctx, 0.5 + s1 * r0, 0.5 + c1 * r0, 0.5 + s1 * r1, 0.5 + c1 * r1);
+
+              drawer.drawArc_(ctx, 0.5, 0.5, t0, t1, r0);
+              drawer.drawArc_(ctx, 0.5, 0.5, t1, t2, r1);
+            }
+            if(i == 1) {
+              // draw stripes that indicate the gear is spinning
+              var s = 0.07;
+              var s2 = 0.03;
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0 / 8 - s, 1.0 / 8 + s, 0.45);
+              drawer.drawArc_(ctx, 0.5, 0.5, 3.0 / 8 - s, 3.0 / 8 + s, 0.45);
+              drawer.drawArc_(ctx, 0.5, 0.5, 5.0 / 8 - s, 5.0 / 8 + s, 0.45);
+              drawer.drawArc_(ctx, 0.5, 0.5, 7.0 / 8 - s, 7.0 / 8 + s, 0.45);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0 / 8 - s2, 1.0 / 8 + s2, 0.52);
+              drawer.drawArc_(ctx, 0.5, 0.5, 3.0 / 8 - s2, 3.0 / 8 + s2, 0.52);
+              drawer.drawArc_(ctx, 0.5, 0.5, 5.0 / 8 - s2, 5.0 / 8 + s2, 0.52);
+              drawer.drawArc_(ctx, 0.5, 0.5, 7.0 / 8 - s2, 7.0 / 8 + s2, 0.52);
+            }
+          } else if(component.number == 2) {
+            drawer.drawEllipse_(ctx, 0.43, 0.5, 0.15, 0.3);
+            drawer.drawEllipse_(ctx, 0.57, 0.5, 0.15, 0.3);
+          } else if(component.number == 3) {
+            // water droplet
+            drawer.drawFilledTriangle_(ctx, 0.5, 0.2, 0.3, 0.5, 0.7, 0.5);
+            drawer.drawFilledCircle_(ctx, 0.5, 0.6, 0.21);
+          } else if(component.number == 4) {
+            // TODO: draw this better. This represents a heating coil, with some stripes indicating heat above it when enabled
+            // draw a heating coil icon
+            drawer.drawLine_(ctx, 0.2, 1.0, 0.2, 0.7);
+            drawer.drawCircle_(ctx, 0.3, 0.7, 0.1);
+            drawer.drawCircle_(ctx, 0.43, 0.7, 0.1);
+            drawer.drawCircle_(ctx, 0.58, 0.7, 0.1);
+            drawer.drawCircle_(ctx, 0.7, 0.7, 0.1);
+            drawer.drawLine_(ctx, 0.79, 1.0, 0.79, 0.7);
+            if(i == 1) {
+              // draw heat stripes above it
+              drawer.drawArc_(ctx, 0.4, 0.4, 0.5-0.1, 0.5+0.1, 0.15);
+              drawer.drawArc_(ctx, 0.6, 0.4, 0.5-0.1, 0.5+0.1, 0.15);
+              drawer.drawArc_(ctx, 0.8, 0.4, 0.5-0.1, 0.5+0.1, 0.15);
+              drawer.drawArc_(ctx, 0.17, 0.25, 0.0-0.1, 0.0+0.1, 0.15);
+              drawer.drawArc_(ctx, 0.37, 0.25, 0.0-0.1, 0.0+0.1, 0.15);
+              drawer.drawArc_(ctx, 0.57, 0.25, 0.0-0.1, 0.0+0.1, 0.15);
+            }
+          } else if(component.number >= 5 && component.number <= 9) {
+            drawer.drawLine_(ctx, 0.2, 0.35, 0.2, 0.65);
+            drawer.drawLine_(ctx, 0.1, 0.35, 0.3, 0.35);
+
+            drawer.drawLine_(ctx, 0.4, 0.35, 0.4, 0.65);
+            drawer.drawLine_(ctx, 0.4, 0.35, 0.6, 0.65);
+            drawer.drawLine_(ctx, 0.6, 0.35, 0.6, 0.65);
+
+            drawer.drawLine_(ctx, 0.8, 0.35, 0.8, 0.65);
+            drawer.drawLine_(ctx, 0.7, 0.35, 0.9, 0.35);
+          } else if(component.number >= 10 && component.number <= 14) {
+            drawer.drawLine_(ctx, 0.1, 0.3, 0.1, 0.7);
+            drawer.drawLine_(ctx, 0.1, 0.3, 0.3, 0.3);
+            drawer.drawLine_(ctx, 0.1, 0.5, 0.3, 0.5);
+            drawer.drawLine_(ctx, 0.1, 0.7, 0.3, 0.7);
+
+            drawer.drawLine_(ctx, 0.4, 0.3, 0.4, 0.7);
+            drawer.drawLine_(ctx, 0.4, 0.3, 0.5, 0.5);
+            drawer.drawLine_(ctx, 0.5, 0.5, 0.6, 0.3);
+            drawer.drawLine_(ctx, 0.6, 0.3, 0.6, 0.7);
+
+            drawer.drawLine_(ctx, 0.75, 0.3, 0.75, 0.7);
+            drawer.drawLine_(ctx, 0.75, 0.3, 0.9, 0.3);
+            drawer.drawLine_(ctx, 0.9, 0.3, 0.9, 0.5);
+            drawer.drawLine_(ctx, 0.75, 0.5, 0.9, 0.5);
+          } else if(component.number >= 15 && component.number <= 19) {
+            // ligntning symbol for jamming
+            drawer.drawLine_(ctx, 0.5, 0.2, 0.3, 0.5);
+            drawer.drawLine_(ctx, 0.3, 0.5, 0.6, 0.4);
+            drawer.drawLine_(ctx, 0.6, 0.4, 0.4, 0.7);
+            drawer.drawFilledTriangle_(ctx, 0.3, 0.7, 0.5, 0.7, 0.3, 0.85);
+          } else {
+            okdraw = true;
+          }
+        }
         //if((c == 'i') && !(cell.drawchip || digitmap[cell.metasymbol])) okdraw = false;
         if(okdraw && textel) {
           /*ctx.textAlign = 'center';
@@ -12171,6 +12462,11 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           this.staticrender = true;
         }
       }
+    }
+
+    //if(cell.components[0] && cell.components[0].disabled && devicemaparea[cell.circuitsymbol]) {
+    if(cell.components[0] && devicemaparea[cell.circuitsymbol]) {
+      this.setLook(cell, cell.components[0].type);
     }
 
     // ensure that if this is a re-init (e.g. after clicking on a bB bit with mouse), it will actually draw the change, not do the optimization when nothing changed
@@ -12653,10 +12949,26 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
   };
 
   this.setLook = function(cell, type) {
+    if(!this.text0) return;
+
+    if(cell.components[0] && (cell.components[0].disabled & 1)) {
+      if(this.componentdisabled) return;
+      this.componentdisabled = true;
+      //util.removeElement(this.div0);
+      util.removeElement(this.text1);
+      this.text0.style.visibility = 'visible';
+      this.text0.innerHTML = '';
+      this.text0.style.backgroundColor = OFFCOLOR;
+      return;
+    }
+
+    if(!this.text1) return;
+
     /* see the RendererText setLook function for comment about styles and types */
     // Reading from .innerText turns out to be very slow in JavaScript (for the comparisons with 'R', 'r', etc...),
     // even if there are just a few hundreds switches/timers/... in a large map, and for that reason, the separate
     // fields look0 and look1 are used instead.
+    if(!cell.components[0] || cell != cell.components[0].corecell) return;
     if(type == TYPE_TIMER_ON || type == TYPE_TIMER_OFF) {
       var clocked = cell.components[0].clocked;
       if(clocked && this.look0 != 'R') this.text0.innerText = this.look0 = 'R';
@@ -12773,7 +13085,7 @@ function updateComponents(components) {
 
   for(var i = 0; i < components.length; i++) {
     components[i].changed = false;
-    components[i].changin = 0;
+    components[i].changein = 0;
     components[i].updated = false;
     components[i].prevvalue = components[i].value;
   }
@@ -12836,6 +13148,7 @@ function parseNumbers() {
       else if(c == 'f' || c == 'F') type = NUMBER_FIXED;
       else if(c == 'r' || c == 'R') type = NUMBER_TIMER;
       else if(c == 'q' || c == 'Q') type = NUMBER_PULSE;
+      else if(c == 'K') type = NUMBER_KINETIC;
       else if(c == 'N') type = NUMBER_NOTE;
       else if(c == 'I') type = NUMBER_ICDEF;
       else if(c == 'i') type = NUMBER_ICCALL;
@@ -14903,6 +15216,7 @@ function parseComponents() {
               else if(c == '?') type2 = TYPE_RANDOM;
               else if(c == 'N' || c == '#N') type2 = TYPE_MUSIC_NOTE;
               else if(c == 'J') type2 = TYPE_JACK;
+              else if(c == 'K') type2 = TYPE_KINETIC;
               else if(ffmap[c] || c == '#c') type2 = TYPE_FLIPFLOP;
             }
 
@@ -15057,6 +15371,15 @@ function parseComponents() {
             component.partner = [];
             component.partnerdiv = [];
             for(var i = 0; i < maxjacks; i++) component.partner[i] = component.partnerdiv[i] = null;
+          }
+          if(type == TYPE_KINETIC) {
+            var number = 0;
+            for(var i = 0; i < array.length; i++) {
+              var x = array[i][0];
+              var y = array[i][1];
+              number = Math.max(number, world[y][x].number);
+            }
+            component.number = number;
           }
 
           for(var i = 0; i < array.length; i++) {
@@ -15771,7 +16094,7 @@ function parseText(text, opt_title, opt_registeredCircuit, opt_fragmentAction, o
 
 
 // to do in a stage before setTocHTML, since it edits the source text itself
-function makeTocRoom(text, tocPos, tocType, codelen, outCoords) {
+function makeTocRoom(text, tocPos, tocType, tocDepth, codelen, outCoords) {
   var start = tocPos;
   var end = tocPos + codelen;
   var numLines = 0;
@@ -15805,6 +16128,10 @@ function makeTocRoom(text, tocPos, tocType, codelen, outCoords) {
            (text[pos + 2] == '#' && text[pos + 3] == '#' && text[pos + 4] == ' '))) {
         continue;
       }
+      var depth = 1;
+      if(text[pos + 2] == '#' && text[pos + 3] == ' ') depth = 2;
+      if(text[pos + 2] == '#' && text[pos + 3] == '#' && text[pos + 4] == ' ') depth = 3;
+      if(tocDepth != 0 && depth > tocDepth) continue;
       numchapters++;
     }
     numLines = numchapters + 1;
@@ -15882,6 +16209,7 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction, 
   var pos = 0;
   for(;;) {
     var tocType = -1;
+    var tocDepth = 0;
     var codelen = 0;
     var pos = text.indexOf('INSERT:', pos);
     if(pos < 0) break;
@@ -15896,7 +16224,10 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction, 
       pos++;
     }
     var linkname = '';
-    if(keyword == 'toc') tocType = 0;
+    if(keyword == 'toc') { tocType = 0; tocDepth = 0; } // infinite toc depth
+    else if(keyword == 'toc1') { tocType = 0; tocDepth = 1; }
+    else if(keyword == 'toc2') { tocType = 0; tocDepth = 2; }
+    else if(keyword == 'toc3') { tocType = 0; tocDepth = 3; }
     else if(keyword == 'links') tocType = 1;
     else if(keyword == 'links_help') tocType = 2;
     else if(keyword == 'links_main') tocType = 3;
@@ -15925,9 +16256,10 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction, 
     var tocY = 0;
     if(tocPos >= 0) {
       var coords = [tocX, tocY];
-      text = makeTocRoom(text, tocPos, tocType, codelen, coords);
+      text = makeTocRoom(text, tocPos, tocType, tocDepth, codelen, coords);
       coords.push(tocType);
       coords.push(linkname);
+      coords.push(tocDepth);
       tocs.push(coords);
     }
   }
@@ -15943,13 +16275,16 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction, 
     var tocX = tocs[i][0];
     var tocY = tocs[i][1];
     var tocType = tocs[i][2];
+    var tocLink = tocs[i][3];
+    var tocDepth = tocs[i][4];
     world[tocY][tocX].symbol = 'toc';
     world[tocY][tocX].circuitsymbol = 'toc';
     world[tocY][tocX].displaysymbol = 'toc';
     world[tocY][tocX].metasymbol = 'toc';
     world[tocY][tocX].skipparsing = false;
     world[tocY][tocX].circuitextra = tocType;
-    world[tocY][tocX].toclink = tocs[i][3];
+    world[tocY][tocX].tocdepth = tocDepth;
+    world[tocY][tocX].toclink = tocLink;
     line0[tocY] = 0;
     line1[tocY] = 1;
   }
@@ -16129,11 +16464,11 @@ function isPaused() {
 
 var changeDropdownElements = [];
 
-function registerChangeDropdownElement(type) {
-  changeDropdownElements.push(type);
+// opt_value can mean on/off, or a number, depending on the type
+function registerChangeDropdownElement(type, opt_name, opt_value) {
+  changeDropdownElements.push([type, opt_name || typesymbols[type], opt_value == undefined ? -1 : opt_value]);
 }
 
-registerChangeDropdownElement('change');
 registerChangeDropdownElement(TYPE_SWITCH_OFF);
 registerChangeDropdownElement(TYPE_SWITCH_ON);
 registerChangeDropdownElement(TYPE_PUSHBUTTON_OFF);
@@ -16153,12 +16488,16 @@ registerChangeDropdownElement(TYPE_CONSTANT_OFF);
 registerChangeDropdownElement(TYPE_CONSTANT_ON);
 // For 'c' and 'C' I can unfortunately not use TYPE, because both for on and off it's just called "TYPE_COUNTER", plus it
 // needs to choose between constant and counter (handled elsewhere)
-registerChangeDropdownElement('c');
-registerChangeDropdownElement('C');
+registerChangeDropdownElement(TYPE_COUNTER, 'c', 0);
+registerChangeDropdownElement(TYPE_COUNTER, 'C', 1);
 registerChangeDropdownElement(TYPE_DELAY);
 registerChangeDropdownElement(TYPE_MUSIC_NOTE);
 registerChangeDropdownElement(TYPE_RANDOM);
 registerChangeDropdownElement(TYPE_JACK);
+registerChangeDropdownElement(TYPE_KINETIC, 'fan', 0);
+registerChangeDropdownElement(TYPE_KINETIC, 'TNT', 8);
+registerChangeDropdownElement(TYPE_KINETIC, 'EMP', 13);
+registerChangeDropdownElement(TYPE_KINETIC, 'JAM', 18);
 //registerChangeDropdownElement('rem_inputs');
 
 

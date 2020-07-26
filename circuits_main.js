@@ -5996,6 +5996,132 @@ registerCircuit('32-bit divider', `
 `, 'div32');
 
 
+registerCircuit('Propagation', `
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+s-------------------------------------------------------------------------------------------------->K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+
+
+K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6  K6
+
+`, 'propagation');
 
 registerCircuit('74181 ALU', `
 
@@ -6552,11 +6678,11 @@ registerCircuit('4-bit CPU', `
   . . .>#######i32 # = = =         |||| g      d g10  8g>a|||  ||||         ||||
   . . . ^^^^       # = = =         |||| w      ^ v       ^|||  ||||         ||||
   . ..+>####illlli # = = =   ......++++>a----->o<a<..... g|||  ||||         ||||
-  .-+-+>#"r1"^^^^#<#<1 = =   .     ||||                . 1|||  ||||  98     ||||
-  . . .>#######i32 # = = =   .######i21<...e<a<g19     . 9|||  ||||  gg     ||||
-  . . . ^^^^       # = = =    ^^^^ ^^^^    ^ ^         .  |||  ||||  vv     ||||
-  . ..+>####illlli # = = =    |||| #i22<g9.. g8        ...|||  #####i23     ||||
-  .-+-+>#"r2"^^^^#<#<2 = =    |||| ^^^^                  ||||  ^^^^^^^^     ||||
+  .-+-+>#"r1"^^^^#<#<1 = =   .     ||||            7   . 1|||  ||||  98     ||||
+  . . .>#######i32 # = = =   .######i21<...e<a<g19 K   . 9|||  ||||  gg     ||||
+  . . . ^^^^       # = = =    ^^^^ ^^^^    ^ ^     ^   .  |||  ||||  vv     ||||
+  . ..+>####illlli # = = =    |||| #i22<g9.. g8    s   ...|||  #####i23     ||||
+  .-+-+>#"r2"^^^^#<#<2 = =    |||| ^^^^         "damage" ||||  ^^^^^^^^     ||||
   . . .>#######i32 # = = = ===3210=7654==================0321==32107654=====7654==3210==
   . . . ^^^^       # = = = =    "adder"             "shift"     "logic"           vvvv
   . ..+>####illlli # = = = =                                                      O###
@@ -6613,8 +6739,8 @@ registerCircuit('4-bit CPU', `
         ^^^^ ^^^^        =         =====3210            BBbb#BBBB#bBbb#bbbb"e 1110"
         |||| ssss        =                              bbbb#bbbb#bbbb#bbbb"f 1111"
         ||||             =                                                 "      "
-        3210==============                             "oooo aaaa bbbb iccc"
-                                                       " op |  A |  B |b indir, C"
+        3210==============                              "oooo aaaa bbbb iccc"
+                                                        1"op" 1"A" 1"B" 0"b indir, C"
 
 0"Control the CPU here: clock to toggle ticking, manual clock to do a single"
 0"tick, reset to reset the whole memory, reset IP to only reset the instruction"
