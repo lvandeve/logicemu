@@ -472,6 +472,7 @@ function getStatsText() {
   text += 'world width: ' + w + '\n';
   text += 'world height: ' + h + '\n';
   text += 'num circuit cells: ' + numCells + '\n'; // not comments, isolators, ...
+  text += 'cell size (pixels): ' + tw + '*' + th + '\n';
   text += '\n';
   text += ' physical stats\n';
   text += 'estimated num transistors (imprecise for large devices): ' + (numTransistors + numTransistorsLarge) + '\n'; // not exact for large components like built-in flip-flops, ALUs, ...
@@ -674,8 +675,9 @@ function createMenuUI() {
     initDivs();
     render();
   };
-  util.makeElement('option', rendererDropdown).innerText = 'text';
   util.makeElement('option', rendererDropdown).innerText = 'graphical';
+  util.makeElement('option', rendererDropdown).innerText = 'text';
+  util.makeElement('option', rendererDropdown).innerText = 'source';
   rendererDropdown.selectedIndex = graphics_mode;
 
   var colorDropdown = util.makeUIElement('select', menuRow2El, 3);

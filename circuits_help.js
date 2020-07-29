@@ -545,33 +545,6 @@ s-.>d]a->l   s..>c..>l
 
    R------>l
 
-0"J is a patch panel jack. Path panel jacks allow making arbitrary connections"
-0"between any two jacks."
-
-0"Click a jack, then another jack, to connect them together with a patch wire."
-0"To remove a wire, click both its jacks again. To remove all wires from one"
-0"jack, click that jack twice. To remove all jacks from the board (or save"
-0"state), see the dropdown for patchpanel jacks in the menu bar."
-
-0"A jack supports a maximum of 4 wires, adding more will remove the oldest one."
-
-0"You cannot connect multiple jacks that have an input (an arrow pointing to"
-0"it) together in one group, if you try an older input connection may be"
-0"removed, or it may refuse to connect and indicate a temporary red line. This"
-0"is because multiple inputs to the same connected jacks gives a conflict (we"
-0"could OR them, but instead we choose the realistic approach where this can"
-0"cause an electric short)."
-
-0"Example: the jacks J below allow you to choose to connect the switches"
-0"to an AND gate, a XOR gate, directly to a LED, or make some other combination:"
-
-s>J    J>a>J    J>l
-         #
-s>J    J>#
-
-s>J    J>e>J    J>l
-         #
-s>J    J>#
 
 0"A music note 'N' acts like a speaker, producing a tone of a given frequency."
 
@@ -639,15 +612,15 @@ p-->N400000 0"white noise"
 
 s--->K  0"no number: same as 0."
 
-s--->K0 0"fan / wind / cooling"
+s--->K0 0"motor / gear"
 
-s--->K1 0"motor / gear"
+s--->K1 0"fan / wind / cooling"
 
-s--->K2 0"electromagnet"
+s--->K2 0"heating"
 
 s--->K3 0"pump / sprinkler / liquid"
 
-s--->K4 0"heating / incandescent"
+s--->K4 0"electromagnet"
 
 0"for completeness: other simple output types not using 'K' (excludes dot matrix screen, ascii, ...):"
 
@@ -660,11 +633,83 @@ s--->N  0"speaker"
 s--->T  0"binary"
 
 0"These outputs such as fan, electromagnet, ... have no other effect other than"
-0"showing a different icon if enabled. It's no different than what an LED does,"
-0"displaying output. But it can be used to indicate that this output represents"
-0"some particular type of action."
+0"showing a different icon if enabled (unless their sensor versions are used,"
+0"see below). As output, they're no different than what an LED does, displaying"
+0"output. But it can be used to indicate that this output represents some"
+0"particular type of action."
 
-0"Further variants of K do have actions:"
+0"These components can also be used as detectors instead. As a detector, they"
+0"will typically only detect output by one of their matching type in a certain"
+0"radius in the neighborhood. Some have slightly different behavior."
+
+0"Gear: activates all neighbors eventually, but has a radius of 1:"
+
+l<--KKKKKKKKKKKKK
+                K
+s-->KKKKKKKKKKKKK
+
+0"Gears will activate if neighboring gears are active, except if exactly 3"
+0"neighbors are active."
+
+               KKKK
+p--->KKKKKKKKKKKK KKKKKKKKKKK<--p
+               KKKK
+
+
+0"Fan: only detects active fans with an input, but not fans that indirectly detect air, and have a larger radius, but"
+0"notice that fans too far away from the active one detect nothing:"
+0"Without inputs, the fan is, instead, an airflow sensor."
+
+ K1 K1 K1 K1 K1
+
+ K1 K1 K1 K1 K1
+
+ K1 K1 K1 K1 K1
+
+s-->K1 K1 K1 K1
+
+ K1 K1 K1 K1 K1
+
+ K1 K1 K1 K1 K1
+
+ K1 K1 K1 K1 K1
+
+0"Heat: similar to fan but smaller radius:"
+0"Without inputs, the fan is, instead, a heat sensor."
+
+ K2 K2 K2 K2
+
+ K2 K2 K2 K2
+
+s-->K2 K2 K2
+
+ K2 K2 K2 K2
+
+ K2 K2 K2 K2
+
+0"Water: unlike fan and heat, all water 'pipes' will transmit the water on to"
+0"next pipes, and some gap between pipes is allowed:"
+
+s-->K3  K3  K3  K3  K3  K3  K3  K3 3K-->l
+
+0"Electromagnet: similar to fan and heat, with much larger radius, but only transmits"
+0"in straight directions (N, E, S, W), not the entire circular pattern:"
+0"Without inputs, this acts as a sensor for electromagnets in those 4 directions."
+
+
+   4K-->l
+
+s-->K4                   4K-->l
+s-->K4                   4K-->l
+s-->K4                   4K-->l
+
+   4K-->l
+
+0"Note: only those that do not have any inputs (arrows pointed at them) will act"
+0"as sensors, those with inputs will only activate if their input is enabled, not"
+0"from neighboring matching devices."
+
+0"Higher numbered variants of K have more active effects:"
 
 0"Numbers 5-9 represent TNT of different strengths which can permanently disable devices in a certain radius"
 
@@ -748,6 +793,19 @@ s---->K16l<S
    l<Sl<Sl<S
 
 0"Note: size 17..19 are larger and not shown here to not affect the other circuits around here."
+
+0"Number 20 represents a cover or hatch, that when off, makes what's below it invisible."
+
+
+    ############
+    #          #
+    #"revealed"#
+    #          #
+s-->K20        #
+    #          #
+    # s.....>l #
+    #          #
+    ############
 
 
 0"An RGB LED 'D' takes a red, green and blue input:"
@@ -1335,6 +1393,36 @@ l<----u
   0uuuuuuuu0
 
 
+0"J is a patch panel jack. Path panel jacks allow making arbitrary connections"
+0"between any two jacks."
+
+0"Click a jack, then another jack, to connect them together with a patch wire."
+0"To remove a wire, click both its jacks again. To remove all wires from one"
+0"jack, click that jack twice. To remove all jacks from the board (or save"
+0"state), see the dropdown for patchpanel jacks in the menu bar."
+
+0"A jack supports a maximum of 4 wires, adding more will remove the oldest one."
+
+0"You cannot connect multiple jacks that have an input (an arrow pointing to"
+0"it) together in one group, if you try an older input connection may be"
+0"removed, or it may refuse to connect and indicate a temporary red line. This"
+0"is because multiple inputs to the same connected jacks gives a conflict (we"
+0"could OR them, but instead we choose the realistic approach where this can"
+0"cause an electric short)."
+
+0"Example: the jacks J below allow you to choose to connect the switches"
+0"to an AND gate, a XOR gate, directly to a LED, or make some other combination:"
+
+s>J    J>a>J    J>l
+         #
+s>J    J>#
+
+s>J    J>e>J    J>l
+         #
+s>J    J>#
+
+
+
 0"# Epilogue"
 
 0"The end, see the next tutorials for more information, such as about"
@@ -1469,7 +1557,11 @@ s-->l
 0"- Part: a character on a single cell (see Cell), as opposed to a Component"
 0"which is made from one or more parts (or cells)."
 
-0"- Rendering Mode: either graphics mode or text mode, see their definitions."
+0"- Rendering Mode: graphics mode, text mode or source mode, see their definitions."
+
+0"- Source Mode: a rendering mode that literally shows the source code, not very"
+0"  useful for running circuits, but for taking a quick look at the source code"
+0"  in-place"
 
 0"- Terminal: see VTE."
 
@@ -1603,9 +1695,10 @@ s-->e<--S
 0"done in the circuit. Depending on the immediate or electron algorithm, ticks"
 0"have a different meaning. You can click the indicator to reset it to 0."
 
-0"To the right of the ticks indicator is a dropdown to choose between graphical"
-0"or text mode. Graphical mode looks better, text may be faster and can help"
-0"with editing instead. More on that is in the 'Rendering Modes' help circuit."
+0"To the right of the ticks indicator is a dropdown to choose graphical mode,"
+0"text mode or source mode. Graphical mode looks better, text may be faster and"
+0"can help with editing instead. Source mode is even more primitive. More on"
+0"that is in the 'Rendering Modes' help circuit."
 
 0"Right of that is a color scheme selector, to choose between various light"
 0"or dark schemes to render with."
@@ -1642,7 +1735,7 @@ s-->J   J-->l
 
 registerCircuit('Rendering Modes', `
 
-0"There are two rendering modes: text (ASCII) and graphical (HTML5 canvas)."
+0"There are three rendering modes: graphical (HTML5 canvas), text and source."
 0"They can be selected with a dropdown in the top menu."
 
 0"The graphical mode draws nice wires, boxes around components, device inputs"
@@ -1656,11 +1749,18 @@ registerCircuit('Rendering Modes', `
 0"...). To learn the meaning of the characters, see the editing help"
 0"instead."
 
+0"The source mode is a more primitive of the text mode, drawing all original"
+0"source code characters of the circuit literally. This mode is not very"
+0"useful for running circuits, but for taking a quick look at the source code"
+0"in-place. Note that despite being simple text, this one may run slower in"
+0"some browsers on circuits with lots of text due to how it has to create"
+0"individual elements for every single character in this case."
+
 0"The text mode may render faster in some browsers, especially for huge"
 0"circuits."
 
-0"Try out the two modes on the circuit below by changing the dropdown at the"
-0"top between 'graphical' and 'text':"
+0"Try out the modes on the circuit below by changing the dropdown at the top"
+0"between 'graphical', 'text' and 'source':"
 
       l   lll
       m  lVVWl
@@ -1993,7 +2093,7 @@ s....
 
 0"Edited circuits can be saved with the [save] dropdown to a few local save"
 0"slots. But Local storage is unreliable (and not online), it's safer to export"
-0" andsave circuits for example to your disk with a text editor instead to"
+0"and save circuits for example to your disk with a text editor instead to"
 0"safely keep them (or use version control, ...)."
 
 0"In addition, when you edited a map, there may be a '#code=...' code in the"
@@ -3166,15 +3266,15 @@ p-->N400000 0"white noise"
 
 s--->K  0"no number: same as 0."
 
-s--->K0 0"fan / wind / cooling"
+s--->K0 0"motor / gear"
 
-s--->K1 0"motor / gear"
+s--->K1 0"fan / wind / cooling"
 
-s--->K2 0"electromagnet"
+s--->K2 0"heating"
 
 s--->K3 0"pump / sprinkler / liquid"
 
-s--->K4 0"heating / incandescent"
+s--->K4 0"electromagnet"
 
 0"for completeness: other simple output types not using 'K' (excludes dot matrix screen, ascii, ...):"
 
@@ -3187,11 +3287,83 @@ s--->N  0"speaker"
 s--->T  0"binary"
 
 0"These outputs such as fan, electromagnet, ... have no other effect other than"
-0"showing a different icon if enabled (in graphics mode at least). It's no"
-0"different than what an LED does, displaying output. But it can be used to"
-0"indicate that this output represents some particular type of action."
+0"showing a different icon if enabled (unless their sensor versions are used,"
+0"see below). As output, they're no different than what an LED does, displaying"
+0"output. But it can be used to indicate that this output represents some"
+0"particular type of action."
 
-0"Further variants of K do have actions:"
+0"These components can also be used as detectors instead. As a detector, they"
+0"will typically only detect output by one of their matching type in a certain"
+0"radius in the neighborhood. Some have slightly different behavior."
+
+0"Gear: activates all neighbors eventually, but has a radius of 1:"
+
+l<--KKKKKKKKKKKKK
+                K
+s-->KKKKKKKKKKKKK
+
+0"Gears will activate if neighboring gears are active, except if exactly 3"
+0"neighbors are active."
+
+               KKKK
+p--->KKKKKKKKKKKK KKKKKKKKKKK<--p
+               KKKK
+
+
+0"Fan: only detects active fans with an input, but not fans that indirectly detect air, and have a larger radius, but"
+0"notice that fans too far away from the active one detect nothing:"
+0"Without inputs, the fan is, instead, an airflow sensor."
+
+ K1 K1 K1 K1 K1
+
+ K1 K1 K1 K1 K1
+
+ K1 K1 K1 K1 K1
+
+s-->K1 K1 K1 K1
+
+ K1 K1 K1 K1 K1
+
+ K1 K1 K1 K1 K1
+
+ K1 K1 K1 K1 K1
+
+0"Heat: similar to fan but smaller radius:"
+0"Without inputs, the fan is, instead, a heat sensor."
+
+ K2 K2 K2 K2
+
+ K2 K2 K2 K2
+
+s-->K2 K2 K2
+
+ K2 K2 K2 K2
+
+ K2 K2 K2 K2
+
+0"Water: unlike fan and heat, all water 'pipes' will transmit the water on to"
+0"next pipes, and some gap between pipes is allowed:"
+
+s-->K3  K3  K3  K3  K3  K3  K3  K3 3K-->l
+
+0"Electromagnet: similar to fan and heat, with much larger radius, but only transmits"
+0"in straight directions (N, E, S, W), not the entire circular pattern:"
+0"Without inputs, this acts as a sensor for electromagnets in those 4 directions."
+
+
+   4K-->l
+
+s-->K4                   4K-->l
+s-->K4                   4K-->l
+s-->K4                   4K-->l
+
+   4K-->l
+
+0"Note: only those that do not have any inputs (arrows pointed at them) will act"
+0"as sensors, those with inputs will only activate if their input is enabled, not"
+0"from neighboring matching devices."
+
+0"Higher numbered variants of K have more active effects:"
 
 0"Numbers 5-9 represent TNT of different strengths which can permanently disable devices in a certain radius"
 
@@ -3276,6 +3448,18 @@ s---->K16l<S
 
 0"Note: size 17..19 are larger and not shown here to not affect the other circuits around here."
 
+0"Number 20 represents a cover or hatch, that when off, makes what's below it invisible."
+
+
+    ############
+    #          #
+    #"revealed"#
+    #          #
+s-->K20        #
+    #          #
+    # s.....>l #
+    #          #
+    ############
 
 
 0"## Dot Matrix Display, RGB LED"
@@ -4836,8 +5020,9 @@ s   s   s
 
 3"MODE;immediate    : force immediate mode                                            "
 3"MODE;electron     : force electron mode                                             "
-3"RENDER;text       : force text mode rendering (ascii)                               "
 3"RENDER;graphical  : force graphics mode rendering (canvas)                          "
+3"RENDER;text       : force text mode rendering (ascii)                               "
+3"RENDER;source     : force source mode rendering (literal ascii)                     "
 3"INSERT;toc        : inserts a table of contents to chapters in this circuit.        "
 3"                    Clicking a link will scroll towards that chapter title. Chapter "
 3"                    titles are made with markdown as explained earlier.             "
@@ -6626,24 +6811,44 @@ registerCircuit('Music Note (audio speaker) with multiple controls and Enable (N
 
 `, 'component' + componentid++);
 
-registerCircuit('Fan (K)', `
+registerCircuit('Motor / Gear (K)', `
 s-->K
 `, 'component' + componentid++);
 
-registerCircuit('Motor / Gear (K)', `
+registerCircuit('Gears (K)', `
+s-->KKKKKKKKKK-->l
+`, 'component' + componentid++);
+
+registerCircuit('Fan (K)', `
 s-->K1
 `, 'component' + componentid++);
 
-registerCircuit('Electromagnet (K)', `
+registerCircuit('Wind Detector (K)', `
+s-->K1   1K--->l
+`, 'component' + componentid++);
+
+registerCircuit('Heater (K)', `
 s-->K2
+`, 'component' + componentid++);
+
+registerCircuit('Heat Detector (K)', `
+s-->K2 2K--->l
 `, 'component' + componentid++);
 
 registerCircuit('Pump / Sprinkler (K)', `
 s-->K3
 `, 'component' + componentid++);
 
-registerCircuit('Heater', `
+registerCircuit('Water Pipes (K)', `
+s-->K3  K3  K3  K3  K3 3K-->l
+`, 'component' + componentid++);
+
+registerCircuit('Electromagnet (K)', `
 s-->K4
+`, 'component' + componentid++);
+
+registerCircuit('Electromagnet Detector (K)', `
+s-->K4               4K--->l
 `, 'component' + componentid++);
 
 registerCircuit('TNT (K)', `
@@ -7770,6 +7975,30 @@ S----->o---->l8
 
 S--->K------>l8
 
+F---->KK---->l8
+
+    55
+F-->KK>c---->l8
+
+    6
+f-->K-------]l8
+
+F-->K1 1K--->l8
+
+F-->K2 2K--->l8
+
+F-->K3 3K--->l8
+
+F-->K4 4K--->l8
+
+    KKKK
+F-->K KK----]l8
+    KKKK
+
+    KKKK
+F-->KK K---->l8
+    KKKK
+
 0"# Off"
 
 0"In this section, the LED on the right of each contraption must be OFF. If"
@@ -7931,6 +8160,8 @@ F----->o---->l8
 F------v
        K10
 F----->o---->l8
+
+F---->K K--->l8
 
 0"# Toggle"
 

@@ -1416,12 +1416,14 @@ var origtitle = null;
 var BACKSLASH_ALTERNATIVE = ';'; // because backslash in `` type strings does not work
 var DQUOT_ALTERNATIVE = '`'; // JS strings can use `, in other languages " is already the string quotes
 
-var graphics_mode = 1; // 0=text, 1=canvas
+var graphics_mode = 0; // 1=canvas, 0=text, 2=source
 var graphics_mode_actual = graphics_mode;
 
 var worldstartheight = 160; // under menu
 
 var worldDiv = makeDiv(10, worldstartheight, 0, 0, maindiv);
+//worldDiv2 is used for the kindiv of kinetic components, but can be used for anything that should be an overlay where clicking on elements does not trigger the onclick of worlddiv (which always activates before children)
+var worldDiv2 = makeDiv(10, worldstartheight, 0, 0, maindiv);
 var renderingMessageDiv = makeDiv(10, worldstartheight, 0, 0);
 
 // num active ticks done
@@ -5275,7 +5277,7 @@ function Alu() {
     for(var y = y0; y < y1; y++) {
       for(var x = x0; x < x1; x++) {
         var c = world[y][x];
-        c.isalutext = true;
+        if(!extendmap[c.symbol]) c.isalutext = true;
         //if(c.circuitsymbol != 'U') continue; // only numbers next to U count, not next to extenders
         // due to the parsing, a multidigit number will show up as lower single digits here and there.
         if(c.number > found) {
@@ -6948,6 +6950,7 @@ function MusicNote() { // function Note()
   this.prevvol = 0;
   this.currentvol = -1;
   this.prevfreq = 0;
+  this.prevfreq2 = 0;
   this.currentfreq = -1;
   this.prevshape = -1;
   this.currentshape = -1;
@@ -7038,8 +7041,6 @@ function MusicNote() { // function Note()
     }
     var shape = this.numshapeinputs ? shapevalue : this.baseshape;
 
-    if(freq == 0 && !(shape == 4 || shape == 5)) this.output = false; // can't hear 0-Hz wave (except the noise ones)
-
     if(freqvalue != this.prevfreqvalue && this.numfreqinputs) {
       this.currentfreq = freq;
       if(this.oscillator) {
@@ -7066,8 +7067,9 @@ function MusicNote() { // function Note()
       unmuteAudioContext(1);
     }
 
+    if(!(shape == 4 || shape == 5) && this.getPlayFreq() == 0) this.output = false; // can't hear 0-Hz wave (except the noise ones)
 
-    if(shapevalue != this.prevshapevalue && this.numshapeinputs) {
+    if(this.numshapeinputs) {
       this.currentshape = shape;
 
       if(this.oscillator) {
@@ -7078,7 +7080,7 @@ function MusicNote() { // function Note()
       this.prevshapevalue = shapevalue;
       this.prevshape = shape;
 
-      unmuteAudioContext(1);
+      if(this.output) unmuteAudioContext(1);
     }
 
     if(volvalue != this.prevvolvalue) {
@@ -7138,7 +7140,13 @@ function MusicNote() { // function Note()
   };
 
   this.setShape = function(shape) {
-    if(this.oscillator && shape == this.prevshape) return;
+    var shapechange = false;
+    if(!this.oscillator) shapechange = true;
+    if(shape != this.prevshape) shapechange = true;
+    if((shape == 4 || shape == 5) && ((this.getPlayFreq(0) == 0) != (this.prevfreq2 == 0))) shapechange = true; // the noise ones have different shape setup for freq 0 vs other freqs
+    this.prevfreq2 = this.getPlayFreq(0);
+    if(!shapechange) return;
+
     this.stop();
     if(shape == 4 || shape == 5) {
       this.oscillator = audioContext.createBufferSource();
@@ -7176,7 +7184,7 @@ function MusicNote() { // function Note()
   this.initDefault = function(component) {
     this.basefrequency = 440;
     this.baseshape = 0;
-    this.basevolume = 0.2;
+    this.basevolume = 1.0;
     this.parent = component;
   };
 
@@ -7864,6 +7872,115 @@ function updateJacks() {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+function drawkinetic(component) {
+  if(component.type != TYPE_KINETIC && component.number != 20) return;
+  if(component.kindiv) util.removeElement(component.kindiv);
+
+  var x0 = 0;
+  var y0 = 0;
+  var x1 = 0;
+  var y1 = 0;
+  // TODO: better way to find our max bounding box, this here is a temporary solution, better is to use graph search or largeComponentBB at the point when the array is available
+  var y = component.corecell.y;
+  for(var x = line0[y]; x <= component.corecell.x; x++) {
+    if(world[y][x].components[0] == component) {
+      x0 = x;
+      break;
+    }
+  }
+  for(var x = component.corecell.x; x < line1[y]; x++) {
+    if(world[y][x].components[0] == component) {
+      x1 = x + 1;
+    }
+  }
+  var x = component.corecell.x;
+  for(var y = 0; y <= component.corecell.y; y++) {
+    if(world[y] && world[y][x] && world[y][x].components[0] == component) {
+      y0 = y;
+      break;
+    }
+    if(world[y] && world[y][x0] && world[y][x0].components[0] == component) {
+      y0 = y;
+      break;
+    }
+    if(world[y] && world[y][x1] && world[y][x1].components[0] == component) {
+      y0 = y;
+      break;
+    }
+  }
+  for(var y = component.corecell.y; y < h; y++) {
+    if(world[y] && world[y][x] && world[y][x].components[0] == component) {
+      y1 = y + 1;
+    }
+    if(world[y] && world[y][x0] && world[y][x0].components[0] == component) {
+      y1 = y + 1;
+    }
+    if(world[y] && world[y][x1] && world[y][x1].components[0] == component) {
+      y1 = y + 1;
+    }
+  }
+  for(var x = line0[y0]; x <= x0; x++) {
+    if(x >= line1[y0]) break;
+    if(world[y0][x].components[0] == component) {
+      x0 = x;
+      break;
+    }
+  }
+  for(var x = Math.max(x0, line0[y0]); x < line1[y0]; x++) {
+    if(world[y0][x].components[0] == component) {
+      x1 = x + 1;
+    }
+  }
+  for(var x = line0[y1 - 1]; x <= x0; x++) {
+    if(x >= line1[y1 - 1]) break;
+    if(world[y1 - 1][x].components[0] == component) {
+      x0 = x;
+      break;
+    }
+  }
+  for(var x = Math.max(x0, line0[y1 - 1]); x < line1[y1 - 1]; x++) {
+    if(world[y1 - 1][x].components[0] == component) {
+      x1 = x + 1;
+    }
+  }
+  component.kindiv = util.makeDiv(x0 * tw + 4, y0 * th + 4, (x1 - x0) * tw - 8 - 2, (y1 - y0) * th - 8 - 2, worldDiv2);
+
+  //component.kindiv.style.backgroundColor = OFFCOLOR;
+  //component.kindiv.style.color = ONCOLOR;
+
+  component.kindiv.style.backgroundColor = GATEBGCOLOR;
+  component.kindiv.style.border = '1px solid ' + OFFCOLOR;
+  component.kindiv.style.color = OFFCOLOR;
+
+
+  component.kindiv.innerText = 'K';
+  component.kindiv.title = 'cover/hatch, give input signal to reveal what\'s behind';
+  component.kindiv.style.fontSize = tw + 'px';
+  component.kindiv.style.zIndex = MAINZINDEX + 3;
+  component.kindiv.style.visibility = component.value ? 'hidden' : 'visible';
+  component.kindivvisible = !component.value;
+
+  component.kindiv.onclick = function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    return false;
+  };
+}
+
+// redraw after e.g. graphics mode/color/zoom was changed
+function redrawkinetic() {
+  for(var i = 0; i < components.length; i++) {
+    var d = components[i].kindiv;
+    if(!d) continue;
+    components[i].kindiv = undefined;
+    drawkinetic(components[i]);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 function Component() {
   this.value = false;
   this.prevvalue = false; // used for the slow algorithms, plus also for flipflops (to support shift registers with D flipflops made from counters...)
@@ -8088,6 +8205,10 @@ function Component() {
       this.disabled &= ~10; // flag 2/8 are temporary
       return;
     }
+    if(this.error) {
+      this.value = false;
+      return;
+    }
     if(this.parent) this.parent.update();
     var numon = 0;
     var numoff = 0;
@@ -8278,8 +8399,125 @@ function Component() {
         jacks[i].updated = true;
       }
     } else if(this.type == TYPE_KINETIC) {
-      this.value = this.getNewValue(numon, numoff);
-      if(this.number >= 5 && this.number <= 19) {
+      this.kintick = this.kintick ? (this.kintick) + 1 : 1;
+      if(this.number >= 0 && this.number <= 4) {
+        var input_only = (this.number != 0 && this.number != 3); // the water and gear ones propagate their effect, that is to say, even ones without input will active next ones
+        if(this.inputs.length) {
+          this.value = this.getNewValue(numon, numoff);
+          if(!input_only) {
+            this.kinprevvalue = this.kinvalue || 0;
+            if(!this.kinvalue) {
+              this.kinvalue = this.value ? 1 : 0;
+            } else if(this.kinvalue == 1) {
+              this.kinvalue = 2;
+            } else if(this.kinvalue == 2) {
+              this.kinvalue = this.value ? 2 : 3;
+            } else if(this.kinvalue == 3) {
+              this.kinvalue = 0;
+            }
+          }
+        } else {
+          numon = 0;
+          numoff = 0;
+
+          // for non-straight-only ones, avoid too large radius, it's computationally expensive and done for every tick
+          var radius = 1;
+          if(this.number == 0) radius = 1; // gear
+          if(this.number == 1) radius = 8; // fan
+          if(this.number == 2) radius = 4; // heat
+          if(this.number == 3) radius = 4; // water
+          if(this.number == 4) radius = 32;
+          var straight_only = (this.number == 0 || this.number == 4);
+          var x0 = this.corecell.x - radius;
+          var x1 = this.corecell.x + radius;
+          var y0 = this.corecell.y - radius;
+          var y1 = this.corecell.y + radius;
+
+          if(input_only) {
+            this.value = false;
+            for(var y = y0; y <= y1; y++) {
+              if(y < 0) y = 0;
+              if(y >= h) break;
+              for(var x = x0; x <= x1; x++) {
+                if(x < line0[y]) x = line0[y];
+                if(x > line1[y]) break;
+                if(straight_only && y != this.corecell.y) {
+                  if(x < this.corecell.x) x = this.corecell.x;
+                  else if(x > this.corecell.x) break;
+                }
+                var dx = this.corecell.x - x;
+                var dy = this.corecell.y - y;
+                if(radius > 1) {
+                  if(dx * dx + dy * dy > radius * radius) continue;
+                } else {
+                  if(Math.abs(dx) + Math.abs(dy) > 1) continue;
+                }
+                var c = world[y][x];
+                if(!c) continue;
+                var comp = c.components[0];
+                if(comp == this || !comp || comp.type != TYPE_KINETIC || comp.number != this.number || !comp.inputs.length) continue;
+                this.value |= comp.value;
+              }
+            }
+          } else {
+            // kinetic components with this type of propagating effect need their own prevvalue field, independent of the main prevvalue field that depends on the emulation algorithm for the electronic components
+            this.kinprevvalue2 = this.kinprevvalue;
+            this.kinprevvalue = this.kinvalue;
+            if(!this.kinvalue) this.kinvalue = 0;
+            for(var y = y0; y <= y1; y++) {
+              if(y < 0) y = 0;
+              if(y >= h) break;
+              for(var x = x0; x <= x1; x++) {
+                if(x < line0[y]) x = line0[y];
+                if(x > line1[y]) break;
+                if(straight_only && y != this.corecell.y) {
+                  if(x < this.corecell.x) x = this.corecell.x;
+                  else if(x > this.corecell.x) break;
+                }
+                var dx = this.corecell.x - x;
+                var dy = this.corecell.y - y;
+                if(radius > 1) {
+                  if(dx * dx + dy * dy > radius * radius) continue;
+                } else {
+                  if(Math.abs(dx) + Math.abs(dy) > 1) continue;
+                }
+                var c = world[y][x];
+                if(!c) continue;
+                var comp = c.components[0];
+                if(comp == this || !comp || comp.type != TYPE_KINETIC || comp.number != this.number) continue;
+
+                // make the speed independent of whether comp was already updated this tick, or was last updated previous tick
+                var curr = (this.kintick == comp.kintick) ? comp.kinprevvalue : comp.kinvalue;
+                var prev = (this.kintick == comp.kintick) ? comp.kinprevvalue2 : comp.kinprevvalue;
+                if(curr == 1) numon++;
+                if(curr == 3) numoff++;
+              }
+            }
+
+            if(this.number == 0) {
+              // for gears only, do not activate if 3 neighbors activated. There's no real good reason
+              // to do this, but this unlocks some intersting behavioral possibilities.
+              if(numon == 3) numon = 0;
+              if(numoff == 3) numoff = 0;
+            }
+
+            if(this.kinvalue == 0) {
+              if(numon) this.kinvalue = 1;
+            } else if(this.kinvalue == 1) {
+              if(numoff) this.kinvalue = 3;
+              else this.kinvalue = 2;
+            } else if(this.kinvalue == 2) {
+              if(numoff) this.kinvalue = 3;
+            } else if(this.kinvalue == 3) {
+              if(numon) this.kinvalue = 1;
+              else this.kinvalue = 0;
+            }
+            this.value = (this.kinvalue == 1 || this.kinvalue == 2);
+            if(this.kinvalue == 1 || this.kinvalue == 3) this.changein = 1;
+          }
+        }
+      } else if(this.number >= 5 && this.number <= 19) {
+        this.value = this.getNewValue(numon, numoff);
         var emp = (this.number >= 10 && this.number <= 14);
         var jam = (this.number >= 15 && this.number <= 19);
         var activate = false;
@@ -8355,6 +8593,19 @@ function Component() {
               }
             }
           }
+        }
+      } else if(this.number == 20) {
+        if(!this.kindiv) {
+          drawkinetic(this);
+        }
+        this.value = this.getNewValue(numon, numoff);
+        if(!this.value && !this.kindivvisible) {
+          this.kindiv.style.visibility = 'visible';
+          this.kindivvisible = true;
+        }
+        if(this.value && this.kindivvisible) {
+          this.kindiv.style.visibility = 'hidden';
+          this.kindivvisible = false;
         }
       }
     } else if(this.type == TYPE_IC) {
@@ -8493,6 +8744,16 @@ function Component() {
       } else {
         this.value = numon; // delay 0, so immediate
       }
+    } else if(this.type == TYPE_PUSHBUTTON_OFF || this.type == TYPE_PUSHBUTTON_ON) {
+      //var type_on = this.type == TYPE_PUSHBUTTON_ON;
+      //if(this.pushbuttonflipwhilepaused) type_on = !type_on;
+
+      this.value = this.getNewValue(numon, numoff);
+      if(this.pushbuttonflipwhilepaused) {
+        delete this.pushbuttonflipwhilepaused;
+        this.type = (this.type == TYPE_PUSHBUTTON_OFF ? TYPE_PUSHBUTTON_ON : TYPE_PUSHBUTTON_OFF);
+        this.corecell.renderer.setLook(this.corecell, this.type);
+      }
     } else if(this.type == TYPE_TIMER_OFF || this.type == TYPE_TIMER_ON) {
       var duration = this.number;
       if(duration <= 0) duration = 10; // default, or number 0, gives 10 ticks to toggle, 20 ticks period (which for the default of 0.05 seconds per update gives a period of 1 second)
@@ -8528,22 +8789,20 @@ function Component() {
   };
 
   this.mousedown = function(e, x, y) {
-    // repair if CTRL key down
-    if(this.disabled && e.ctrlKey) {
-      this.disabled = 0;
-      return;
-    }
     if(e.shiftKey && !e.ctrlKey && !changeMode) {
-      if(isPaused() && highlightedcomponent == this) {
-        highlightedcomponent = null;
-        unpause();
-      } else {
+      if(highlightedcomponent != this) {
         pause();
         highlightedcomponent = this;
         render();
         autopaused = true; // this to cause less user confusion: with this true, it unpauses more easily (when pressing anything)
+        e.stopPropagation();
+        e.preventDefault();
+        return false;
+      } else if(highlightedcomponent == this) {
+        // NOTE: worldDiv's onclick also handles undoing of this but for the whole area and without shift
+        highlightedcomponent = null;
+        unpause();
       }
-      return;
     }
     // for TYPE_ROM, just do default behavior, it already toggles bit
     if(e.ctrlKey && this.type != TYPE_ROM && !changeMode) {
@@ -8600,10 +8859,40 @@ function Component() {
         this.type = TYPE_CONSTANT_OFF;
       } else if(this.type == TYPE_COUNTER || this.type == TYPE_RANDOM) {
         this.value = !this.value;
+      } else if(this.type == TYPE_KINETIC && this.number == 0) {
+        if(this.kinvalue == 0) this.kinvalue = 1;
+        if(this.kinvalue == 2) this.kinvalue = 3;
       } else if(this.type == TYPE_FLIPFLOP) {
         //this.value = !this.value;
         var ff = this.ff ? this.ff : (this.parent ? this.parent.ff : null);
-        if(ff) ff.value = !ff.value;
+        if(ff) {
+          if((ff.numq == 1 || ff.numQ == 1) && (ff.numff == ff.numq + ff.numy || ff.numff == ff.numQ + ff.numy)) {
+            var temp = ff.numq;
+            ff.numq = ff.numQ;
+            ff.numQ = temp;
+            ff.value = !ff.value;
+            if(this.parent) {
+              for(var i = 0; i < this.parent.inputs.length; i++) {
+                if(this.parent.input_ff_types[i] == 5) this.parent.input_ff_types[i] = 6;
+                else if(this.parent.input_ff_types[i] == 6) this.parent.input_ff_types[i] = 5;
+              }
+            } else {
+              for(var i = 0; i < this.inputs.length; i++) {
+                if(this.input_ff_types[i] == 5) this.input_ff_types[i] = 6;
+                else if(this.input_ff_types[i] == 6) this.input_ff_types[i] = 5;
+              }
+            }
+            if(this.corecell.circuitsymbol == 'q') this.corecell.circuitsymbol = 'Q';
+            else if(this.corecell.circuitsymbol == 'Q') this.corecell.circuitsymbol = 'q';
+            if(this.corecell.displaysymbol == 'q') this.corecell.displaysymbol = 'Q';
+            else if(this.corecell.displaysymbol == 'Q') this.corecell.displaysymbol = 'q';
+            if(this.corecell.symbol == 'q') this.corecell.symbol = 'Q';
+            else if(this.corecell.symbol == 'Q') this.corecell.symbol = 'q';
+            this.corecell.initDiv2();
+          } else {
+            ff.value = !ff.value;
+          }
+        }
       } else {
         didsomething = false;
       }
@@ -8652,6 +8941,7 @@ function Component() {
         if(!this.musicnote) {
           this.musicnote = new MusicNote();
           this.musicnote.initDefault(this);
+          this.musicnote.numvolinputs = 1;
         }
       }
       if(type == TYPE_KINETIC) {
@@ -8665,19 +8955,25 @@ function Component() {
       if(this.type == TYPE_JACK && type != TYPE_JACK) {
         removepatchcables(this);
       }
+      var repair = type == 'repair';
       if(!e.ctrlKey && !e.shiftKey) changeMode = null;
-      this.type = type;
-      this.value = value;
-      if(!symbol) return;
+      if(!repair) {
+        this.type = type;
+        this.value = value;
+        if(!symbol) return;
+      } else {
+        this.disabled = 0; // repair
+      }
       for(var i = 0; i < this.cells.length; i++) {
         var cell = world[this.cells[i][1]][this.cells[i][0]];
-        if(!devicemap[cell.circuitsymbol]) continue;
-        cell.symbol = symbol;
-        cell.displaysymbol = symbol;
-        cell.circuitsymbol = symbol;
+        if(!repair) {
+          if(!devicemap[cell.circuitsymbol]) continue;
+          cell.symbol = symbol;
+          cell.displaysymbol = symbol;
+          cell.circuitsymbol = symbol;
+        }
         cell.initDiv(cell.x, cell.y);
       }
-      this.disabled = 0; // also repair the component
       if(!paused) update();
       else render();
       return;
@@ -8752,13 +9048,21 @@ function Component() {
     // For pushbutton, do the update immediately, to avoid missing a tick when quickly pressing mouse down then up again
     if(this.type == TYPE_PUSHBUTTON_OFF) {
       if(!e.shiftKey) {
-        this.type = TYPE_PUSHBUTTON_ON;
-        this.corecell.renderer.setLook(this.corecell, this.type);
+        if(paused) {
+          this.pushbuttonflipwhilepaused = true;
+        } else {
+          this.type = TYPE_PUSHBUTTON_ON;
+          this.corecell.renderer.setLook(this.corecell, this.type);
+        }
       }
     } else if(this.type == TYPE_PUSHBUTTON_ON) {
       if(!e.shiftKey) {
-        this.type = TYPE_PUSHBUTTON_OFF;
-        this.corecell.renderer.setLook(this.corecell, this.type);
+        if(paused) {
+          this.pushbuttonflipwhilepaused = true;
+        } else {
+          this.type = TYPE_PUSHBUTTON_OFF;
+          this.corecell.renderer.setLook(this.corecell, this.type);
+        }
       }
     } else {
       return false; // did nothing
@@ -8916,9 +9220,9 @@ function setColorScheme(index) {
 
   if(index == 0) { // light
     ONCOLOR = '#200';
-    OFFCOLOR = '#aaa';
-    BGCOLOR = 'white';
-    TEXTFGCOLOR = '#000'; // '#940';
+    OFFCOLOR = '#999';
+    BGCOLOR = '#fafafa';
+    TEXTFGCOLOR = '#333'; // '#940';
     TEXTBGCOLOR = '#eef';
 
     led_off_fg_colors = ['#d66', '#d96', '#dd6', '#6d6', '#66d', '#60d', '#d66', '#666', '#000'];
@@ -8945,7 +9249,7 @@ function setColorScheme(index) {
     OUTSIDESCREENBGCOLOR = '#444';
     OUTSIDESCREENFGCOLOR = '#fff';
 
-    LINKCOLOR = '#00e';
+    LINKCOLOR = '#06f';
     TITLECOLOR = 'black';
 
     TERMINALBGCOLOR = 'black';
@@ -9121,7 +9425,7 @@ function setColorScheme(index) {
     TITLECOLOR = TEXTFGCOLOR;
   } else if(index == 6) { // brown
     setColorScheme(0);
-    BGCOLOR = '#950';
+    BGCOLOR = '#a60';
     TEXTBGCOLOR = '#720';
 
     var offbg = '#000';
@@ -9134,7 +9438,7 @@ function setColorScheme(index) {
 
     ONCOLOR = '#fe0';
     OFFCOLOR = '#000';
-    TEXTFGCOLOR = '#ff0';
+    TEXTFGCOLOR = '#fdb';
 
     GATEBGCOLOR = '#a60';
     GATEFGONCOLOR = ONCOLOR;
@@ -9151,7 +9455,7 @@ function setColorScheme(index) {
     SWITCHON_BORDERCOLOR = 'white';
     SWITCHOFF_BORDERCOLOR = SWITCHOFF_FGCOLOR;
 
-    LINKCOLOR = '#008';
+    LINKCOLOR = '#ccf';
     TITLECOLOR = ONCOLOR;
   } else if(index == 7) { // candy
     setColorScheme(0);
@@ -9378,9 +9682,11 @@ function stopBlinkingCursor() {
 
 function getNewRenderer() {
   if(graphics_mode_actual == 0) {
-    return new RendererText();
-  } else if(graphics_mode_actual == 1) {
     return new RendererImg();
+  } else if(graphics_mode_actual == 1) {
+    return new RendererText();
+  } else if(graphics_mode_actual == 2) {
+    return new RendererSource();
   }
 }
 
@@ -9388,7 +9694,8 @@ function getNewRenderer() {
 var CLICKDEBUG = false;
 
 function Cell() {
-  this.symbol = ''; // the original parsed symbol from the text
+  this.origsymbol = ''; // the original parsed symbol from the text, unaltered
+  this.symbol = ''; // almost always equal to origsymbol, with just very few exceptions (toc, some string alterations, ...)
   this.displaysymbol = ''; // the symbol that will be displayed for this cell (sometimes different than the text, e.g. ! gets hidden, ...)
   this.circuitsymbol = ''; // symbols that take part of circuits, does NOT include comments, numbers (those only alter circuit properties), ...
   this.metasymbol = ''; // like symbol, but comments get all replaced by '"' (use this to check for comment, or for number digits, instead of circuitsymbol)
@@ -9593,14 +9900,15 @@ function Cell() {
         title = 'kinetic device';
         if(component) {
           title += ': ';
-          if(!component.number) title += 'fan / wind / cooling';
-          if(component.number == 1) title += 'motor / gear';
-          if(component.number == 2) title += 'electromagnet';
-          if(component.number == 3) title += 'pump / sprinkler / liquid';
-          if(component.number == 4) title += 'heating / incandescent';
+          if(!component.number) title += 'motor / gear. Can also activate neighboring gears.';
+          if(component.number == 1) title += 'fan / wind / cooling. Can also detect nearby activated fans.';
+          if(component.number == 2) title += 'heating / incandescent. Can also detect nearby heat.';
+          if(component.number == 3) title += 'pump / sprinkler / liquid. Can also transport and detect water.';
+          if(component.number == 4) title += 'electromagnet. Can also detect electromagnets at some horizontal or vertical distance.';
           if(component.number >= 5 && component.number <= 9) title += 'TNT: destroys devices around it';
           if(component.number >= 10 && component.number <= 14) title += 'EMP: temporarily disables devices around it';
           if(component.number >= 15 && component.number <= 19) title += 'JAM: temporarily randomizes devices around it';
+          if(component.number == 20) title += 'cover / hatch';
         }
 
       }
@@ -9936,7 +10244,8 @@ function Cell() {
   this.initDiv = function(x, y) {
     // do not make unneeded divs, large rendering speedup
     // make one on the last row though, if user added empty rows they want some scrolling space there
-    if(this.displaysymbol == ' ' && !(x == 0 && y == h - 1) && !this.verticalcommentspace) return;
+    if(graphics_mode_actual != 2 && this.displaysymbol == ' ' && !(x == 0 && y == h - 1) && !this.verticalcommentspace) return;
+    if(graphics_mode_actual == 2 && this.symbol == ' ' && this.origsymbol == ' ') return;
 
     if(this.renderer) {
       this.renderer.cleanup();
@@ -9968,7 +10277,7 @@ function Cell() {
         for(var i = 0; i < w.components.length; i++) {
           var compo = w.components[i];
           if(!compo) continue;
-          console.log('component ' + i + ': index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y + ' number: ' + compo.number + ' | rom_out_pos: ' + compo.rom_out_pos + ' ff_cycle: ' + compo.ff_cycle + ',' + compo.ff_cycle_time + ', disabled: ' + compo.disabled);
+          console.log('component ' + i + ': index: ' + compo.index + ',  type: ' + compo.type + ', corecell: ' + compo.corecell.circuitsymbol + ', corecell.x: ' + compo.corecell.x + ', corecell.y: ' + compo.corecell.y + ' number: ' + compo.number + ' | rom_out_pos: ' + compo.rom_out_pos + ' ff_cycle: ' + compo.ff_cycle + ',' + compo.ff_cycle_time + ', disabled: ' + compo.disabled + ', kinvalue: ' + compo.kinvalue);
           if(compo.parent) console.log('parent: index: ' + compo.parent.index + ',  type: ' + compo.parent.type + ', corecell: ' + compo.parent.corecell.circuitsymbol + ', corecell.x: ' + compo.parent.corecell.x + ', corecell.y: ' + compo.parent.corecell.y);
           for(var j = 0; j < compo.inputs.length; j++) {
             var corecellinfo = (compo.inputs[j].corecell) ? (compo.inputs[j].corecell.circuitsymbol + ', corecell.x: ' + compo.inputs[j].corecell.x + ', corecell.y: ' + compo.inputs[j].corecell.y) : ('' + compo.inputs[j].corecell);
@@ -10173,8 +10482,12 @@ function RendererText() {
     //worldDiv.style.width = (tw * w) + 'px';
     //worldDiv.style.height = (th * h) + 'px';
     //worldDiv.style.border = '1px solid yellow';
-
     worldDiv.onmousedown = function(e) {
+      if(isPaused() && !!highlightedcomponent) {
+        highlightedcomponent = null;
+        unpause();
+      }
+
       var x = e.pageX - worldDiv.offsetLeft;
       var y = e.pageY - worldDiv.offsetTop;
       var button = findNearestSwitch(x, y, x - AROUNDBUTTONRADIUS - tw, y - AROUNDBUTTONRADIUS - th,
@@ -10201,7 +10514,7 @@ function RendererText() {
     this.div0.onmousedown = clickfun;
     //this.div0.ontouchstart = clickfun;
 
-    if(cell.circuitsymbol != '"') {
+    if(cell.circuitsymbol != '"' && !cell.comment) {
       this.div1 = makeDiv(x * tw, y * th, tw, th, worldDiv);
       this.div1.onmousedown = clickfun;
       //this.div1.ontouchstart = clickfun;
@@ -10270,7 +10583,7 @@ function RendererText() {
       } else if(/*cell.commentalign >= 0 && cell.commentalign <= 2*/cell.commentstyle != 0) {
         var align = cell.commentalign;
         if(cell.commentstyle == 2) {
-          this.div0.style.fontFamily = 'unset'; // remove monospace
+          this.div0.style.fontFamily = 'sans-serif'; // remove monospace
         }
         this.div0.innerText = '';
         this.div0.style.backgroundColor = 'unset';
@@ -10289,6 +10602,7 @@ function RendererText() {
             span0.style.fontSize = Math.floor(tw * 0.8) + 'px'; // avoids background overlapping parts of font issues. Test this with underscore characters in font style 3 of 4 (multiple lines), with different zoom letters, to ensure the _ does not disappear behind the background of the next line
           } else {
             // a bit bigger, because otherwise formatted text tends to be too much smaller compared to circuits, give it a bit more readability
+            // however, on the other hand it makes letters too close to each other on next lines, so disabled after all...
             span0.style.fontSize = Math.floor(tw * 1.1) + 'px';
             if(tw < 16) span0.style.letterSpacing = '0.5px'; // this might make it slightly more readable if zoomed out a lot
           }
@@ -10335,7 +10649,10 @@ function RendererText() {
       }
 
       if(cell.commentchapter > 0) {
-        if(cell.commentchapter == 1) textel.style.fontSize = Math.floor(1.2 * tw) + 'px';
+        if(cell.commentchapter == 1) {
+          textel.style.fontSize = Math.floor(1.2 * tw) + 'px';
+          textel.style.fontFamily = 'sans-serif';
+        }
         if(cell.commentchapter < 3) textel.style.fontWeight = 'bold';
         if(cell.commentchapter > 1) textel.style.textDecoration = 'underline';
         if(cell.commentchapter == 3) textel.style.fontStyle = 'italic';
@@ -10580,21 +10897,21 @@ function RendererText() {
     if(type == TYPE_TIMER_ON || type == TYPE_TIMER_OFF) {
       var clocked = cell.components[0].clocked;
       if(clocked && this.look0 != 'R') this.div0.innerText = this.look0 = 'R';
-      if(!clocked && this.look0 != 'r') this.div0.innerText = this.look0 = 'r';
+      else if(!clocked && this.look0 != 'r') this.div0.innerText = this.look0 = 'r';
     }
     if(type == TYPE_SWITCH_ON || type == TYPE_SWITCH_OFF) {
       var user = (type == TYPE_SWITCH_ON);
       if(user && this.look0 != 'S') this.div0.innerText = this.look0 = 'S';
-      if(!user && this.look0 != 's') this.div0.innerText = this.look0 = 's';
+      else if(!user && this.look0 != 's') this.div0.innerText = this.look0 = 's';
       if(user && this.look1 != 'S') this.div1.innerText = this.look1 = 'S';
-      if(!user &&this.look1 != 's') this.div1.innerText = this.look1 = 's';
+      else if(!user &&this.look1 != 's') this.div1.innerText = this.look1 = 's';
     }
     if(type == TYPE_PUSHBUTTON_ON || type == TYPE_PUSHBUTTON_OFF) {
       var user = (type == TYPE_PUSHBUTTON_ON);
       if(user && this.look0 != 'P') this.div0.innerText = this.look0 = 'P';
-      if(!user && this.look0 != 'p') this.div0.innerText = this.look0 = 'p';
+      else if(!user && this.look0 != 'p') this.div0.innerText = this.look0 = 'p';
       if(user && this.look1 != 'P') this.div1.innerText = this.look1 = 'P';
-      if(!user && this.look1 != 'p') this.div1.innerText = this.look1 = 'p';
+      else if(!user && this.look1 != 'p') this.div1.innerText = this.look1 = 'p';
     }
   };
 
@@ -10611,9 +10928,170 @@ function RendererText() {
       if(char == this.prevchar) return;
       this.div0.innerText = char;
       this.div0.style.backgroundColor = TERMINALBGCOLOR;
+      this.prevchar = char;
     }
   };
 }
+
+/** @implements Renderer
+ * This renderer shows the source code, mostly, with a few exceptions
+ * It does not show contents of terminal displays well, no RGB LEd or dot matrix
+ * coors, nor various other graphicsl effects.
+ * It does show different color for ON and OFF cells.
+ * This is mainly useful to take a quick look at the source in-place.
+ *
+ * There are a few things where it deviates from the source, including showing
+ * any table of contents (since those resize the circuit so there's not much
+ * to avoid the change anyway).
+ */
+function RendererSource() {
+  this.fallback = new RendererText();
+
+  this.prevvalue = -1;
+  this.prevchar = -1;
+  this.div0 = null; // div for off style
+  this.div1 = null; // div for on style
+
+  this.globalInit = function() {
+    this.fallback.globalInit();
+  };
+
+  this.cleanup = function() {
+    util.removeElement(this.div0);
+    util.removeElement(this.div1);
+  };
+
+  // one time initialization of a cell
+  this.init = function(cell, x, y, clickfun) {
+    this.fallback.init(cell, x, y, clickfun);
+    this.div0 = this.fallback.div0;
+    this.div1 = this.fallback.div1;
+  };
+
+  // specific initialization, can be re-done if cell changed on click
+  this.init2 = function(cell, symbol, virtualsymbol, opt_title) {
+    var c = cell.origsymbol;
+    var c2 = cell.symbol; // this one can distinguish 'toc'
+    if(c == ' ' && c2 == ' ') return;
+
+    if(this.div0) {
+      this.div0.innerText = c;
+      this.div0.style.color = OFFCOLOR;
+      this.div0.style.fontFamily = 'fixed';
+      this.div0.style.fontSize = Math.floor(tw * 1.0) + 'px';
+      //this.div0.style.border = '1px solid white';
+      this.div0.style.textAlign = 'center';
+      //this.div0.style.fontWeight = 'bold';
+      this.div0.style.zIndex = MAINZINDEX;
+    }
+    if(this.div1) {
+      var c1 = c;
+      // One of the few exceptions for 'source': capitalize ON LED's
+      if(c == 'l' && cell.components[0] && cell.components[0].type == TYPE_LED) c1 = 'L';
+      this.div1.innerText = c1;
+      this.div1.style.color = ONCOLOR;
+      this.div1.style.fontFamily = 'fixed';
+      this.div1.style.fontSize = Math.floor(tw * 1.0) + 'px';
+      this.div1.style.fontWeight = 'bold';
+      this.div1.style.textAlign = 'center';
+      this.div1.style.zIndex = MAINZINDEX;
+      this.div1.style.visibility = 'hidden';
+    }
+
+    if(cell.comment) this.div0.style.color = TEXTFGCOLOR;
+
+    // One of the few exceptions that's not rendered as source. One reason is that the original shape of the circuit has been changed to let the TOC fit here anyway, and the toc command overwritten from the cell.symbol's
+    if(symbol == 'toc') {
+      setTocHTML(cell.circuitextra, cell.tocdepth, cell.toclink, this.div0);
+    }
+
+
+    if(virtualsymbol == 'T') {
+      var outside = specialmap[symbol];
+      var vte = null;
+      if(cell.components[0] && cell.components[0].type == TYPE_VTE) vte = cell.components[0].vte;
+      if(!vte && cell.components[0] && cell.components[0].parent) vte = cell.components[0].parent.vte;
+
+      if(vte) {
+        var comp = cell.components[0];
+        if(vte.parent == comp && vte.supportsTyping() && comp.corecell.x == cell.x && comp.corecell.y == cell.y) {
+          // set at position where this terminal is, because otherwise the browser will scroll the screen towards where the element is placed when focusing it
+          vte.initTextArea(worldDiv, cell.x * tw, cell.y * th);
+        }
+      }
+    }
+
+    if(cell.components[0] && cell.components[0].error) {
+      this.markError(cell, cell.getErrorText());
+    } else if(opt_title) {
+      if(this.div0) this.div0.title = opt_title;
+      if(this.div1) this.div1.title = opt_title;
+    }
+
+    this.init2done = true;
+  };
+
+  this.markError = function(cell, errortext) {
+    if (!errortext) {
+      errortext = 'parse error @ ' + cell.x + ' ' + cell.y + '(' + cell.symbol + ')';
+    }
+    this.div0.style.backgroundColor = ERRORBGCOLOR;
+    this.div1.style.backgroundColor = ERRORBGCOLOR;
+    this.div0.style.color = ERRORFGCOLOROFF;
+    this.div1.style.color = ERRORFGCOLORON;
+    this.div0.title = errortext;
+    this.div1.title = errortext;
+  };
+
+  this.setCursorPointer = function(opt_textstyle) {
+    if(!this.div0) return;
+    var style = opt_textstyle ? 'text' : 'pointer';
+    this.div0.style.cursor = style;
+    this.div1.style.cursor = style;
+    if(this.clickDiv) this.clickDiv.style.cursor = style;
+  };
+
+  this.setValue = function(cell, value, type) {
+    if(!this.div1) return; // e.g. if this is a comment (TODO: fix the fact that comment gets setValue at all, it should not be part of a component)
+    if(value != this.prevvalue) { // changing visibility is slow in case of lots of elements, so only do if it changed
+      if(value) {
+        this.div0.style.visibility = 'hidden';
+        this.div1.style.visibility = 'visible';
+      } else {
+        this.div0.style.visibility = 'visible';
+        this.div1.style.visibility = 'hidden';
+      }
+    }
+    this.prevvalue = value;
+  };
+
+  this.setLook = function(cell, type) {
+    this.fallback.setLook(cell, type);
+  };
+
+  // typevte rendervte typeterminal renderterminal
+  this.setTerminal = function(char, blink, blur) {
+    if(blink) {
+      //blinking cursor for the active terminal
+      this.div0.innerText = '';
+      registerBlinkingCursor(this.div0);
+    } else if(blur) {
+      this.div0.innerText = '';
+    } else {
+      if(char == this.prevchar) return;
+      if(char == ' ' || !char) {
+      } else if(!char) {
+        this.div1.innerText = '';
+        this.div1.style.visibility = 'hidden';
+      } else {
+        this.div1.innerText = char;
+        if(this.prevchar != ' ') this.div1.style.visibility = 'visible';
+      }
+      this.prevchar = char;
+    }
+  };
+}
+
 
 
 // checks if neighbor at given direction from x,y is device
@@ -10627,14 +11105,27 @@ function hasDevice(x, y, dir) {
 // very similar to connected, but with a few tweaks for graphics.
 // if connected to a % or & double corner and that double corner is not
 // connected with its other end, returns false instead of true
-function connected2g(x, y, dir) {;
+function connected2g(x, y, dir) {
   if(!connected2(x, y, dir)) return false;
-  if(dir > 3) return true;
   var n = getNeighbor(x, y, dir);
   if(n) {
     var x2 = n.x;
     var y2 = n.y;
     var c2 = world[y2][x2].circuitsymbol;
+
+    if(dir > 3) {
+      if(world[y2][x2].circuitextra == 2 && dinputmap[c2]) {
+        // this is a diagonal ^, possibly crossing. If not crossing and this wire corresponds to the empty output side, then a wire should not make a diagonal branch towards that input
+        var n2 = getNeighbor(x2, y2, dir);
+        if(!n2) return false;
+        var x3 = n2.x;
+        var y3 = n2.y;
+        var c3 = world[y3][x3].circuitsymbol;
+        if(!devicemaparea[c3]) return false;
+      }
+      return true;
+    }
+
     var dir2 = -1;
     if(c2 == '&') dir2 = (dir == 0) ? 3 : ((dir == 1) ? 2 : ((dir == 2) ? 1 : 0));
     if(c2 == '%') dir2 = (dir == 0) ? 1 : ((dir == 1) ? 0 : ((dir == 2) ? 3 : 2));
@@ -10721,6 +11212,8 @@ function RendererDrawer() {
     var x1b = Math.floor(x1 * tw);
     var y1b = Math.floor(y1 * th);
 
+    var thick = tw > 35;
+
     if(USE_BRESENHAM) {
       // For non-diagonal lines, the canvas line drawing routine is reliable
       // enough to not be blurry (if used carefully such as with the 0.5's
@@ -10729,11 +11222,19 @@ function RendererDrawer() {
         if(x0b == tw) { x0b--; x1b--; }
         ctx.moveTo(this.tx + x0b + 0.5, this.ty + y0b);
         ctx.lineTo(this.tx + x1b + 0.5, this.ty + y1b);
+        if(thick) {
+          ctx.moveTo(this.tx + x0b + 0.5 + 1, this.ty + y0b);
+          ctx.lineTo(this.tx + x1b + 0.5 + 1, this.ty + y1b);
+        }
         return;
       } else if(y0b == y1b) {
         if(y0b == th) { y0b--; y1b--; }
         ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5);
         ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5);
+        if(thick) {
+          ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5 + 1);
+          ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5 + 1);
+        }
         return;
       }
 
@@ -10782,7 +11283,12 @@ function RendererDrawer() {
       var x = x0b;
       var y = y0b;
       for(var i = 0; i <= numpixels; i++) {
-        ctx.fillRect(this.tx + x, this.ty + y, 1, 1);
+        if(thick) {
+          if(dxb > dyb) ctx.fillRect(this.tx + x, this.ty + y, 1, 2);
+          else ctx.fillRect(this.tx + x, this.ty + y, 2, 1);
+        } else {
+          ctx.fillRect(this.tx + x, this.ty + y, 1, 1);
+        }
         num += numinc;
         if (num >= den) {
           num -= den;
@@ -11727,7 +12233,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           // only for the solid parts, wires part of this component must still use on color
           if(devicemaparea[c]) {
             gateBorderColor = GATEFGOFFCOLOR;
-            if(component && (type == TYPE_CONSTANT_OFF || type == TYPE_CONSTANT_ON || type == TYPE_FIXED) && component.parent && component.parent.fixed.inverted) {
+            if(component && (type == TYPE_CONSTANT_OFF || type == TYPE_CONSTANT_ON || type == TYPE_FIXED) && component.parent && component.parent.fied && component.parent.fixed.inverted) {
               gateBorderColor = GATEFGONCOLOR;
             }
 
@@ -12222,7 +12728,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         if(digitmap[symbol]) {
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.font = '' + tw + 'px serif';
+          ctx.font = '' + tw + 'px sans-serif';
           this.ctx0.strokeStyle = this.ctx0.fillStyle = BGCOLOR;
           ctx.fillText(symbol, drawer.tx + (tw >> 1), drawer.ty + (th >> 1));
         }
@@ -12337,24 +12843,6 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         if(c == 'K') { // TYPE_KINETIC
           okdraw = false;
           if(!component.number) {
-            // draw a fan-icon
-            drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.15);
-            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.1, 0.1, 0.3, 0.1);
-            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.9, 0.1, 0.9, 0.3);
-            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.9, 0.9, 0.7, 0.9);
-            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.1, 0.9, 0.1, 0.7);
-            if(i == 1) {
-              // draw stripes that indicate the fan is spinning
-              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15, 1.0/8, 0.25);
-              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15, 1.0/8, 0.35);
-              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.25, 1.0/8+0.25, 0.25);
-              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.25, 1.0/8+0.25, 0.35);
-              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.5, 1.0/8+0.5, 0.25);
-              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.5, 1.0/8+0.5, 0.35);
-              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.75, 1.0/8+0.75, 0.25);
-              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.75, 1.0/8+0.75, 0.35);
-            }
-          } else if(component.number == 1) {
             // draw a gear-icon
             drawer.drawCircle_(ctx, 0.5, 0.5, 0.15);
             var num = (tw < 32) ? 6 : 8;
@@ -12389,14 +12877,25 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
               drawer.drawArc_(ctx, 0.5, 0.5, 5.0 / 8 - s2, 5.0 / 8 + s2, 0.52);
               drawer.drawArc_(ctx, 0.5, 0.5, 7.0 / 8 - s2, 7.0 / 8 + s2, 0.52);
             }
+          } else if(component.number == 1) {
+            // draw a fan-icon
+            drawer.drawFilledCircle_(ctx, 0.5, 0.5, 0.15);
+            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.1, 0.1, 0.3, 0.1);
+            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.9, 0.1, 0.9, 0.3);
+            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.9, 0.9, 0.7, 0.9);
+            drawer.drawFilledTriangle_(ctx, 0.5, 0.5, 0.1, 0.9, 0.1, 0.7);
+            if(i == 1) {
+              // draw stripes that indicate the fan is spinning
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15, 1.0/8, 0.25);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15, 1.0/8, 0.35);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.25, 1.0/8+0.25, 0.25);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.25, 1.0/8+0.25, 0.35);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.5, 1.0/8+0.5, 0.25);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.5, 1.0/8+0.5, 0.35);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.75, 1.0/8+0.75, 0.25);
+              drawer.drawArc_(ctx, 0.5, 0.5, 1.0/8-0.15+0.75, 1.0/8+0.75, 0.35);
+            }
           } else if(component.number == 2) {
-            drawer.drawEllipse_(ctx, 0.43, 0.5, 0.15, 0.3);
-            drawer.drawEllipse_(ctx, 0.57, 0.5, 0.15, 0.3);
-          } else if(component.number == 3) {
-            // water droplet
-            drawer.drawFilledTriangle_(ctx, 0.5, 0.2, 0.3, 0.5, 0.7, 0.5);
-            drawer.drawFilledCircle_(ctx, 0.5, 0.6, 0.21);
-          } else if(component.number == 4) {
             // TODO: draw this better. This represents a heating coil, with some stripes indicating heat above it when enabled
             // draw a heating coil icon
             drawer.drawLine_(ctx, 0.2, 1.0, 0.2, 0.7);
@@ -12414,6 +12913,13 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
               drawer.drawArc_(ctx, 0.37, 0.25, 0.0-0.1, 0.0+0.1, 0.15);
               drawer.drawArc_(ctx, 0.57, 0.25, 0.0-0.1, 0.0+0.1, 0.15);
             }
+          } else if(component.number == 3) {
+            // water droplet
+            drawer.drawFilledTriangle_(ctx, 0.5, 0.2, 0.3, 0.5, 0.7, 0.5);
+            drawer.drawFilledCircle_(ctx, 0.5, 0.6, 0.21);
+          } else if(component.number == 4) {
+            drawer.drawEllipse_(ctx, 0.43, 0.5, 0.15, 0.3);
+            drawer.drawEllipse_(ctx, 0.57, 0.5, 0.15, 0.3);
           } else if(component.number >= 5 && component.number <= 9) {
             drawer.drawLine_(ctx, 0.2, 0.35, 0.2, 0.65);
             drawer.drawLine_(ctx, 0.1, 0.35, 0.3, 0.35);
@@ -12453,7 +12959,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         if(okdraw && textel) {
           /*ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.font = '' + tw + 'px serif';
+          ctx.font = '' + tw + 'px sans-serif';
           ctx.fillText(symbol, tw >> 1, th >> 1);*/
           textel.innerText = symbol;
         } else if((numborder == 0 && virtualsymbol == '#') || symbol == '#i') {
@@ -13018,6 +13524,7 @@ var w = 0, h = 0;
 var line0 = [];
 var line1 = [];
 
+// render when components updated. For the initial render, see initDivs
 function render() {
   if(highlightedcomponent) {
     renderHighlightComponent(highlightedcomponent);
@@ -13729,6 +14236,7 @@ function parseCells(text) {
       var s = x >= lines[y].length ? ' ' : lines[y][x];
       if (s == BACKSLASH_ALTERNATIVE && !comment) s = '\\';
       if (s == DQUOT_ALTERNATIVE) s = '"';
+      cell.origsymbol = s;
       cell.symbol = s;
       cell.displaysymbol = s;
       cell.circuitsymbol = s;
@@ -14555,6 +15063,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
       if((c == 'v' || c == 'w') && !(todir == 7 && z == 0) && !(todir == 4 && z == 1)) return false;
       if((c == '<' || c == '[') && !(todir == 4 && z == 0) && !(todir == 5 && z == 1)) return false;
     } else {
+      //if(c2 == 'g' || c2 == '=' || antennamap[c2]) return true;
       // nothing interacts with the front side if device inputs here, that is resolved only later
       if((c == '^' || c == 'm') && todir == 0) return false;
       if((c == '>' || c == ']') && todir == 1) return false;
@@ -15377,7 +15886,9 @@ function parseComponents() {
             for(var i = 0; i < array.length; i++) {
               var x = array[i][0];
               var y = array[i][1];
-              number = Math.max(number, world[y][x].number);
+              var c = world[y][x].circuitsymbol;
+              // do not count numbers of wires: the wire could be touching a larger number e.g. formed by the grouping of various small numbers next to each other and then give that much too large invalid value to this component
+              if(c == 'K') number = Math.max(number, world[y][x].number);
             }
             component.number = number;
           }
@@ -16021,15 +16532,23 @@ function computeComponentsOrder() {
 function initDivs() {
   worldDiv.style.display = 'none'; // making it invisible while rendering makes it faster in some browsers
   worldDiv.innerText = '';
+  worldDiv2.innerText = '';
 
   getNewRenderer().globalInit();
 
-  // y in opposite order: reason: fonts usually have attachments at the bottom, not the top. And sometimes the bottom attachment spills over into the cell below. If the cell below has a background color, it would come on top of the font, clipping it. Doing bottom to to porder makes higher cells be on top of lower cells, fixing that.
-  //for(var y = h - 1; y >= 0; y--) {
-  // However, doing y in opposite order confuses the browser about the direction paragraphs of text are going, so do it in the regular order anyway. The above mentioned clipping issues appear fixed now, if not, use different solution than rendering in opposite order.
-  for(var y = 0; y < h; y++) {
-    for(var x = line0[y]; x < line1[y]; x++) {
-      world[y][x].initDiv(x, y);
+  if(graphics_mode_actual == 2) {
+    for(var y = 0; y < h; y++) {
+      if(!world[y]) continue;
+      for(var x = 0; x < w; x++) {
+        if(!world[y][x]) continue;
+        world[y][x].initDiv(x, y);
+      }
+    }
+  } else {
+    for(var y = 0; y < h; y++) {
+      for(var x = line0[y]; x < line1[y]; x++) {
+        world[y][x].initDiv(x, y);
+      }
     }
   }
   // The purpose of this div is that you can still scroll a bit lower,
@@ -16039,6 +16558,7 @@ function initDivs() {
   renderingMessageDiv.innerText = '';
 
   redrawjacks();
+  redrawkinetic();
 }
 
 // this is for divs that create canvases (non-empty and non-comment ones), for the slow firefox
@@ -16160,6 +16680,8 @@ function makeTocRoom(text, tocPos, tocType, tocDepth, codelen, outCoords) {
   text = text.substr(0, start) + newlines + text.substr(end);
   return text;
 }
+
+var graphics_mode_debug_override = -1;
 
 function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction, opt_paused) {
   // for the very first parse, do NOT scroll up, it is handy if you have
@@ -16321,13 +16843,18 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction, 
   }*/
   var graphicsindex = origtext.indexOf('RENDER:');
   if(graphicsindex >= 0) {
-    if(util.textHasAt(origtext, graphicsindex + 7, 'text')) {
+    if(util.textHasAt(origtext, graphicsindex + 7, 'graphical')) {
       graphics_mode_actual = 0;
     }
-    else if(util.textHasAt(origtext, graphicsindex + 7, 'graphical')) {
+    else if(util.textHasAt(origtext, graphicsindex + 7, 'text')) {
       graphics_mode_actual = 1;
     }
+    else if(util.textHasAt(origtext, graphicsindex + 7, 'source')) {
+      graphics_mode_actual = 2;
+    }
   }
+  if(graphics_mode_debug_override >= 0) graphics_mode_actual = graphics_mode_debug_override;
+  //graphics_mode_actual = 2;
   rendererDropdown.selectedIndex = graphics_mode_actual;
 
   // for rendering: this is circuit's width, but reduced to a smaller width in
@@ -16494,10 +17021,12 @@ registerChangeDropdownElement(TYPE_DELAY);
 registerChangeDropdownElement(TYPE_MUSIC_NOTE);
 registerChangeDropdownElement(TYPE_RANDOM);
 registerChangeDropdownElement(TYPE_JACK);
-registerChangeDropdownElement(TYPE_KINETIC, 'fan', 0);
+registerChangeDropdownElement(TYPE_KINETIC, 'gear', 0);
+registerChangeDropdownElement(TYPE_KINETIC, 'fan', 1);
 registerChangeDropdownElement(TYPE_KINETIC, 'TNT', 8);
 registerChangeDropdownElement(TYPE_KINETIC, 'EMP', 13);
 registerChangeDropdownElement(TYPE_KINETIC, 'JAM', 18);
+registerChangeDropdownElement('repair', 'repair');
 //registerChangeDropdownElement('rem_inputs');
 
 
@@ -16708,5 +17237,5 @@ function printTransform(text, op) {
   console.log(transform(text, op));
 }
 
-
+var debugHook = null;
 

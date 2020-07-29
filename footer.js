@@ -60,5 +60,5 @@ createMenuUI();
 parseText(loaded[0], loaded[1], loaded[2] ? linkableCircuits[loaded[2]] : undefined, 2);
 if(loaded[3] >= 0) currentSelectedCircuit = loaded[3];
 
-
+if(debugHook) debugHook();
 

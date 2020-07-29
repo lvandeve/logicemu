@@ -4206,6 +4206,67 @@ s....>M.. ..+..>M..
 
 
 
+registerCircuit('Logic with gears', `
+
+0"The gears have a special rule: they rotate if their neighbors rotate, but"
+0"not if 3 neighbors rotate. This has nothing to do with gears in real life,"
+0"the rule is included out of interest because it allows to make logic gates in"
+0"a more elaborate way. This is not the normal way to use logicemu, just an"
+0"interesting alternative. Cellular automata are a more useful way to study"
+0"this type of behaviour."
+
+0"Here are a few logic gate examples. Inputs must be synchronized. Diodes protect"
+0"propagating signal from one input to the other."
+
+0"diode:"
+
+                   KKKK
+    p-->KKKKKKKKKKKKK KKKKKKKKKKKKKKKK<--p
+                   KKKK
+
+0"OR:"
+
+
+                   KKKK
+  "A"p>o>KKKKKKKKKKKK KKK
+       ^           KKKK K
+"A+B"p..                KKKKKKKKKKKKKK-->l
+       v           KKKK K
+  "B"p>o>KKKKKKKKKKKK KKK
+                   KKKK
+
+0"XOR:"
+
+
+                   KKKK
+  "A"p>o>KKKKKKKKKKKK KKKKK
+       ^           KKKK K K
+"A+B"p..                KKKKKKKKKKKKKK-->l
+       v           KKKK K K
+  "B"p>o>KKKKKKKKKKKK KKKKK
+                   KKKK
+
+
+
+
+0"NIMPLY (A AND NOT B):"
+
+
+                   KKKK
+  "A"p>o>KKKKKKKKKKKK KKKK
+       ^           KKKK  K
+"A+B"p..                 K
+       v           KKKK KKKK
+  "B"p>o>KKKKKKKKKKKK KKK KKKKKKKKKKKK-->l
+                   KKKK KKKK
+
+
+0"A NOT gate requires getting a signal out of nothing. Given such signal is"
+0"provided, it can be made by XOR-ing the input with that signal at the"
+0"precisely correct time. Not shown here."
+
+`, 'logic_gears');
+
 registerTitle('Time');
 
 
@@ -6682,7 +6743,7 @@ registerCircuit('4-bit CPU', `
   . . .>#######i32 # = = =   .######i21<...e<a<g19 K   . 9|||  ||||  gg     ||||
   . . . ^^^^       # = = =    ^^^^ ^^^^    ^ ^     ^   .  |||  ||||  vv     ||||
   . ..+>####illlli # = = =    |||| #i22<g9.. g8    s   ...|||  #####i23     ||||
-  .-+-+>#"r2"^^^^#<#<2 = =    |||| ^^^^         "damage" ||||  ^^^^^^^^     ||||
+  .-+-+>#"r2"^^^^#<#<2 = =    |||| ^^^^        1"damage" ||||  ^^^^^^^^     ||||
   . . .>#######i32 # = = = ===3210=7654==================0321==32107654=====7654==3210==
   . . . ^^^^       # = = = =    "adder"             "shift"     "logic"           vvvv
   . ..+>####illlli # = = = =                                                      O###
@@ -6750,7 +6811,7 @@ registerCircuit('4-bit CPU', `
              ###"manual clock"0
              p##
          ### v                    ###                   ###
- 0"clock"###>o>a.g0           1g--p##"reset"0   2go<----p##"reset only IP"0
+ 2"clock"###>o>a.g0           1g--p##"reset"0   2go<----p##"reset only IP"0
          ##r   m                  ###             ^     ###
            3   g3                                 g1
 
