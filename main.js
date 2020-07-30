@@ -685,6 +685,7 @@ function createMenuUI() {
   colorDropdown.onchange = function() {
     util.setLocalStorage(colorDropdown.selectedIndex, 'color_scheme');
     setColorScheme(colorDropdown.selectedIndex);
+    colorscheme = colorDropdown.selectedIndex;
     initDivs();
     render();
   };

@@ -8825,7 +8825,7 @@ s>J   J>#      J>#      J>L
 
                                        J   J   J   J
 
-0"# K-outputs"
+0"# Kinetic devices K"
 
 s-->K
 
@@ -8840,7 +8840,13 @@ s-->K3       s-->K8       s-->K13      s-->K18
 s-->K4       s-->K9       s-->K14      s-->K19
 
 
-
+     ##########
+     #  ^     #
+     #  S     #
+s--->K20 s>o------>l
+     #        #
+     #        #
+     ##########
 
 
 0"# Error color"

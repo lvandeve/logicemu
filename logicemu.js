@@ -7210,8 +7210,8 @@ function MusicNote() { // function Note()
       freq %= 100000;
       if(shape > 7) shape = 0;
     }
-    if(freq < 20) freq = 0;
-    if(freq > 20000) freq = 20000;
+    if(freq < 1) freq = 0;
+    if(freq > 100000) freq = 100000;
     this.basefrequency = freq;
     this.baseshape = shape;
 
@@ -8155,7 +8155,7 @@ function Component() {
     } else if(this.type == TYPE_JACK) {
       return numon != 0; // not implemented in this function, but elsewhere, but behave like OR initially when not yet connected to another jack
     } else if(this.type == TYPE_KINETIC) {
-      return numon != 0;
+      return (this.number == 20) ? (numoff == 0) : (numon != 0); // acts as OR, except the hatch/cover which acts as AND to require all inputs enabled to open up
     }
     return false;
   };
@@ -10271,7 +10271,7 @@ function Cell() {
         console.log('===================');
         var w = world[y][x];
         var s = 'x: ' + x + ', y: ' + y + ', circuitsymbol: ' + w.circuitsymbol + ', metasymbol: ' + w.metasymbol + ', displaysymbol: ' + w.displaysymbol + ', circuitextra: ' + w.circuitextra + ' | clusterindex: ' + w.clusterindex;
-        s += ', number: ' + w.number + ', numbertype: ' + w.numbertype;
+        s += ', number: ' + w.number + ', numbertype: ' + w.numbertype + ', largedevicetype: ' + w.largedevicetype;
         console.log(s);
         if(w.antennax != -1 || w.antennay != -1) console.log('antennax: ' + w.antennax + ', antennay: ' + w.antennay);
         for(var i = 0; i < w.components.length; i++) {
@@ -10284,7 +10284,6 @@ function Cell() {
             console.log('input ' + j + ': index: ' +  compo.inputs[j].index + ', type: ' + compo.inputs[j].type + ', corecell: ' +  corecellinfo);
           }
         }
-
       }
       return false;
     }, component, x, y);
@@ -10921,9 +10920,11 @@ function RendererText() {
       //blinking cursor for the active terminal
       this.div0.innerText = '';
       registerBlinkingCursor(this.div0);
+      this.prevchar = null;
     } else if(blur) {
       this.div0.innerText = '';
       this.div0.style.backgroundColor = TERMINALMIDCOLOR;
+      this.prevchar = null;
     } else {
       if(char == this.prevchar) return;
       this.div0.innerText = char;
@@ -11075,8 +11076,10 @@ function RendererSource() {
       //blinking cursor for the active terminal
       this.div0.innerText = '';
       registerBlinkingCursor(this.div0);
+      this.prevchar = null;
     } else if(blur) {
       this.div0.innerText = '';
+      this.prevchar = null;
     } else {
       if(char == this.prevchar) return;
       if(char == ' ' || !char) {
@@ -11223,8 +11226,13 @@ function RendererDrawer() {
         ctx.moveTo(this.tx + x0b + 0.5, this.ty + y0b);
         ctx.lineTo(this.tx + x1b + 0.5, this.ty + y1b);
         if(thick) {
-          ctx.moveTo(this.tx + x0b + 0.5 + 1, this.ty + y0b);
-          ctx.lineTo(this.tx + x1b + 0.5 + 1, this.ty + y1b);
+          if(x0 > 0.5) {
+            ctx.moveTo(this.tx + x0b + 0.5 - 1, this.ty + y0b);
+            ctx.lineTo(this.tx + x1b + 0.5 - 1, this.ty + y1b);
+          } else {
+            ctx.moveTo(this.tx + x0b + 0.5 + 1, this.ty + y0b);
+            ctx.lineTo(this.tx + x1b + 0.5 + 1, this.ty + y1b);
+          }
         }
         return;
       } else if(y0b == y1b) {
@@ -11232,8 +11240,13 @@ function RendererDrawer() {
         ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5);
         ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5);
         if(thick) {
-          ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5 + 1);
-          ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5 + 1);
+          if(y0 > 0.5) {
+            ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5 - 1);
+            ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5 - 1);
+          } else {
+            ctx.moveTo(this.tx + x0b, this.ty + y0b + 0.5 + 1);
+            ctx.lineTo(this.tx + x1b, this.ty + y1b + 0.5 + 1);
+          }
         }
         return;
       }
@@ -15325,6 +15338,11 @@ var globalLooseWireInstanceE = null;
 // also sets index of old component to -1, since it's no longer part of the components array
 function mergeComponents(component, oldcomponent) {
   if(oldcomponent.index < 0) return;
+  if(oldcomponent.error) {
+    component.error = true;
+    if(component.errormessage) component.errormessage += ' | ' + oldcomponent.errormessage;
+    else component.errormessage = oldcomponent.errormessage;
+  }
 
   for(var j = 0; j < oldcomponent.cells.length; j++) {
     component.cells.push(oldcomponent.cells[j]);
@@ -16017,6 +16035,7 @@ function parseComponents() {
           // So if we're a TYPE_DELAY or TYPE_COUNTER, we actually want our #'s to instead
           // be merged with the main core component. And this requires a bit of fixing up.
           // In addition, do the main purpose here, which is to change the type of the TYPE_FLIPFLOP component to the new type
+          // TODO: can we get rid of this (and of mergeComponents) and know type of the FF from its largedevicearray?
           if(array.length > 0) {
             // find corecell
             var corecell = -1;
