@@ -8729,6 +8729,13 @@ s--( )-->l      (--s l<--)         s--(#)-->l   (--#  )-->l
                            l  l  l
 
 
+l l   l l   l l   l      a l
+^ ^   ^ ^   ^ ^   ^^     ^^
+a e   a e   a |   | ;    . ;
+^^^   ^^    ^^|   s  s   s  s
+s s   s s   s s
+
+
 
 
 s-1========1->l   s-1========1->l    s-1========1->l   s-1========1->l
@@ -8755,10 +8762,10 @@ S-->r-->l     S-->s-->l
 S-->R-->l     S-->S-->l
 
 
-0"Due to the way the rendering works, some of the combined wire/input crossings inputs below will"
-0"show as either all on or all off even if only a subset of the wires are on. This is a"
-0"limitation of how the rendering works, only for a common subset of shapes it supports up to"
-0"4 graphical patterns combining on and off in a cell instead of only 2."
+0"Wire crossing inputs X and Y have the most possible shapes: each of 8 sides could be"
+0"empty, wire, or arrow/antiarrow head. Up to 4 independent parts can have the on or the off"
+0"color. Therefore, these use the dynamic drawing system to support more than the"
+0"standard limit of 2 (standard) or 4 (specific to a few, like +) different on/off wire combinations."
 
         s S          s   S             s              s        s    s s    s s       s
 s--Xl   | |     l    |    ; l      l    ;      l       ; l     |l    ;|     ;|l     l|l
@@ -8801,13 +8808,6 @@ S--X-   S--X-     S--Xl    X   S--Xl  S--X-  S--Xl   S--X-  S--X-  S--Xl  S--Xl 
 -X--S   -X--S     lX--S   X    lX--S  -X--S  lX--S   -X--S  -X--S  lX--S  lX--S   lX--S
 /       /          |     / ;     ;    l      /       l ;     l;    /l     /l;     /l;
                             s     s         s           s      s             s   s   s
-
-
-l l   l l   l l   l      a l
-^ ^   ^ ^   ^ ^   ^^     ^^
-a e   a e   a |   | ;    . ;
-^^^   ^^    ^^|   s  s   s  s
-s s   s s   s s
 
 
 0"# Patch Panel Wires"

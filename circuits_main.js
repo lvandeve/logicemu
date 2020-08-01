@@ -4212,11 +4212,14 @@ registerCircuit('Logic with gears', `
 0"not if 3 neighbors rotate. This has nothing to do with gears in real life,"
 0"the rule is included out of interest because it allows to make logic gates in"
 0"a more elaborate way. This is not the normal way to use logicemu, just an"
-0"interesting alternative. Cellular automata are a more useful way to study"
-0"this type of behaviour."
+0"interesting alternative."
 
-0"Here are a few logic gate examples. Inputs must be synchronized. Diodes protect"
-0"propagating signal from one input to the other."
+0"Cellular automata are a more useful way to study this type of behaviour (this"
+0"one works like WireWorld but with 4 instead of 8 neighbors)."
+
+0"Here are a few logic gate examples. Inputs must be synchronized, therefore the"
+0"'A+B' buttons are provided. Diodes protect propagating signal from one input"
+0"to the other."
 
 0"diode:"
 
@@ -4226,44 +4229,78 @@ registerCircuit('Logic with gears', `
 
 0"OR:"
 
+  "A"p>o>KKKKKKKKKKKK
+       ^            K
+       .           KKK
+       .           KKK
+"A+B"p..           K KKKKKKKKKKKKKKKKK-->l
+       .           KKK
+       .           KKK
+       v            K
+  "B"p>o>KKKKKKKKKKKK
 
-                   KKKK
-  "A"p>o>KKKKKKKKKKKK KKK
-       ^           KKKK K
-"A+B"p..                KKKKKKKKKKKKKK-->l
-       v           KKKK K
-  "B"p>o>KKKKKKKKKKKK KKK
-                   KKKK
 
 0"XOR:"
 
-
-                   KKKK
-  "A"p>o>KKKKKKKKKKKK KKKKK
-       ^           KKKK K K
-"A+B"p..                KKKKKKKKKKKKKK-->l
-       v           KKKK K K
-  "B"p>o>KKKKKKKKKKKK KKKKK
-                   KKKK
-
-
+  "A"p>o>KKKKKKKKKKKK
+       ^            K
+       .           KKKKK
+       .           KKK K
+"A+B"p..           K KKKKKKKKKKKKKKKKK-->l
+       .           KKK K
+       .           KKKKK
+       v            K
+  "B"p>o>KKKKKKKKKKKK
 
 
 0"NIMPLY (A AND NOT B):"
 
 
-                   KKKK
-  "A"p>o>KKKKKKKKKKKK KKKK
-       ^           KKKK  K
-"A+B"p..                 K
-       v           KKKK KKKK
-  "B"p>o>KKKKKKKKKKKK KKK KKKKKKKKKKKK-->l
-                   KKKK KKKK
+  "A"p>o>KKKKKKKKKKKK
+       ^            K
+       .           KKK
+       .           KKK
+"A+B"p..           K KKKKKK
+       .           KKKKK KKKKKKKKKKKKK-->l
+       .           KKK KKKK
+       v            K
+  "B"p>o>KKKKKKKKKKKK
 
+0"NOT gate"
 
 0"A NOT gate requires getting a signal out of nothing. Given such signal is"
 0"provided, it can be made by XOR-ing the input with that signal at the"
 0"precisely correct time. Not shown here."
+
+
+0"Wire Crossing"
+
+  "A"p>o>KKKKKKKKKKKK  KKKKK
+       ^            K  K K K
+       .           KKKKK KKKKKKKKKKKKK-->l
+       .           KKKK KK K
+"A+B"p..           K KKKKKKK
+       .           KKKK KK K
+       .           KKKKK KKKKKKKKKKKKK-->l
+       v            K  K K K
+  "B"p>o>KKKKKKKKKKKK  KKKKK
+
+
+
+0"Half Adder"
+                       KKKK
+                       K  K
+                       K KKK
+                       K KKK KKKK
+  "A"p>o>KKKKKKKKKKKKKKK K KKK KKKKKKKKKKKK-->l"carry"
+       ^            K    KKKKK KK
+       .           KKKKK KKK KKKK
+       .           KKK K  K
+"A+B"p..           K KKKKKK
+       .           KKK K  K
+       .           KKKKK KK
+       v            K    K
+  "B"p>o>KKKKKKKKKKKK    KKKKKKKKKKKKKKKKKK-->l"sum"
 
 `, 'logic_gears');
 

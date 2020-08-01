@@ -11650,23 +11650,78 @@ function RendererDrawer() {
     return [num, code];
   };
 
+  // specifically made for dynamic rendering of the 8-way '*' crossing. Value and code use different bits.
+  this.drawCrossing2_ = function(ctx, code, value, color0, color1) {
+    var full = 1; // which one gets the full length
+
+    if(code & 2) {
+      ctx.strokeStyle = ctx.fillStyle = ((value & 1) ? color1 : color0);
+      ctx.beginPath();
+      if(full == 2) {
+        this.drawLineCore_(ctx, 0, 0.5, 1, 0.5);
+        full = 0;
+      } else {
+        var shift = 0.2;
+        this.drawLineCore_(ctx, 0, 0.5, 0.5 - shift + 0.1, 0.5);
+        this.drawLineCore_(ctx, 0.5 + shift, 0.5, 1, 0.5);
+      }
+      ctx.stroke();
+    }
+
+    if(code & 1) {
+      ctx.strokeStyle = ctx.fillStyle = ((value & 2) ? color1 : color0);
+      ctx.beginPath();
+      if(full) {
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
+        full = 0;
+      } else {
+        var shift = 0.2;
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
+        this.drawLineCore_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      }
+      ctx.stroke();
+    }
+
+    if(code & 4) {
+      ctx.strokeStyle = ctx.fillStyle = ((value & 8) ? color1 : color0);
+      ctx.beginPath();
+      if(full == 4) {
+        this.drawLineCore_(ctx, 0, 1, 1, 0);
+        full = 0;
+      } else {
+        this.drawLineCore_(ctx, 0, 1, 0.4, 0.6);
+        this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
+      }
+      ctx.stroke();
+    }
+
+    if(code & 8) {
+      ctx.strokeStyle = ctx.fillStyle = ((value & 4) ? color1 : color0);
+      ctx.beginPath();
+      if(full == 8) {
+        this.drawLineCore_(ctx, 0, 0, 1, 1);
+        full = 0;
+      } else {
+        this.drawLineCore_(ctx, 0, 0, 0.4, 0.4);
+        this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
+      }
+      ctx.stroke();
+    }
+  };
+
   // Designed for the wire crossing input 'X' and 'Y' to draw the non-arrow parts. Returns similar value as this.drawCrossing_, but with 8 possible separate directions for the num and code.
   this.drawCrossing_crossingInput_ = function(cell, ctx) {
     var num = 0;
     var code = 0;
-    ctx.beginPath();
     var gap = 0.1;
-    if(connected2g(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { num++; /*this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5);*/ code |= 1; }
-    if(connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5);*/ code |= 2; }
-    if(connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1);*/ code |= 4; }
-    if(connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { num++; /*this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5);*/ code |= 8; }
-    if(connected2g(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 1, 0);*/ code |= 16; }
-    if(connected2g(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 1, 1);*/ code |= 32; }
-    if(connected2g(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 0, 1);*/ code |= 64; }
-    if(connected2g(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { num++; /*this.drawLineCore_(ctx, 0.5, 0.5, 0, 0);*/ code |= 128; }
-    ctx.stroke();
-
-
+    if(connected2g(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { num++;  code |= 1; }
+    if(connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { num++;  code |= 2; }
+    if(connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { num++;  code |= 4; }
+    if(connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { num++;  code |= 8; }
+    if(connected2g(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { num++; code |= 16; }
+    if(connected2g(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { num++; code |= 32; }
+    if(connected2g(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { num++; code |= 64; }
+    if(connected2g(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { num++; code |= 128; }
 
     ctx.beginPath();
     var gap = 0.1;
@@ -11717,72 +11772,122 @@ function RendererDrawer() {
     return [num, code];
   };
 
-  // specifically made for dynamic rendering of the 8-way '*' crossing. Value and code use different bits.
-  this.drawCrossing2_ = function(ctx, code, value, color0, color1) {
-    var color;
+  // The version for dynamicdraw
+  this.drawCrossing_crossingInput2_ = function(ctx, code, value, color0, color1) {
+    var gap = 0.1;
     var full = 1; // which one gets the full length
-
-    color = (value & 1) ? color1 : color0;
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    if(code & 2) {
-      if(full == 2) {
-        this.drawLineCore_(ctx, 0, 0.5, 1, 0.5);
+    if((code & 2) || (code & 8)) {
+      ctx.strokeStyle = ctx.fillStyle = ((value & 1) ? color1 : color0);
+      ctx.beginPath();
+      if(full) {
+        if(code & 2) this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5);
+        if(code & 8) this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5);
         full = 0;
       } else {
-        var shift = 0.2;
-        this.drawLineCore_(ctx, 0, 0.5, 0.5 - shift + 0.1, 0.5);
-        this.drawLineCore_(ctx, 0.5 + shift, 0.5, 1, 0.5);
+        if(code & 2) this.drawLineCore_(ctx, 0.5 + gap, 0.5, 1, 0.5);
+        if(code & 8) this.drawLineCore_(ctx, 0, 0.5, 0.5 - gap, 0.5);
       }
+      ctx.stroke();
     }
-    ctx.stroke();
-
-    color = (value & 2) ? color1 : color0;
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    if(code & 1) {
+    if((code & 1) || (code & 4)) {
+      ctx.strokeStyle = ctx.fillStyle = ((value & 2) ? color1 : color0);
+      ctx.beginPath();
       if(full) {
         this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
+        if(code & 1) this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5);
+        if(code & 4) this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1);
         full = 0;
       } else {
-        var shift = 0.2;
-        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-        this.drawLineCore_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+        if(code & 1) this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+        if(code & 4) this.drawLineCore_(ctx, 0.5, 0.5 + gap, 0.5, 1);
       }
+      ctx.stroke();
     }
-    ctx.stroke();
+    if((code & 16) || (code & 64)) {
+      ctx.strokeStyle = ctx.fillStyle = ((value & 8) ? color1 : color0);
+      ctx.beginPath();
+      if(full) {
+        if(code & 16) this.drawLineCore_(ctx, 0.5, 0.5, 1, 0);
+        if(code & 64) this.drawLineCore_(ctx, 0.5, 0.5, 0, 1);
+        full = 0;
+      } else {
+        if(code & 16) this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
+        if(code & 64) this.drawLineCore_(ctx, 0.4, 0.6, 0, 1);
+      }
+      ctx.stroke();
+    }
+    if((code & 32) || (code & 128)) {
+      ctx.strokeStyle = ctx.fillStyle = ((value & 4) ? color1 : color0);
+      ctx.beginPath();
+      if(full) {
+        if(code & 32) this.drawLineCore_(ctx, 0.5, 0.5, 1, 1);
+        if(code & 128) this.drawLineCore_(ctx, 0.5, 0.5, 0, 0);
+        full = 0;
+      } else {
+        if(code & 32) this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
+        if(code & 128) this.drawLineCore_(ctx, 0.4, 0.4, 0, 0);
+      }
+      ctx.stroke();
+    }
 
-    color = (value & 8) ? color1 : color0;
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    if(code & 4) {
-      if(full == 4) {
-        this.drawLineCore_(ctx, 0, 1, 1, 0);
-        full = 0;
-      } else {
-        this.drawLineCore_(ctx, 0, 1, 0.4, 0.6);
-        this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
-      }
-    }
-    ctx.stroke();
+  };
 
-    color = (value & 4) ? color1 : color0;
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    if(code & 8) {
-      if(full == 8) {
-        this.drawLineCore_(ctx, 0, 0, 1, 1);
-        full = 0;
-      } else {
-        this.drawLineCore_(ctx, 0, 0, 0.4, 0.4);
-        this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
-      }
-    }
-    ctx.stroke();
+  this.drawCrossingInput_ = function(cell, ctx) {
+    var r = drawer.drawCrossing_crossingInput_(cell, ctx);
+    var num = r[0];
+    var code = r[1];
+    var code2 = 0;
+    if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19); code2 |= 1; }
+    if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19); code2 |= 2; }
+    if(hasDevice(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19); code2 |= 4; }
+    if(hasDevice(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19); code2 |= 8; }
+    if(hasDevice(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0); code2 |= 16; }
+    if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1); code2 |= 32; }
+    if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1); code2 |= 64; }
+    if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0); code2 |= 128; }
+    return [num, code, code2];
+  };
+
+  this.drawCrossingInput2_ = function(ctx, code, code2, value, color0, color1) {
+    this.drawCrossing_crossingInput2_(ctx, code, value, color0, color1);
+    if(code2 & 1) { ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19); }
+    if(code2 & 2) { ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19); }
+    if(code2 & 4) { ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19); }
+    if(code2 & 8) { ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19); }
+    if(code2 & 16) { ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0); }
+    if(code2 & 32) { ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1); }
+    if(code2 & 64) { ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1); }
+    if(code2 & 128) { ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0); }
+  };
+
+  this.drawAntiCrossingInput_ = function(cell, ctx, oppositeColor) {
+    var r = drawer.drawCrossing_crossingInput_(cell, ctx);
+    var num = r[0];
+    var code = r[1];
+    var code2 = 0;
+    // no "isInterestingComponent" checks for Y, unlike X, because Y can affect things, it's negating (for X any effect, like as AND input, is negated if it's a dummy, but not for Y)
+    if(hasDevice(cell.x, cell.y, 0)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 0); code2 |= 1; }
+    if(hasDevice(cell.x, cell.y, 1)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 0.5); code2 |= 2; }
+    if(hasDevice(cell.x, cell.y, 2)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 1); code2 |= 4; }
+    if(hasDevice(cell.x, cell.y, 3)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 0.5); code2 |= 8; }
+    if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 0); code2 |= 16; }
+    if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 1); code2 |= 32; }
+    if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 1); code2 |= 64; }
+    if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 0); code2 |= 128; }
+    return [num, code, code2];
+  };
+
+  this.drawAntiCrossingInput2_ = function(ctx, code, code2, value, color0, color1) {
+    this.drawCrossing_crossingInput2_(ctx, code, value, color0, color1);
+
+    if(code2 & 1) { ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 2) ? color0 : color1, 0.5, 0.5, 0.5, 0); }
+    if(code2 & 2) { ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 1) ? color0 : color1, 0.5, 0.5, 1, 0.5); }
+    if(code2 & 4) { ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 2) ? color0 : color1, 0.5, 0.5, 0.5, 1); }
+    if(code2 & 8) { ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 1) ? color0 : color1, 0.5, 0.5, 0, 0.5); }
+    if(code2 & 16) { ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 8) ? color0 : color1, 0.5, 0.5, 1, 0); }
+    if(code2 & 32) { ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 4) ? color0 : color1, 0.5, 0.5, 1, 1); }
+    if(code2 & 64) { ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 8) ? color0 : color1, 0.5, 0.5, 0, 1); }
+    if(code2 & 128) { ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 4) ? color0 : color1, 0.5, 0.5, 0, 0); }
   };
 
   this.fillBg_ = function(ctx, color) {
@@ -12107,7 +12212,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
    // if non-0, only use "on" drawing if a wire with that particular numerical direction is on
   this.drawonly = 0;
   this.dynamicdraw = false;
-  this.dynamicdrawcode = 0;
+  this.dynamicdrawcode = 0; // for regular wires
+  this.dynamicdrawcode2 = 0; // for arrowed (or antiarrow if >= 256) wires
   this.norender = false; // don't do anything in setValue
   this.falserender = false; // only do something in setValue the first time
   this.componentdisabled = false;
@@ -12229,32 +12335,28 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       var ctx = (i == 0) ? this.ctx0 : this.ctx1;
       var canvas = (i == 0) ? this.canvas0 : this.canvas1;
       var textel = (i == 0) ? this.text0 : this.text1;
-      var currentColor = (i == 0) ? OFFCOLOR : ONCOLOR;
-      var oppositeColor = (i == 0) ? ONCOLOR : OFFCOLOR;
-      var currentGateColor = (i == 0) ? GATEFGOFFCOLOR : GATEFGONCOLOR;
-      var oppositeGateColor = (i == 0) ? GATEFGONCOLOR : GATEFGOFFCOLOR;
-      var gateBorderColor = currentGateColor;
 
+      var component = cell.components[0] || cell.components[1];
+      var type = component ? component.type : TYPE_NULL;
+
+      var i2 = i;
       // for big devices like IC and FlipFlop with multiple possible output values, it's
       // ugly if borders get different colors for 'on' and 'off' sub-parts of it, so set to
-      // off (the letter character will still get on color)
-      if(cell.components[0] || cell.components[1]) {
-        var component = cell.components[0] || cell.components[1];
-        var type = component.type;
+      // off. Idem for the text/number characters inside.
+      if(i == 1 && component) {
         if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM || type == TYPE_MUX ||
             type == TYPE_ALU || ((type == TYPE_CONSTANT_OFF || type == TYPE_CONSTANT_ON || type == TYPE_FIXED) && (component.parent || component.fixed))) {
           // only for the solid parts, wires part of this component must still use on color
           if(devicemaparea[c]) {
-            gateBorderColor = GATEFGOFFCOLOR;
-            if(component && (type == TYPE_CONSTANT_OFF || type == TYPE_CONSTANT_ON || type == TYPE_FIXED) && component.parent && component.parent.fied && component.parent.fixed.inverted) {
-              gateBorderColor = GATEFGONCOLOR;
-            }
-
-            ctx.strokeStyle = gateBorderColor;
-            ctx.fillStyle = OFFCOLOR;
+            i2 = 0;
           }
         }
       }
+      var currentColor = (i2 == 0) ? OFFCOLOR : ONCOLOR;
+      var oppositeColor = (i2 == 0) ? ONCOLOR : OFFCOLOR;
+      var currentGateColor = (i2 == 0) ? GATEFGOFFCOLOR : GATEFGONCOLOR;
+      var oppositeGateColor = (i2 == 0) ? GATEFGONCOLOR : GATEFGOFFCOLOR;
+      var gateBorderColor = currentGateColor;
 
       if(c == '-') {
         drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
@@ -12433,198 +12535,182 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         if(hasDevice(cell.x, cell.y, 3)) {num++; drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 0.5);}
         drawer.drawSplit_(cell, ctx, num);
       } else if(c == 'X') {
-        var r = drawer.drawCrossing_crossingInput_(cell, ctx);
-        var code2 = r[1];
-        var code = 0;
-        if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19); code |= 1; }
-        if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19); code |= 2; }
-        if(hasDevice(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19); code |= 4; }
-        if(hasDevice(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19); code |= 8; }
-        if(hasDevice(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0); code |= 16; }
-        if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1); code |= 32; }
-        if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1); code |= 64; }
-        if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0); code |= 128; }
+        var r = drawer.drawCrossingInput_(cell, ctx);
+        var code = r[1];
+        var code2 = r[2];
         var code3 = code + code2;
-
-        // temporary debug help
-        /*var div = makeDiv(cell.x * tw, cell.y * th, tw, th, worldDiv);
-        div.title = 'code: ' + code + ' ' + code2;
-        div.style.zIndex = '1000';*/
-
-        if(code == 0 && r[0] > 1) {
-          // no actual inputs, it acts as a '*'
-          // TODO: support full dynamicdraw for wire crossing inputs too. This will need to draw more types of combinations due to with/without arrow
+        if(code2 == 0 && r[0] > 1) {
+          // no actual inputs, it acts as a '*', use its simpler dynamicdraw
           this.dynamicdraw = true;
           this.dynamicdrawcode = drawer.drawCrossing_(cell, ctx)[1];
         }
-        // TODO: 1,2,4,8 commented out because wrong, this is case of only single direction so only 2 total states, but may be necessary for cases where there's a genuine regular wire
-        // TODO: there are more cases that go wrong with combinations of crossing of wire and nonwire, either causing too much or too little drawn
-        else if(code == 1 && code3 == 15) {
+        // For several combinations, built-in non-dynamic graphics can be used
+        else if(code2 == 1 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 32;
         }
-        else if(code == 2 && code3 == 15) {
+        else if(code2 == 2 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 33;
         }
-        else if(code == 4 && code3 == 15) {
+        else if(code2 == 4 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 34;
         }
-        else if(code == 8 && code3 == 15) {
+        else if(code2 == 8 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 35;
         }
-        else if(code == 144 && code3 == 240) {
+        else if(code2 == 144 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 4;
           this.drawextrag = 2;
         }
-        else if(code == 48 && code3 == 240) {
+        else if(code2 == 48 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 4;
           this.drawextrai1 = 8;
           this.drawextrag = 3;
         }
-        else if(code == 96 && code3 == 240) {
+        else if(code2 == 96 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 4;
           this.drawextrai1 = 8;
           this.drawextrag = 4;
         }
-        else if(code == 192 && code3 == 240) {
+        else if(code2 == 192 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 4;
           this.drawextrag = 5;
         }
-        else if(code == 3 && code3 == 15) {
+        else if(code2 == 3 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 16;
         }
-        else if(code == 6 && code3 == 15) {
+        else if(code2 == 6 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 2;
           this.drawextrai1 = 1;
           this.drawextrag = 17;
         }
-        else if(code == 12 && code3 == 15) {
+        else if(code2 == 12 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 18;
         }
-        else if(code == 9 && code3 == 15) {
+        else if(code2 == 9 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 2;
           this.drawextrai1 = 1;
           this.drawextrag = 19;
         }
+        else {
+          // nothing simpler work, use complex dynamicdraw
+          this.dynamicdraw = true;
+          this.dynamicdrawcode = code;
+          this.dynamicdrawcode2 = code2;
+        }
       } else if(c == 'Y') {
-        var r = drawer.drawCrossing_crossingInput_(cell, ctx);
-        var code2 = r[1];
-        var code = 0;
-        // no "isInterestingComponent" checks for Y, unlike X, because Y can affect things, it's negating (for X any effect, like as AND input, is negated if it's a dummy, but not for Y)
-        if(hasDevice(cell.x, cell.y, 0)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 0); code |= 1; }
-        if(hasDevice(cell.x, cell.y, 1)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 0.5); code |= 2; }
-        if(hasDevice(cell.x, cell.y, 2)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 1); code |= 4; }
-        if(hasDevice(cell.x, cell.y, 3)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 0.5); code |= 8; }
-        if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 0); code |= 16; }
-        if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 1); code |= 32; }
-        if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 1); code |= 64; }
-        if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 0); code |= 128; }
+        var r = drawer.drawAntiCrossingInput_(cell, ctx, oppositeColor);
+        var code = r[1];
+        var code2 = r[2];
         var code3 = code + code2;
-
-        if(code == 0 && r[0] > 1) {
-          // no actual inputs, it acts as a '*'
-          // TODO: support full dynamicdraw for wire crossing inputs too. This will need to draw more types of combinations due to with/without negated arrow
+        if(code2 == 0 && r[0] > 1) {
+          // no actual inputs, it acts as a '*', use its simpler dynamicdraw
           this.dynamicdraw = true;
           this.dynamicdrawcode = drawer.drawCrossing_(cell, ctx)[1];
         }
-        // TODO: 1,2,4,8 commented out because wrong, this is case of only single direction so only 2 total states, but may be necessary for cases where there's a genuine regular wire
-        // TODO: there are more cases that go wrong with combinations of crossing of wire and nonwire, either causing too much or too little drawn
-        else if(code == 1 && code3 == 15) {
+        // For several combinations, built-in non-dynamic graphics can be used
+        else if(code2 == 1 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 36;
         }
-        else if(code == 2 && code3 == 15) {
+        else if(code2 == 2 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 37;
         }
-        else if(code == 4 && code3 == 15) {
+        else if(code2 == 4 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 38;
         }
-        else if(code == 8 && code3 == 15) {
+        else if(code2 == 8 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 39;
         }
-        else if(code == 144 && code3 == 240) {
+        else if(code2 == 144 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 4;
           this.drawextrag = 6;
         }
-        else if(code == 48 && code3 == 240) {
+        else if(code2 == 48 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 4;
           this.drawextrai1 = 8;
           this.drawextrag = 7;
         }
-        else if(code == 96 && code3 == 240) {
+        else if(code2 == 96 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 4;
           this.drawextrai1 = 8;
           this.drawextrag = 8;
         }
-        else if(code == 192 && code3 == 240) {
+        else if(code2 == 192 && code3 == 240) {
           this.drawextra = true;
           this.drawextrai0 = 8;
           this.drawextrai1 = 4;
           this.drawextrag = 9;
         }
-        else if(code == 3 && code3 == 15) {
+        else if(code2 == 3 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 20;
         }
-        else if(code == 6 && code3 == 15) {
+        else if(code2 == 6 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 2;
           this.drawextrai1 = 1;
           this.drawextrag = 21;
         }
-        else if(code == 12 && code3 == 15) {
+        else if(code2 == 12 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 1;
           this.drawextrai1 = 2;
           this.drawextrag = 22;
         }
-        else if(code == 9 && code3 == 15) {
+        else if(code2 == 9 && code3 == 15) {
           this.drawextra = true;
           this.drawextrai0 = 2;
           this.drawextrai1 = 1;
           this.drawextrag = 23;
+        }
+        else {
+          // nothing simpler work, use complex dynamicdraw
+          this.dynamicdraw = true;
+          this.dynamicdrawcode = code;
+          this.dynamicdrawcode2 = (code2 << 8);
         }
       } else if(c == '*') {
         var a = drawer.drawCrossing_(cell, ctx);
@@ -13372,7 +13458,13 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       if(this.dynamicdraw) {
         drawer.tx = dx;
         drawer.ty = dy;
-        drawer.drawCrossing2_(dest, this.dynamicdrawcode, value, OFFCOLOR, ONCOLOR);
+        if(this.dynamicdrawcode2 == 0) {
+          drawer.drawCrossing2_(dest, this.dynamicdrawcode, value, OFFCOLOR, ONCOLOR);
+        } else if(this.dynamicdrawcode2 < 256) {
+          drawer.drawCrossingInput2_(dest, this.dynamicdrawcode, this.dynamicdrawcode2, value, OFFCOLOR, ONCOLOR);
+        } else {
+          drawer.drawAntiCrossingInput2_(dest, this.dynamicdrawcode, this.dynamicdrawcode2 >> 8, value, OFFCOLOR, ONCOLOR);
+        }
         this.prevvalue = value;
         return;
       }
@@ -13547,6 +13639,7 @@ function render() {
     for(var x = line0[y]; x < line1[y]; x++) {
       var cell = world[y][x];
       if(!cell.renderer) continue;
+
       var value = 0;
       if(cell.components[0]) value |= cell.components[0].value;
       if(cell.components[1]) value |= (cell.components[1].value << 1);
@@ -13558,16 +13651,21 @@ function render() {
       if(cell.components[7]) value |= (cell.components[7].value << 7);
       if(antennamap[cell.circuitsymbol] && cell.circuitextra == 1) {
         // This is an inaccurate hack to make antennas light up as well.
-        // Antennas are actually more like "warp portals" that make far away cells treated as neighbors, but the antennas
+        // Antennas with circuitextra 1 are actually more like "warp portals" that make far away cells treated as neighbors, but the antennas
         // themselves don't participate in the component structure.
         // The inaccurate hack makes the antenna light up if some neighboring and probably connected component lights up.
-        // It is wrong in some edge cases, doesn't check any components beyond 3, doesn't check diagonal directions, and isn't copied in the renderHighlightComponent function
+        // It is wrong in some edge cases, doesn't check any components beyond 3, not performant, and isn't copied in the renderHighlightComponent function
         // TODO: implement more accurate way. Maybe give antenna cells a component array of relevant components for rendering too, then this code can go away again.
         for(var i = 0; i < 4; i++) {
           if(y > 0 && world[y - 1][x].components[i] && world[y - 1][x].components[i].value && connected2b(x, y, 0)) value |= (1 << i);
           if(x + 1 < w && world[y][x + 1].components[i] && world[y][x + 1].components[i].value && connected2b(x, y, 1)) value |= (1 << i);
           if(y + 1 < h && world[y + 1][x].components[i] && world[y + 1][x].components[i].value && connected2b(x, y, 2)) value |= (1 << i);
           if(x > 0 && world[y][x - 1].components[i] && world[y][x - 1].components[i].value && connected2b(x, y, 3)) value |= (1 << i);
+          // diagonal ones
+          if(y > 0 && x + 1 < w && world[y - 1][x + 1].components[i] && world[y - 1][x + 1].components[i].value && connected2b(x, y, 4)) value |= (1 << i);
+          if(y + 1 < h && x + 1 < w && world[y + 1][x + 1].components[i] && world[y + 1][x + 1].components[i].value && connected2b(x, y, 5)) value |= (1 << i);
+          if(y + 1 < h && x > 0 && world[y + 1][x - 1].components[i] && world[y + 1][x - 1].components[i].value && connected2b(x, y, 6)) value |= (1 << i);
+          if(y > 0 && x > 0 && world[y - 1][x - 1].components[i] && world[y - 1][x - 1].components[i].value && connected2b(x, y, 7)) value |= (1 << i);
         }
       }
       cell.setValue(value);
