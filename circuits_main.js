@@ -7964,3 +7964,142 @@ registerCircuit('74595 8-bit register shift', `
 
 0"Author/Contributor: chezsick"
 `, '74hc595');
+
+
+
+registerCircuit('MOS 6502 PLA', `
+
+                    0         1         2         3         4         5         6         7         8         9         0         1         2         3
+        "t " s----->bbbbbbbbbbbbbbbbbbbbbbBbbbBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBbbbbbbbbbbbbbbBbbbbbbbbbbbBbbbbBbbbbbbbbbbbbbbbbbbbbbbBBbbbbbbbbbbBbbbbb "t "
+        "t " s----->bbbbbbbbbbbbbbbbbbbbbbbbBbbbbbbbbbbbbBBbBbbbbBbbbbbbbbbbbbbbbbbbbbbbbbbBbbbbbbbbbbbbbBbbbbbBbbbbbbBbbBbbbbbbbbbbbbbBbbbbbbbbbBbbbb "t "
+        "t " s----->bBbbbbbbbbbbbbbbbbbbbbbbbBbbbbbbbbbbBbbBbbBbbbBbbbbbbbBbbbbbbbbbbbbbbbbbbbbbbbBbbbbbbbBbbbBbbbbbbbbbbbbbbBbbbbbBbbbbbbbbbbBbbbbbbb "t "
+        "t " s----->bbBbbbBbBbbbbbbbbbbbbbbbbbbbBbbBbBbBbbbbbBbbbbbbBbbbbbbbbBbbbbbbbbbbbbbbbbBbbBbbBBBBbbbbbbbbbbbbbbbBBbbbBbbbbbbbbbbbbbbbbbbBbbbbbb "t "
+        "1'" sv->O->bbbbbbbBbBBbBBBBbBbbbbbbbbbBbbbbbbbbbbbbbbbbBbbbbbbbbBbBbbbbBBbbbbbBBbbbbbbBBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBBbbbbbbbbbbBbbbbbbbbbbb "1 "
+        "0~"  o---->BbbBBBbbbbbBbbbbBbBBBBBBBBBbbbBbbbbBBBBbbbbBbbbBBBbbbbBbBBBbbbbBbbBbbBbbbBBbbBBbBbbbBbbBBbbbbBBBBbBBBBBBBBbbBBBbbBBBbBbBBbbbbbbBbB "0 "
+        "0'" s^->O->bBBbbbbbBbbbbbbbbbbbbbbbbbbbbBbbBbbbbbbBBBbbbBBbbbBBBbbbbbbBBbbbBBbbbbBbBbbbbbbBbbBbbbbbbBbBbbbbbbbbbbbbbbbbbbbbBbbbBbbbbbbbBbbbbb "0 "
+        "7 " s--v-->bbbbbbbbbbbbbbbbbbbbbBBBBBBBbBBbBbbBBBBbbbbBbbbBBbbbbBBBBBbBbBbBbbbBbBBbbbBBBBBbbbbbBbbBBbbbbbBBBbBBBBBBBBbBBBBbbBBBbbBbbbbbbbBbbB "7 "
+        "7'"    O-->BbbBBBbBbBBBBBBBBBBBBbbbbbbbbbbbbbbbbbbbbbbbBbbbbBBBbbbbbbBbbbBbBbBbBbbbbbbbbbbBbbbbbbbbbbbbbbbbbBbbbbbbbbbbbbbbbbbbBBbBBbbbbbbBbb "7'"
+        "4 " s---v->bbbBbBbbBBBBbbbBBbBbBBBBBBBbbbBBbbbBBBBBbbbBbBbBBBbbbbBbBBbbbBBBbbBBBBbbbbBBbBBbbbbbBbbBBBbbbbBBBbBBBBBBBBbbbBbbbBBBbBBBbbBBbbbbbB "4 "
+        "4'"     O->bBBbBbBbbbbbbBbbbBbbbbbbbbbbbbbbbbbbbbbbBBBbbbBbbbbbbbbbbbBbbbbbbbbbbbbBBBbbbbbbBbbbbbbbbbbBBBbbbbbbbbbbbbbbBbBBbbbbbbbbBbbbbBbBbb "4'"
+        "3 " s--v-->bBbbbbbbBbbbbbbbbbbbbBBbBbBbbbbbbBbbbBBBBBbbbBBBBbbbbbbbBbbbbbbbbbbbbbbbBBbbbBBbBBBbBbbBbBbBbBBBbbBbbbBBbbbbbbbBbbbBbbbBbbbBBbbbbb "3 "
+        "3'"    O-->bbBBBbbbbBBbbBbBBBBbbbbBbBbbbbBBbbbbbbbbbbBBbbbbbbbbbbBbbbBbbbBBbbBBBbbBbbBBbbbbbbbBbbbbBbBbBbbbBbbBBBbbBBbbbbBbbbBbbBBbBbBbbBbBBB "3'"
+        "2 " s---v->bBBBBbbbBBBbbBbBBBBbbBBBBBBbbbbbbbbBbBBBBBbBbBBBBbbbbbbbBBBbbBBBbbBBBbbbBBBBbBBbBbBbBbbBbBbBbBBBbbBBBbBBbBbbBbBbbbBBbbBbBbbbBbbBBB "2 "
+        "2'"     O->BbbbbbBbbbbbbbbbbbbBbbbbbbbbbbBBbbbbbbbbbbbbbbbbbbbbbbBbbbbbbbbbbbbbbBbbbbbbbbbbbBbbbbbbBbbbbbbbBbbbbBbbBbbbbBbBbBbbbBbbbbBBbbbbbb "2'"
+        "6 " s--v-->BbbbBbbBbBbbBBBbbBbBBBBbbbbbbbbbBbbbbBbbbbbbbbbbBbbbbBbBBbBbbbBbBbBbBBBbbbbbbBBBbbbbbbbbbbbbbbbBbBBBbbbBbbbBbBBbbBBbbbBbbBbbbbbBbb "6 "
+        "6'"    O-->bbbbbBbbbbBBbbbBBbbbbbbbBbBBbBBbbbbbbbBbbbbbBbbBbBBBBbBbbbbbBbbBbbbbbbbbbbBBBbbbbbbbBbbbBbbbbbbbBbbbbBBbBbBbBbbbBbbBBBbBBbbbbbbbbb "6'"
+        "5 " s---v->BbbBBBbbbBBbBBbBbbBbbbBBbbBbbBbbBbbbbbBbbbbbbbbbbbBbbbbbbbBbbbBbbbbbbbbbbbBbbBbBbbbbbbbBbbbbbbBbbBBBBbbbBbbbbbbbbbbBBbbbbbbbbbbbbb "5 "
+        "5'"     O->bbbbbbbbbbbBbbBbBBbBBBbbBBbBbbbbbbbbbbbbbbbBBbbbBbbBBBbbBbbbBbbBBbBbBBBbbbbbbbBbbbbbBbbbbbbbbbbBbbbbbbbBbBbbbBbbBBBbbbbbbbbbbbbBbb "5'"
+        "c1" s----->bbbBBBbbbBBBbBBbbBbBBBbBbbbbbBbbBbBbbbbbbbbbbbbbbBBBBbbbbbBbbbBBBBBBBBBbbBbBbbbbbbbbbbbBBbbbbbbbbbbbbbbbbbbbBbBbbBBbbbbbBbbbbbbbbb "c1"
+        "c2" s----->bbbbbbbbbbbbbbbBBbBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBBBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBbbBbbbBBBBbbbbbbbbbb "c2"
+                    wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+                    llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+
+`, 'MOS6502_PLA');
+
+registerCircuit('MOS 6502 ALU', `
+
+
+0"Select 1 of the 5 operations for the main ALU:"
+
+"AND"s..>b..g0
+         #
+ "OR"s..>#..g1
+         #
+"XOR"s..>#..g2
+         #
+"SHR"s..>#..g3
+         #
+"ADD"S..>#..g4
+
+0"Control signals for A and B before the actual ALU input:"
+
+"SHL"s......g5
+
+"NEG"s......g6
+
+"ZB" s......g7
+
+"ZA" s......g8
+
+
+0"6502 ALU. It is not gauranteed that this circuit is correct, some inversions and other details may be incorrect."
+
+
+                          1"shr"
+                             s               l
+                             v               ^
+                             z               .
+           6g   5g  7g     ..................+....................>O...>l"8"
+            w    v   v     . .           .   .              .
+       ....>M ..>M f>M  1g>z z<g0     2g>z   O           4g>z
+       .    # .  #   #     ^ ^           ^   ^              ^
+  "B"s...>O>#.+.>#..>#..>A.+....>O....>O.+.>Z. ....>O>O..>Z..
+"4"           .         >  . .     .     .   . .   >        .
+  "A"s..................>O.. .   ... ....+...+.. ..>A....>Z..
+                           . .   v   .   .   .   .
+                           ..+..>O....>O..   Z   .
+                             v .             ^   .
+                          3g>z .>O..........>A   .
+                             .               ^   .
+                             .               ..>O.
+                             .               .
+           6g   5g  7g     ..................+....................>O...>l"4"
+            w    v   v     . .           .   .              .
+       ....>M ..>M f>M  1g>z z<g0     2g>z   O           4g>z
+       .    # .  #   #     ^ ^           ^   ^              ^
+  "B"s...>O>#.+.>#..>#..>A.+....>O....>O.+.>Z. ....>O>O..>Z..
+"4"           .         >  . .     .     .   . .   >        .
+  "A"s..................>O.. .   ... ....+...+.. ..>A....>Z..
+                           . .   v   .   .   .   .
+                           ..+..>O....>O..   Z   .
+                             v .             ^   .
+                          3g>z .>O..........>A   .
+                             .               ^   .
+                             .               ..>O.
+                             .               .
+           6g   5g  7g     ..................+....................>O...>l"2"
+            w    v   v     . .           .   .              .
+       ....>M ..>M f>M  1g>z z<g0     2g>z   O           4g>z
+       .    # .  #   #     ^ ^           ^   ^              ^
+  "B"s...>O>#.+.>#..>#..>A.+....>O....>O.+.>Z. ....>O>O..>Z..
+"2"           .         >  . .     .     .   . .   >        .
+  "A"s..................>O.. .   ... ....+...+.. ..>A....>Z..
+                           . .   v   .   .   .   .
+                           ..+..>O....>O..   Z   .
+                             v .             ^   .
+                          3g>z .>O..........>A   .
+                             .               ^   .
+                             .               ..>O.
+                             .               .
+           6g   5g  7g     ..................+....................>O...>l"1"
+            w    v   v     . .           .   .              .
+       ....>M ..>M f>M  1g>z z<g0     2g>z   O           4g>z
+       .    # .  #   #     ^ ^           ^   ^              ^
+  "B"s...>O>#.+.>#..>#..>A.+....>O....>O.+.>Z. ....>O>O..>Z..
+"1"           .         >  . .     .     .   . .   >        .
+  "A"s..................>O.. .   ... ....+...+.. ..>A....>Z..
+                           . .   v   .   .   .   .
+                           ..+..>O....>O..   Z   .
+                             v .             ^   .
+                          3g>z .>O..........>A   .
+                             .               ^   .
+                             v               ..>O.
+                             l               s
+                                         1"carry"
+
+
+
+0"In the above ALU, XOR is made as follows from 2 NAND, 2 invertors, and open"
+0"collector outputs shared with a pull-up resistor:"
+
+s......>O..
+   .      v
+   . ..>O>A>Z..>l
+    x        .
+   . ....>A>Z.
+   .      ^
+s..........
+
+
+`, 'MOS6502_ALU');
+
