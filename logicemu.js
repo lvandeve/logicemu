@@ -12339,24 +12339,33 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       var component = cell.components[0] || cell.components[1];
       var type = component ? component.type : TYPE_NULL;
 
-      var i2 = i;
+      var currentColor = (i == 0) ? OFFCOLOR : ONCOLOR;
+      var oppositeColor = (i == 0) ? ONCOLOR : OFFCOLOR;
+      var currentGateColor = (i == 0) ? GATEFGOFFCOLOR : GATEFGONCOLOR;
+      var oppositeGateColor = (i == 0) ? GATEFGONCOLOR : GATEFGOFFCOLOR;
+      var gateBorderColor = currentGateColor;
+
       // for big devices like IC and FlipFlop with multiple possible output values, it's
       // ugly if borders get different colors for 'on' and 'off' sub-parts of it, so set to
       // off. Idem for the text/number characters inside.
       if(i == 1 && component) {
+        var fixed = ((type == TYPE_CONSTANT_OFF || type == TYPE_CONSTANT_ON || type == TYPE_FIXED) && (component.parent || component.fixed));
         if(type == TYPE_FLIPFLOP || type == TYPE_IC || type == TYPE_IC_PASSTHROUGH || type == TYPE_ROM || type == TYPE_MUX ||
-            type == TYPE_ALU || ((type == TYPE_CONSTANT_OFF || type == TYPE_CONSTANT_ON || type == TYPE_FIXED) && (component.parent || component.fixed))) {
+            type == TYPE_ALU || fixed) {
           // only for the solid parts, wires part of this component must still use on color
           if(devicemaparea[c]) {
-            i2 = 0;
+            if(type != TYPE_ROM && !fixed && type != TYPE_FLIPFLOP) {
+              // For types where the letters/numbers don't positionally mean anything about the output wire at that location, disable
+              // the on/off color, e.g. to avoid parts of the numbers of an ALU type lighting up, ...
+              currentColor = OFFCOLOR;
+              oppositeColor = ONCOLOR;
+              currentGateColor = OFFCOLOR;
+              oppositeGateColor = GATEFGONCOLOR;
+            }
+            gateBorderColor = OFFCOLOR;
           }
         }
       }
-      var currentColor = (i2 == 0) ? OFFCOLOR : ONCOLOR;
-      var oppositeColor = (i2 == 0) ? ONCOLOR : OFFCOLOR;
-      var currentGateColor = (i2 == 0) ? GATEFGOFFCOLOR : GATEFGONCOLOR;
-      var oppositeGateColor = (i2 == 0) ? GATEFGONCOLOR : GATEFGOFFCOLOR;
-      var gateBorderColor = currentGateColor;
 
       if(c == '-') {
         drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
