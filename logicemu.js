@@ -1340,8 +1340,8 @@ var LogicEmuMath = (function() {
       return [sign, maxexp, 1];
     }
     if(f == 0) {
-      // TODO: support negative 0?
-      return [0, 0, 0];
+      if(1 / f < 0) sign = 1; // for the case of negative zero (-0)
+      return [sign, 0, 0];
     }
 
     var exp = 0;
@@ -1364,7 +1364,7 @@ var LogicEmuMath = (function() {
       // overflow, return infinity
       return [sign, maxexp, 0];
     }
-    var mantissa = Math.floor(f * Math.pow(2, mantissabits));
+    var mantissa = Math.floor((f - 1) * Math.pow(2, mantissabits));
     return [sign, exp, mantissa];
   };
   result.dissectfloat = dissectfloat;
@@ -4028,6 +4028,7 @@ function Alu() {
         case 88: return 'time';
         case 89: return 'date';
         case 90: return 'unix';
+        case 95: return 'rand';
         case 96: return 'mirr';
         case 97: return 'btrv';
         case 98: return 'shuf';
@@ -4119,6 +4120,7 @@ function Alu() {
         case 88: return 'time in seconds since unix epoch. Needs positive edge input bit change to update.';
         case 89: return 'convert unix epoch to Y-M-S h:m:s: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
         case 90: return 'Y-M-S h:m:s to unix epoch: from LSB: 6 bits seconds, 6 bits minutes, 5 bits hour, 5 bits day, 4 bits month, remaining bits year';
+        case 95: return this.numa ? (this.numb ? 'random a..b' : 'random 0..a') : 'random';
         case 96: return 'mirror bits';
         case 97: return 'bit reversal (mirror bit indices)';
         case 98: return 'perfect shuffle bits';
@@ -4787,6 +4789,41 @@ function Alu() {
       date.setUTCSeconds(seconds);
       var unix = Math.floor(+date / 1000);
       o = math.B(unix);
+    } else if(op == 95) {
+      if((miscin && !this.prevmiscin) || (this.prevo == undefined)) {
+        if(!this.numa) {
+          for(var i = 0; i < this.numo; i++) {
+            if(Math.random() < 0.5) {
+              var ni = math.B(i);;
+              o |= (math.n1 << ni);
+            }
+          }
+        } else if(!this.numb) {
+          // 1 input, random value is in range 0..a (excluding a itself)
+          var rb;
+          if(math.supportbigint) {
+            o = math.B(Math.floor(Math.random() * 4294967296)) * a / math.B(4294967296);
+            //o = math.B(Math.floor(Math.random() * 4294967296)) * (a + math.n1) / math.B(4294967296);
+          } else {
+            o = Math.floor(a * Math.random());
+            //o = Math.floor((a + 1) * Math.random());
+          }
+        } else {
+          // 2 inputs, random value is in range a..b (excluding b itself, b == a returns a, b < a returns unspecified result)
+          var rb;
+          if(math.supportbigint) {
+            o = a + math.B(Math.floor(Math.random() * 4294967296)) * (b - a) / math.B(4294967296);
+            //o = math.B(Math.floor(Math.random() * 4294967296)) * (a + math.n1) / math.B(4294967296);
+          } else {
+            o = a + Math.floor((b - a) * Math.random());
+            //o = Math.floor((a + 1) * Math.random());
+          }
+        }
+        this.prevo = o;
+      } else {
+        o = this.prevo;
+      }
+      this.prevmiscin = miscin;
     } else if(op == 96) {
       // mirror bits
       for(var i = 0; i < this.numo; i++) {
@@ -5181,6 +5218,21 @@ function Alu() {
       o = 0; // time/date ops not supported for float
     } else if(op == 90) {
       o = 0; // time/date ops not supported for float
+    } else if(op == 95) {
+      if((miscin && !this.prevmiscin) || (this.prevo == undefined)) {
+        if(!this.numa) {
+          o = Math.random();
+        } else if(!this.numb) {
+          // 1 input, random value is in range 0..a (excluding a itself)
+          o = Math.random() * a;
+        } else {
+          o = Math.random() * (b - a) + a;
+        }
+        this.prevo = o;
+      } else {
+        o = this.prevo;
+      }
+      this.prevmiscin = miscin;
     } else if(op == 96) {
       o = 0; // bit ops not supported for float
     } else if(op == 97) {
@@ -5404,7 +5456,7 @@ function Alu() {
         c[3] = f[1][2];
         c[4] = 1;
       } else {
-        if(numf == 0) { this.setError('must have input side opposite of output side'); return false; }
+        //if(numf == 0) { this.setError('must have input side opposite of output side'); return false; }
         if(numf > 3) { this.setError('too many inputs'); return false; }
       }
     } else {
@@ -5432,7 +5484,7 @@ function Alu() {
         c[1] = inlsbinv;
         c[2] = arr[0].n;
       } else {
-        if(arr.length == 0) { this.setError('must have input side opposite of output side'); return false; }
+        //if(arr.length == 0) { this.setError('must have input side opposite of output side'); return false; }
         if(arr.length > 3) { this.setError('too many inputs'); return false; }
       }
     }
@@ -5460,10 +5512,12 @@ function Alu() {
       if(miscindir != -1) { this.setError('multiple misc in sides'); return false; }
       if(arr.length == 1) {
         if(arr[0].n == 1) {
+          // 1 bit: the side input is the 1-bit carry or similar input
           miscindir = i;
           miscin[0] = miscindir;
           miscin[1] = 1;
         } else {
+          // Multiple bits: the side input is the operation-select input
           selectdir = i;
           select[0] = selectdir;
           select[1] = false; // TODO: use optional '0' symbol to indicate its LSB position

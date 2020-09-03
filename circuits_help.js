@@ -3979,9 +3979,10 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
  0"(unsigned: 80..87, signed: 208..215, float: 336..343)"
  0"80:sine, 81:arcsine, 82:cosine, 83:arccosine, 84:tangent, 85:arctangent/atan2, 86:ln, 87:exp"
 
-0"* time related:"
+0"* time related + random:"
  0"(unsigned: 88..95, signed: 216..223, float: 344..351)"
  0"88:unix time in seconds, 89:unix time to Y-M-D h:m:s, 90: Y-M-D h:m:s to unix time"
+ 0"95: random (0, 1 or 2 inputs, side-input toggles change)"
 
 0"* bit permutation operations:"
  0"(unsigned: 96..103, signed: 224..231, float: 352..359)"

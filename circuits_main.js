@@ -1309,7 +1309,7 @@ registerCircuit('8-bit fully customizable barrel shifter', `
 
 `, 'fullshift');
 
-registerCircuit('Floating Point', `
+registerCircuit('32-Bit Floating Point', `
 
 0"This circuit allows to see the bits of any 32-bit floating point value typed in decimal."
 0"Place the cursor in the input terminals to type values in decimal."
@@ -1324,11 +1324,15 @@ registerCircuit('Floating Point', `
 "S EEEEEEEE MMMMMMMMMMMMMMMMMMMMMMM"
  l llllllll lllllllllllllllllllllll
  ^ ^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^
+ T T####### T######################
+ ^ ^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^
 2T#################################
 
 0"This circuit allows to see the decimal value of any bit representation of 32-bit floating point:"
 
 2T#################################
+ ^ ^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^
+ T T####### T######################
  ^ ^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^
  s ssssssss sssssssssssssssssssssss
 "S EEEEEEEE MMMMMMMMMMMMMMMMMMMMMMM"
@@ -1345,7 +1349,49 @@ registerCircuit('Floating Point', `
  ^ ^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^
 2T#################################
 
-`, 'float');
+`, 'float32');
+
+registerCircuit('64-Bit Floating Point', `
+
+0"This circuit allows to see the bits of any 64-bit floating point value typed in decimal."
+0"Place the cursor in the input terminals to type values in decimal."
+0"E.g. try: 0, 0.5, 1, 5, 1e3, 1e10, -5, 1e-10, Infinity, NaN"
+
+0"S = sign bit"
+0"E = exponent bits"
+0"M = mantissa bits"
+
+
+"      ...8421                                              ...8421"
+"S EEEEEEEEEEE MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
+ l lllllllllll llllllllllllllllllllllllllllllllllllllllllllllllllll
+ ^ ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ T T########## T###################################################
+ ^ ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2T#################################################################
+
+0"This circuit allows to see the decimal value of any bit representation of 32-bit floating point:"
+
+2T#################################################################
+ ^ ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ T T########## T###################################################
+ ^ ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ s sssssssssss ssssssssssssssssssssssssssssssssssssssssssssssssssss
+"S EEEEEEEEEEE MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
+"      ...8421                                              ...8421"
+
+0"Roundtrip: type float, see binary, and reinterpret. Reinterpreted result may differ"
+0"slightly due to floating point precision, e.g. try 0.3. This is normal and"
+0"expected behavior of floating point."
+
+
+2T#################################################################
+ ^ ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ l lllllllllll llllllllllllllllllllllllllllllllllllllllllllllllllll
+ ^ ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2T#################################################################
+
+`, 'float64');
 
 
 registerTitle('Flip-flops');

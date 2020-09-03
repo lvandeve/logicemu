@@ -2255,11 +2255,12 @@ s....>e..>l
 "1"F..>#....>#....>#....>#....>#....>l2
 
 
+
 0"## Patch Panel"
 
-0"This allows experimenting with fredkin gates yourself. Connected jacks (J)"
-0"together to connect switches to fredkin gates and/or LEDs and make anything"
-0"you like."
+0"This allows experimenting with fredkin gates yourself. Connect jacks (J)"
+0"together by clicking them to connect switches to fredkin gates and/or LEDs"
+0"and make anything you like."
 
 f>J  s>J  J>i>J  J>i>J  J>i>J  J>l  J>l2
             #      #      #
@@ -2416,11 +2417,42 @@ s..>i..>l
 "b"s..>i..>O..>l 0"a XNOR b"
 
 
+0"## Full Adder"
+
+
+   F......>#......>#...>l2
+           #       #
+"a"s..>#..>#......(#)..>l2
+       #   #       #
+"b"s..>#..>i..>#..>#...>l2
+       #       #   #
+"c"s..(#).....>#..>i...>l"sum"
+       #       #
+   f..>i......>i.......>l"carry"
+
+0"Alternative which outputs the a and b inputs rather than garbage signals:"
+
+
+   F......>#......>#..>#..>l2
+           #       #   #
+"a"s..>#..>#......(#).>#..>l"a"
+       #   #       #   #
+"b"s..>#..>i..>#..>#..>i..>l"b"
+       #       #   #
+"c"s..(#).....>#..>i......>l"sum"
+       #       #
+   f..>i......>i..........>l"carry"
+
+0"The top line, the constant 1 input, can be removed and 3 of the toffoli"
+0"gates replaced by a controlled not, which has 1 input less, but here we use"
+0"toffoli gates only."
+
+
 0"## Patch Panel"
 
-0"This allows experimenting with toffoli gates yourself. Connected jacks (J)"
-0"together to connect switches to toffoli gates and/or LEDs and make anything"
-0"you like."
+0"This allows experimenting with toffoli gates yourself. Connect jacks (J)"
+0"together by clicking them to connect switches to toffoli gates and/or LEDs"
+0"and make anything you like."
 
 f>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
             #      #      #
