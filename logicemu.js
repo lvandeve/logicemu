@@ -585,7 +585,11 @@ var LogicEmuMath = (function() {
   result.mod = mod;
 
   // in case BigInt is not supported, this function helps to support shifting up to 2**53 instead of just up to 2**31
-  var rshift = supportbigint ? function(n) { return n >> n1; } : function(n) { return Math.floor(n / 2); };
+  var rshift1 = supportbigint ? function(n) { return n >> n1; } : function(n) { return Math.floor(n / 2); };
+
+  // like left shift, but designed to also work with more than 31 bits in case BigInt is not supported in the browser
+  var lshift = supportbigint ? function(n, s) { return n << s; } : function(n, s) { return n * ((s < 31) ? (1 << s) : (Math.pow(2, s))); };
+  result.lshift = lshift;
 
   // returns (a + b) % c, taking overflow into account (in JS, overflow means reaching a part in the floating point representation where it can no longer distinguish 1)
   var modadd = supportbigint ?
@@ -609,7 +613,7 @@ var LogicEmuMath = (function() {
     while(b > 0) {
       if(b & 1) x = modadd(x, y, c);
       y = modadd(y, y, c);
-      b = rshift(b);
+      b = rshift1(b);
     }
     return x % c;
   };
@@ -645,7 +649,7 @@ var LogicEmuMath = (function() {
         a &= mask;
         while(b > 0) {
           if(b & n1) r = ((r * a) & mask);
-          b = rshift(b);
+          b = rshift1(b);
           a = ((a * a) & mask);
         }
       } else {
@@ -653,7 +657,7 @@ var LogicEmuMath = (function() {
         a %= m;
         while(b > 0) {
           if(b & n1) r = modmul(r, a, m);
-          b = rshift(b);
+          b = rshift1(b);
           a = modmul(a, a, m);
         }
       }
@@ -881,10 +885,10 @@ var LogicEmuMath = (function() {
       else base = [2, 325, 9375, 28178, 450775, 9780504, 1795265022]; //valid up to >2^64
       for(var i = 0; i < base.length; i++) base[i] = B(base[i]);
 
-      var d = rshift(n);
+      var d = rshift1(n);
       var s = n1;
       while(!(d & n1)) {
-        d = rshift(d);
+        d = rshift1(d);
         ++s;
       }
 
@@ -1368,6 +1372,184 @@ var LogicEmuMath = (function() {
     return [sign, exp, mantissa];
   };
   result.dissectfloat = dissectfloat;
+
+  // approximation of gamma function, for floating point input
+  var gamma = function(x) {
+    if(x <= 0 && x == Math.round(x)) return Infinity;
+    if(x > 200) return Infinity;
+    if(x < 0.5) return Math.PI / (Math.sin(Math.PI * x) * gamma(1 - x));
+    var p = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+    x -= 1;
+    var y = p[0];
+    for(var i = 1; i < 7 + 2; i++) {
+      y += p[i] / (x + i);
+    }
+    var t = x + 7 + 0.5;
+    return Math.sqrt(Math.PI * 2) * Math.pow(t, x + 0.5) * Math.exp(-t) * y;
+  };
+  result.gamma = gamma;
+
+  // approximation of Lamber's W function (principal branch, for real values above -1/e), for floating point input
+  var lambertw = function(x) {
+    if(isNaN(x)) return NaN;
+    if(x == Infinity || x == -Infinity) return Infinity;
+
+    if(x >= -1.0 / Math.E && x <= 703) {
+      //Newton's method. Only works up to 703
+      var wj = x < 10 ? 0 : Math.log(x) - Math.log(Math.log(x)); // Without good starting value, it requires hundreds of iterations rather than just 30.
+      var num = Math.max(30, x > 0 ? 10 + Math.floor(x) : 30);
+      for(var i = 0; i < num; i++) {
+        var ew = Math.exp(wj);
+        wj = wj - ((wj * ew - x) / (ew + wj * ew));
+      }
+      return wj;
+    } else if (x > 0) {
+      var step = 1;
+      var lastDir = 0;
+      var result = Math.log(x) - Math.log(Math.log(x)); // good starting value speeds up iterations. E.g. only 76 instead of 292 for 7e100.
+      for(;;) {
+        if(step == 0 || step * 0.5 == step || result + step == result) return result; //avoid infinite loop
+        var v = result * Math.exp(result);
+        if(Math.abs(v - x) <= 1e-15) return result;
+        if(v > x) {
+          result -= step;
+          if(lastDir == -1) step *= 0.5;
+          lastDir = 1;
+        } else {
+          result += step;
+          if(lastDir == 1) step *= 0.5;
+          lastDir = -1;
+        }
+      }
+    }
+    return NaN;
+  };
+  result.lambertw = lambertw;
+
+  // Faddeeva function: w(z) = exp(-z^2)*erfc(-iz)
+  var faddeeva = function(x, y) {
+    var invsqrtpi2   = 2 / Math.sqrt(Math.PI);
+    var cexp = function(x, y) {
+      var e = Math.exp(x);
+      return [e * Math.cos(y), e * Math.sin(y)];
+    };
+    var cmul = function(a, b, c, d) {
+      return [a * c - b * d, a * d + b * c];
+    };
+    var cinv = function(x, y) {
+      var d = x * x + y * y;
+      return [x / d, -y / d];
+    };
+    var rho2 = (x / 6.3 * x / 6.3) + (y / 4.4 * y / 4.4);
+    if(y < 0 && rho2 >= 0.292 * 0.292) {
+      if(x == 0 && y < -26.64) return [Infinity, 0];
+      var e = cexp(y * y - x * x, -2 * x * y);
+      var f = R.faddeeva(-x, -y);
+      return [2 * e[0] - f[0], 2 * e[1] - f[1]];
+    }
+    var result = [0, 0];
+    if(rho2 < 0.292 * 0.292) {
+      var s = (1 - 0.85 * y / 4.4) * Math.sqrt(rho2);
+      var n = Math.ceil(6 + 72 * s);
+      var kk = 1;
+      var zz = [y * y - x * x, -2 * x * y];
+      var t = [y, -x];
+      for(var k = 0; k < n; k++) {
+        if(k > 0) {
+          kk *= -k;
+          t = cmul(t[0], t[1], zz[0], zz[1]);
+        }
+        result[0] += t[0] / (kk * (2 * k + 1));
+        result[1] += t[1] / (kk * (2 * k + 1));
+      }
+      var e = cexp(zz[0], zz[1]);
+      result = cmul(e[0], e[1], result[0], result[1]);
+      result[0] = e[0] - result[0] * invsqrtpi2;
+      result[1] = e[1] - result[1] * invsqrtpi2;
+    } else if(rho2 < 1.0) {
+      var s = (1 - y / 4.4) * Math.sqrt(1 - rho2);
+      var nu = Math.ceil(16 + 26 * s) + 1;
+      var n = Math.ceil(7  + 34 * s) + 1;
+      var h = 1.88 * s;
+
+      var w = [0, 0];
+      for (var k = nu; k > n; k--) {
+        w = cinv(2 * (y + k * w[0] + h), 2 * (k * w[1] - x));
+      }
+      var hh = Math.pow(h * 2, n - 1);
+      for (var k = n; k > 0; k--) {
+        w = cinv(2 * (y + k * w[0] + h), 2 * (k * w[1] - x));
+        result = cmul(result[0] + hh, result[1], w[0], w[1]);
+        hh /= (h * 2);
+      }
+      result[0] *= invsqrtpi2;
+      result[1] *= invsqrtpi2;
+    } else {
+      var nu = Math.ceil(3 + (1442 / (26 * Math.sqrt(rho2) + 77))) + 1;
+      for (var k = nu; k > 0; k--) {
+        result = cinv(2 * (y + k * result[0]), 2 * (k * result[1] - x));
+      }
+      result[0] *= invsqrtpi2;
+      result[1] *= invsqrtpi2;
+    }
+
+    if(x == 0) result[1] = 0;
+    if(y == 0) result[0] = Math.exp(-x * x);
+    return result;
+  };
+
+  var erf = function(x, y) {
+    var a = Math.exp(-x * x);
+    if(x >= 0) return 1 - a * faddeeva(0, x)[0];
+    else return a * faddeeva(0, -x)[0] - 1;
+  };
+  result.erf = erf;
+
+  var erfc = function(x, y) {
+    var a = Math.exp(-x * x);
+    if(x >= 0) return a * faddeeva(0, x)[0];
+    else return 2 - a * faddeeva(0, -x)[0];
+  };
+  result.erfc = erfc;
+
+  var besselj = function(n, x) {
+    if(n < 0 && Math.floor(n) == n) {
+      return (n & 1) ? -besselj(-n, x) : besselj(-n, x);
+    }
+    if(x == 0) return n == 0 ? 1 : ((n > 0 || Math.floor(n) == n) ? 0 : Infinity);
+    if(n == -0.5) return Math.sqrt(2 / (Math.PI * x)) * Math.cos(x);
+    if(n == 0.5) return Math.sqrt(2 / (Math.PI * x)) * Math.sin(x);
+    // For 0 and 1, provide implementation that supports large |x| as well
+    if((n == 0 || n == 1) && Math.abs(x) > 12) {
+      var a = (n == 0) ? [-0.703125e-1, 0.112152099609375, -0.5725014209747314, 0.6074042001273483, -0.1100171402692467e3, 0.03038090510922384e4, -0.1188384262567832e6, 0.06252951493434797e7, -0.4259392165047669e9, 0.03646840080706556e11, -0.3833534661393944e13, 0.04854014686852901e15] : [0.1171875,-0.144195556640625, 0.6765925884246826,-0.6883914268109947e1, 0.1215978918765359e3, -0.3302272294480852e4, 0.1276412726461746e6, -0.6656367718817688e7, 0.4502786003050393e9, -0.3833857520742790e11, 0.4011838599133198e13, -0.5060568503314727e15];
+      var b = (n == 0) ? [0.732421875e-1, -0.2271080017089844, 0.1727727502584457e1, -0.2438052969955606e2, 0.5513358961220206e3, -0.1825775547429318e5, 0.8328593040162893e6, -0.5006958953198893e8, 0.3836255180230433e10, -0.3649010818849833e12, 0.4218971570284096e14, -0.5827244631566907e16] : [-0.1025390625,0.2775764465332031, -0.1993531733751297e1,0.2724882731126854e2, -0.6038440767050702e3, 0.1971837591223663e5, -0.8902978767070678e6, 0.5310411010968522e8, -0.4043620325107754e10, 0.3827011346598605e12, -0.4406481417852278e14, 0.6065091351222699e16];
+      var ca = 1, cb = ((n == 0 ? -0.125 : 0.375) / x);
+      var xx = 1;
+      for(var k = 0; k < 12; k++) {
+        xx /= x * x;
+        ca += xx * a[k];
+        cb += xx / x * b[k];
+      }
+      var p = x - (Math.PI * (n == 0 ? 0.25 : 0.75));
+      return Math.sqrt(1 / (x * (Math.PI / 2))) * (ca * (Math.cos(p)) - (cb * (Math.sin(p))));
+    }
+    // series for others
+    var r = 1;
+    var e = 1;
+    var s = -x * x / 4;
+    var maxit = 50;
+    for(var i = 1; i <= maxit; i++) {
+      e *= s / (i * (n + i));
+      if((i == maxit && Math.abs(e) < 1e-15) || e == 0) {
+        return r * Math.pow(x, n) / (Math.pow(2, n) * gamma(n + 1));
+      }
+      r += e;
+    }
+    // The series did not have enough numerical precision to converge. Return NaN.
+    // Implementing alternative algorithms for large values of x is too much code to be worth it in this logic simulator.
+    return NaN;
+  };
+  result.besselj = besselj;
 
   return result;
 }());
@@ -1919,21 +2101,25 @@ function CallSub(id) {
         alu.adir = v.alu.adir;
         alu.alsbpos = v.alu.alsbpos;
         alu.numa = v.alu.numa;
+        alu.numa_mant = v.alu.numa_mant;
         alu.numa_exp = v.alu.numa_exp;
         alu.numa_sign = v.alu.numa_sign;
         alu.bdir = v.alu.bdir;
         alu.blsbpos = v.alu.blsbpos;
         alu.numb = v.alu.numb;
+        alu.numb_mant = v.alu.numb_mant;
         alu.numb_exp = v.alu.numb_exp;
         alu.numb_sign = v.alu.numb_sign;
         alu.cdir = v.alu.cdir;
         alu.clsbpos = v.alu.clsbpos;
         alu.numc = v.alu.numc;
+        alu.numc_mant = v.alu.numc_mant;
         alu.numc_exp = v.alu.numc_exp;
         alu.numc_sign = v.alu.numc_sign;
         alu.odir = v.alu.odir;
         alu.olsbpos = v.alu.olsbpos;
         alu.numo = v.alu.numo;
+        alu.numo_mant = v.alu.numo_mant;
         alu.numo_exp = v.alu.numo_exp;
         alu.numo_sign = v.alu.numo_sign;
         alu.miscindir = v.alu.miscindir;
@@ -3902,27 +4088,31 @@ function Alu() {
   // input A
   this.adir = -1;
   this.alsbinv = false;  // true means lsb is on other side than the usual (usual = the rule of 'v' in getIO)
-  this.numa = 0;
-  this.numa_exp = 0; // used if this.floating, then total amount of a inputs is this.numa+this.numa_exp+1 (1 is the sign bit)
-  this.numa_sign = 0; // only 1 if this.floating and input a present
+  this.numa = 0; // total amount of input wires involved in input a
+  this.numa_mant = 0; // mantissa wires of input a, only relevant if this.floating (or floating opindex with op select if not this.floating)
+  this.numa_exp = 0; // exponent wires of input a, only relevant if this.floating (or floating opindex with op select if not this.floating)
+  this.numa_sign = 0; // sign wires of input a, always 1, only relevant if this.floating (or floating opindex with op select if not this.floating)
   // input B
   this.bdir = -1;
   this.blsbinv = false;
   this.numb = 0;
+  this.numb_mant = 0; // similar to numa_mant
   this.numb_exp = 0; // similar to numa_exp
-  this.numb_sign = 0; // only 1 if this.floating and input b present
+  this.numb_sign = 0; // similar to numa_sign
   // input C
   this.cdir = -1;
   this.clsbinv = false;
   this.numc = 0;
+  this.numc_mant = 0; // similar to numa_mant
   this.numc_exp = 0; // similar to numa_exp
-  this.numc_sign = 0; // only 1 if this.floating and input c present
+  this.numc_sign = 0; // similar to numa_sign
   // output
   this.odir = -1;
   this.olsbinv = false;
   this.numo = 0;
+  this.numo_mant = 0; // similar to numa_mant, but for the output
   this.numo_exp = 0; // similar to numa_exp, but for the output
-  this.numo_sign = 0; // only 1 if this.floating and output o present
+  this.numo_sign = 0; // similar to numa_sign, but for the output
   // misc side: carry in, carry or overflow out
   this.miscindir = -1;
   this.miscoutdir = -1;
@@ -3982,6 +4172,7 @@ function Alu() {
         case 26: return 'neg';
         case 27: return 'abs';
         case 28: return this.numb ? 'csgn' : 'sign';
+        case 31: return 'iden';
         case 32: return this.numb ? 'eq' : 'eq0';
         case 33: return this.numb ? 'lt' : 'lt0';
         case 34: return this.numb ? 'lte' : 'lte0';
@@ -4035,6 +4226,10 @@ function Alu() {
         case 99: return 'ushf';
         case 100: return 'grp';
         case 101: return 'ugrp';
+        case 104: return 'gama';
+        case 105: return 'w';
+        case 106: return 'j';
+        case 108: return 'erf';
         default: return 'unk';
     }
   };
@@ -4045,20 +4240,20 @@ function Alu() {
 
   this.getOpLongNameFor = function(opindex) {
     switch(opindex) {
-        case 0: return this.floating ? ('convert from unsigned integer (useful for float, opcode ' + (opindex + 256) + ')') : 'zero';
-        case 1: return this.floating ? ('convert to unsigned integer (useful for float, opcode ' + (opindex + 256) + ')') : 'bitand';
-        case 2: return this.floating ? ('convert from signed integer (useful for float, opcode ' + (opindex + 256) + ')') : 'a nimply b';
-        case 3: return this.floating ? ('convert to signed integer (useful for float, opcode ' + (opindex + 256) + ')') : 'a';
-        case 4: return this.floating ? ('convert 0..1 from unsigned integer full range (useful for float, opcode ' + (opindex + 256) + ')') : 'b nimply a';
-        case 5: return this.floating ? ('convert 0..1 to unsigned integer full range (useful for float, opcode ' + (opindex + 256) + ')') : 'b';
-        case 6: return this.floating ? ('convert 0..1 from signed integer full range (useful for float, opcode ' + (opindex + 256) + ')') : 'bitxor';
-        case 7: return this.floating ? ('convert 0..1 to signed integer full range (useful for float, opcode ' + (opindex + 256) + ')') : 'bitor';
-        case 8: return this.floating ? ('floor (useful for float, opcode ' + (opindex + 256) + ')') : 'bitnor';
-        case 9: return this.floating ? ('ceil (useful for float, opcode ' + (opindex + 256) + ')') : 'bitxnor';
-        case 10: return this.floating ? ('round (useful for float, opcode ' + (opindex + 256) + ')') : 'bitinvert b';
-        case 11: return this.floating ? ('truncate towards 0 (useful for float, opcode ' + (opindex + 256) + ')') : 'b imply a';
-        case 12: return this.floating ? ('floating point exponent raw bits (only for float, opcode ' + (opindex + 256) + ')') : 'bitinvert a';
-        case 13: return this.floating ? ('floating point mantissa raw bits (only for float, opcode ' + (opindex + 256) + ')') : 'a imply b';
+        case 0: return this.floating ? ('convert from unsigned integer to float') : 'zero';
+        case 1: return this.floating ? ('convert from float to unsigned integer') : 'bitand';
+        case 2: return this.floating ? ('convert from signed integer to float') : 'a nimply b';
+        case 3: return this.floating ? ('convert from float to signed integer') : 'a';
+        case 4: return this.floating ? ('convert to float 0..1 from unsigned integer full range (0..1 range modifiable if multiple inputs)') : 'b nimply a';
+        case 5: return this.floating ? ('convert from float 0..1 to unsigned integer full range') : 'b';
+        case 6: return this.floating ? ('convert to float -1..1 from signed integer full range (-1..1 range modifiable if multiple inputs)') : 'bitxor';
+        case 7: return this.floating ? ('convert float float -1..1 to signed integer full range') : 'bitor';
+        case 8: return this.floating ? ('floor') : 'bitnor';
+        case 9: return this.floating ? ('ceil') : 'bitxnor';
+        case 10: return this.floating ? ('round') : 'bitinvert b';
+        case 11: return this.floating ? ('truncate towards 0') : 'b imply a';
+        case 12: return this.floating ? ('floating point exponent raw bits') : 'bitinvert a';
+        case 13: return this.floating ? ('floating point mantissa raw bits') : 'a imply b';
         case 14: return this.floating ? 'get the mathematical constant pi' : 'bitnand';
         case 15: return this.floating ? 'get the mathematical constant e (Euler\'s number)' : 'all ones';
         case 16: return this.numc ? 'add modulo third input' : 'add';
@@ -4074,6 +4269,7 @@ function Alu() {
         case 26: return 'negate';
         case 27: return 'absolute value';
         case 28: return this.numb ? 'copysign' : 'sign';
+        case 31: return 'identity function (passes through the value, possibly with changed bit amount or precision)';
         case 32: return this.numc ? 'equals modulo third input' : (this.numb ? 'equals' : 'equals 0');
         case 33: return (this.numb ? 'lesser than' : 'lesser than 0');
         case 34: return (this.numb ? 'lesser than or equals' : 'lesser than or equals 0');
@@ -4109,12 +4305,12 @@ function Alu() {
         case 74: return 'popcount';
         case 76: return 'parallel bit extract (PEXT): select input bits with mask, extract to continguous low order bits of result';
         case 77: return 'parallel bit deposit (PDEP): select output bits with mask, deposit contiguious low order bits of input there';
-        case 80: return 'sine (scaled)';
-        case 81: return 'arcsine (scaled)';
-        case 82: return 'cosine (scaled)';
-        case 83: return 'arcosine (scaled)';
-        case 84: return 'tangent (scaled and limited)';
-        case 85: return this.numb ? 'atan2' : 'arctangent (scaled and limited)';
+        case 80: return this.floating ? 'sine' : 'sine (scaled: unsigned=quarter period, signed=full period, float=not scaled)';
+        case 81: return this.floating ? 'arcsine' : 'arcsine (scaled: unsigned=quarter period, signed=full period, float=not scaled)';
+        case 82: return this.floating ? 'cosine' : 'cosine (scaled: unsigned=quarter period, signed=full period, float=not scaled)';
+        case 83: return this.floating ? 'arccosine' : 'arccosine (scaled: unsigned=quarter period, signed=full period, float=not scaled)';
+        case 84: return this.floating ? 'tangent' : 'tangent (scaled and limited: unsigned=1/8th period, signed=1/4th period, float=unlimited, not scaled)';
+        case 85: return this.numb ? 'atan2' : (this.floating ? 'arctangent' : 'arctangent (scaled and limited)');
         case 86: return 'ln (input scaled to 1..e)';
         case 87: return 'exp (input scaled to 0..1)';
         case 88: return 'time in seconds since unix epoch. Needs positive edge input bit change to update.';
@@ -4127,6 +4323,10 @@ function Alu() {
         case 99: return 'perfect unshuffle bits';
         case 100: return 'group bits (GRP): select input bits with mask, bits matching mask one go to low order bits of result, others to high order bits of result';
         case 101: return 'ungroup bits (UNGRP): select output bits with mask, deposit contiguous low order bits of input to output positions where mask is one, remaining input bits to where mask is zero';
+        case 104: return 'gamma function';
+        case 105: return 'lambertw function' + (this.floating ? '' : (' (floating point only, use opindex ' + (opindex + 256) + ')'));
+        case 106: return 'bessel J function' + (this.floating ? ' (for any real nu and x, but some large values are not supported and return NaN)' : (' (floating point only, use opindex ' + (opindex + 256) + ')'));
+        case 108: return 'error function (complementary if with misc input)';
         default: return 'unknown';
     }
   };
@@ -4137,19 +4337,6 @@ function Alu() {
 
 
   this.update = function(inputs) {
-    if(this.floating) {
-      this.updateFloating(inputs);
-    } else {
-      this.updateInteger(inputs);
-    }
-  }
-
-
-  // first inputs are the data, last the select
-  // can handle both signed and unsigned integer case
-  this.updateInteger = function(inputs) {
-    if(inputs.length != this.numa + this.numb + this.numc + this.nummiscin + this.numselect) return false;
-
     for(var i = 0; i < this.output.length; i++) this.output[i] = 0;
 
     var op = this.opindex;
@@ -4165,6 +4352,33 @@ function Alu() {
     op += select;
 
     var signed = this.signed;
+    var floating = this.floating;
+
+    if(!signed && (op >= 128 && op < 256)) {
+      signed = true;
+      op -= 128;
+    } else if(!signed && op >= 256) {
+      floating = true;
+      op -= 256;
+    } else if(signed && op >= 128) {
+      floating = true;
+      op -= 128;
+    }
+
+    if(floating) {
+      this.updateFloating(inputs, op);
+    } else {
+      this.updateInteger(inputs, op, signed);
+    }
+  }
+
+  // first inputs are the data, last the select
+  // can handle both signed and unsigned integer case
+  this.updateInteger = function(inputs, op, signed) {
+    if(inputs.length != this.numa + this.numb + this.numc + this.nummiscin + this.numselect) return false;
+
+    for(var i = 0; i < this.output.length; i++) this.output[i] = 0;
+
     if(op < 16) signed = false;
     if(op == 26 || op == 27) signed = true;  // neg or abs
     if(op == 55 || op == 90) signed = false;
@@ -4172,31 +4386,31 @@ function Alu() {
     var a = math.n0;
     for(var i = 0; i < this.numa; i++) {
       var j = i + this.numb + this.numc;
-      if(inputs[j]) a ^= (math.n1 << math.B(i));
+      if(inputs[j]) a += math.lshift(math.n1, math.B(i)); // +, not |, to support non-BigInt supporting browsers too
     }
 
     var b = math.n0;
     for(var i = 0; i < this.numb; i++) {
       var j = i + this.numc;
-      if(inputs[j]) b ^= (math.n1 << math.B(i));
+      if(inputs[j]) b += math.lshift(math.n1, math.B(i)); // +, not |, to support non-BigInt supporting browsers too
     }
 
     var c = math.n0;
     for(var i = 0; i < this.numc; i++) {
       var j = i;
-      if(inputs[j]) c ^= (math.n1 << math.B(i));
+      if(inputs[j]) c += math.lshift(math.n1, math.B(i)); // +, not |, to support non-BigInt supporting browsers too
     }
 
     if(signed) {
       var na = math.B(this.numa);
       var nb = math.B(this.numb);
       var nc = math.B(this.numb);
-      var maska = ((math.n1 << na) - math.n1);
-      var maskb = ((math.n1 << nb) - math.n1);
-      var maskc = ((math.n1 << nc) - math.n1);
-      var maxa = (math.n1 << (na - math.n1)) - math.n1;
-      var maxb = (math.n1 << (nb - math.n1)) - math.n1;
-      var maxc = (math.n1 << (nc - math.n1)) - math.n1;
+      var maska = math.lshift(math.n1, na) - math.n1;
+      var maskb = math.lshift(math.n1, nb) - math.n1;
+      var maskc = math.lshift(math.n1, nc) - math.n1;
+      var maxa = math.lshift(math.n1, na - math.n1) - math.n1;
+      var maxb = math.lshift(math.n1, nb - math.n1) - math.n1;
+      var maxc = math.lshift(math.n1, nc - math.n1) - math.n1;
       if(a > maxa) a = (a - maska - math.n1);
       if(op != 54 && b > maxb) b = (b - maskb - math.n1);
       if(c > maxc) c = (c - maskc - math.n1);
@@ -4380,6 +4594,8 @@ function Alu() {
         // sign
         o = (a == 0) ? math.n0 : ((a > 0) ? math.n1 : -math.n1);
       }
+    } else if(op == 31) {
+      o = a;
     } else if(op == 32) {
       // equals
       if(this.numc) {
@@ -4661,85 +4877,150 @@ function Alu() {
       }
     } else if(op == 80) {
       // sine, with full input period scaled in the full integer range, and scaled output to fit full output integer range
-      if(signed) a += (math.n1 << math.B(this.numa - 1));
-      var f = Number(a) * Math.PI * 2.0 / ((1 << this.numa) - 0);
-      f = Math.sin(f);
-      f = (f + 1.0) / 2.0; // make in range 0..1 instead of -1..1
-      o = Math.floor(f * (Math.pow(2, this.numo) - 1));
-      if(math.supportbigint) o = BigInt(o);
-      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+      // with 8-bit int as example and with for internal values [] meaning closed interval and [) meaning half-open interval (for signed int due to different magnitude of largest neg and pos value):
+      // for unsigned: input 0..255 scaled to [0..pi/2], output [0..1] scaled to 0..255
+      // for signed: input -128..127 scaled to [-pi..pi), output [-1..1] scaled to -128..127 (even sized buckets, e.g. output value 0 is for mathematical output values [0..2.0/256))
+      var ascale = math.n1 << math.B(this.numa);
+      var ascale2 = math.n1 << math.B(this.numa - 1);
+      var oscale = math.n1 << math.B(this.numo);
+      var oscale2 = math.n1 << math.B(this.numo - 1);
+      if(signed) {
+        var f = Number(a) / (Number(ascale2));
+        f *= Math.PI;
+        f = Math.sin(f);
+        o = math.B(Math.floor(f * (Number(oscale2) - 0))); // - 0 instead of - 1 on purpose, see next line why
+        if(o >= oscale2) o--; // e.g. for 8-bit, allow outputting -128 as minimum, but +127 max (+128 would overflow to -128), so that the sine uses full available output range, best for plasma's etc...
+        // fix numerical imprecisions of a few common values
+        if(a == 0) o = math.n0;
+        if(a == -ascale2) o = math.n0;
+      } else {
+        var f = Number(a) / (Number(ascale) - 1);
+        f *= Math.PI * 0.5;
+        f = Math.sin(f);
+        o = math.B(Math.floor(f * (Number(oscale) - 1)));
+      }
     } else if(op == 81) {
       // arcsine, with full input scaled in the full integer range, and scaled output period to fit full output integer range
-      if(signed) a += (math.n1 << math.B(this.numa - 1));
-      var f = Number(a) * 2.0 / ((1 << this.numa) - (signed ? 0 : 1)) - 1.0;
-      f = Math.asin(f);
-      f = f / (Math.PI) + 0.5; // make in range 0..1
-      o = Math.floor(f * (Math.pow(2, this.numo) - (signed ? 0 : 1)));
-      o = math.B(o);
-      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+      // with 8-bit int as example and with for floats [] meaning closed interval and [) meaning half-open interval (for signed int due to different magnitude of largest neg and pos value):
+      // for unsigned: input 0..255 scaled to [0..1], output [0..pi/2] scaled to 0..255
+      // for signed: input -128..127 scaled to [-1..1), output [-pi..pi) scaled to -127..127 (note that the function mathematically only outputs -pi/2..pi/2 so -64..64, and that range not fully reached due to halfopen input interval. -pi..pi range is used for consistency with sin, cos and acos)
+      var ascale = math.n1 << math.B(this.numa);
+      var ascale2 = math.n1 << math.B(this.numa - 1);
+      var oscale = math.n1 << math.B(this.numo);
+      var oscale2 = math.n1 << math.B(this.numo - 1);
+      if(signed) {
+        var f = Number(a) / (Number(ascale2));
+        f = Math.asin(f);
+        f /= Math.PI;
+        o = math.B(Math.floor(f * (Number(oscale2) - 1)));
+      } else {
+        var f = Number(a) / (Number(ascale) - 1);
+        f = Math.asin(f);
+        f /= (Math.PI * 0.5);
+        o = math.B(Math.floor(f * (Number(oscale) - 1)));
+      }
     } else if(op == 82) {
       // cosine, with full input period scaled in the full integer range, and scaled output to fit full output integer range
-      if(signed) a += (math.n1 << math.B(this.numa - 1));
-      var f = Number(a) * Math.PI * 2.0 / ((1 << this.numa) - 0);
-      f = Math.cos(f);
-      f = (f + 1.0) / 2.0; // make in range 0..1 instead of -1..1
-      o = Math.floor(f * (Math.pow(2, this.numo) - 1));
-      if(math.supportbigint) o = BigInt(o);
-      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+      // with 8-bit int as example and with for internal values [] meaning closed interval and [) meaning half-open interval (for signed int due to different magnitude of largest neg and pos value):
+      // for unsigned: input 0..255 scaled to [0..pi/2], output [0..1] scaled to 0..255
+      // for signed: input -128..127 scaled to [-pi..pi), output [-1..1] scaled to -128..127
+      var ascale = math.n1 << math.B(this.numa);
+      var ascale2 = math.n1 << math.B(this.numa - 1);
+      var oscale = math.n1 << math.B(this.numo);
+      var oscale2 = math.n1 << math.B(this.numo - 1);
+      if(signed) {
+        var f = Number(a) / (Number(ascale2));
+        f *= Math.PI;
+        f = Math.cos(f);
+        o = math.B(Math.floor(f * (Number(oscale2) - 0))); // - 0 instead of - 1 on purpose, see next line why
+        if(o >= oscale2) o--; // e.g. for 8-bit, allow outputting -128 as minimum, but +127 max (+128 would overflow to -128), so that the cosine uses full available output range, best for plasma's etc...
+      } else {
+        var f = Number(a) / (Number(ascale) - 1);
+        f *= Math.PI * 0.5;
+        f = Math.cos(f);
+        o = math.B(Math.floor(f * (Number(oscale) - 1)));
+      }
     } else if(op == 83) {
       // arccosine, with full input scaled in the full integer range, and scaled output period to fit full output integer range
-      if(signed) a += (math.n1 << math.B(this.numa - 1));
-      var f = Number(a) * 2.0 / ((1 << this.numa) - (signed ? 0 : 1)) - 1.0;
-      f = Math.acos(f);
-      f = f / (Math.PI) + 0.5; // make in range 0..1
-      o = Math.floor(f * (Math.pow(2, this.numo) - (signed ? 0 : 1)));
-      o = math.B(o);
-      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+      // with 8-bit int as example and with for floats [] meaning closed interval and [) meaning half-open interval (for signed int due to different magnitude of largest neg and pos value):
+      // for unsigned: input 0..255 scaled to [0..1], output [0..pi/2] scaled to 0..255
+      // for signed: input -128..127 scaled to [-1..1), output [-pi..pi) scaled to -127..127 (note that the function mathematically only outputs 0..pi so 0..127, and that range not fully reached due to halfopen input interval. -pi..pi range is used for consistency with sin, asin and cos)
+      var ascale = math.n1 << math.B(this.numa);
+      var ascale2 = math.n1 << math.B(this.numa - 1);
+      var oscale = math.n1 << math.B(this.numo);
+      var oscale2 = math.n1 << math.B(this.numo - 1);
+      if(signed) {
+        var f = Number(a) / (Number(ascale2));
+        f = Math.acos(f);
+        f /= Math.PI;
+        o = math.B(Math.floor(f * (Number(oscale2) - 1)));
+      } else {
+        var f = Number(a) / (Number(ascale) - 1);
+        f = Math.acos(f);
+        f /= (Math.PI * 0.5);
+        o = math.B(Math.floor(f * (Number(oscale) - 1)));
+      }
     } else if(op == 84) {
         // tan, with input limited to 0..pi/4 (-pi/4..pi/4 if signed) and output 0..1 (-1..1 if signed) (scaled to fit in the full input/output bits)
-      var scaled = Number(a) / ((1 << this.numa) * (signed ? 0.5 : 1)); // full input bit range scaled to -1..1 for signed, 0..1 for unsigned
+      var ascale = math.n1 << math.B(this.numa);
+      var oscale = math.n1 << math.B(this.numo);
+      var scaled = Number(a) / (Number(ascale) * (signed ? 0.5 : 1)); // full input bit range scaled to -1..1 for signed, 0..1 for unsigned
       var f = scaled * Math.PI / 4;
       f = Math.tan(f);
       f = Math.min(Math.max(signed ? -1 : 0, f), 1);
-      o = math.B(Math.floor(f * ((1 << this.numo) * (signed ? 0.5 : 1))));
+      o = math.B(Math.floor(f * (Number(oscale) * (signed ? 0.5 : 1))));
     } else if(op == 85) {
+      var ascale = math.n1 << math.B(this.numa);
+      var oscale = math.n1 << math.B(this.numo);
       if(this.numb) {
         // atan2
         // range 0..1 if unsigned, -1..1 if signed
-        var a2 = Number(a) / (1 << (this.numa - (signed ? 1 : 0)));
-        var b2 = Number(b) / (1 << (this.numb - (signed ? 1 : 0)));
+        var ascale2 = math.n1 << math.B(this.numa);
+        var oscale2 = math.n1 << math.B(this.numo);
+        var bscale = math.n1 << math.B(this.numb);
+        var bscale2 = math.n1 << math.B(this.numb - 1);
+        var a2 = Number(a) / Number(signed ? ascale2 : ascale);
+        var b2 = Number(b) / Number(signed ? bscale2 : bscale);
         var f = Math.atan2(a2, b2);
         // if signed, f has range -pi to pi, map to -1..1. if unsigned it has range 0 to pi/2,  map it to range 0..1
         if(signed) f = f / Math.PI;
         else f = f / (Math.PI / 2);
-        o = Math.floor(f * (Math.pow(2, this.numo - (signed ? 1 : 0)) - 1));
+        o = Math.floor(f * Number(signed ? oscale2 : oscale) - 1);
         o = math.B(o);
         if(!a && !b) overflow = true;
       } else {
         // arctan, with input limited to 0..1 (unsigned) or -1..1 (signed) and output 0..pi/4 or -pi/4..pi/4 (scaled to fit in the full input/output bits)
-        var scaled = Number(a) / ((1 << this.numa) * (signed ? 0.5 : 1)); // full input bit range scaled to -1..1 for signed, 0..1 for unsigned
+        var scaled = Number(a) / (Number(ascale) * (signed ? 0.5 : 1)); // full input bit range scaled to -1..1 for signed, 0..1 for unsigned
         var f = Math.atan(scaled);
         f /= Math.PI / 4;
         f = Math.min(Math.max(signed ? -1 : 0, f), 1);
-        o = math.B(Math.floor(f * ((1 << this.numo) * (signed ? 0.5 : 1))));
+        o = math.B(Math.floor(f * (Number(oscale) * (signed ? 0.5 : 1))));
       }
     } else if(op == 86) {
       // ln, with input scaled from 1 to e, so output is scaled from 0 to 1
-      if(signed) a += (math.n1 << math.B(this.numa - 1));
-      var f = 1 + Number(a) * (Math.E - 1) / ((1 << this.numa) - 0);
+      var ascale = math.n1 << math.B(this.numa);
+      var ascale2 = math.n1 << math.B(this.numa - 1);
+      var oscale = math.n1 << math.B(this.numo);
+      var oscale2 = math.n1 << math.B(this.numo - 1);
+      if(signed) a += ascale2;
+      var f = 1 + Number(a) * (Math.E - 1) / (Number(ascale) - 0);
       f = Math.log(f);
-      o = Math.floor(f * (Math.pow(2, this.numo) - 1));
+      o = Math.floor(f * (Number(oscale) - 1));
       if(math.supportbigint) o = BigInt(o);
-      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+      if(signed) o -= oscale2;
     } else if(op == 87) {
       // exp, with input scaled from 0 to 1, so output scaled from 1 to e
-      if(signed) a += (math.n1 << math.B(this.numa - 1));
-      var f = Number(a) / ((1 << this.numa) - 0);
+      var ascale = math.n1 << math.B(this.numa);
+      var ascale2 = math.n1 << math.B(this.numa - 1);
+      var oscale = math.n1 << math.B(this.numo);
+      var oscale2 = math.n1 << math.B(this.numo - 1);
+      if(signed) a += ascale2;
+      var f = Number(a) / (Number(ascale) - 0);
       f = Math.exp(f);
       f = (f - 1) / (Math.E - 1); // make in range 0..1
-      o = Math.floor(f * (Math.pow(2, this.numo) - 1));
+      o = Math.floor(f * (Number(oscale) - 1));
       if(math.supportbigint) o = BigInt(o);
-      if(signed) o -= (math.n1 << math.B(this.numo - 1));
+      if(signed) o -= oscale2;
     } else if(op == 88) {
       if(!this.prevo || ((a & math.n1) && !(this.preva & math.n1))) {
         var date = new Date();
@@ -4899,6 +5180,31 @@ function Alu() {
           s++;
         }
       }
+    } else if(op == 104) {
+      // similar to op==59, but gamma function instead of factorial
+      // Limited to a size to keep it reasonable.
+      // modulo b if a second input is present.
+      a--; // gamma function instead of factorial
+      if(a > 16384) {
+        overflow = true;
+      } else {
+        if(this.numb == 0) b = (math.n1 << math.B(this.numo));
+        var f = math.factorial(a, b, (this.numb != 0));
+        o = f[0];
+        overflow = f[1];
+      }
+    } else if(op == 105) {
+      // float-only function not supported by int (lambertw)
+    } else if(op == 106) {
+      // float-only function not supported by int (besselj)
+    } else if(op == 108) {
+      // erf, scaled to range 0..1 or -1..1 in full integer range
+      var ascale = math.n1 << math.B(this.numa);
+      var oscale = math.n1 << math.B(this.numo);
+      var scaled = Number(a) / (Number(ascale) * (signed ? 0.5 : 1)); // full input bit range scaled to -1..1 for signed, 0..1 for unsigned
+      var f = miscin ? math.erfc(scaled) : math.erf(scaled);
+      f = Math.min(Math.max(signed ? -1 : 0, f), 1);
+      o = math.B(Math.floor(f * (Number(oscale) * (signed ? 0.5 : 1))));
     } else {
       o = math.n0;
     }
@@ -4936,7 +5242,7 @@ function Alu() {
     }
   };
 
-  this.updateFloating = function(inputs) {
+  this.updateFloating = function(inputs, op) {
     var read = function(inputs, pos, mantissabits, expbits) {
       var mantissa = 0;
       var exponent = 0;
@@ -4981,19 +5287,21 @@ function Alu() {
 
     var a = 0, b = 0, c = 0, o = 0;
     var pos = 0;
-    var posa = 0;
-    if(this.numc_sign) {
-      c = read(inputs, pos, this.numc, this.numc_exp);
-      pos += this.numc + this.numc_exp + 1;
+    var posa = 0, posb = 0, posc = 0;
+    if(this.numc) {
+      posc = pos;
+      c = read(inputs, pos, this.numc_mant, this.numc_exp);
+      pos += this.numc;
     }
-    if(this.numb_sign) {
-      b = read(inputs, pos, this.numb, this.numb_exp);
-      pos += this.numb + this.numb_exp + 1;
+    if(this.numb) {
+      posb = pos;
+      b = read(inputs, pos, this.numb_mant, this.numb_exp);
+      pos += this.numb;
     }
-    if(this.numa_sign) {
+    if(this.numa) {
       posa = pos;
-      a = read(inputs, pos, this.numa, this.numa_exp);
-      pos += this.numa + this.numa_exp + 1;
+      a = read(inputs, pos, this.numa_mant, this.numa_exp);
+      pos += this.numa;
     }
 
     var miscin = 0;
@@ -5002,50 +5310,71 @@ function Alu() {
       pos++;
     }
 
-
-    var op = this.opindex;
-    var select = 0;
-    for(var i = 0; i < this.numselect; i++) {
-      if(inputs[pos++]) {
-        select += (1 << i);
-      }
-    }
-    op += select;
-
     var out_uint = false; // use output as unsigned integer bits
     var out_int = false; // use output as signed integer bits
 
     if(op == 0) {
       // from uint
-      o = readint(inputs, posa, this.numa + this.numa_exp + 1, false);
+      o = readint(inputs, posa, this.numa_mant + this.numa_exp + 1, false);
     } else if(op == 1) {
       // to uint
       o = Math.round(a);
       out_uint = true;
     } else if(op == 2) {
       // from int
-      o = readint(inputs, posa, this.numa + this.numa_exp + 1, true);
+      o = readint(inputs, posa, this.numa_mant + this.numa_exp + 1, true);
     } else if(op == 3) {
       // to int
       o = Math.round(a);
       out_int = true;
     } else if(op == 4) {
-      var scale = Math.pow(2, this.numa + this.numa_exp + 1);
       // from uint, scaled
-      o = readint(inputs, posa, this.numa + this.numa_exp + 1, false);
+      var scale = Math.pow(2, this.numa_mant + this.numa_exp + 1) - 1;
+      if(miscin) scale++; // make 1 exclusive instead of inclusive
+      var mul = 1, add = 0;
+      if(this.numb && !this.numc) {
+        mul = readint(inputs, posb, this.numb_mant + this.numb_exp + 1, false);
+      } else if(this.numb && this.numc) {
+        var ia = readint(inputs, posb, this.numb_mant + this.numb_exp + 1, false);
+        var ib = readint(inputs, posc, this.numc_mant + this.numc_exp + 1, false);
+        mul = ib - ia;
+        add = ia;
+      }
+      o = readint(inputs, posa, this.numa_mant + this.numa_exp + 1, false);
       o /= scale;
+      o = o * mul + add;
     } else if(op == 5) {
       // to uint, scaled
-      var scale = Math.pow(2, this.numo + this.numo_exp + 1);
+      var scale = Math.pow(2, this.numo_mant + this.numo_exp + 1) - 1;
+      if(miscin) scale++; // make 1 exclusive instead of inclusive
       o = Math.min(Math.max(0, Math.round(a * scale)), scale - 1);
       out_uint = true;
     } else if(op == 6) {
-      var scale = Math.pow(2, this.numa + this.numa_exp);
       // from int, scaled
-      o = readint(inputs, posa, this.numa + this.numa_exp + 1, true);
-      o /= scale;
+      if(!this.numb) {
+        var scale = Math.pow(2, this.numa_mant + this.numa_exp) - 1;
+        if(miscin) scale++; // make 1 exclusive instead of inclusive
+        o = readint(inputs, posa, this.numa_mant + this.numa_exp + 1, true);
+        o /= scale;
+      } else {
+        var scale = Math.pow(2, this.numa_mant + this.numa_exp + 1) - 1;
+        if(miscin) scale++; // make 1 exclusive instead of inclusive
+        var mul = 1, add = 0;
+        if(this.numb && !this.numc) {
+          mul = readint(inputs, posb, this.numb_mant + this.numb_exp + 1, true);
+        } else if(this.numb && this.numc) {
+          var ia = readint(inputs, posb, this.numb_mant + this.numb_exp + 1, true);
+          var ib = readint(inputs, posc, this.numc_mant + this.numc_exp + 1, true);
+          mul = ib - ia;
+          add = ia;
+        }
+        o = readint(inputs, posa, this.numa_mant + this.numa_exp + 1, false);
+        o /= scale;
+        o = o * mul + add;
+      }
     } else if(op == 7) {
-      var scale = Math.pow(2, this.numo + this.numo_exp);
+      var scale = Math.pow(2, this.numo_mant + this.numo_exp) - 1;
+      if(miscin) scale++; // make 1 exclusive instead of inclusive
       // to int, scaled
       o = Math.min(Math.max(-scale, Math.round(a * scale)), scale - 1);
       out_int = true;
@@ -5059,22 +5388,24 @@ function Alu() {
       o = (a < 0) ? Math.ceil(a) : Math.floor(a);
     } else if(op == 12) {
       // extract exponent bits (raw, keep bias)
-      o = readint(inputs, posa + this.numa, this.numa_exp, false);
+      o = readint(inputs, posa + this.numa_mant, this.numa_exp, false);
       out_uint = true;
     } else if(op == 13) {
       // extract mantissa bits
-      o = readint(inputs, posa, this.numa, false);
+      o = readint(inputs, posa, this.numa_mant, false);
       out_uint = true;
     } else if(op == 14) {
       o = Math.PI;
-      if(this.numb_sign) o *= b;
+      if(this.numb) o *= b;
     } else if(op == 15) {
       o = Math.E;
-      if(this.numb_sign) o *= b;
+      if(this.numb) o *= b;
     } else if(op == 16) {
       o = a + b;
+      if(miscin) o++;
     } else if(op == 17) {
       o = a - b;
+      if(miscin) o--;
     } else if(op == 18) {
       o = a * b;
     } else if(op == 19) {
@@ -5100,7 +5431,7 @@ function Alu() {
     } else if(op == 27) {
       o = (a < 0) ? -a : a;
     } else if(op == 28) {
-      if(this.numb_sign) {
+      if(this.numb) {
         // copysign
         o = a;
         if((b < 0) != (a < 0)) o = -a;
@@ -5109,6 +5440,8 @@ function Alu() {
         // sign
         o = (a == 0) ? 0 : ((a > 0) ? 1 : -1);
       }
+    } else if(op == 31) {
+      o = a;
     } else if(op == 32) {
       o = (a == b) ? 1 : 0;
     } else if(op == 33) {
@@ -5126,21 +5459,21 @@ function Alu() {
     } else if(op == 39) {
       o = (a > b) ? a : b;
     } else if(op == 40) {
-      if(!this.numb_sign) b = 1;
+      if(!this.numb) b = 1;
       o = a * Math.pow(2, b);
     } else if(op == 41) {
-      if(!this.numb_sign) b = 1;
+      if(!this.numb) b = 1;
       o = a * Math.pow(0.5, b);
     } else if(op == 42) {
       o = 0; // left rotating shift not supported for float
     } else if(op == 43) {
       o = 0; // right rotating shift not supported for float
     } else if(op == 48) {
-      o = this.numb_sign ? Math.pow(a, b) : (a * a);
+      o = this.numb ? Math.pow(a, b) : (a * a);
     } else if(op == 49) {
-      o = this.numb_sign ? (Math.log(a) / Math.log(b)) : (Math.log(a) / Math.log(2));
+      o = this.numb ? (Math.log(a) / Math.log(b)) : (Math.log(a) / Math.log(2));
     } else if(op == 50) {
-      o = this.numb_sign ? Math.pow(a, 1 / b) : Math.sqrt(a);
+      o = this.numb ? Math.pow(a, 1 / b) : Math.sqrt(a);
     } else if(op == 54) {
       o = 0;  // binary to bcd / base conversion not supported for float
     } else if(op == 55) {
@@ -5152,20 +5485,7 @@ function Alu() {
     } else if(op == 58) {
       o = 0; // number theory integer ops not supported for float
     } else if(op == 59) {
-      // approximation of factorial
-      var gamma_ = function(z) {
-        if(z <= 0 && z == Math.round(z)) return Infinity;
-        if(z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gamma_(1 - z));
-        var p = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
-        z -= 1;
-        var x = p[0];
-        for(var i = 1; i < 7 + 2; i++) {
-          x += p[i] / (z + i);
-        }
-        var t = z + 7 + 0.5;
-        return Math.sqrt(Math.PI * 2) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
-      };
-      o = gamma_(a + 1);
+      o = math.gamma(a + 1);
     } else if(op == 60) {
       o = 0; // number theory integer ops not supported for float
     } else if(op == 61) {
@@ -5205,7 +5525,7 @@ function Alu() {
     } else if(op == 84) {
       o = Math.tan(a);
     } else if(op == 85) {
-      if(this.numb_sign) {
+      if(this.numb) {
         o = Math.atan2(a, b);
       } else {
         o = Math.atan(a);
@@ -5245,6 +5565,14 @@ function Alu() {
       o = 0; // bit ops not supported for float
     } else if(op == 101) {
       o = 0; // bit ops not supported for float
+    } else if(op == 104) {
+      o = math.gamma(a);
+    } else if(op == 105) {
+      o = math.lambertw(a);
+    } else if(op == 106) {
+      o = this.numb ? math.besselj(a, b) : math.besselj(0, a);
+    } else if(op == 108) {
+      o = miscin ? math.erfc(a) : math.erf(a);
     } else {
       o = 0;
     }
@@ -5253,30 +5581,30 @@ function Alu() {
     if(out_int || out_uint) {
       if(o < 0) {
         if(out_int) {
-          var max = Math.pow(2, this.numo + this.numo_exp + 1);
+          var max = Math.pow(2, this.numo_mant + this.numo_exp + 1);
           if(o * 2 < -max) outflag = 1;
           o = max + o;
         } else {
-          var max2 = Math.pow(2, this.numo + this.numo_exp + 2);
+          var max2 = Math.pow(2, this.numo_mant + this.numo_exp + 2);
           outflag = 1;
           o = max + o;
         }
       } else {
         if(out_int) {
-          var max = Math.pow(2, this.numo + this.numo_exp + 1);
+          var max = Math.pow(2, this.numo_mant + this.numo_exp + 1);
           if(o * 2 >= max) outflag = 1;
         }
       }
       var conv = o.toString(2);
-      var bits = this.numo + this.numo_exp + 1;
+      var bits = this.numo_mant + this.numo_exp + 1;
       for(var i = 0; i < bits; i++) {
         this.output[i] = (i < conv.length) ? (conv[conv.length - i - 1] == '1' ? 1 : 0) : 0;
       }
       if(conv.length > bits) outflag = 1;
     } else {
-      write(o, this.output, 0, this.numo, this.numo_exp);
+      write(o, this.output, 0, this.numo_mant, this.numo_exp);
     }
-    this.output[this.numo + this.numo_exp + 1] = outflag;
+    this.output[this.numo_mant + this.numo_exp + 1] = outflag;
   };
 
   this.setError = function(text) {
@@ -5361,10 +5689,10 @@ function Alu() {
     var numinputsides = 0;
     var numoutputsides = 0;
 
-    var a = [-1, -1, 0, 0, 0]; // dir, lsbpos, num, num_exp, num_sign. TODO: use "lsbinv" system some other large components use instead, to align better with getIO's clockwise/counterclockwise system
-    var b = [-1, -1, 0, 0, 0];
-    var c = [-1, -1, 0, 0, 0];
-    var o = [-1, -1, 0, 0, 0];
+    var a = [-1, -1, 0, 0, 0, 0]; // dir, lsbpos, num, num_mant, num_exp, num_sign. TODO: use "lsbinv" system some other large components use instead, to align better with getIO's clockwise/counterclockwise system
+    var b = [-1, -1, 0, 0, 0, 0];
+    var c = [-1, -1, 0, 0, 0, 0];
+    var o = [-1, -1, 0, 0, 0, 0];
     var miscin = [-1, 0];
     var miscout = [-1, 0];
     var select = [-1, -1, 0];
@@ -5404,16 +5732,26 @@ function Alu() {
       var f = extractfloatio(io, outdir, true);
       if(f[0]) { this.setError(f[0]); return false; }
       var numf = f.length - 1;
-      if(numf != 1) { this.setError('max 1 floating point input supported, either as 1 whole group or 3 separate parts'); return false; }
+      if(numf != 1) { this.setError('max 1 floating point output supported, either as 1 whole group or 3 separate parts'); return false; }
       o[0] = outdir;
       o[1] = false; // TODO: use optional '0' symbol to indicate its LSB position
-      o[2] = f[1][1];
-      o[3] = f[1][2];
-      o[4] = 1;
+      o[3] = f[1][1];
+      o[4] = f[1][2];
+      o[5] = 1; // amount of sign bits is always 1
+      o[2] = o[3] + o[4] + o[5];
     } else {
       o[0] = outdir;
       o[1] = false; // TODO: use optional '0' symbol to indicate its LSB position
       o[2] = num;
+      // still compute mantissa, exponent and sign bits anyway. Even though this is an integer operation by default, it is still possible to become floating when opindex can be incremented to cross int->float opindex boundary
+      var f = extractfloatio(io, outdir, true);
+      if(f[0]) {
+        // error, but no problem, just let float not work then
+      } else {
+        o[3] = f[1][1];
+        o[4] = f[1][2];
+        o[5] = 1; // amount of sign bits is always 1
+      }
     }
 
     // get the inputs from opposite side of output
@@ -5425,36 +5763,42 @@ function Alu() {
       if(numf == 1) {
         a[0] = indir;
         a[1] = inlsbinv;
-        a[2] = f[1][1];
-        a[3] = f[1][2];
-        a[4] = 1;
+        a[3] = f[1][1];
+        a[4] = f[1][2];
+        a[5] = 1;
+        a[2] = a[3] + a[4] + a[5];
       } else if(numf == 2) {
         a[0] = indir;
         a[1] = inlsbinv;
-        a[2] = f[2][1];
-        a[3] = f[2][2];
-        a[4] = 1;
+        a[3] = f[2][1];
+        a[4] = f[2][2];
+        a[5] = 1;
+        a[2] = a[3] + a[4] + a[5];
         b[0] = indir;
         b[1] = inlsbinv;
-        b[2] = f[1][1];
-        b[3] = f[1][2];
-        b[4] = 1;
+        b[3] = f[1][1];
+        b[4] = f[1][2];
+        b[5] = 1;
+        b[2] = b[3] + b[4] + b[5];
       } else if(numf == 3) {
         a[0] = indir;
         a[1] = inlsbinv;
-        a[2] = f[3][1];
-        a[3] = f[3][2];
-        a[4] = 1;
+        a[3] = f[3][1];
+        a[4] = f[3][2];
+        a[5] = 1;
+        a[2] = a[3] + a[4] + a[5];
         b[0] = indir;
         b[1] = inlsbinv;
-        b[2] = f[2][1];
-        b[3] = f[2][2];
-        b[4] = 1;
+        b[3] = f[2][1];
+        b[4] = f[2][2];
+        b[5] = 1;
+        b[2] = b[3] + b[4] + b[5];
         c[0] = indir;
         c[1] = inlsbinv;
-        c[2] = f[1][1];
-        c[3] = f[1][2];
-        c[4] = 1;
+        c[3] = f[1][1];
+        c[4] = f[1][2];
+        c[5] = 1;
+        c[2] = c[3] + c[4] + c[5];
       } else {
         //if(numf == 0) { this.setError('must have input side opposite of output side'); return false; }
         if(numf > 3) { this.setError('too many inputs'); return false; }
@@ -5486,6 +5830,26 @@ function Alu() {
       } else {
         //if(arr.length == 0) { this.setError('must have input side opposite of output side'); return false; }
         if(arr.length > 3) { this.setError('too many inputs'); return false; }
+      }
+      // similar as with outputs: still compute mantissa, exp, sign bits anyway in case int opindex becomes a float opindex. But error is not treated as error in this case.
+      var f = extractfloatio(io, indir, false);
+      var numf = f.length - 1;
+      if(!f[0] && numf == arr.length) {
+        if(numf >= 1) {
+          a[3] = f[1][1];
+          a[4] = f[1][2];
+          a[5] = 1;
+        }
+        if(numf >= 2) {
+          b[3] = f[2][1];
+          b[4] = f[2][2];
+          b[5] = 1;
+        }
+        if(numf >= 3) {
+          c[3] = f[3][1];
+          c[4] = f[3][2];
+          c[5] = 1;
+        }
       }
     }
 
@@ -5559,26 +5923,23 @@ function Alu() {
     this.numb = dirs[1][2];
     this.numc = dirs[2][2];
     this.numo = dirs[3][2];
-    this.numa_exp = dirs[0][3];
-    this.numb_exp = dirs[1][3];
-    this.numc_exp = dirs[2][3];
-    this.numo_exp = dirs[3][3];
-    this.numa_sign = dirs[0][4];
-    this.numb_sign = dirs[1][4];
-    this.numc_sign = dirs[2][4];
-    this.numo_sign = dirs[3][4];
+    this.numa_mant = dirs[0][3];
+    this.numb_mant = dirs[1][3];
+    this.numc_mant = dirs[2][3];
+    this.numo_mant = dirs[3][3];
+    this.numa_exp = dirs[0][4];
+    this.numb_exp = dirs[1][4];
+    this.numc_exp = dirs[2][4];
+    this.numo_exp = dirs[3][4];
+    this.numa_sign = dirs[0][5];
+    this.numb_sign = dirs[1][5];
+    this.numc_sign = dirs[2][5];
+    this.numo_sign = dirs[3][5];
     this.nummiscin = dirs[4][1];
     this.nummiscout = dirs[5][1];
     this.numselect = dirs[6][2];
 
-
-    if(this.floating) {
-      this.output.length = this.numo + this.numo_exp + 1 + this.nummiscout;
-    } else {
-      this.output.length = this.numo + this.nummiscout;
-    }
-
-
+    this.output.length = this.numo + this.nummiscout;
 
     /*
     Sort inputs as follows:
@@ -5964,13 +6325,13 @@ function VTE() {
         var mul = math.n1;
         for(var i = 0; i < this.numinputs; i++) {
           var j = i + pos;
-          var ip = math.supportbigint ? BigInt(inputs[j]) : inputs[j];
+          var ip = math.B(inputs[j]);
           index += ip * mul;
           mul *= math.n2;
         }
         if(this.signeddisplay) {
-          var max = math.n1 << math.B(this.numinputs);
-          var half = math.n1 << (math.B(this.numinputs) - math.n1);
+          var max = math.lshift(math.n1, math.B(this.numinputs));
+          var half = math.lshift(math.n1, math.B(this.numinputs - 1));
           if(index >= half) index = -(max - index);
         }
         s = '' + index;
