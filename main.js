@@ -681,7 +681,7 @@ function createMenuUI() {
   rendererDropdown.selectedIndex = graphics_mode;
 
   var colorDropdown = util.makeUIElement('select', menuRow2El, 3);
-  colorDropdown.title = 'Choose color scheme';
+  colorDropdown.title = 'Choose color scheme. The custom one can be edited in settings using CSS colors. The random one changes every time and is not gauranteed to be legible';
   colorDropdown.onchange = function() {
     util.setLocalStorage(colorDropdown.selectedIndex, 'color_scheme');
     setColorScheme(colorDropdown.selectedIndex);
@@ -701,6 +701,8 @@ function createMenuUI() {
   util.makeElement('option', colorDropdown).innerText = 'contrast';
   util.makeElement('option', colorDropdown).innerText = 'monochrome';
   util.makeElement('option', colorDropdown).innerText = 'invmono';
+  util.makeElement('option', colorDropdown).innerText = 'random';
+  util.makeElement('option', colorDropdown).innerText = 'custom';
   colorDropdown.selectedIndex = colorscheme;
 
   var zoomoutButton = util.makeUIElement('button', menuRow2El, 1);
@@ -1021,8 +1023,8 @@ function createMenuUI() {
     overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
     overlay.style.position = 'fixed';
     overlay.style.zIndex = '99';
-    editdiv = makeDiv(30-5, worldstartheight, 400+15, 400+15+30);
-    editdiv.style.backgroundColor = '#888';
+    editdiv = makeDiv(30-5, worldstartheight, 600+15, 400+15+30);
+    editdiv.style.backgroundColor = '#ccc';
     editdiv.style.position = 'fixed';
     editdiv.style.top = '50%';
     editdiv.style.left = '50%';
@@ -1034,11 +1036,20 @@ function createMenuUI() {
       document.body.removeChild(editdiv);
       editmode = false;
       createMenuUI();
+
+      if(editarea.value != '') {
+        customcolorscheme = editarea.value;
+        util.setLocalStorage(customcolorscheme, 'custom_color_scheme');
+      }
+
+      setColorScheme(currentcolorschemeindex);
+      initDivs();
+      render();
     };
     editModeCancelFun = editModeFinishFun;
-    createEditorMenuUI(undefined, editModeFinishFun);
+    //createEditorMenuUI(undefined, editModeFinishFun);
     editdiv.style.zIndex = 100;
-    util.makeInternalButton('ok', editdiv, 320, 415, function() {
+    util.makeInternalButton('ok', editdiv, 520, 415, function() {
       editModeCancelFun();
     });
     var cb = util.makeElementAt('input', 20, 20, editdiv);
@@ -1050,6 +1061,35 @@ function createMenuUI() {
     var text = util.makeElementAt('span', 50, 20, editdiv);
     text.innerText = 'enable experimental possible new editor';
     overlay.onclick = editModeCancelFun;
+
+    util.makeElementAt('span', 22, 58, editdiv).innerText = 'Custom color scheme. Use CSS colors.'
+    util.makeElementAt('span', 22, 78, editdiv).innerText = 'Set color dropdown in main top UI to "custom" to use this scheme.'
+    util.makeElementAt('span', 22, 98, editdiv).innerText = 'Hint: edit this in a text editor, then paste it back here.'
+    var editarea = util.makeAbsElement('textarea', 20, 120, 500, 150, editdiv);
+    editarea.value = customcolorscheme || '';
+
+    var button = util.makeElementAt('button', 20, 280, editdiv);
+    button.style.width = '500px';
+    button.style.height = '20px';
+    button.innerText = 'fill in current ^';
+    var restoretext = null;
+    button.onclick = function() {
+      var current = exportColorScheme();
+      if(restoretext) {
+        editarea.value = restoretext;
+        button.innerText = 'fill in current ^';
+        restoretext = null;
+      } else {
+        if(editarea.value && editarea.value != current && editarea.value != customcolorscheme) {
+          button.innerText = 'restore ^'; // retore what was previously typed in the edit area
+          restoretext = editarea.value;
+        } else if(!!customcolorscheme && customcolorscheme != current) {
+          button.innerText = 'restore ^'; // restore the original custom color scheme that was in the edit area
+          restoretext = customcolorscheme;
+        }
+        editarea.value = current;
+      }
+    };
   };
 
 

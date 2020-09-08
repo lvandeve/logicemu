@@ -9566,7 +9566,27 @@ var ERRORBGCOLOR;
 var ERRORFGCOLOROFF;
 var ERRORFGCOLORON;
 
+var currentcolorschemeindex = 0;
+
 function setColorScheme(index) {
+  currentcolorschemeindex = index;
+  computeColorScheme(index);
+}
+
+function computeColorScheme(index) {
+
+  // random
+  if(index == 12) {
+    randomizeColorScheme();
+    return;
+  }
+
+  // custom
+  if(index == 13) {
+    importColorScheme(customcolorscheme);
+    return;
+  }
+
   CHIPLABELBGCOLOR = '#feb';
   CHIPLABELFGCOLOR = '#000';
   ERRORBGCOLOR = '#ff0';
@@ -9702,7 +9722,7 @@ function setColorScheme(index) {
     TERMINALBGCOLOR = '#00f';
     TERMINALFGCOLOR = '#fff';
   } else if(index == 2) { // gray
-    setColorScheme(0);
+    computeColorScheme(0);
 
     BGCOLOR = '#aaa';
 
@@ -9736,7 +9756,7 @@ function setColorScheme(index) {
     BUSCOLORS = ['#666', '#665', '#656', '#566', '#556', '#565', '#655', '#555'];
 
   } else if(index == 3) { // red
-    setColorScheme(0);
+    computeColorScheme(0);
     BGCOLOR = '#500';
     TEXTBGCOLOR = '#720';
 
@@ -9770,7 +9790,7 @@ function setColorScheme(index) {
     LINKCOLOR = '#88f';
     TITLECOLOR = ONCOLOR;
   } else if(index == 4) { // green
-    setColorScheme(0);
+    computeColorScheme(0);
 
     BGCOLOR = '#050';
 
@@ -9805,7 +9825,7 @@ function setColorScheme(index) {
     LINKCOLOR = '#ff0';
     TITLECOLOR = TEXTFGCOLOR;
   } else if(index == 5) { // blue
-    setColorScheme(0);
+    computeColorScheme(0);
 
     BGCOLOR = '#008';
 
@@ -9839,7 +9859,7 @@ function setColorScheme(index) {
     LINKCOLOR = '#880';
     TITLECOLOR = TEXTFGCOLOR;
   } else if(index == 6) { // brown
-    setColorScheme(0);
+    computeColorScheme(0);
     BGCOLOR = '#a60';
     TEXTBGCOLOR = '#720';
 
@@ -9873,7 +9893,7 @@ function setColorScheme(index) {
     LINKCOLOR = '#ccf';
     TITLECOLOR = ONCOLOR;
   } else if(index == 7) { // candy
-    setColorScheme(0);
+    computeColorScheme(0);
 
     BGCOLOR = '#fbf';
 
@@ -9911,10 +9931,10 @@ function setColorScheme(index) {
     TERMINALBGCOLOR = '#88f';
     TERMINALFGCOLOR = '#fff';
   } else if(index == 8) { // inverted
-    setColorScheme(0);
+    computeColorScheme(0);
     negateColorScheme(); // this only looks decent for inverting the 'light' color scheme.
   } else if(index == 9) { // contrast
-    setColorScheme(2); //gray
+    computeColorScheme(2); //gray
     BGCOLOR = '#999';
     ONCOLOR = 'white';
     OFFCOLOR = 'black';
@@ -10043,7 +10063,239 @@ function negateColorScheme() {
   // error-colors not negated, should remain yellow+red
 }
 
+function randomColor(dark, bright) {
+  var hex = '0123456789ABCDEF';
+  var result = '#';
+  if(dark) for(var i = 0; i < 3; i++) result += hex[Math.floor(Math.random() * 8)] + hex[Math.floor(Math.random() * 16)];
+  else if(bright) for(var i = 0; i < 3; i++) result += hex[8 + Math.floor(Math.random() * 8)] + hex[Math.floor(Math.random() * 16)];
+  else for(var i = 0; i < 6; i++) result += hex[Math.floor(Math.random() * 16)];
+  return result;
+}
+
+// generate two random colors, with a higher chance of being more different
+function randomColorPair(dark, bright) {
+  var hex = '0123456789ABCDEF';
+  var result = '#';
+
+  var random = function() {
+    if(dark) return Math.random() * 0.5;
+    else if(bright) return 0.5 + Math.random() * 0.5;
+    else return Math.random();
+  };
+
+  var a = [], b = [], c = [];
+  var dab = 0, dbc = 0, dac = 0;
+  for(var i = 0; i < 3; i++) {
+    a.push(random());
+    b.push(random());
+    c.push(random());
+    dab += (a[i] - b[i]) * (a[i] - b[i]);
+    dbc += (b[i] - c[i]) * (b[i] - c[i]);
+    dac += (a[i] - c[i]) * (a[i] - c[i]);
+  }
+  if(dab > dbc && dab > dac) {
+    // keep
+  } else if(dbc > dac) {
+    a = b;
+    b = c;
+  } else {
+    b = c;
+  }
+
+  var resulta = '#', resultb = '#';
+
+  for(var i = 0; i < 3; i++) {
+    resulta +=  hex[Math.floor(a[i] * 16)] + hex[Math.floor(Math.random() * 16)];
+    resultb +=  hex[Math.floor(b[i] * 16)] + hex[Math.floor(Math.random() * 16)];
+  }
+  return [resulta, resultb];
+}
+
+function randomizeColorScheme() {
+  // while most colors are entirely random (and thus have too low contrast in some cases), ensure a few things, such as text vs background, are in distinct groups "dark" and "bright"
+  var dark = Math.random() < 0.5;
+  var onoff;
+  computeColorScheme(2); // get correct array lengths etc...
+  BGCOLOR = randomColor(dark, !dark);
+  onoff = randomColorPair(!dark, dark);
+  ONCOLOR = onoff[0];
+  OFFCOLOR = onoff[1];
+  GATEBGCOLOR = randomColor(dark, !dark);
+  onoff = randomColorPair(!dark, dark);
+  GATEFGONCOLOR = onoff[0];
+  GATEFGOFFCOLOR = onoff[1];
+  TEXTFGCOLOR = randomColor(!dark, dark);
+  TEXTBGCOLOR = randomColor(dark, !dark);
+  for(var i = 0; i < BUSCOLORS.length; i++) BUSCOLORS[i] = randomColor();
+  TERMINALFGCOLOR = randomColor();
+  TERMINALMIDCOLOR = randomColor();
+  TERMINALBGCOLOR = randomColor();
+  OUTSIDESCREENFGCOLOR = randomColor();
+  OUTSIDESCREENBGCOLOR = randomColor();
+  LINKCOLOR = randomColor();
+  TITLECOLOR = randomColor();
+  CHIPLABELFGCOLOR = randomColor();
+  CHIPLABELBGCOLOR = randomColor();
+}
+
+function randomizeColorSchemeAndRedraw() {
+  randomizeColorScheme();
+  initDivs();
+  render();
+}
+
+// more: also LED, switch and error colors
+function randomizeColorSchemeMore() {
+  randomizeColorSchemeMild();
+  for(var i = 0; i < led_off_fg_colors.length; i++) led_off_fg_colors[i] = randomColor();
+  for(var i = 0; i < led_off_bg_colors.length; i++) led_off_bg_colors[i] = randomColor();
+  for(var i = 0; i < led_off_border_colors.length; i++) led_off_border_colors[i] = randomColor();
+  for(var i = 0; i < led_on_fg_colors.length; i++) led_on_fg_colors[i] = randomColor();
+  for(var i = 0; i < led_on_bg_colors.length; i++) led_on_bg_colors[i] = randomColor();
+  for(var i = 0; i < led_on_border_colors.length; i++) led_on_border_colors[i] = randomColor();
+  SWITCHOFF_FGCOLOR = randomColor();
+  SWITCHOFF_BGCOLOR = randomColor();
+  SWITCHOFF_BORDERCOLOR = randomColor();
+  SWITCHON_FGCOLOR = randomColor();
+  SWITCHON_BGCOLOR = randomColor();
+  SWITCHON_BORDERCOLOR = randomColor();
+  ERRORBGCOLOR = randomColor();
+  ERRORFGCOLOROFF = randomColor();
+  ERRORFGCOLORON = randomColor();
+}
+
+function randomizeColorSchemeMoreAndRedraw() {
+  randomizeColorSchemeMore();
+  initDivs();
+  render();
+}
+
+function exportColorScheme() {
+  var result = '';
+  result += 'background:' + BGCOLOR + '\n';
+  result += 'on:' + ONCOLOR + '\n';
+  result += 'off:' + OFFCOLOR + '\n';
+  result += 'gate_bg:' + GATEBGCOLOR + '\n';
+  result += 'gate_on:' + GATEFGONCOLOR + '\n';
+  result += 'gate_off:' + GATEFGOFFCOLOR + '\n';
+  result += 'text_fg:' + TEXTFGCOLOR + '\n';
+  result += 'text_bg:' + TEXTBGCOLOR + '\n';
+  result += 'bus:' + BUSCOLORS.join(',') + '\n';
+  result += 'led_off_fg:' + led_off_fg_colors.join(',') + '\n';
+  result += 'led_off_bg:' + led_off_bg_colors.join(',') + '\n';
+  result += 'led_off_border:' + led_off_border_colors.join(',') + '\n';
+  result += 'led_on_fg:' + led_on_fg_colors.join(',') + '\n';
+  result += 'led_on_bg:' + led_on_bg_colors.join(',') + '\n';
+  result += 'led_on_border:' + led_on_border_colors.join(',') + '\n';
+  result += 'switch_off_fg:' + SWITCHOFF_FGCOLOR + '\n';
+  result += 'switch_off_bg:' + SWITCHOFF_BGCOLOR + '\n';
+  result += 'switch_off_border:' + SWITCHOFF_BORDERCOLOR + '\n';
+  result += 'switch_on_fg:' + SWITCHON_FGCOLOR + '\n';
+  result += 'switch_on_bg:' + SWITCHON_BGCOLOR + '\n';
+  result += 'switch_on_border:' + SWITCHON_BORDERCOLOR + '\n';
+  result += 'terminal_fg:' + TERMINALFGCOLOR + '\n';
+  result += 'terminal_mid:' + TERMINALMIDCOLOR + '\n';
+  result += 'terminal_bg:' + TERMINALBGCOLOR + '\n';
+  result += 'terminal_outside_fg:' + OUTSIDESCREENFGCOLOR + '\n';
+  result += 'terminal_outside_bg:' + OUTSIDESCREENBGCOLOR + '\n';
+  result += 'link:' + LINKCOLOR + '\n';
+  result += 'title:' + TITLECOLOR + '\n';
+  result += 'chiplabel_fg:' + CHIPLABELFGCOLOR + '\n';
+  result += 'chiplabel_bg:' + CHIPLABELBGCOLOR + '\n';
+  result += 'error_bg:' + ERRORBGCOLOR + '\n';
+  result += 'error_fg_off:' + ERRORFGCOLOROFF + '\n';
+  result += 'error_fg_on:' + ERRORFGCOLORON + '\n';
+
+  return result;
+}
+
+
+function importColorScheme(scheme) {
+  computeColorScheme(0); // defaults in case of missing fields or for the arrays if too short length
+  if(!scheme) return;
+
+  var lines = scheme.split('\n');
+  for(var i = 0; i < lines.length; i++) {
+    var pair = lines[i].split(':');
+    if(pair.length == 0 || lines[i].length == 0) continue;
+    if(pair.length != 2) {
+      console.log('importColorScheme: invalid line: ' + lines[i]);
+    }
+    var key = pair[0];
+    var color = pair[1]; // must follow CSS color format
+    if(key == 'background') BGCOLOR = color;
+    else if(key == 'on') ONCOLOR = color;
+    else if(key == 'off') OFFCOLOR = color;
+    else if(key == 'gate_bg') GATEBGCOLOR = color;
+    else if(key == 'gate_on') GATEFGONCOLOR = color;
+    else if(key == 'gate_off') GATEFGOFFCOLOR = color;
+    else if(key == 'text_fg') TEXTFGCOLOR = color;
+    else if(key == 'text_bg') TEXTBGCOLOR = color;
+    else if(key == 'bus') {
+      var colors = color.split(',');
+      var len = Math.min(BUSCOLORS.length, colors.length) || 0;
+      for(var j = 0; j < len; j++) BUSCOLORS[j] = colors[j];
+    }
+    else if(key == 'led_off_fg') {
+      var colors = color.split(',');
+      var len = Math.min(led_off_fg_colors.length, colors.length) || 0;
+      for(var j = 0; j < len; j++) led_off_fg_colors[j] = colors[j];
+    }
+    else if(key == 'led_off_bg') {
+      var colors = color.split(',');
+      var len = Math.min(led_off_bg_colors.length, colors.length) || 0;
+      for(var j = 0; j < len; j++) led_off_bg_colors[j] = colors[j];
+    }
+    else if(key == 'led_off_border') {
+      var colors = color.split(',');
+      var len = Math.min(led_off_border_colors.length, colors.length) || 0;
+      for(var j = 0; j < len; j++) led_off_border_colors[j] = colors[j];
+    }
+    else if(key == 'led_on_fg') {
+      var colors = color.split(',');
+      var len = Math.min(led_on_fg_colors.length, colors.length) || 0;
+      for(var j = 0; j < len; j++) led_on_fg_colors[j] = colors[j];
+    }
+    else if(key == 'led_on_bg') {
+      var colors = color.split(',');
+      var len = Math.min(led_on_bg_colors.length, colors.length) || 0;
+      for(var j = 0; j < len; j++) led_on_bg_colors[j] = colors[j];
+    }
+    else if(key == 'led_on_border') {
+      var colors = color.split(',');
+      var len = Math.min(led_on_border_colors.length, colors.length) || 0;
+      for(var j = 0; j < len; j++) led_on_border_colors[j] = colors[j];
+    }
+    else if(key == 'switch_off_fg') SWITCHOFF_FGCOLOR = color;
+    else if(key == 'switch_off_bg') SWITCHOFF_BGCOLOR = color;
+    else if(key == 'switch_off_border') SWITCHOFF_BORDERCOLOR = color;
+    else if(key == 'switch_on_fg') SWITCHON_FGCOLOR = color;
+    else if(key == 'switch_on_bg') SWITCHON_BGCOLOR = color;
+    else if(key == 'switch_on_border') SWITCHON_BORDERCOLOR = color;
+    else if(key == 'terminal_fg') TERMINALFGCOLOR = color;
+    else if(key == 'terminal_mid') TERMINALMIDCOLOR = color;
+    else if(key == 'terminal_bg') TERMINALBGCOLOR = color;
+    else if(key == 'terminal_outside_fg') OUTSIDESCREENFGCOLOR = color;
+    else if(key == 'terminal_outside_bg') OUTSIDESCREENBGCOLOR = color;
+    else if(key == 'link') LINKCOLOR = color;
+    else if(key == 'title') TITLECOLOR = color;
+    else if(key == 'chiplabel_fg') CHIPLABELFGCOLOR = color;
+    else if(key == 'chiplabel_bg') CHIPLABELBGCOLOR = color;
+    else if(key == 'error_bg') ERRORBGCOLOR = color;
+    else if(key == 'error_fg_off') ERRORFGCOLOROFF = color;
+    else if(key == 'error_fg_on') ERRORFGCOLORON = color;
+    else console.log('unknown key: ' + key);
+  }
+}
+
+function importColorSchemeAndRedraw(scheme) {
+  importColorScheme(scheme);
+  initDivs();
+  render();
+}
+
 var colorscheme = util.getLocalStorage('color_scheme') || 0;
+var customcolorscheme = util.getLocalStorage('custom_color_scheme') || 0;
 
 
 setColorScheme(colorscheme);
