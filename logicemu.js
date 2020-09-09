@@ -1389,6 +1389,28 @@ var LogicEmuMath = (function() {
   };
   result.gamma = gamma;
 
+  var loggamma = function(x) {
+    if(x < 0) {
+      if(x == Math.floor(x)) return Infinity;
+      var l = Math.log(Math.PI / Math.abs((Math.sin(Math.PI * x))));
+      return l - loggamma(1 - x);
+    }
+    if(x == 1 || x == 2) return 0;
+    if(x == Infinity) return Infinity;
+    if(x == -Infinity) return NaN;
+    if(x > -20 && x < 20) return Math.log(Math.abs(gamma(x)));
+
+    // stirling series
+    var x3 = x * x * x;
+    var x5 = x3 * x * x;
+    var x7 = x5 * x * x;
+    var x9 = x7 * x * x;
+    var result = 0.918938533204672669540968854562; //0.5 * ln(2pi)
+    result += (x - 0.5) * Math.log(x) - x + 1.0 / (x * 12) -1.0 / (x3 * 360) + 1.0 / (x5 * 1260) - 1.0 / (x7 * 1680) + 1.0 / (x9 * 1188);
+    return result;
+  };
+  result.loggamma = loggamma;
+
   // approximation of Lamber's W function (principal branch, for real values above -1/e), for floating point input
   var lambertw = function(x) {
     if(isNaN(x)) return NaN;
@@ -4227,8 +4249,9 @@ function Alu() {
         case 100: return 'grp';
         case 101: return 'ugrp';
         case 104: return 'gama';
-        case 105: return 'w';
-        case 106: return 'j';
+        case 105: return 'lgam';
+        case 106: return 'w';
+        case 107: return 'j';
         case 108: return 'erf';
         default: return 'unk';
     }
@@ -4324,8 +4347,9 @@ function Alu() {
         case 100: return 'group bits (GRP): select input bits with mask, bits matching mask one go to low order bits of result, others to high order bits of result';
         case 101: return 'ungroup bits (UNGRP): select output bits with mask, deposit contiguous low order bits of input to output positions where mask is one, remaining input bits to where mask is zero';
         case 104: return 'gamma function';
-        case 105: return 'lambertw function' + (this.floating ? '' : (' (floating point only, use opindex ' + (opindex + 256) + ')'));
-        case 106: return 'bessel J function' + (this.floating ? ' (for any real nu and x, but some large values are not supported and return NaN)' : (' (floating point only, use opindex ' + (opindex + 256) + ')'));
+        case 105: return 'loggamma function';
+        case 106: return 'lambertw function' + (this.floating ? '' : (' (floating point only, use opindex ' + (opindex + 256) + ')'));
+        case 107: return 'bessel J function' + (this.floating ? ' (for any real nu and x, but some large values are not supported and return NaN)' : (' (floating point only, use opindex ' + (opindex + 256) + ')'));
         case 108: return 'error function (complementary if with misc input)';
         default: return 'unknown';
     }
@@ -5196,6 +5220,8 @@ function Alu() {
     } else if(op == 105) {
       // float-only function not supported by int (lambertw)
     } else if(op == 106) {
+      // float-only function not supported by int (lambertw)
+    } else if(op == 107) {
       // float-only function not supported by int (besselj)
     } else if(op == 108) {
       // erf, scaled to range 0..1 or -1..1 in full integer range
@@ -5568,8 +5594,10 @@ function Alu() {
     } else if(op == 104) {
       o = math.gamma(a);
     } else if(op == 105) {
-      o = math.lambertw(a);
+      o = math.loggamma(a);
     } else if(op == 106) {
+      o = math.lambertw(a);
+    } else if(op == 107) {
       o = this.numb ? math.besselj(a, b) : math.besselj(0, a);
     } else if(op == 108) {
       o = miscin ? math.erfc(a) : math.erf(a);
@@ -10127,9 +10155,9 @@ function randomizeColorScheme() {
   TEXTFGCOLOR = randomColor(!dark, dark);
   TEXTBGCOLOR = randomColor(dark, !dark);
   for(var i = 0; i < BUSCOLORS.length; i++) BUSCOLORS[i] = randomColor();
-  TERMINALFGCOLOR = randomColor();
+  TERMINALFGCOLOR = randomColor(!dark, dark);
   TERMINALMIDCOLOR = randomColor();
-  TERMINALBGCOLOR = randomColor();
+  TERMINALBGCOLOR = randomColor(dark, !dark);
   OUTSIDESCREENFGCOLOR = randomColor();
   OUTSIDESCREENBGCOLOR = randomColor();
   LINKCOLOR = randomColor();

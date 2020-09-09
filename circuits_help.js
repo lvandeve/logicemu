@@ -3992,15 +3992,15 @@ ssssssss         ^^^^^^^^           ########C<p0"down"
 
 0"* special functions (most float-only):"
  0"(unsigned: 104..111, signed: 232..239, float: 360..367)"
- 0"104:gamma,105:lambertw,106:besselj"
+ 0"104:gamma,105:loggamma,106:lambertw,107:besselj"
  0"108:erf/erfc"
 
 
 0"Adding 128 to the number makes the operation signed, e.g. operation 19 is"
-0"division, and operation 147 is signed division. Signed operations use twos"
-0"complements"
+0"unsigned division, and operation 147 is signed division. Signed operations"
+0"use twos complements"
 
-0"Adding 256 to the number makes the operation floating, e.g. operation 27 is"
+0"Adding 256 to the number makes the operation floating, e.g. operation 19 is"
 0"integer division, and operation 275 is floating point division. For floating"
 0"point data, you can choose to use a single bit group for the input/output, or"
 0"split it in three groups: mantissa, exponent and sign. The same bit encoding as"
