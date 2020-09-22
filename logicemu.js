@@ -10160,10 +10160,10 @@ function randomizeColorScheme() {
   TERMINALBGCOLOR = randomColor(dark, !dark);
   OUTSIDESCREENFGCOLOR = randomColor();
   OUTSIDESCREENBGCOLOR = randomColor();
-  LINKCOLOR = randomColor();
-  TITLECOLOR = randomColor();
-  CHIPLABELFGCOLOR = randomColor();
-  CHIPLABELBGCOLOR = randomColor();
+  LINKCOLOR = randomColor(!dark, dark);
+  TITLECOLOR = randomColor(!dark, dark);
+  CHIPLABELFGCOLOR = randomColor(!dark, dark);
+  CHIPLABELBGCOLOR = randomColor(dark, !dark);
 }
 
 function randomizeColorSchemeAndRedraw() {
