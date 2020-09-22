@@ -1779,7 +1779,7 @@ function DefSub() {
   this.index = -2;
   this.error = false;
   this.errormessage = null;
-  this.externalinputs = [];
+  this.externalinputs = []; // filled in by parseICTemplates, array of [x, y] pairs
   //this.inputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num inputs for N, E, S, W, NE, SE, SW, NW
   //this.outputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num outputs for N, E, S, W, NE, SE, SW, NW
 
@@ -1804,7 +1804,7 @@ function DefSub() {
 
     for(var i = 0; i < components.length; i++) {
       var v = components[i];
-      if(v.defsubindex != id) continue;
+      if(v.defsubindex != id) continue; // the input components is in fact those of the entire world... so filter out for only ours
       var newindex = this.components.length;
       this.components.push(v);
       this.translateindex[v.index] = newindex;
@@ -1832,6 +1832,20 @@ function DefSub() {
       }
     }
 
+    // this array converts input id to component id. Used to bypass some TYPE_IC_PASSTHROUGH components
+    // the internal switches of a chip are converted to TYPE_IC_PASSTHROUGH, but in the simple case, which
+    // is 99% of the time the situation anyway, can be skipped to save an unneeded tick for electron mode
+    var singleinputcomponents = [];
+
+    for(var i = 0; i < this.components.length; i++) {
+      var v = this.components[i];
+      if(v.defsubindex != id) continue;
+      // only if v.inputs[0] has one or less input [TODO: should be just 0?] input and exactly one output
+      if(v.inputs.length == 1 && v.inputs[0].inputs.length <= 1) {
+        singleinputcomponents[v.inputs[0].index] = v.index;
+      }
+    }
+
     for(var i = 0; i < this.externalinputs.length; i++) {
       var x0 = this.externalinputs[i][0];
       var y0 = this.externalinputs[i][1];
@@ -1845,6 +1859,7 @@ function DefSub() {
       used[y0 * w + x0] = true;
       var stack = [[x0, y0]];
       var array = [];
+      // collect all cells of the switch in array
       while(stack.length > 0) {
         var s = stack.pop();
         array.push(s);
@@ -1861,6 +1876,7 @@ function DefSub() {
         }
       }
 
+      // find connected wire to this switch to get its direction for the input direction
       var dir = -1;
       for(var j = 0; j < array.length; j++) {
         var x = array[j][0];
@@ -1882,6 +1898,11 @@ function DefSub() {
       if(!v) {
         this.markError('component not found for chip template');
         return;
+      }
+      // see comment at singleinputcomponents for info on this
+      if(singleinputcomponents[v.index]) {
+        v.bypass = true;
+        v.bypass_to_index = singleinputcomponents[v.index];
       }
       var tindex = this.translateindex[v.index];
       if(dir >= 0) {
@@ -2000,6 +2021,8 @@ function CallSub(id) {
       component.rgbcolor = v.rgbcolor;
       component.clocked = v.clocked;
       component.frozen = v.frozen;
+      component.bypass = v.bypass;
+      component.bypass_to_index = v.bypass_to_index;
 
       for(var j = 0; j < v.inputs.length; j++) {
         var input = this.components[defsub.translateindex[v.inputs[j].index]];
@@ -2350,16 +2373,42 @@ function CallSub(id) {
     var inputs = this.inputs;
     var outputs = this.outputs;
 
-    // connect external inputs to our internal components. So our inputs from a sub-level, will read from a higher level, while the higher level thinks it's outputting to the 'i' instead of our own components
+    // connect external inputs to our internal components. So our inputs from a sub-level, will read from a higher level,
+    // while the higher level thinks it's outputting to the 'i' instead of our own components
     for(var i = 0; i < inputs.length; i++) {
       var einput = inputs[i][0];
       var iinput = this.components[defsub.inputs[i][0]];
+
+      var negated = inputs[i][4];
+      // TODO: this is broken for nested chips that have an internal IC directly at an input side. Fix that.
+      /*// bypass TYPE_IC_PASSTHROUGH inputs if possible to save a tick in electron mode. See singleinputcomponents in a DefSub function for more info. This is the version for inputs. See below for similar bypassing for outputs.
+      if(iinput.bypass) {
+        var index = iinput.bypass_to_index;
+        index = defsub.translateindex[index];
+        iinput = this.components[index];
+        if(!iinput.bypassed) {
+          // possible double-negation. Note that we are guaranteed that iinput has exactly 1 input, given how bypass_to_index was constructed
+          if(iinput.inputs_negated[0]) negated = !negated;
+          // remove its existing inputs, once, becuase it has the TYPE_IC_PASSTHROUGH as input as well, it must be decoupled, else if this is e.g. an AND gate, it can never get enabled.
+          // NOTE: normally this can happen only ones, the bypassed variable is normally never used... the typical scenario is: some logic gate in the chip has the switch from the template as input, turned into a TYPE_IC_PASSTHROUGH for the callsub, and we replace that switch/TYPE_IC_PASSTHROUGH directly with the external input, rather than have this extra layer
+          // TODO: remove the TYPE_IC_PASSTHROUGH entirely from the world instead of keeping it around as a loose component
+          iinput.bypassed = true;
+          iinput.inputs = [];
+          iinput.inputs_negated = [];
+          iinput.inputs_x = [];
+          iinput.inputs_y = [];
+          iinput.inputs_x2 = [];
+          iinput.inputs_y2 = [];
+          iinput.input_ff_types = [];
+        }
+      }*/
       iinput.inputs.push(einput);
-      iinput.inputs_negated.push(inputs[i][4]);
+      iinput.inputs_negated.push(negated);
       iinput.inputs_x.push(-1);
       iinput.inputs_y.push(-1);
       iinput.inputs_x2.push(-1);
       iinput.inputs_y2.push(-1);
+      iinput.input_ff_types.push(-1);
     }
 
     // connect our internal outputs, to the external output components (which are 'i'), and change their type to "TYPE_IC_PASSTHROUGH"
@@ -2367,15 +2416,29 @@ function CallSub(id) {
       var eoutput = outputs[i][0];
       var ioutput = this.components[defsub.outputs[i][0]];
 
-      eoutput.inputs = [ioutput]; // handled further
       eoutput.inputs_negated = [false];
       eoutput.inputs_x = [-1];
       eoutput.inputs_y = [-1];
       eoutput.inputs_x2 = [-1];
       eoutput.inputs_y2 = [-1];
       eoutput.input_ff_types = [0];
-
       eoutput.type = TYPE_IC_PASSTHROUGH;
+
+      if(ioutput.inputs.length == 1) {
+        // internal passthrough has 1 input (TODO: or 0?), so we can bypass it entirely, saving an unnecessary tick in electron mode. This is the version for bypassing output. See bypass_to_index for the input version of this.
+        // TODO: remove the TYPE_IC_PASSTHROUGH component from the whole list altogether
+        eoutput.inputs = [ioutput.inputs[0]];
+        eoutput.inputs_negated = [ioutput.inputs_negated[0]];
+        eoutput.inputs_x = [ioutput.inputs_x[0]];
+        eoutput.inputs_y = [ioutput.inputs_y[0]];
+        eoutput.inputs_x2 = [ioutput.inputs_x2[0]];
+        eoutput.inputs_y2 = [ioutput.inputs_y2[0]];
+        eoutput.input_ff_types = [ioutput.input_ff_types[0]];
+      } else {
+        // internal passthrough has more than 1 input (that should normally almost never occur), so cannot avoid using the passthrough itself
+        eoutput.inputs = [ioutput]; // handled further
+
+      }
     }
   };
 }
@@ -12076,12 +12139,7 @@ function RendererDrawer() {
     var x1b = this.tx + Math.floor(x1 * tw);
     var y1b = this.ty + Math.floor(y1 * th);
 
-    ctx.beginPath();
-    ctx.moveTo(x0b, y0b);
-    ctx.lineTo(x1b, y0b);
-    ctx.lineTo(x1b, y1b);
-    ctx.lineTo(x0b, y1b);
-    ctx.fill();
+    ctx.fillRect(x0b, y0b, x1b - x0b, y1b - y0b);
   };
 
   // arrow head will be at x1, y1

@@ -6104,7 +6104,8 @@ l<o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e 
 
 
 0"The circuit below is the chip-template for the 4-bit CLA used 4 times above."
-0"Using a chip has no effect on speed. It does obscure some of the logic above"
+0"The chips introduce a slight delay in electron mode but that doesn't stop"
+0"the CLA from still being faster. The chip does obscure some of the logic above"
 0"from view but otherwise it would be too large to fit on a screen."
 
                                                           I0                  s"c0"
