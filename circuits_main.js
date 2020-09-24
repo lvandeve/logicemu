@@ -5033,9 +5033,11 @@ registerCircuit('Conway\'s game of life ship', `
 registerCircuit('Langtons Ant', `
 0"Langton's Ant"
 
-0"This circuit is without clock, and only works in 'electron' mode, not in"
-0"'immediate' mode. Make this clocked with global wire to make it work in"
-0"'immediate' mode."
+0"This circuit is without clock, and is designed for 'electron' mode. However,"
+0"immediate mode works too, but switching between immediate and electron will"
+0"stop the continuous flow. Make this clocked (where each 'c' only updates at"
+0"each controlled clock tick) to make mode switching (and, stability in real"
+0"life) work."
 
 0"MODE:electron"
 
@@ -6104,9 +6106,11 @@ l<o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e o<a e 
 
 
 0"The circuit below is the chip-template for the 4-bit CLA used 4 times above."
-0"The chips introduce a slight delay in electron mode but that doesn't stop"
-0"the CLA from still being faster. The chip does obscure some of the logic above"
-0"from view but otherwise it would be too large to fit on a screen."
+0"The chips introduce a 1-tick delay in electron mode but that doesn't stop"
+0"the CLA from still being faster in most cases (the main point being that it"
+0"has a much faster worst case as in the default switches setup above). The"
+0"chip does obscure some of the logic above from view but otherwise it would be"
+0"too large to fit on a screen."
 
                                                           I0                  s"c0"
  2"c0"--------------------------------------------.------------.--------.-----.

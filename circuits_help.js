@@ -8006,6 +8006,26 @@ F-->K KK----]l8
 F-->KK K---->l8
     KKKK
 
+       I935
+s----->O---->l8
+
+s--->i935--->l8
+
+s---]i935---]l8
+
+       I936
+s-----]o---->l8
+
+s--->i936--->l8
+
+s---]i936---]l8
+
+s>lI937
+
+S--->i937--->l8
+
+S---]i937---]l8
+
 0"# Off"
 
 0"In this section, the LED on the right of each contraption must be OFF. If"

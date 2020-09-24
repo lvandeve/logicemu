@@ -155,6 +155,7 @@ var LogicEmuUtils = (function() {
   };
   result.bind = bind;
 
+  // deep clone
   var clone = function(obj) {
     // Handle the 3 simple types, and null or undefined
     if(null == obj || 'object' != typeof obj) return obj;
@@ -180,6 +181,16 @@ var LogicEmuUtils = (function() {
     throw new Error('Cloning this object not supported.');
   };
   result.clone = clone;
+
+  // only shallow clone array
+  var cloneArray = function(arr) {
+    var result = [];
+    for(var i = 0; i < arr.length; i++) {
+      result[i] = arr[i];
+    }
+    return result;
+  };
+  result.cloneArray = cloneArray;
 
   var textHasAt = function(text, pos, sub) {
     return text.substr(pos, sub.length) == sub;
@@ -1832,20 +1843,6 @@ function DefSub() {
       }
     }
 
-    // this array converts input id to component id. Used to bypass some TYPE_IC_PASSTHROUGH components
-    // the internal switches of a chip are converted to TYPE_IC_PASSTHROUGH, but in the simple case, which
-    // is 99% of the time the situation anyway, can be skipped to save an unneeded tick for electron mode
-    var singleinputcomponents = [];
-
-    for(var i = 0; i < this.components.length; i++) {
-      var v = this.components[i];
-      if(v.defsubindex != id) continue;
-      // only if v.inputs[0] has one or less input [TODO: should be just 0?] input and exactly one output
-      if(v.inputs.length == 1 && v.inputs[0].inputs.length <= 1) {
-        singleinputcomponents[v.inputs[0].index] = v.index;
-      }
-    }
-
     for(var i = 0; i < this.externalinputs.length; i++) {
       var x0 = this.externalinputs[i][0];
       var y0 = this.externalinputs[i][1];
@@ -1898,11 +1895,6 @@ function DefSub() {
       if(!v) {
         this.markError('component not found for chip template');
         return;
-      }
-      // see comment at singleinputcomponents for info on this
-      if(singleinputcomponents[v.index]) {
-        v.bypass = true;
-        v.bypass_to_index = singleinputcomponents[v.index];
       }
       var tindex = this.translateindex[v.index];
       if(dir >= 0) {
@@ -1992,12 +1984,12 @@ function CallSub(id) {
       component.prevvalue = v.prevvalue;
       component.type = v.type;
       component.inputs = []; // handled further
-      component.inputs_negated = v.inputs_negated;
-      component.inputs_x = v.inputs_x;
-      component.inputs_y = v.inputs_y;
-      component.inputs_x2 = v.inputs_x2;
-      component.inputs_y2 = v.inputs_y2;
-      component.input_ff_types = v.input_ff_types;
+      component.inputs_negated = util.cloneArray(v.inputs_negated);
+      component.inputs_x = util.cloneArray(v.inputs_x);
+      component.inputs_y = util.cloneArray(v.inputs_y);
+      component.inputs_x2 = util.cloneArray(v.inputs_x2);
+      component.inputs_y2 = util.cloneArray(v.inputs_y2);
+      component.input_ff_types = util.cloneArray(v.input_ff_types);
       component.cells = v.cells;
       component.corecell = v.corecell;
       component.updated = v.updated;
@@ -2021,8 +2013,6 @@ function CallSub(id) {
       component.rgbcolor = v.rgbcolor;
       component.clocked = v.clocked;
       component.frozen = v.frozen;
-      component.bypass = v.bypass;
-      component.bypass_to_index = v.bypass_to_index;
 
       for(var j = 0; j < v.inputs.length; j++) {
         var input = this.components[defsub.translateindex[v.inputs[j].index]];
@@ -2378,37 +2368,12 @@ function CallSub(id) {
     for(var i = 0; i < inputs.length; i++) {
       var einput = inputs[i][0];
       var iinput = this.components[defsub.inputs[i][0]];
-
-      var negated = inputs[i][4];
-      // TODO: this is broken for nested chips that have an internal IC directly at an input side. Fix that.
-      /*// bypass TYPE_IC_PASSTHROUGH inputs if possible to save a tick in electron mode. See singleinputcomponents in a DefSub function for more info. This is the version for inputs. See below for similar bypassing for outputs.
-      if(iinput.bypass) {
-        var index = iinput.bypass_to_index;
-        index = defsub.translateindex[index];
-        iinput = this.components[index];
-        if(!iinput.bypassed) {
-          // possible double-negation. Note that we are guaranteed that iinput has exactly 1 input, given how bypass_to_index was constructed
-          if(iinput.inputs_negated[0]) negated = !negated;
-          // remove its existing inputs, once, becuase it has the TYPE_IC_PASSTHROUGH as input as well, it must be decoupled, else if this is e.g. an AND gate, it can never get enabled.
-          // NOTE: normally this can happen only ones, the bypassed variable is normally never used... the typical scenario is: some logic gate in the chip has the switch from the template as input, turned into a TYPE_IC_PASSTHROUGH for the callsub, and we replace that switch/TYPE_IC_PASSTHROUGH directly with the external input, rather than have this extra layer
-          // TODO: remove the TYPE_IC_PASSTHROUGH entirely from the world instead of keeping it around as a loose component
-          iinput.bypassed = true;
-          iinput.inputs = [];
-          iinput.inputs_negated = [];
-          iinput.inputs_x = [];
-          iinput.inputs_y = [];
-          iinput.inputs_x2 = [];
-          iinput.inputs_y2 = [];
-          iinput.input_ff_types = [];
-        }
-      }*/
       iinput.inputs.push(einput);
-      iinput.inputs_negated.push(negated);
+      iinput.inputs_negated.push(inputs[i][4]);
       iinput.inputs_x.push(-1);
       iinput.inputs_y.push(-1);
       iinput.inputs_x2.push(-1);
       iinput.inputs_y2.push(-1);
-      iinput.input_ff_types.push(-1);
     }
 
     // connect our internal outputs, to the external output components (which are 'i'), and change their type to "TYPE_IC_PASSTHROUGH"
@@ -2416,29 +2381,15 @@ function CallSub(id) {
       var eoutput = outputs[i][0];
       var ioutput = this.components[defsub.outputs[i][0]];
 
+      eoutput.inputs = [ioutput]; // handled further
       eoutput.inputs_negated = [false];
       eoutput.inputs_x = [-1];
       eoutput.inputs_y = [-1];
       eoutput.inputs_x2 = [-1];
       eoutput.inputs_y2 = [-1];
       eoutput.input_ff_types = [0];
+
       eoutput.type = TYPE_IC_PASSTHROUGH;
-
-      if(ioutput.inputs.length == 1) {
-        // internal passthrough has 1 input (TODO: or 0?), so we can bypass it entirely, saving an unnecessary tick in electron mode. This is the version for bypassing output. See bypass_to_index for the input version of this.
-        // TODO: remove the TYPE_IC_PASSTHROUGH component from the whole list altogether
-        eoutput.inputs = [ioutput.inputs[0]];
-        eoutput.inputs_negated = [ioutput.inputs_negated[0]];
-        eoutput.inputs_x = [ioutput.inputs_x[0]];
-        eoutput.inputs_y = [ioutput.inputs_y[0]];
-        eoutput.inputs_x2 = [ioutput.inputs_x2[0]];
-        eoutput.inputs_y2 = [ioutput.inputs_y2[0]];
-        eoutput.input_ff_types = [ioutput.input_ff_types[0]];
-      } else {
-        // internal passthrough has more than 1 input (that should normally almost never occur), so cannot avoid using the passthrough itself
-        eoutput.inputs = [ioutput]; // handled further
-
-      }
     }
   };
 }
@@ -13112,10 +13063,10 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
               // the on/off color, e.g. to avoid parts of the numbers of an ALU type lighting up, ...
               currentColor = OFFCOLOR;
               oppositeColor = ONCOLOR;
-              currentGateColor = OFFCOLOR;
+              currentGateColor = GATEFGOFFCOLOR;
               oppositeGateColor = GATEFGONCOLOR;
             }
-            gateBorderColor = OFFCOLOR;
+            gateBorderColor = GATEFGOFFCOLOR;
           }
         }
       }
@@ -17253,6 +17204,53 @@ function parseComponents() {
   for(var i = 0; i < callsubs.length; i++) {
     callsubs[i].init2(null);
   }
+
+  // Skip passthroughs when possible (when they have 1 input, which is normally always the case):
+  // this will save 2 ticks per IC (1 on input and 1 on ouptut side) in electron mode (of 3 potential
+  // ticks lost in total per IC)
+  // TODO: can we also save that 1 remaining lost tick?
+  var has_skipped_passthrough = false;
+  for(var i = 0; i < components.length; i++) {
+    var c = components[i];
+    var inputs = c.inputs;
+    for(var j = 0; j < inputs.length; j++) {
+      var p = c.inputs[j];
+      while(p && p.type == TYPE_IC_PASSTHROUGH && p.inputs.length == 1) {
+        c.inputs[j] = p.inputs[0];
+        if(p.inputs_negated[0]) c.inputs_negated[j] = !c.inputs_negated[j];
+        p.passthrough_skipped = true;
+        has_skipped_passthrough = true;
+        // if p's input itself was also a passthrough, then keep going...
+        // TODO: also update all intermediate ones already so higher up loop will be more efficient in some potential pathalogical cases
+        p = p.inputs[0];
+      }
+    }
+  }
+  // This is done for graphical reasons: the cells have references to the components, e.g. long wires that are output
+  // from a chip will have reference to the passthrough. But to also have the wires light up faster in electron mode,
+  // let them too point to the input-component that replaces the passthrough instead.
+  if(has_skipped_passthrough) {
+    for(var y = 0; y < h; y++) {
+      for(var x = line0[y]; x < line1[y]; x++) {
+        var c = world[y][x];
+        for(var j = 0; j < c.components.length; j++) {
+          var p = c.components[j];
+          // not done for corecell: the corecell is the IC cell itself, that one should stay of type passthrough or it'll get the wrong rendered look
+          if(p && p.passthrough_skipped && (x != p.corecell.x || y != p.corecell.y)) {
+            var p2 = p.inputs[0];
+            c.components[j] = p2;
+          }
+        }
+      }
+    }
+  }
+  // In theory, we could remove the inputs of the skippes passthroughs now since nothing depends on them anymore. However, as seen above, corecells
+  // still do so if their graphics would dpened on their state, they should still be updated. Also it's uncertain if maybe possibly some other form
+  // of references to them still exists. So, the code below is commented out and not done.
+  /*for(var i = 0; i < components.length; i++) {
+    var c = components[i];
+    if(c.passthrough_skipped) c.inputs = [];
+  }*/
 
   var global_counter = false;
   var global_delay = false;
