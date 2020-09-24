@@ -1684,7 +1684,7 @@ var TYPE_ROM = TYPE_index++;
 var TYPE_MUX = TYPE_index++;
 var TYPE_ALU = TYPE_index++;
 var TYPE_IC = TYPE_index++; // also called "sub"
-var TYPE_IC_PASSTHROUGH = TYPE_index++; // the switch gets internally converted into this. Behaves like OR, but will have always only 1 input
+var TYPE_IC_PASSTHROUGH = TYPE_index++; // the internal implicit input/output switches/LEDs of ICs get internally converted into this. Behaves like OR, but will have always only 1 input. Will be removed from the circuit flow in a next parsing stage to avoid delays.
 var TYPE_VTE = TYPE_index++;
 var TYPE_DOTMATRIX = TYPE_index++;
 var TYPE_TRISTATE = TYPE_index++;
@@ -2388,8 +2388,8 @@ function CallSub(id) {
       eoutput.inputs_x2 = [-1];
       eoutput.inputs_y2 = [-1];
       eoutput.input_ff_types = [0];
-
       eoutput.type = TYPE_IC_PASSTHROUGH;
+      ioutput.type = TYPE_IC_PASSTHROUGH;
     }
   };
 }
@@ -17205,10 +17205,11 @@ function parseComponents() {
     callsubs[i].init2(null);
   }
 
-  // Skip passthroughs when possible (when they have 1 input, which is normally always the case):
-  // this will save 2 ticks per IC (1 on input and 1 on ouptut side) in electron mode (of 3 potential
-  // ticks lost in total per IC)
-  // TODO: can we also save that 1 remaining lost tick?
+  // Bypass IC-passthroughs when possible (when they have 1 input, which is normally always the case):
+  // this will save 3 ticks per IC (1 on input and 2 on output side due to the way they are parsed
+  // and constructed), thereby removing all delays and making the IC equivalent to having the original
+  // circuit in its place.
+  // TODO: prevent the creation of those TYPE_IC_PASSTHROUGH components in the first place, connect it up correctly in the CallSub and DefSub functions from the start
   var has_skipped_passthrough = false;
   for(var i = 0; i < components.length; i++) {
     var c = components[i];
