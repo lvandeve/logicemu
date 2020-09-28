@@ -14705,7 +14705,7 @@ function parseNumbers() {
           if(puredigitmap[world[y1 - 1][x].metasymbol]) ttb = false;
           var base = -range;
           var y0 = y;
-          while(y0 > 0 && digitmap[world[y0][x].metasymbol]) y0--;
+          while(y0 > 0 && digitmap[world[y0 - 1][x].metasymbol]) y0--;
           if(ttb) {
             // top to bottom
             for(y2 = y0; y2 < y1; y2++) {
@@ -14738,7 +14738,7 @@ function parseNumbers() {
           if(puredigitmap[world[y][x1 - 1].metasymbol]) ltr = false;
           var base = -range;
           var x0 = x;
-          while(x0 > line0[y] && digitmap[world[y][x0].metasymbol]) x0--;
+          while(x0 > line0[y] && digitmap[world[y][x0 - 1].metasymbol]) x0--;
           if(ltr) {
             // left to right
             for(x = x0; x < x1; x++) {
