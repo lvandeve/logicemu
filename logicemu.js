@@ -482,6 +482,22 @@ var LogicEmuUtils = (function() {
   };
   result.averageColor = averageColor;
 
+
+  // e,g, code point 0x1f600 returns smile emoji.
+  var unicode_to_utf16 = function(code_point) {
+    var result = '';
+    if (code_point < 0x10000) {
+       result += String.fromCharCode(code_point);
+    } else if (code_point <= 0x10FFFF) {
+      result += String.fromCharCode((code_point >> 10) + 0xD7C0);
+      result += String.fromCharCode((code_point & 0x3FF) + 0xDC00);
+    } else {
+      result += String.fromCharCode(0xFFFD); // replacement character code
+    }
+    return result;
+  };
+  result.unicode_to_utf16 = unicode_to_utf16;
+
   return result;
 }());
 
@@ -6505,9 +6521,17 @@ function VTE() {
         this.newline();
         return;
       }
-      if(index < 32 || index > 126) index = 63;
+      var support_unicode = true;
+      var text = '';
+      if(support_unicode) {
+        if(index < 32 || index == 127) index = 63; // ascii value for question mark '?' as replacement char
+        text = util.unicode_to_utf16(index);
+      } else {
+        if(index < 32 || index > 126) index = 63; // ascii value for question mark '?' as replacement char
+        text = String.fromCharCode(index);
+      }
       if(this.cursorx >= this.x1b - this.x0b) this.newline();
-      this.text[this.cursory][this.cursorx] = String.fromCharCode(index);
+      this.text[this.cursory][this.cursorx] = text;
       this.cursorx++;
     }
 
@@ -8410,7 +8434,7 @@ function drawkinetic(component) {
   component.kindiv.style.color = OFFCOLOR;
 
 
-  component.kindiv.innerText = 'K';
+  component.kindiv.innerText = 'K20';
   component.kindiv.title = 'cover/hatch, give input signal to reveal what\'s behind';
   component.kindiv.style.fontSize = tw + 'px';
   component.kindiv.style.zIndex = MAINZINDEX + 3;

@@ -3735,6 +3735,23 @@ SsssssS3"ASCII code in to screen"
           |||||||
           SsssssS"ASCII code in to screen"0
 
+0"The screen also supports unicode rather than just ASCII. ASCII is a 7-bit code,"
+0"but Unicode is a 21-bit code including international characters, emoji, ..."
+
+0"How it gets displayed may depend on your webbrowser and installed fonts, if"
+0"the code given below (smiley emoji) doesn't work, try lower valued codes."
+
+0"Values translate directly from hex unicode codepoints which you can look up"
+0"online, every 4 bits from the switches below correspond to a hex digit, e.g."
+0"unicode U+1F600 is binary 0 0001 1111 0110 0000 0000"
+
+     T####################C<p
+     #####################
+     #####################
+     ^^^^^^^^^^^^^^^^^^^^^
+     ssssSSSSSsSSsssssssss
+ 1"21 bits Unicode code point"
+
 0"Note that the terminal has some inputs/outputs without letters, and some with"
 0"letters:, as follows:"
 
@@ -5941,6 +5958,14 @@ registerCircuit('ASCII Terminal With Both and Enable (T)', `
                 sssssss
 `, 'component' + componentid++);
 
+registerCircuit('Unicode Screen Terminal (T)', `
+     T####################C<p
+     #####################
+     #####################
+     ^^^^^^^^^^^^^^^^^^^^^
+     ssssSSSSSsSSsssssssss
+`, 'component' + componentid++);
+
 registerCircuit('Decimal Display Terminal (T)', `
      T######
      ^^^^^^^
@@ -6868,6 +6893,14 @@ s-->K14
 
 registerCircuit('JAM (K)', `
 s-->K19
+`, 'component' + componentid++);
+
+registerCircuit('Hatch (K)', `
+    #################
+    #               #
+s-->K20  "revealed" #
+    #               #
+    #################
 `, 'component' + componentid++);
 
 registerCircuit('Bus (=)', `
