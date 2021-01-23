@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2020 Lode Vandevenne
+Copyright (c) 2018-2021 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -4674,7 +4674,7 @@ function Alu() {
       o = (a >= b) ? math.n1 : math.n0;
     } else if(op == 37) {
       o = (a > b) ? math.n1 : math.n0;
-    } else if(op == 39) {
+    } else if(op == 38) {
       o = (a < b) ? a : b;
     } else if(op == 39) {
       o = (a > b) ? a : b;
@@ -5510,7 +5510,7 @@ function Alu() {
       o = (a >= b) ? 1 : 0;
     } else if(op == 37) {
       o = (a > b) ? 1 : 0;
-    } else if(op == 39) {
+    } else if(op == 38) {
       o = (a < b) ? a : b;
     } else if(op == 39) {
       o = (a > b) ? a : b;

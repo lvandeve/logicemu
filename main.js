@@ -891,6 +891,8 @@ function createMenuUI() {
     if(!editmode) {
       var docwidth = /*document.body.clientWidth*/window.innerWidth - 24 - 80;
       var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8 - 80;
+      if(docwidth < 100) docwidth = 100;
+      if(docheight < 100) docheight = 100;
       var fontsize = 10;
       var ewidth = 60;
       var eheight = 60;
@@ -900,7 +902,7 @@ function createMenuUI() {
       overlay.style.zIndex = '99';
 
       var ew = Math.floor(docwidth * 0.7);
-      var eh = Math.floor(docwidth * 0.7);
+      var eh = Math.floor(docheight * 0.7);
       editdiv = makeDiv(0, 0, ew, eh);
       editdiv.style.backgroundColor = '#bbb';
       editdiv.style.position = 'fixed';
@@ -954,6 +956,8 @@ function createMenuUI() {
     if(!editmode) {
       var docwidth = /*document.body.clientWidth*/window.innerWidth - 24 - 80;
       var docheight = /*document.body.clientHeight*/window.innerHeight - 100 - 8 - 80;
+      if(docwidth < 100) docwidth = 100;
+      if(docheight < 100) docheight = 100;
       var fontsize = 10;
       var ewidth = 60;
       var eheight = 60;
@@ -963,7 +967,7 @@ function createMenuUI() {
       overlay.style.zIndex = '99';
 
       var ew = Math.floor(docwidth * 0.7);
-      var eh = Math.floor(docwidth * 0.7);
+      var eh = Math.floor(docheight * 0.7);
       editdiv = makeDiv(0, 0, ew, eh);
       editdiv.style.backgroundColor = '#bbb';
       editdiv.style.position = 'fixed';
@@ -1910,6 +1914,9 @@ function fillRegisteredCircuits() {
 
 var introText = `
 0"# Welcome to LogicEmu, an online digital logic simulator!"
+
+0"LogicEmu is packed with interactive digital circuits, and you can also"
+0"make your own!"
 
 0"In circuits, press the green 's' inputs with the mouse to change values."
 0"Read results from the red 'l' outputs. For example, below is an AND gate 'a'."
