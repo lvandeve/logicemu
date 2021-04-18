@@ -6373,11 +6373,25 @@ function VTE() {
         }
         sign = inputs[this.numinputs + this.numinputs2] ? 1 : 0;
         //s = '' + sign + '.' + exponent + '.' + mantissa;
-        s = '' + math.createfloat(sign, exponent, mantissa, this.numinputs2, this.numinputs);
+        var f = math.createfloat(sign, exponent, mantissa, this.numinputs2, this.numinputs);
+        s = '' + f;
         rendersize = Math.max(this.x1b - this.x0b, this.y1b - this.y0b);
         if(s == 'Infinity' && rendersize < 8) s = 'Inf';
         if(s == '-Infinity' && rendersize < 9) s = '-Inf';
-        if(s[0] == '-' && s.length > rendersize) s = s.substr(0, s.length - 1);
+        if(s.length + 1 > rendersize) { // + 1, to show at least one empty character to show it's not accidently clipped
+          if(f >= 10 || (f < 0.1 && f > -0.1) || f <= -10) {
+            s = f.toExponential(Math.max(2, rendersize - 4));
+            if(s.length + 1 > rendersize) s = f.toExponential(Math.max(2, rendersize - 5));
+            if(s.length + 1 > rendersize) s = f.toExponential(Math.max(2, rendersize - 6));
+            if(s.length + 1 > rendersize) s = f.toExponential(Math.max(2, rendersize - 7));
+            if(s.length + 1 > rendersize) s = f.toExponential(Math.max(2, rendersize - 8));
+          } else {
+            s = f.toPrecision(Math.max(2, rendersize - 3));
+            if(s.length + 1 > rendersize) s = f.toPrecision(Math.max(2, rendersize - 4));
+            if(s.length + 1 > rendersize) s = f.toPrecision(Math.max(2, rendersize - 5));
+            if(s.length + 1 > rendersize) s = f.toPrecision(Math.max(2, rendersize - 6));
+          }
+        }
       } else {
         var index = math.n0;
         var mul = math.n1;
