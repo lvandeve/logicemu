@@ -2057,8 +2057,19 @@ s..>e..>l
         v
 "c"s...>e......>l 0"(a AND b) XOR c"
 
+0"Peres gate: defined as follows:"
 
-0"Fredkin and Toffoli are able to implement all classical logic gates, they are"
+      .....
+      .   .
+"a"s..+...+....>l 0"a"
+      . v . v
+"b"s...>a .>e..>l 0"a XOR b"
+        v
+"c"s...>e......>l 0"(a AND b) XOR c"
+        I
+
+
+0"Fredkin, Toffoli and Peres are able to implement all classical logic gates, they are"
 0"universal classical logic gates (but they are not universal quantum logic"
 0"gates). See next circuits for examples of this."
 
@@ -2469,6 +2480,137 @@ F>J  s>J  J>i>J  J>i>J  J>i>J  J>l  J>l2
 
 
 `, 'toffoli');
+
+registerCircuit('Peres gate', `
+
+0"The Peres gate is a reversible and universal classic logic gate, defined as below."
+0"Since it can output a XOR b and a AND b at the same time, it can trivially be used as a half adder."
+
+      .....
+      .   .
+"a"s..+...+....>l 0"a"
+      . v . v
+"b"s...>a .>e..>l 0"a XOR b"
+        v
+"c"s...>e......>l 0"(a AND b) XOR c"
+        I
+
+0"It's defined as a chip above so we can use it as follows now (with the"
+0"controlled input/output always at bottom):"
+
+s..>#..>l
+    #
+s..>#..>l
+    #
+s..>i..>l
+
+
+0"It can make all regular gates, but there are 'garbage' input and output"
+0"signals to support the reversibility"
+
+0"## NOT"
+
+"1"F..>#..>l2
+       #
+"1"F..>#..>l2
+       #
+"c"s..>i..>l 0"NOT c"
+
+
+0"## AND"
+
+"a"s..>#..>l2
+       #
+"b"s..>#..>l2
+       #
+"0"f..>i..>l 0"a AND b"
+
+
+0"## NAND"
+
+"a"s..>#..>l2
+       #
+"b"s..>#..>l2
+       #
+"1"F..>i..>l 0"a NAND b"
+
+
+0"## OR"
+
+"a"s..>#...>l2
+       #
+"b"s..>#..
+       # .
+    ..>i.+.>l 0"a OR b"
+    .    .
+    ......
+
+
+0"## NOR"
+
+"a"s..>#.... ...>#..>l2
+       #   . .   #
+"b"s..>#..  x  F>#..>l 0"a NOR b"
+       # . . .   #
+    ..>i.+.. ...>i..>l2
+    .    .
+    ......
+
+0"## XOR"
+
+"a"s..>#..>l2
+       #
+"b"s..>#..>l 0"a XOR b"
+       #
+"0"f..>i..>l2
+
+
+0"## XNOR"
+
+         .......>l2
+         .
+"a"s..>#.. F>#..>l2
+       #     #
+"b"s..>#....>#..>l 0"a XNOR b"
+       #     #
+"1"F..>i....>i..>l2
+
+
+
+0"## Full Adder"
+
+
+
+"a"s..>#..........>l2
+       #
+"b"s..>#......>#..>l2
+       #       #
+"0"f..>i.. ...>#..>l"sum"
+          x    #
+"c"s...... ...>i..>l"carry"
+
+
+0"## Patch Panel"
+
+0"This allows experimenting with peres gates yourself. Connect jacks (J)"
+0"together by clicking them to connect switches to peres gates and/or LEDs"
+0"and make anything you like."
+
+f>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+            #      #      #
+f>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+            #      #      #
+f>J  s>J  J>i>J  J>i>J  J>i>J  J>l  J>l2
+
+F>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+            #      #      #
+F>J  s>J  J>#>J  J>#>J  J>#>J  J>l  J>l2
+            #      #      #
+F>J  s>J  J>i>J  J>i>J  J>i>J  J>l  J>l2
+
+
+
+`, 'peres');
 
 
 
