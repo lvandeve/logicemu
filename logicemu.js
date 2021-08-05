@@ -4132,6 +4132,48 @@ function Mux() {
   };
 }
 
+var alu_override_ops = {};
+
+/*
+registerAluOverride: JS-console only feature: override any numeric ALU's functionality with a custom JavaScript function.
+
+How to use this:
+
+For example for the following circuit, which has an ALU with id 0, the id to use for the override below:
+
+   llllllll
+   ^^^^^^^^
+   ########U0
+   ^^^^^^^^
+   ssssssss
+
+Then in the JS console, register a custom function for 0 as follows:
+
+This example gives an alternating bit pattern, xored with the input:
+
+registerAluOverride(0, function(inputs, outputs) {
+  //console.log('input: ' + inputs);
+  //console.log('output: ' + outputs);
+  for(var i = 0; i < outputs.length; i++) outputs[i] = !!((i & 1) ^ inputs[i]);
+});
+
+Implement any custom JS code in the function instead.
+
+Your function receives 'inputs' and 'outputs' arrays. They are arrays of booleans whose size matches those of the current ALU.
+
+You can read from inputs, and you can assign to outputs. The output has all false by default. Any true you fill in, will translate to the matching output wire being enabled.
+
+These registered overrides are presistent until browser refresh, that is, they will stay even when loading different circuits, but are lost when refreshing the browser.
+
+Saving the JS override function in the circuit (when exporting it, etc...) is not supported, there is no way to store the JS code in the circuits' ASCII representation. Save your custom registerAluOverride elsewhere as JS code instead.
+
+To remove an override, do registerOverride(id, undefined)
+*/
+function registerAluOverride(id, fun) {
+  alu_override_ops[id] = fun;
+  update();
+}
+
 // Arithmetic Logic Unit ('U')
 function Alu() {
   this.parent = null;
@@ -4419,12 +4461,20 @@ function Alu() {
       op -= 128;
     }
 
-    if(floating) {
+    if(alu_override_ops[op]) {
+      this.updateOverride(inputs, op);
+    } else if(floating) {
       this.updateFloating(inputs, op);
     } else {
       this.updateInteger(inputs, op, signed);
     }
-  }
+  };
+
+  this.updateOverride = function(inputs, op) {
+    var o = alu_override_ops[op];
+    for(var i = 0; i < this.output.length; i++) this.output[i] = false;
+    o(inputs, this.output);
+  };
 
   // first inputs are the data, last the select
   // can handle both signed and unsigned integer case
