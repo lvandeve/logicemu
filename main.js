@@ -288,7 +288,7 @@ function getStatsText() {
     numComponentInputs += ni;
 	
 	// cheznewa: i generate a fingerprint of this circuit
-	fingerprint += (c.inputs.length*(i%(8*1024*1024))) % (256*1024*1024)
+	fingerprint = (fingerprint + (c.inputs.length*(i%(8*1024*1024)))) % (256*1024*1024)
 
     // Any built-in device of some complexity, e.g. the terminal emulator or ALUs, are assumed to use a simple CPU of 4000 transistors for that.
     var cpuTransistors = 4000;
