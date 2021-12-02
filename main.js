@@ -259,6 +259,7 @@ function getStatsText() {
   var numCells = 0;
   var numTransistors = 0;
   var numTransistorsLarge = 0;
+  var fingerprint = 0;
   for(var i = 0; i < components.length; i++) {
     var c = components[i];
     var t = c.type;
@@ -285,6 +286,9 @@ function getStatsText() {
     }
 
     numComponentInputs += ni;
+	
+	// cheznewa: i generate a fingerprint of this circuit
+	fingerprint += (c.inputs.length*(i%(8*1024*1024))) % (256*1024*1024)
 
     // Any built-in device of some complexity, e.g. the terminal emulator or ALUs, are assumed to use a simple CPU of 4000 transistors for that.
     var cpuTransistors = 4000;
@@ -492,6 +496,7 @@ function getStatsText() {
   text += ' other logicemu-related stats\n';
   text += 'num non-hidden components: ' + numVisibleComponents + '\n'; // not in chip etc...
   text += 'num components (full): ' + components.length + '\n'; // includes components for internal workings, not relevant to the actual circuit
+  text += '\nfingerprint: ' + fingerprint + '\n';
   return text;
 }
 
@@ -832,7 +837,7 @@ function createMenuUI() {
   statsButton.title = 'show circuit statistics and parameters. The estimated num transistors assumes NMOS logic, gives exact value when only using basic 2-input logic gates (AND, NAND, XOR, ...), but will use some arbitrary large amount of transistors per big built-in device (ALU, terminal emulator, ...)';
   statsButton.onclick = function() {
     if(dialogDiv) return;
-    dialogDiv = makeDialog(500, 500, getStatsText(), 'ok', function() {
+    dialogDiv = makeDialog(500, 520, getStatsText(), 'ok', function() {
       dialogDiv = undefined;
     });
   };
