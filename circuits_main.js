@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2020 Lode Vandevenne
+Copyright (c) 2018-2023 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -4330,6 +4330,19 @@ registerCircuit('Logic with gears', `
 
 0"XOR:"
 
+
+  "A"p>o>KKKKKKKKKKKK
+       ^            K
+       .           KKK
+       .           KKKK
+"A+B"p..           K KKKKKKKKKKKKKKKKK-->l
+       .           KKKK
+       .           KKK
+       v            K
+  "B"p>o>KKKKKKKKKKKK
+
+0"alternative for XOR:"
+
   "A"p>o>KKKKKKKKKKKK
        ^            K
        .           KKKKK
@@ -4341,8 +4354,7 @@ registerCircuit('Logic with gears', `
   "B"p>o>KKKKKKKKKKKK
 
 
-0"NIMPLY (A AND NOT B):"
-
+0"A AND NOT B (NIMPLY):"
 
   "A"p>o>KKKKKKKKKKKK
        ^            K
@@ -4353,6 +4365,26 @@ registerCircuit('Logic with gears', `
        .           KKK KKKK
        v            K
   "B"p>o>KKKKKKKKKKKK
+
+
+0"AND:"
+
+
+
+                      KKKK
+                      K  K
+                      K KKK
+                      K KKK KKKK
+  "A"p>o>KKKKKKKKKKKKKK K KKK KKKKKKKKKKKK-->l
+       ^            K   KKKKK KK
+       .           KKK  KKK KKKK
+       .           KKKK  K
+"A+B"p..           K KKKKK
+       .           KKKK
+       .           KKK
+       v            K
+  "B"p>o>KKKKKKKKKKKK
+
 
 0"NOT gate"
 
@@ -4376,19 +4408,19 @@ registerCircuit('Logic with gears', `
 
 
 0"Half Adder"
-                       KKKK
-                       K  K
-                       K KKK
-                       K KKK KKKK
-  "A"p>o>KKKKKKKKKKKKKKK K KKK KKKKKKKKKKKK-->l"carry"
-       ^            K    KKKKK KK
-       .           KKKKK KKK KKKK
-       .           KKK K  K
-"A+B"p..           K KKKKKK
-       .           KKK K  K
-       .           KKKKK KK
-       v            K    K
-  "B"p>o>KKKKKKKKKKKK    KKKKKKKKKKKKKKKKKK-->l"sum"
+                      KKKK
+                      K  K
+                      K KKK
+                      K KKK KKKK
+  "A"p>o>KKKKKKKKKKKKKK K KKK KKKKKKKKKKKK-->l"carry"
+       ^            K   KKKKK KK
+       .           KKK  KKK KKKK
+       .           KKKK  K
+"A+B"p..           K KKKKK
+       .           KKKK  K
+       .           KKK  KK
+       v            K   K
+  "B"p>o>KKKKKKKKKKKK   KKKKKKKKKKKKKKKKKK-->l"sum"
 
 `, 'logic_gears');
 
@@ -8126,7 +8158,7 @@ registerCircuit('MOS 6502 ALU', `
        ....>M ..>M f>M  1g>z z<g0     2g>z   O           4g>z
        .    # .  #   #     ^ ^           ^   ^              ^
   "B"s...>O>#.+.>#..>#..>A.+....>O....>O.+.>Z. ....>O>O..>Z..
-"4"           .         >  . .     .     .   . .   >        .
+"8"           .         >  . .     .     .   . .   >        .
   "A"s..................>O.. .   ... ....+...+.. ..>A....>Z..
                            . .   v   .   .   .   .
                            ..+..>O....>O..   Z   .

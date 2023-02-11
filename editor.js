@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2020 Lode Vandevenne
+Copyright (c) 2018-2023 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

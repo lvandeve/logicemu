@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2020 Lode Vandevenne
+Copyright (c) 2018-2023 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -4442,6 +4442,19 @@ s-->#
   (/  /  /  )
   0uuuuuuuuu0
 
+0"It also allows splitting some devices such as a mux across space when marking"
+0"with a 0, e.g. the following mux set up for controlled swap is a single"
+0"device:""
+
+s-->M-->l
+    #
+    n0
+
+    u0
+    #
+s-->#-->l
+    ^
+    s
 
 0"The antenna with 0 for wrap-around behaves differently than without the 0,"
 0"instead of acting as one single all-connecting wire, different input/output"
@@ -4458,6 +4471,7 @@ s-->#
 0"device it inputs too, again useful to split up a large repetitive wrap-around"
 0"circuit:"
 
+      0    0
  s--->(    )l
 
 
@@ -7130,8 +7144,8 @@ registerCircuit('Unit Test', `
 
 0"# On"
 
-0"In this section, the LED on the right of each contraption must be ON. If it's"
-0"OFF, something is broken. A short delay just after loading is allowed."
+0"In this section, the LED on the right of each contraption must be ON (green). If it's"
+0"OFF (red), something is broken. A short delay just after loading is allowed."
 0"There should also be no errors indicated."
 
 F...........>l8
@@ -8070,6 +8084,18 @@ S--->i937--->l8
 
 S---]i937---]l8
 
+  I1056
+s-->E-->l
+s-->#
+
+
+s>i--------->l8
+  1
+s(0)->l
+  5
+s(6)->l
+S(#)-------->l8
+s>#
 
 
 
@@ -8236,8 +8262,6 @@ F------v
 F----->o---->l8
 
 F---->K K--->l8
-
-
 
 
 0"# Toggle"

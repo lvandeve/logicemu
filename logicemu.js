@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2021 Lode Vandevenne
+Copyright (c) 2018-2023 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1723,11 +1723,11 @@ var NUMBER_ROM = NUMBER_index++;
 var NUMBER_ALU = NUMBER_index++;
 var NUMBER_VTE = NUMBER_index++;
 var NUMBER_KINETIC = NUMBER_index++;
+var NUMBER_ANTENNA = NUMBER_index++; // for antenna wrap. Priority of this is lower than ICCALL: In case of s--(0)-->l where the 0 is part of a vertical chip that we're jumping over we want the 1 to be part of the chip, not antenna
 var NUMBER_ICCALL = NUMBER_index++;
 var NUMBER_ICDEF = NUMBER_index++;
 var NUMBER_GLOBAL = NUMBER_index++; // for global wire g
 var NUMBER_BUS = NUMBER_index++;
-var NUMBER_ANTENNA = NUMBER_index++; // for antenna wrap
 var NUMBER_COMMENT = NUMBER_index++;
 
 
@@ -2497,8 +2497,10 @@ for n/e/s/w outputs: for N left to right, E: top to bottom, S: right to left, W:
 
 The sides to use to detect inputs/outputs are given by x0, y0, x1, y1
 The values x0s, y0s, x1s, y1s are used for an additional extra check for special inputs. These values can be the same as x0, y0, x1, y1 (in that case nothing more is done), or possibly 1 larger on one or more sides. See getIO for info.
+
+TODO: use and support opt_array for more components than just Mux. This is to support components split into multiple parts by antennas, to exclude parts that are in-between
 */
-function getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, component) {
+function getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, component, opt_array) {
   var r = {};
   r.i = [];
   r.o = [];
@@ -2522,6 +2524,17 @@ function getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, component) {
   r.oQ = {n:0, a:[]};
   r.nispecial = 0;
   r.nospecial = 0;
+
+  var include_x = undefined;
+  var include_y = undefined;
+  if(opt_array) {
+    include_x = [];
+    include_y = [];
+    for(var i = 0; i < opt_array.length; i++) {
+      include_x[opt_array[i][0]] = true;
+      include_y[opt_array[i][1]] = true;
+    }
+  }
 
   for(var i = 0; i < component.inputs.length; i++) {
     var x = component.inputs_x[i];
@@ -2621,10 +2634,12 @@ function getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, component) {
   };
 
   for(var x = x0; x < x1; x++) {
+    if(opt_array && !include_x[x]) continue;
     if(connected2(x, y0, 0)) addOutput(0, x, y0, x1 - x - 1, x, false);
     if(connected2(x, y1 - 1, 2)) addOutput(2, x, y1 - 1, x - x0, x, false);
   }
   for(var y = y0; y < y1; y++) {
+    if(opt_array && !include_y[y]) continue;
     if(connected2(x0, y, 3)) addOutput(3, x0, y, y - y0, y, false);
     if(connected2(x1 - 1, y, 1)) addOutput(1, x1 - 1, y, y1 - y - 1, y, false);
   }
@@ -2633,10 +2648,12 @@ function getIO(x0, y0, x1, y1, x0s, y0s, x1s, y1s, component) {
   // NOTE: this is only a temporary solution. In theory ALL y,c,C,q,Q of the component's outputs should be considered, and also diagonal ones.
   // however this temporary solution probably covers almost all use cases, so is likely good enough.
   for(var x = x0s; x < x1s; x++) {
+    if(opt_array && !include_x[x]) continue;
     if(y0s != y0 && connected2(x, y0s, 0)) addOutput(0, x, y0s, x1s - x - 1, x, true);
     if(y1s != y1 && connected2(x, y1s - 1, 2)) addOutput(2, x, y1s - 1, x - x0s, x, true);
   }
   for(var y = y0s; y < y1s; y++) {
+    if(opt_array && !include_y[y]) continue;
     if(x0s != x0 && connected2(x0s, y, 3)) addOutput(3, x0s, y, y - y0s, y, true);
     if(x1s != x1 && connected2(x1s - 1, y, 1)) addOutput(1, x1s - 1, y, y1s - y - 1, y, true);
   }
@@ -3792,22 +3809,24 @@ function Mux() {
 
   // init before inputs are resolved
   // returns true if ok, false if error
+  // array = of x,y coordinates
   this.init1 = function(array) {
     largeComponentBB(array, false, this);
     var x0 = this.x0;
     var y0 = this.y0;
     var x1 = this.x1;
     var y1 = this.y1;
+    this.array = array;
 
     this.parent = null; // the parent component for this Mux
 
-    for(var y = y0; y < y1; y++) {
-      for(var x = x0; x < x1; x++) {
-        var c = world[y][x];
-        if(c.circuitsymbol == 'M' || c.circuitsymbol == '#M') {
-          this.parent = c.components[0] || c.components[1];
-          break;
-        }
+    for(var i = 0; i < array.length; i++) {
+      var x = array[i][0];
+      var y = array[i][1];
+      var c = world[y][x];
+      if(c.circuitsymbol == 'M' || c.circuitsymbol == '#M') {
+        this.parent = c.components[0] || c.components[1];
+        break;
       }
       if(this.parent) break;
     }
@@ -3816,18 +3835,12 @@ function Mux() {
       this.setError('no parent component found');
       return false;
     }
-    for(var y = y0; y < y1; y++) {
-      for(var x = x0; x < x1; x++) {
-        var c = world[y][x];
-        //if(c.components[0] == this.parent) continue;
-        /*if(!c.components[0]) {
-          c.components[0] = this.parent;
-        } else {
-          c.components[0].parent = this.parent;
-        }*/
-        if(c.components[0]) c.components[0].parent = this.parent;
-        if(c.components[1]) c.components[1].parent = this.parent;
-      }
+    for(var i = 0; i < array.length; i++) {
+      var x = array[i][0];
+      var y = array[i][1];
+      var c = world[y][x];
+      if(c.components[0]) c.components[0].parent = this.parent;
+      if(c.components[1]) c.components[1].parent = this.parent;
     }
     this.parent.mux = this;
     this.parent.type = TYPE_MUX; // reason: it might be TYPE_UNKNOWN_DEVICE if it was parsed with #
@@ -3867,7 +3880,8 @@ function Mux() {
     var demux = false;
     var demuxdataside = -1;
 
-    if(io.nios) return null; // mixed input/output sides not supported
+    // commented out: they ARE supported, to allow having the select input be on the same side as the regular output for example
+    //if(io.nios) return null; // mixed input/output sides not supported
 
     // it's a demux if there is a side with less inputs than outputs
     for(var i = 0; i < 4; i++) {
@@ -4102,7 +4116,7 @@ function Mux() {
 
     if(!this.parent) return false;
 
-    var io = getIO(x0, y0, x1, y1, x0, y0, x1, y1, this.parent);
+    var io = getIO(x0, y0, x1, y1, x0, y0, x1, y1, this.parent, this.array);
     if(!io) { this.setError('getting io error'); return false; }
 
     var dirs = this.getDirs(io);
@@ -4787,7 +4801,7 @@ function Alu() {
         if(a < 0) {
           overflow = true;
         } else {
-          o = math.log2(a);
+          o = math.sqrt(a);
         }
       }
     } else if(op == 54) {
@@ -16344,13 +16358,16 @@ function parseLargeDevices() {
 
         // neighbors
         for(var i = 0; i < 4; i++) { // 0=N, 1=E, 2=S, 3=W
-          var x2 = x + ((i == 1) ? 1 : ((i == 3) ? -1 : 0));
-          var y2 = y + ((i == 0) ? -1 : ((i == 2) ? 1 : 0));
-          if(x2 < 0 || x2 >= w || y2 < 0 || y2 >= h) continue;
+          var wc2 = getNeighbor(x, y, i);
+          if(wc2 == null) continue;
+          var x2 = wc2.x;
+          var y2 = wc2.y;
+          var c2 = wc2.circuitsymbol;
+          var ce2 = wc2.circuitextra;
+
           if(used[y2][x2]) continue;
 
-          var c2 = world[y2][x2].circuitsymbol;
-          var ce2 = world[y2][x2].circuitextra;
+
 
           if(!largeDeviceConnected(c, c2)) continue;
 
@@ -17649,6 +17666,10 @@ function makeTocRoom(text, tocPos, tocType, tocDepth, codelen, outCoords) {
 
 var graphics_mode_debug_override = -1;
 
+var lastzoom_tw = parseInt(util.getLocalStorage('lastzoom_tw')) || -1;
+var lastzoom_th = parseInt(util.getLocalStorage('lastzoom_th')) || -1;
+var lastzoom_circuit = util.getLocalStorage('lastzoom_circuit') || '';
+
 function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction, opt_paused) {
   // for the very first parse, do NOT scroll up, it is handy if you have
   // a big edited circuit open and refresh the browser to still see the
@@ -17887,6 +17908,15 @@ function parseText2(text, opt_title, opt_registeredCircuit, opt_fragmentAction, 
   if(tw > mint && tw < t && tw * 2 >= t) t = tw;
 
   th = tw = t;
+
+  if(!!origtitle && origtitle == lastzoom_circuit && lastzoom_tw > 0 && lastzoom_th > 0) {
+    tw = lastzoom_tw;
+    th = lastzoom_th;
+    t = tw;
+  }
+  lastzoom_circuit = origtitle;
+  lastzoom_tw = tw;
+  lastzoom_th = th;
 
 
   logPerformance('initDivs start');

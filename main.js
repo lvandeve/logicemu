@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2020 Lode Vandevenne
+Copyright (c) 2018-2023 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -705,6 +705,12 @@ function createMenuUI() {
   util.makeElement('option', colorDropdown).innerText = 'custom';
   colorDropdown.selectedIndex = colorscheme;
 
+  var saveZoom = function() {
+    util.setLocalStorage(lastzoom_circuit || '', 'lastzoom_circuit');
+    util.setLocalStorage(lastzoom_tw || -1, 'lastzoom_tw');
+    util.setLocalStorage(lastzoom_th || -1, 'lastzoom_th');
+  };
+
   var zoomoutButton = util.makeUIElement('button', menuRow2El, 1);
   zoomoutButton.innerText = '-';
   zoomoutButton.title = 'Zoom out';
@@ -714,8 +720,11 @@ function createMenuUI() {
     th = Math.floor(th * 0.66);
     if(tw < 8) tw = 8;
     if(th < 8) th = 8;
+    lastzoom_tw = tw;
+    lastzoom_th = th;
     initDivs();
     render();
+    saveZoom();
   };
 
   var zoominButton = util.makeUIElement('button', menuRow2El, 1);
@@ -727,8 +736,11 @@ function createMenuUI() {
     th = Math.floor(th * 1.5);
     if(tw > 64) tw = 64;
     if(th > 64) th = 64;
+    lastzoom_tw = tw;
+    lastzoom_th = th;
     initDivs();
     render();
+    saveZoom();
   };
 
   util.makeUISpacer(16, menuRow2El);
@@ -1966,7 +1978,7 @@ var introText = `
 0"to you, not shared. Sharing has to be done manually, which you can do either"
 0"using the source code of a circuit or a base64 URL if it's small enough."
 
-0"LogicEmu. Copyright (C) 2018-2020 by Lode Vandevenne"`;
+0"LogicEmu. Copyright (C) 2018-2023 by Lode Vandevenne"`;
 
 var introTitle = 'Online Logic Simulator';
 
