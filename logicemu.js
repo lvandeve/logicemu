@@ -1641,7 +1641,6 @@ var USEAUTOPAUSE = true; // pause after LogicEmu was open in a browser tab for a
 
 var TWIDDLE_PROBABILITY = 0.1; // for update algorithm 3
 
-
 var USE_BRESENHAM = true; // if true, use bresenham for diagonal lines to ensure they are not blurry (not antialiased as it looks choppier instead of better here)
 
 
@@ -12115,12 +12114,12 @@ function RendererDrawer() {
       }
 
       // Update such that diagonal lines work as intended
-      x0b = Math.floor(x0 * (tw - 1));
+      // TODO: this and the hack below are resolution dependent and make things worse in some cases, disabled for now, but improve this. Test out arrow heads in all directions at various pixel resolutions.
+      /*x0b = Math.floor(x0 * (tw - 1));
       y0b = Math.floor(y0 * (th - 1));
       x1b = Math.floor(x1 * (tw - 1));
-      y1b = Math.floor(y1 * (th - 1));
-
-      if(x1 - x0 == y0 - y1) {
+      y1b = Math.floor(y1 * (th - 1));*/
+      /*if(x1 - x0 == y0 - y1) {
         // ugly hack: only do this fix for antidiagonals on the main diagonal for now, as it shifts the ones of '%' in less nice way compared to alignemt with its straight segments
         if(x0 == 1.0 - y0) {
           // ensure to preserve the 45 degree angle (the rounding may break antidiagonals)
@@ -12129,7 +12128,7 @@ function RendererDrawer() {
           x1b = Math.ceil(x1 * (tw - 1));
           y1b = Math.floor(y1 * (th - 1));
         }
-      }
+      }*/
 
       var dxb = Math.abs(x1b - x0b);
       var dyb = Math.abs(y1b - y0b);
@@ -12918,6 +12917,7 @@ function MultiCanvas(x, y, w, h, parent, initfun) {
     this.canvases[y2][x2].width = w2;
     this.canvases[y2][x2].height = h2;
     this.canvases[y2][x2].style.display = 'block';
+    this.canvases[y2][x2].className = 'pixelated'; // make low-resolution ones less of a blurry mess
     //this.canvases[y2][x2].style.border = '1px solid red'; // for debugging
     this.contexts[y2][x2] = this.canvases[y2][x2].getContext('2d');
     this.initfun(this.canvases[y2][x2], this.contexts[y2][x2]);
@@ -13158,6 +13158,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
     this.text0.style.fontSize = fs + 'px';
     this.text0.style.fontFamily = 'monospace';
     this.text0.style.zIndex = MAINZINDEX;
+    // verticalAlign and lineHeight both required to vertically center the text
+    this.text0.style.verticalAlign = 'middle';
+    this.text0.style.lineHeight = this.text0.style.height;
 
     if(this.text1) {
       this.text1.style.color = ONCOLOR;
@@ -13165,6 +13168,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       this.text1.style.fontSize = fs + 'px';
       this.text1.style.fontFamily = 'monospace';
       this.text1.style.zIndex = MAINZINDEX;
+      // verticalAlign and lineHeight both required to vertically center the text
+      this.text1.style.verticalAlign = 'middle';
+      this.text1.style.lineHeight = this.text1.style.height;
     }
 
     this.ctx0.strokeStyle = OFFCOLOR;

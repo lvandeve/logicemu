@@ -675,7 +675,7 @@ s-->K1 K1 K1 K1
  K1 K1 K1 K1 K1
 
 0"Heat: similar to fan but smaller radius:"
-0"Without inputs, the fan is, instead, a heat sensor."
+0"Without inputs, the heater is, instead, a heat sensor."
 
  K2 K2 K2 K2
 

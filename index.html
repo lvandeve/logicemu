@@ -5,6 +5,19 @@
 <meta charset="utf-8"/>
 <meta name="description" content="LogicEmu - Online Logic Simulator">
 <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+
+<style type="text/css">
+/* Chrome uses 'pixelated' while firefox uses 'crisp-edges' for having nearest-neighbor which
+we want for our pixel art upsampling. In firefox crisp-edges isn't even guaranteed
+to use nearest neighbor since it's allowed to use hqx and similar, but at least for now in
+practice it does.*/
+.pixelated {
+  image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor;
+  image-rendering: -moz-crisp-edges;
+}
+</style>
+
 </head>
 <body>
 <noscript>
