@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2023 Lode Vandevenne
+Copyright (c) 2018-2025 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -598,7 +598,7 @@ var LogicEmuMath = (function() {
     return a / b;
   };
 
-  // a modulo b, matching floored division (not matching truncated division, like the % operation does)
+  // a modulo b for integers, matching floored division (not matching truncated division, like the % operation does)
   var mod = function(a, b) {
     var negb = (b < 0);
     if(negb) b = -b;
@@ -610,6 +610,10 @@ var LogicEmuMath = (function() {
     return a;
   };
   result.mod = mod;
+
+  // a modulo b for floating point values, matching floored division (not matching truncated division, like the % operation does)
+  // this can actually just reuse the implementation of mod for now (The % operator on floats works like fmod)
+  result.fmod = mod;
 
   // in case BigInt is not supported, this function helps to support shifting up to 2**53 instead of just up to 2**31
   var rshift1 = supportbigint ? function(n) { return n >> n1; } : function(n) { return Math.floor(n / 2); };
@@ -4666,7 +4670,7 @@ function Alu() {
       if(b == 0) {
         overflow = true;
       } else {
-        o = a % b;
+        o = a % b; // not using math.mod, since it's remainder of TRUNCATING division, so different behavior on negative signs
       }
     } else if(op == 21) {
       // floor division (rounds towards -Infinity)
@@ -5312,7 +5316,7 @@ function Alu() {
         overflow = f[1];
       }
     } else if(op == 105) {
-      // float-only function not supported by int (lambertw)
+      // float-only function not supported by int (loggamma)
     } else if(op == 106) {
       // float-only function not supported by int (lambertw)
     } else if(op == 107) {
@@ -5523,19 +5527,59 @@ function Alu() {
     } else if(op == 16) {
       o = a + b;
       if(miscin) o++;
+      if(this.numc) { // optional third input to modulo the result (intended for integers but also supported for floats for consistency)
+        if(c == 0) {
+          overflow = true;
+          o = 0;
+        } else {
+          o = math.fmod(o, c);
+        }
+      }
     } else if(op == 17) {
       o = a - b;
       if(miscin) o--;
+      if(this.numc) { // optional third input to modulo the result (intended for integers but also supported for floats for consistency)
+        if(c == 0) {
+          overflow = true;
+          o = 0;
+        } else {
+          o = math.fmod(o, c);
+        }
+      }
     } else if(op == 18) {
       o = a * b;
+      if(this.numc) { // optional third input to modulo the result (intended for integers but also supported for floats for consistency)
+        if(c == 0) {
+          overflow = true;
+          o = 0;
+        } else {
+          o = math.fmod(o, c);
+        }
+      }
     } else if(op == 19) {
       o = a / b;
+      if(this.numc) { // optional third input to modulo the result (intended for integers but also supported for floats for consistency)
+        if(c == 0) {
+          overflow = true;
+          o = 0;
+        } else {
+          o = math.fmod(o, c);
+        }
+      }
     } else if(op == 20) {
       // fmod
-      o = a % b;
+      o = a % b; // not using math.fmod: this intentionally has different sign behavior
     } else if(op == 21) {
       // floordiv actually designed for int, but simply do as the name imples
       o = Math.floor(a / b);
+      if(this.numc) { // optional third input to modulo the result (intended for integers but also supported for floats for consistency)
+        if(c == 0) {
+          overflow = true;
+          o = 0;
+        } else {
+          o %= c;
+        }
+      }
     } else if(op == 22) {
       o = (a - b * Math.floor(a / b));
     } else if(op == 23) {
@@ -5590,6 +5634,14 @@ function Alu() {
       o = 0; // right rotating shift not supported for float
     } else if(op == 48) {
       o = this.numb ? Math.pow(a, b) : (a * a);
+      if(this.numc) { // optional third input to modulo the result (intended for integers but also supported for floats for consistency)
+        if(c == 0) {
+          overflow = true;
+          o = 0;
+        } else {
+          o %= c;
+        }
+      }
     } else if(op == 49) {
       o = this.numb ? (Math.log(a) / Math.log(b)) : (Math.log(a) / Math.log(2));
     } else if(op == 50) {
