@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2023 Lode Vandevenne
+Copyright (c) 2018-2025 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -471,10 +471,27 @@ S-->y-->l
        l   l
        ^   ^                    l l
        |   |                    ^ ^
-  l<-i12<i12<-sI24            l<i24#<s
-     ^ ^ ^ ^                    ^^^^
-     | | | |                    ssss
-     s s s s
+  l<-i12<i12<-sI24            l<i24##<s
+     ^ ^ ^ ^                    ^^ ^^
+     | | | |                    ss ss
+     s s s s                   "22 11"
+
+0"Chips can be rotated. This must be indicated by also rotating the relative"
+0"position of the number compared to the i. The digits themselves must still"
+0"read the same value from left to right or from top to bottom no matter which"
+0"side they're rotated to. Mirroring chips is also supported but only automatically"
+0"detected, does not support indicating it with the number position and cannot be"
+0"done if the input and output shapes are symmetrical."
+
+  s          s
+  v  :    :  v
+  #<s1    1s>#
+l<#<s1    1s>#>l
+  2          2
+  4<s2    2s>4
+l<i<s2    2s>i>l
+  v  :    :  v
+  l          l
 
 
 0"# Special devices"
@@ -823,9 +840,10 @@ s-->K20        #
 0"RGB LEDs with less or more than 3 inputs also exist and use various"
 0"color palettes:"
 
-D    D###    D########
-^    ^^^^    ^^^^^^^^^
-s    ssss    sssssssss
+  D    D###    D#####    D########
+  ^    ^^^^    ^^^^^^    ^^^^^^^^^
+  s    ssss    ssssss    sssssssss
+      "IRGB    RRGGBB    RRRGGGBBB"
 
 0"With more input groups as configured below and at least a dot (c) or fill (q)"
 0"input, D is the Dot Matrix Display. An optional enable 'y' input is also"
@@ -8667,6 +8685,29 @@ Al  ||||||||v        Al  #   l     #  lG   Gs>#    :  #       /#    l    #;     
                                                  X   X                               <   >
                                                 l     l                             l     l
                                                "G     E"                           "C     A"
+
+
+
+
+0"This tests 4 rotations and 4 mirrored rotations of a chip. Each time, the same corresponding switch must affect the same corresponding single or multiple LEDs."
+0"Some LEDs are initially on, those should always be on the same corresponding side"
+
+
+      "1   0                     10               432         0 11            2 33 444             234                 11 0           444 33 2            01"
+       s   s                     ss               sss         l ll            l ll lll             sss                 ll l           lll ll l            ss
+  :    |   |          :      :   vv   :   :       vvv      :  ^ ^^            ^ ^^ ^^^  :          vvv       :         ^^ ^  :     :  ^^^ ^^ ^        :   vv   :
+  2s---+---+-------.>l2      2s>i88#>l2   1l<#######i  :   4l<####         :  ########>l0       :  i#######>l1         ####>l4     0l<########  :     2l<#88i<s2
+       |   |I88              3s>####      1l<#######8<s1   4l<####         0s>8#######          1s>8#######>l1         ####>l4        #######8<s0        ####<s3
+  3s---+---+-------.>l3      4s>####>l3      #######8<s0   4l<####         1s>8#######>l1       0s>8#######            ####>l4     1l<#######8<s1     3l<####<s4
+       v   v       .>l3      :  ####>l3   0l<########  :      ####         :  i#######>l1       :  ########>l0         ####        1l<#######i  :     3l<####  :
+       O   O                    ####      :  vvv vv v      3l<####  :         ^^^       :          v vv vvv  :      :  ####>l3     :       ^^^           ####
+  4s---+---+-------.>l4         ####>l4      lll ll l      3l<####<s4         sss                  l ll lll         4s>####>l3             sss        4l<####
+  :    |   |       .>l4         ####>l4     "444 33 2"        ####<s3        "234"                "2 33 444"        3s>####               "432"       4l<####
+       |   |       .>l4         ####>l4                    2l<#88i<s2                                               2s>i88#>l2                        4l<####
+       ..  |          :         vv v  :                    :   ^^   :                                               :   ^^   :                        :  v vv
+       vv  v                    ll l                           ss                                                       ss                               l ll
+       ll  l                   "11 0"                         "01"                                                     "10"                             "0 11"
+      "11  0"
 
 
 0"RENDER:text"

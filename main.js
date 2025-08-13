@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2023 Lode Vandevenne
+Copyright (c) 2018-2025 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +28,6 @@ Main program js file
 This has been tested to work in Chrome and Firefox, and hopefully works in other browsers too.
 */
 
-
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 
 
 ////////////////////////////////////////////////////////////////////////

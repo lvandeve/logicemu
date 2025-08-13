@@ -1811,8 +1811,8 @@ function DefSub() {
   this.errormessage = null;
   this.externalinputs = []; // filled in by parseICTemplates, array of [x, y] pairs
   this.chipdir = -1;
-  //this.inputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num inputs for N, E, S, W, NE, SE, SW, NW
-  //this.outputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num outputs for N, E, S, W, NE, SE, SW, NW
+  this.inputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num inputs for N, E, S, W, NE, SE, SW, NW
+  this.outputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num outputs for N, E, S, W, NE, SE, SW, NW
 
   this.markError = function(message) {
     for(var i = 0; i < this.components.length; i++) {
@@ -1859,6 +1859,7 @@ function DefSub() {
         else if(x > 0 && y > 0 && world[y - 1][x - 1].circuitextra == 2 && (world[y - 1][x - 1].circuitsymbol == '>' || world[y - 1][x - 1].circuitsymbol == 'v')) dir = 7;
         if(dir >= 0) {
           outputs.push([newindex, dir, x, y]);
+          this.outputcounts[dir]++;
         }
       }
     }
@@ -1919,6 +1920,7 @@ function DefSub() {
       var tindex = this.translateindex[v.index];
       if(dir >= 0) {
         inputs.push([tindex, dir, x0, y0]);
+        this.inputcounts[dir]++;
       }
     }
 
@@ -1969,8 +1971,10 @@ function CallSub(id) {
   this.errormessage = null;
   this.subsubs = [];
   this.chipdir = -1;
-  //this.inputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num inputs for N, E, S, W, NE, SE, SW, NW
-  //this.outputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num outputs for N, E, S, W, NE, SE, SW, NW
+  this.chiphmirror = false;
+  this.chipvmirror = false;
+  this.inputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num inputs for N, E, S, W, NE, SE, SW, NW
+  this.outputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num outputs for N, E, S, W, NE, SE, SW, NW
 
   this.markError = function(message) {
     for(var i = 0; i < this.wcomponents.length; i++) {
@@ -2263,6 +2267,8 @@ function CallSub(id) {
         callsub.subindex = v.callsub.subindex;
         callsub.cells = v.callsub.cells;
         callsub.chipdir = v.callsub.chipdir;
+        callsub.chiphmirror = v.callsub.chiphmirror;
+        callsub.chipvmirror = v.callsub.chipvmirror;
         if(!callsub.init(this)) {
           return false;
         }
@@ -2319,9 +2325,11 @@ function CallSub(id) {
               return false;
             }
             inputs.push([component.inputs[k], dir, x2, y2, component.inputs_negated[k]]);
+            this.inputcounts[dir]++;
           }
           if(connected2(x, y, j)) {
             outputs.push([component, j, x, y]);
+            this.outputcounts[j]++;
           }
         }
       }
@@ -2337,7 +2345,44 @@ function CallSub(id) {
     // chipdir -1 means same as template.
     if(this.chipdir >= 0) dirdiff = ((this.defsub.chipdir - this.chipdir) & 3);
 
+    // auto-detect whether the chip is mirrored. This is unlike chipdir, which is not autodetected but depends on the position of the chip number vs the letter I/i of the template/instance
+    // why auto detect this and not the other: the chipdir feature is older and explicitely marking the direction can prevent errors and also allows rotating chips that would have same amount of inputs and outputs on different sides, which can't be autodetected
+    // why the mirroring is auto detected is because the location of letter vs i/I can only mark 4 directions, not also the mirrorings. But the detection is made very strict and only works in non-ambiguous cases where not mirroring would cause an input or output mismatch issue
+    if(this.inputcounts[0] != defsub.inputcounts[(0 + dirdiff) & 3] || this.inputcounts[1] != defsub.inputcounts[(1 + dirdiff) & 3] || this.inputcounts[2] != defsub.inputcounts[(2 + dirdiff) & 3] || this.inputcounts[3] != defsub.inputcounts[(3 + dirdiff) & 3] ||
+      this.outputcounts[0] != defsub.outputcounts[(0 + dirdiff) & 3] || this.outputcounts[1] != defsub.outputcounts[(1 + dirdiff) & 3] || this.outputcounts[2] != defsub.outputcounts[(2 + dirdiff) & 3] || this.outputcounts[3] != defsub.outputcounts[(3 + dirdiff) & 3]) {
+
+      if(this.inputcounts[0] == defsub.inputcounts[(0 + dirdiff) & 3] && this.inputcounts[1] == defsub.inputcounts[(1 + dirdiff + 2) & 3] && this.inputcounts[2] == defsub.inputcounts[(2 + dirdiff) & 3] && this.inputcounts[3] == defsub.inputcounts[(3 + dirdiff + 2) & 3] &&
+        this.outputcounts[0] == defsub.outputcounts[(0 + dirdiff) & 3] && this.outputcounts[1] == defsub.outputcounts[(1 + dirdiff + 2) & 3] && this.outputcounts[2] == defsub.outputcounts[(2 + dirdiff) & 3] && this.outputcounts[3] == defsub.outputcounts[(3 + dirdiff + 2) & 3]) {
+        this.chiphmirror = true;
+      }
+      if(this.inputcounts[0] == defsub.inputcounts[(0 + dirdiff + 2) & 3] && this.inputcounts[1] == defsub.inputcounts[(1 + dirdiff) & 3] && this.inputcounts[2] == defsub.inputcounts[(2 + dirdiff + 2) & 3] && this.inputcounts[3] == defsub.inputcounts[(3 + dirdiff) & 3] &&
+        this.outputcounts[0] == defsub.outputcounts[(0 + dirdiff + 2) & 3] && this.outputcounts[1] == defsub.outputcounts[(1 + dirdiff) & 3] && this.outputcounts[2] == defsub.outputcounts[(2 + dirdiff + 2) & 3] && this.outputcounts[3] == defsub.outputcounts[(3 + dirdiff) & 3]) {
+        this.chipvmirror = true;
+      }
+    }
+
+    var chiphmirror = this.chiphmirror;
+    var chipvmirror = this.chipvmirror;
+
+
     var sortfun = function(a, b) {
+      if(chiphmirror) {
+        a = util.cloneArray(a);
+        b = util.cloneArray(b);
+        if(a[1] == 1 || a[1] == 3) a[1] = 4 - a[1];
+        if(b[1] == 1 || b[1] == 3) b[1] = 4 - b[1];
+        a[2] = -a[2];
+        b[2] = -b[2];
+      }
+      if(chipvmirror) {
+        a = util.cloneArray(a);
+        b = util.cloneArray(b);
+        if(a[1] == 0 || a[1] == 2) a[1] = 2 - a[1];
+        if(b[1] == 0 || b[1] == 2) b[1] = 2 - b[1];
+        a[3] = -a[3];
+        b[3] = -b[3];
+      }
+
       if(a[1] != b[1]) {
         // virtual dirs (based on chip rotation vs template)
         var avdir = (a[1] & 4) | ((a[1] + dirdiff) & 3);
@@ -7179,7 +7224,7 @@ function DotMatrix() {
     }
     pos += this.numc;
 
-    // the first color of the palette, the clear color. differnt numc gives different palette
+    // the first color of the palette, the clear color. different numc gives different palette
     var color0 = 0;
     if(this.numc == 0) color0 = 34;
     else if(this.numc == 1) color0 = 0;

@@ -1,7 +1,7 @@
 /*
 LogicEmu
 
-Copyright (c) 2018-2023 Lode Vandevenne
+Copyright (c) 2018-2025 Lode Vandevenne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -4138,7 +4138,7 @@ s....>M.. ..+..>M..
   ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ . ^ ^ .
   . . ..+.+...+.+...+.+...+.+...+.+...+.+...+.+....s"2"
   . .   . .   . .   . .   . .   . .   . .   . .
-  . ....+.+.... ....+.+.... ....+.+.... ....+.f
+  . ....+.+.... ....+.+.... ....+.+.... f   . f
   .     . .   .     . .   .     . .   .     .
   .     . ....+...... ....+...... ....+......
   .     .     .     .     .     .     .     .
