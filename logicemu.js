@@ -1810,6 +1810,7 @@ function DefSub() {
   this.error = false;
   this.errormessage = null;
   this.externalinputs = []; // filled in by parseICTemplates, array of [x, y] pairs
+  this.chipdir = -1;
   //this.inputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num inputs for N, E, S, W, NE, SE, SW, NW
   //this.outputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num outputs for N, E, S, W, NE, SE, SW, NW
 
@@ -1967,6 +1968,7 @@ function CallSub(id) {
   this.error = false;
   this.errormessage = null;
   this.subsubs = [];
+  this.chipdir = -1;
   //this.inputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num inputs for N, E, S, W, NE, SE, SW, NW
   //this.outputcounts = [0, 0, 0, 0, 0, 0, 0, 0]; // num outputs for N, E, S, W, NE, SE, SW, NW
 
@@ -2260,6 +2262,7 @@ function CallSub(id) {
         component.callsub = callsub;
         callsub.subindex = v.callsub.subindex;
         callsub.cells = v.callsub.cells;
+        callsub.chipdir = v.callsub.chipdir;
         if(!callsub.init(this)) {
           return false;
         }
