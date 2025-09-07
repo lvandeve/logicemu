@@ -2294,6 +2294,7 @@ function CallSub(id) {
     for(var i = 0; i < this.cells.length; i++) {
       var cell = world[this.cells[i][1]][this.cells[i][0]];
       // note: j is the z index of the cell, which is used for the direction in the case of ICs
+      // the components this is looping through is those of the world cell, but for IC's with directional outputs there are duplicated component objects all representing this IC but for a different direction/z value (the one at 0 is always present regardless of direction, the others depending on what directions are used)
       for(var j = 0; j < cell.components.length; j++) {
         var component = cell.components[j];
         if(parent && component) {
@@ -10611,12 +10612,12 @@ function Cell() {
   this.metasymbol = ''; // like symbol, but comments get all replaced by '"' (use this to check for comment, or for number digits, instead of circuitsymbol)
   this.labelsymbol = null; // used for only very few cell types, for extra text that couldn't be stored in displaysymbol since displaysymbol will render according to actual symbol meaning (e.g. switch becomes green)
   // extra information in addition to circuitsymbol in some cases.
-  // For ^>v<m]w[ inputs: 0 = input reacting to devices on sides too, 1 = input not reacting to devices on sides, 2 = diagonal crossing input (diaginput).
+  // For ^>v<m]w[ inputs: 0 = standard behavior, can take an input from any side, 1 = its input comes from its back side and it acts as a wire crossing from the other sides, 2 = diagonal crossing input (diaginput), 3 = does not interact with sides at all
   // For 'g': if 1, is number (so connected to real g's, unlike g's which don't normally interact)
   // For antennas: if 0, antenna behaves similar as a 'g' but connecting to one matching antenna rather than all matching numbered global wires. If 1, antenna acts as a neighbor-warp, which allows to make wrap-around circuits; if 2, similar to 0 but won't connect to something sandwiched in between short hop, like the x in (x)
   this.circuitextra = 0;
   this.skipparsing = false; // true for things that can be safely skipped for circuit-related parsing (false for any circuit as well as numbers)
-  this.components = [null, null, null, null, null, null, null, null]; // components containing this cell (normally the first is used, but can be 2 for +, /, \, For TYPE_IC, up to 8 can be used, the index matching the output dir)
+  this.components = [null, null, null, null, null, null, null, null]; // components containing this cell (normally the first is used, but can be 2 for +, /, \, For TYPE_IC, up to 8 can be used, the index matching the output dir). Computed in parseComponents
   this.comment = false;
   this.toclink = ''; // only if this is a 'toc' with single link id
   this.x = -1;
@@ -12113,6 +12114,9 @@ function sameDevice(x, y, dir) {
   return false;
 }
 
+var CROSSINGGAP = 0.2; // size of rendering the gap between wires on a wire crossing
+var CROSSINGGAPD = CROSSINGGAP / 1.3; // for diagonals
+
 /** @constructor */
 function RendererDrawer() {
   this.tx = 0;
@@ -12332,9 +12336,6 @@ function RendererDrawer() {
     ctx.stroke();
   };
 
-  this.drawAntiArrowCore_ = function(ctx, x0, y0, x1, y1, opt_r) {
-  };
-
   // this one has a circle instead of arrow head (for negated inputs)
   this.drawAntiArrow_ = function(ctx, oppositeColor, x0, y0, x1, y1, opt_r) {
     var c0 = ctx.strokeStyle;
@@ -12510,115 +12511,136 @@ function RendererDrawer() {
     if(connected2g(cell.x, cell.y, 4) || connected2g(cell.x, cell.y, 6)) { code |= 4; num++; }
     if(connected2g(cell.x, cell.y, 5) || connected2g(cell.x, cell.y, 7)) { code |= 8; num++; }
 
-    ctx.beginPath();
-    var full = 1; // which one gets the full length
-    if(code & 2) {
-      if(full) {
-        this.drawLineCore_(ctx, 0, 0.5, 1, 0.5);
-        full = 0;
-      } else {
-        var shift = 0.2;
-        this.drawLineCore_(ctx, 0, 0.5, 0.5 - shift + 0.1, 0.5);
-        this.drawLineCore_(ctx, 0.5 + shift, 0.5, 1, 0.5);
-      }
-    }
-    if(code & 1) {
-      if(full) {
-        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
-        full = 0;
-      } else {
-        var shift = 0.2;
-        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-        this.drawLineCore_(ctx, 0.5, 0.5 + shift, 0.5, 1);
-      }
-    }
-    if(code & 4) {
-      if(full) {
-        this.drawLineCore_(ctx, 0, 1, 1, 0);
-        full = 0;
-      } else {
-        this.drawLineCore_(ctx, 0, 1, 0.4, 0.6);
-        this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
-      }
-    }
-    if(code & 8) {
-      if(full) {
-        this.drawLineCore_(ctx, 0, 0, 1, 1);
-        full = 0;
-      } else {
-        this.drawLineCore_(ctx, 0, 0, 0.4, 0.4);
-        this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
-      }
-    }
-    ctx.stroke();
+    this.drawCrossing2_(ctx, code, undefined, undefined, undefined);
 
     return [num, code];
   };
 
   // specifically made for dynamic rendering of the 8-way '*' crossing. Value and code use different bits.
+  // if value is undefined, doesn't set any colors on the context
   this.drawCrossing2_ = function(ctx, code, value, color0, color1) {
-    var full = 1; // which one gets the full length
 
-    if(code & 2) {
-      ctx.strokeStyle = ctx.fillStyle = ((value & 1) ? color1 : color0);
-      ctx.beginPath();
-      if(full == 2) {
-        this.drawLineCore_(ctx, 0, 0.5, 1, 0.5);
-        full = 0;
-      } else {
-        var shift = 0.2;
-        this.drawLineCore_(ctx, 0, 0.5, 0.5 - shift + 0.1, 0.5);
-        this.drawLineCore_(ctx, 0.5 + shift, 0.5, 1, 0.5);
-      }
-      ctx.stroke();
-    }
+    // which one gets the full length: first priority SW (1), second priority NE (0), third priority / (2), fourth priority \ (3).
+    var full = (code & 2) ? 1 : ((code & 1) ? 0 : ((code & 4) ? 2 : 3));
+    var gap = CROSSINGGAP;
+    var gapd = CROSSINGGAPD; // for diagonal
 
     if(code & 1) {
-      ctx.strokeStyle = ctx.fillStyle = ((value & 2) ? color1 : color0);
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = ((value & 2) ? color1 : color0);
       ctx.beginPath();
-      if(full) {
+      if(full == 0) {
         this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
-        full = 0;
       } else {
-        var shift = 0.2;
-        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-        this.drawLineCore_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+        this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+        this.drawLineCore_(ctx, 0.5, 0.5 + gap, 0.5, 1);
       }
       ctx.stroke();
     }
 
-    if(code & 4) {
-      ctx.strokeStyle = ctx.fillStyle = ((value & 8) ? color1 : color0);
+    if(code & 2) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = ((value & 1) ? color1 : color0);
       ctx.beginPath();
-      if(full == 4) {
-        this.drawLineCore_(ctx, 0, 1, 1, 0);
-        full = 0;
+      if(full == 1) {
+        this.drawLineCore_(ctx, 0, 0.5, 1, 0.5);
       } else {
-        this.drawLineCore_(ctx, 0, 1, 0.4, 0.6);
-        this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
+        this.drawLineCore_(ctx, 0, 0.5, 0.5 - gap, 0.5);
+        this.drawLineCore_(ctx, 0.5 + gap, 0.5, 1, 0.5);
+      }
+      ctx.stroke();
+    }
+
+
+    if(code & 4) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = ((value & 8) ? color1 : color0);
+      ctx.beginPath();
+      if(full == 2) {
+        this.drawLineCore_(ctx, 0, 1, 1, 0);
+      } else {
+        this.drawLineCore_(ctx, 0, 1, 0.5 - gapd, 0.5 + gapd);
+        this.drawLineCore_(ctx, 0.5 + gapd, 0.5 - gapd, 1, 0);
       }
       ctx.stroke();
     }
 
     if(code & 8) {
-      ctx.strokeStyle = ctx.fillStyle = ((value & 4) ? color1 : color0);
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = ((value & 4) ? color1 : color0);
       ctx.beginPath();
-      if(full == 8) {
+      if(full == 3) {
         this.drawLineCore_(ctx, 0, 0, 1, 1);
-        full = 0;
       } else {
-        this.drawLineCore_(ctx, 0, 0, 0.4, 0.4);
-        this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
+        this.drawLineCore_(ctx, 0, 0, 0.5 - gapd, 0.5 - gapd);
+        this.drawLineCore_(ctx, 0.5 + gapd, 0.5 + gapd, 1, 1);
       }
       ctx.stroke();
     }
   };
 
-  // Designed for the wire crossing input 'X' and 'Y' to draw the non-arrow parts. Returns similar value as this.drawCrossing_, but with 8 possible separate directions for the num and code.
+  // Helper for drawCrossingDirectionalInput_, draws only the non-arrow part
+  // dir = 0123 for NESW
+  // This differs from drawCrossing_crossingInput_ in that it doesn't draw side-connections when they're not connected on both sides, specifically for directional crossing inputs
+  this.drawCrossing_directionalInput_ = function(cell, ctx, dir) {
+    var num = 1; // arrow tail always drawn by this
+    var code = 1 << ((dir + 2) & 3);
+
+    if(dir != 0 && dir != 2 && connected2g(cell.x, cell.y, 0) && connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { num++;  code |= (1 | 4); }
+    if(dir != 1 && dir != 3 && connected2g(cell.x, cell.y, 1) && connected2g(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { num++;  code |= (2 | 8); }
+    if(connected2g(cell.x, cell.y, 4) && connected2g(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { num++;  code |= (16 | 64); }
+    if(connected2g(cell.x, cell.y, 5) && connected2g(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { num++;  code |= (32 | 128); }
+
+    this.drawCrossing_crossingInput2_(ctx, code, undefined, undefined, undefined);
+
+    return [num, code];
+  };
+
+  // Designed circuitextra == 1 of directional inputs (^>v< m]w[)
+  // Draws the arrow and the crossing part
+  // dir = 0123 for NESW
+  // negated = use antiarrow, is negated input
+  // returns [num, code, code2]: number of non-arrow lines drawn, and code and code2 for dynamicdraw
+  // the number of non-arrow lines drawn is guaranteed to be 1 if there are no other sides, so if it's a simple case that doesn't need dynamic draw
+  // oppositeColor = used partially for negated inputs only
+  this.drawCrossingDirectionalInput_ = function(cell, ctx, dir, negated, opt_oppositeColor) {
+    var r = drawer.drawCrossing_directionalInput_(cell, ctx, dir);
+    var code = r[1];
+
+    // which one gets the full length: first priority SW (1), second priority NE (0), third priority / (2), fourth priority \ (3).
+    var full = ((code & 2) || (code & 8)) ? 1 : (((code & 1) || (code & 4)) ? 0 : (((code & 16) || (code & 64)) ? 2 : 3));
+    var gap = CROSSINGGAP;
+
+    var code2 = 0;
+    if(dir == 0) {
+      if(negated) drawer.drawAntiArrow_(ctx, opt_oppositeColor, 0.5, 0.5, 0.5, 0);
+      else drawer.drawArrow_(ctx, 0.5, 0.5 - (full == 0 ? 0 : gap), 0.5, 0);
+      code2 = 1;
+    }
+    if(dir == 1) {
+      if(negated) drawer.drawAntiArrow_(ctx, opt_oppositeColor, 0.5, 0.5, 1, 0.5);
+      else drawer.drawArrow_(ctx, 0.5 + (full == 1 ? 0 : gap), 0.5, 1, 0.5);
+      code2 = 2;
+    }
+    if(dir == 2) {
+      if(negated) drawer.drawAntiArrow_(ctx, opt_oppositeColor, 0.5, 0.5, 0.5, 1);
+      else drawer.drawArrow_(ctx, 0.5, 0.5 + (full == 0 ? 0 : gap), 0.5, 1);
+      code2 = 4;
+    }
+    if(dir == 3) {
+      if(negated) drawer.drawAntiArrow_(ctx, opt_oppositeColor, 0.5, 0.5, 0, 0.5);
+      else drawer.drawArrow_(ctx, 0.5 - (full == 1 ? 0 : gap), 0.5, 0, 0.5);
+      code2 = 8;
+    }
+
+    if(negated) code2 <<= 8;
+
+
+    return [r[0], code, code2];
+  };
+
+
+
+  // Designed for the wire crossing input 'X' and 'Y', and directional inputs when they acts as crossing, to draw the non-arrow parts. Returns similar value as this.drawCrossing_, but with 8 possible separate directions for the num and code.
   this.drawCrossing_crossingInput_ = function(cell, ctx) {
     var num = 0;
     var code = 0;
-    var gap = 0.1;
     if(connected2g(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { num++;  code |= 1; }
     if(connected2g(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { num++;  code |= 2; }
     if(connected2g(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { num++;  code |= 4; }
@@ -12628,141 +12650,135 @@ function RendererDrawer() {
     if(connected2g(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { num++; code |= 64; }
     if(connected2g(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { num++; code |= 128; }
 
-    ctx.beginPath();
-    var gap = 0.1;
-    var full = 1; // which one gets the full length
-    if((code & 2) || (code & 8)) {
-      if(full) {
-        if(code & 2) this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5);
-        if(code & 8) this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5);
-        full = 0;
-      } else {
-        if(code & 2) this.drawLineCore_(ctx, 0.5 + gap, 0.5, 1, 0.5);
-        if(code & 8) this.drawLineCore_(ctx, 0, 0.5, 0.5 - gap, 0.5);
-      }
-    }
-    if((code & 1) || (code & 4)) {
-      if(full) {
-        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
-        if(code & 1) this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5);
-        if(code & 4) this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1);
-        full = 0;
-      } else {
-        if(code & 1) this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - gap);
-        if(code & 4) this.drawLineCore_(ctx, 0.5, 0.5 + gap, 0.5, 1);
-      }
-    }
-    if((code & 16) || (code & 64)) {
-      if(full) {
-        if(code & 16) this.drawLineCore_(ctx, 0.5, 0.5, 1, 0);
-        if(code & 64) this.drawLineCore_(ctx, 0.5, 0.5, 0, 1);
-        full = 0;
-      } else {
-        if(code & 16) this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
-        if(code & 64) this.drawLineCore_(ctx, 0.4, 0.6, 0, 1);
-      }
-    }
-    if((code & 32) || (code & 128)) {
-      if(full) {
-        if(code & 32) this.drawLineCore_(ctx, 0.5, 0.5, 1, 1);
-        if(code & 128) this.drawLineCore_(ctx, 0.5, 0.5, 0, 0);
-        full = 0;
-      } else {
-        if(code & 32) this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
-        if(code & 128) this.drawLineCore_(ctx, 0.4, 0.4, 0, 0);
-      }
-    }
-    ctx.stroke();
+    this.drawCrossing_crossingInput2_(ctx, code, undefined, undefined, undefined);
 
     return [num, code];
   };
 
-  // The version for dynamicdraw
+  // The version for dynamicdraw, if value is set to bitmask of which direction are on/off, or can be used for static drawing if value is undefined
+  // if value is undefined, doesn't set any colors on the context but uses the existing ctx styles
+  // only draws the non-arrow part
   this.drawCrossing_crossingInput2_ = function(ctx, code, value, color0, color1) {
-    var gap = 0.1;
-    var full = 1; // which one gets the full length
-    if((code & 2) || (code & 8)) {
-      ctx.strokeStyle = ctx.fillStyle = ((value & 1) ? color1 : color0);
-      ctx.beginPath();
-      if(full) {
-        if(code & 2) this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5);
-        if(code & 8) this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5);
-        full = 0;
-      } else {
-        if(code & 2) this.drawLineCore_(ctx, 0.5 + gap, 0.5, 1, 0.5);
-        if(code & 8) this.drawLineCore_(ctx, 0, 0.5, 0.5 - gap, 0.5);
-      }
-      ctx.stroke();
-    }
+    var gap = CROSSINGGAP;
+    var gapd = CROSSINGGAPD; // for diagonal
+
+    // which one gets the full length: first priority SW (1), second priority NE (0), third priority / (2), fourth priority \ (3).
+    var full = ((code & 2) || (code & 8)) ? 1 : (((code & 1) || (code & 4)) ? 0 : (((code & 16) || (code & 64)) ? 2 : 3));
+
     if((code & 1) || (code & 4)) {
-      ctx.strokeStyle = ctx.fillStyle = ((value & 2) ? color1 : color0);
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = ((value & 2) ? color1 : color0);
       ctx.beginPath();
-      if(full) {
-        this.drawLineCore_(ctx, 0.5, 0, 0.5, 1);
+      if(full == 0) {
         if(code & 1) this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5);
         if(code & 4) this.drawLineCore_(ctx, 0.5, 0.5, 0.5, 1);
-        full = 0;
       } else {
         if(code & 1) this.drawLineCore_(ctx, 0.5, 0, 0.5, 0.5 - gap);
         if(code & 4) this.drawLineCore_(ctx, 0.5, 0.5 + gap, 0.5, 1);
       }
       ctx.stroke();
     }
-    if((code & 16) || (code & 64)) {
-      ctx.strokeStyle = ctx.fillStyle = ((value & 8) ? color1 : color0);
+    if((code & 2) || (code & 8)) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = ((value & 1) ? color1 : color0);
       ctx.beginPath();
-      if(full) {
+      if(full == 1) {
+        if(code & 2) this.drawLineCore_(ctx, 0.5, 0.5, 1, 0.5);
+        if(code & 8) this.drawLineCore_(ctx, 0, 0.5, 0.5, 0.5);
+      } else {
+        if(code & 2) this.drawLineCore_(ctx, 0.5 + gap, 0.5, 1, 0.5);
+        if(code & 8) this.drawLineCore_(ctx, 0, 0.5, 0.5 - gap, 0.5);
+      }
+      ctx.stroke();
+    }
+    if((code & 16) || (code & 64)) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = ((value & 8) ? color1 : color0);
+      ctx.beginPath();
+      if(full == 2) {
         if(code & 16) this.drawLineCore_(ctx, 0.5, 0.5, 1, 0);
         if(code & 64) this.drawLineCore_(ctx, 0.5, 0.5, 0, 1);
-        full = 0;
       } else {
-        if(code & 16) this.drawLineCore_(ctx, 0.6, 0.4, 1, 0);
-        if(code & 64) this.drawLineCore_(ctx, 0.4, 0.6, 0, 1);
+        if(code & 16) this.drawLineCore_(ctx, 0.5 + gapd, 0.5 - gapd, 1, 0);
+        if(code & 64) this.drawLineCore_(ctx, 0.5 - gapd, 0.5 + gapd, 0, 1);
       }
       ctx.stroke();
     }
     if((code & 32) || (code & 128)) {
-      ctx.strokeStyle = ctx.fillStyle = ((value & 4) ? color1 : color0);
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = ((value & 4) ? color1 : color0);
       ctx.beginPath();
-      if(full) {
+      if(full == 3) {
         if(code & 32) this.drawLineCore_(ctx, 0.5, 0.5, 1, 1);
         if(code & 128) this.drawLineCore_(ctx, 0.5, 0.5, 0, 0);
-        full = 0;
       } else {
-        if(code & 32) this.drawLineCore_(ctx, 0.6, 0.6, 1, 1);
-        if(code & 128) this.drawLineCore_(ctx, 0.4, 0.4, 0, 0);
+        if(code & 32) this.drawLineCore_(ctx, 0.5 + gapd, 0.5 + gapd, 1, 1);
+        if(code & 128) this.drawLineCore_(ctx, 0.5 - gapd, 0.5 - gapd, 0, 0);
       }
       ctx.stroke();
     }
 
   };
 
+  // returns: amount of directions drawn (up to 4, 2 straight and 2 diagonals: - | / \), code for which arrow-tails were drawn, code for arrowheads drawn (codes use bitmask of 8 directions)
   this.drawCrossingInput_ = function(cell, ctx) {
     var r = drawer.drawCrossing_crossingInput_(cell, ctx);
     var num = r[0];
     var code = r[1];
     var code2 = 0;
-    if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19); code2 |= 1; }
-    if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19); code2 |= 2; }
-    if(hasDevice(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19); code2 |= 4; }
-    if(hasDevice(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19); code2 |= 8; }
-    if(hasDevice(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0); code2 |= 16; }
-    if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1); code2 |= 32; }
-    if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1); code2 |= 64; }
-    if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0); code2 |= 128; }
+
+    // which one gets the full length: first priority SW (1), second priority NE (0), third priority / (2), fourth priority \ (3).
+    var full = ((code & 2) || (code & 8)) ? 1 : (((code & 1) || (code & 4)) ? 0 : (((code & 16) || (code & 64)) ? 2 : 3));
+    var gap = CROSSINGGAP;
+    var gapd = CROSSINGGAPD; // for diagonal
+
+    if(hasDevice(cell.x, cell.y, 0) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5 - (full == 0 ? 0 : gap), 0.5, 0, 0.19); code2 |= 1; }
+    if(hasDevice(cell.x, cell.y, 1) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5 + (full == 1 ? 0 : gap), 0.5, 1, 0.5, 0.19); code2 |= 2; }
+    if(hasDevice(cell.x, cell.y, 2) && isInterestingComponent(cell, 1)) { drawer.drawArrow_(ctx, 0.5, 0.5 + (full == 0 ? 0 : gap), 0.5, 1, 0.19); code2 |= 4; }
+    if(hasDevice(cell.x, cell.y, 3) && isInterestingComponent(cell, 0)) { drawer.drawArrow_(ctx, 0.5 - (full == 1 ? 0 : gap), 0.5, 0, 0.5, 0.19); code2 |= 8; }
+    if(hasDevice(cell.x, cell.y, 4) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5 + (full == 2 ? 0 : gapd), 0.5 - (full == 2 ? 0 : gapd), 1, 0); code2 |= 16; }
+    if(hasDevice(cell.x, cell.y, 5) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5 + (full == 3 ? 0 : gapd), 0.5 + (full == 3 ? 0 : gapd), 1, 1); code2 |= 32; }
+    if(hasDevice(cell.x, cell.y, 6) && isInterestingComponent(cell, 3)) { drawer.drawArrow_(ctx, 0.5 - (full == 2 ? 0 : gapd), 0.5 + (full == 2 ? 0 : gapd), 0, 1); code2 |= 64; }
+    if(hasDevice(cell.x, cell.y, 7) && isInterestingComponent(cell, 2)) { drawer.drawArrow_(ctx, 0.5 - (full == 3 ? 0 : gapd), 0.5 - (full == 3 ? 0 : gapd), 0, 0); code2 |= 128; }
     return [num, code, code2];
   };
 
+  // The version for dynamicdraw, if value is set to bitmask of which direction are on/off, or can be used for static drawing if value is undefined
+  // if value is undefined, doesn't set any colors on the context but uses the existing ctx styles
   this.drawCrossingInput2_ = function(ctx, code, code2, value, color0, color1) {
     this.drawCrossing_crossingInput2_(ctx, code, value, color0, color1);
-    if(code2 & 1) { ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0, 0.19); }
-    if(code2 & 2) { ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5, 0.19); }
-    if(code2 & 4) { ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1, 0.19); }
-    if(code2 & 8) { ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5, 0.19); }
-    if(code2 & 16) { ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0); }
-    if(code2 & 32) { ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 1, 1); }
-    if(code2 & 64) { ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 1); }
-    if(code2 & 128) { ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0; drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0); }
+    var full = ((code & 2) || (code & 8)) ? 1 : (((code & 1) || (code & 4)) ? 0 : (((code & 16) || (code & 64)) ? 2 : 3));
+    var gap = CROSSINGGAP;
+    var gapd = CROSSINGGAPD; // for diagonal
+
+    if(code2 & 1) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0;
+      drawer.drawArrow_(ctx, 0.5, 0.5 - (full == 0 ? 0 : gap), 0.5, 0, 0.19);
+    }
+    if(code2 & 2) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0;
+      drawer.drawArrow_(ctx, 0.5 + (full == 1 ? 0 : gap), 0.5, 1, 0.5, 0.19);
+    }
+    if(code2 & 4) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0;
+      drawer.drawArrow_(ctx, 0.5, 0.5 + (full == 0 ? 0 : gap), 0.5, 1, 0.19);
+    }
+    if(code2 & 8) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0;
+      drawer.drawArrow_(ctx, 0.5 - (full == 1 ? 0 : gap), 0.5, 0, 0.5, 0.19);
+    }
+    if(code2 & 16) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0;
+      drawer.drawArrow_(ctx, 0.5 + (full == 2 ? 0 : gapd),  0.5 - (full == 2 ? 0 : gapd), 1, 0);
+    }
+    if(code2 & 32) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0;
+      drawer.drawArrow_(ctx, 0.5 + (full == 3 ? 0 : gapd),  0.5 + (full == 3 ? 0 : gapd), 1, 1);
+    }
+    if(code2 & 64) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0;
+      drawer.drawArrow_(ctx, 0.5 - (full == 2 ? 0 : gapd),  0.5 + (full == 2 ? 0 : gapd), 0, 1);
+    }
+    if(code2 & 128) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0;
+      drawer.drawArrow_(ctx, 0.5 - (full == 3 ? 0 : gapd), 0.5 - (full == 3 ? 0 : gapd), 0, 0);
+    }
   };
 
   this.drawAntiCrossingInput_ = function(cell, ctx, oppositeColor) {
@@ -12770,6 +12786,11 @@ function RendererDrawer() {
     var num = r[0];
     var code = r[1];
     var code2 = 0;
+
+    // which one gets the full length: first priority SW (1), second priority NE (0), third priority / (2), fourth priority \ (3).
+    var full = ((code & 2) || (code & 8)) ? 1 : (((code & 1) || (code & 4)) ? 0 : (((code & 16) || (code & 64)) ? 2 : 3));
+    // no CROSSINGGAP used here: the circles get (almost) no line to them anyway in the half-sized area they're drawn in here, and using gap would make the other endpoint go inside the circle making it get rendered in there
+
     // no "isInterestingComponent" checks for Y, unlike X, because Y can affect things, it's negating (for X any effect, like as AND input, is negated if it's a dummy, but not for Y)
     if(hasDevice(cell.x, cell.y, 0)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 0); code2 |= 1; }
     if(hasDevice(cell.x, cell.y, 1)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 0.5); code2 |= 2; }
@@ -12782,17 +12803,43 @@ function RendererDrawer() {
     return [num, code, code2];
   };
 
+  // The version for dynamicdraw, if value is set to bitmask of which direction are on/off, or can be used for static drawing if value is undefined
+  // if value is undefined, doesn't set color0 on the context but uses the existing ctx styles for that, but still uses color1 for the opposite color
   this.drawAntiCrossingInput2_ = function(ctx, code, code2, value, color0, color1) {
-    this.drawCrossing_crossingInput2_(ctx, code, value, color0, color1);
-
-    if(code2 & 1) { ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 2) ? color0 : color1, 0.5, 0.5, 0.5, 0); }
-    if(code2 & 2) { ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 1) ? color0 : color1, 0.5, 0.5, 1, 0.5); }
-    if(code2 & 4) { ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 2) ? color0 : color1, 0.5, 0.5, 0.5, 1); }
-    if(code2 & 8) { ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 1) ? color0 : color1, 0.5, 0.5, 0, 0.5); }
-    if(code2 & 16) { ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 8) ? color0 : color1, 0.5, 0.5, 1, 0); }
-    if(code2 & 32) { ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 4) ? color0 : color1, 0.5, 0.5, 1, 1); }
-    if(code2 & 64) { ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 8) ? color0 : color1, 0.5, 0.5, 0, 1); }
-    if(code2 & 128) { ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0; drawer.drawAntiArrow_(ctx, (value & 4) ? color0 : color1, 0.5, 0.5, 0, 0); }
+   this.drawCrossing_crossingInput2_(ctx, code, value, color0, color1);
+    // no CROSSINGGAP used here: the circles get (almost) no line to them anyway in the half-sized area they're drawn in here, and using gap would make the other endpoint go inside the circle making it get rendered in there
+    if(code2 & 1) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0;
+      drawer.drawAntiArrow_(ctx, (value & 2) ? color0 : color1, 0.5, 0.5, 0.5, 0);
+    }
+    if(code2 & 2) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0;
+      drawer.drawAntiArrow_(ctx, (value & 1) ? color0 : color1, 0.5, 0.5, 1, 0.5);
+    }
+    if(code2 & 4) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 2) ? color1 : color0;
+      drawer.drawAntiArrow_(ctx, (value & 2) ? color0 : color1, 0.5, 0.5, 0.5, 1);
+    }
+    if(code2 & 8) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 1) ? color1 : color0;
+      drawer.drawAntiArrow_(ctx, (value & 1) ? color0 : color1, 0.5, 0.5, 0, 0.5);
+    }
+    if(code2 & 16) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0;
+      drawer.drawAntiArrow_(ctx, (value & 8) ? color0 : color1, 0.5, 0.5, 1, 0);
+    }
+    if(code2 & 32) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0;
+      drawer.drawAntiArrow_(ctx, (value & 4) ? color0 : color1, 0.5, 0.5, 1, 1);
+    }
+    if(code2 & 64) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 8) ? color1 : color0;
+      drawer.drawAntiArrow_(ctx, (value & 8) ? color0 : color1, 0.5, 0.5, 0, 1);
+    }
+    if(code2 & 128) {
+      if(value != undefined) ctx.strokeStyle = ctx.fillStyle = (value & 4) ? color1 : color0;
+      drawer.drawAntiArrow_(ctx, (value & 4) ? color0 : color1, 0.5, 0.5, 0, 0);
+    }
   };
 
   this.fillBg_ = function(ctx, color) {
@@ -12800,6 +12847,10 @@ function RendererDrawer() {
     ctx.fillStyle = color;
     ctx.fillRect(this.tx, this.ty, tw, th);
     if(origStyle != color) ctx.fillStyle = origStyle;
+  };
+
+  this.clear_ = function(ctx) {
+    ctx.clearRect(this.tx, this.ty, tw, th);
   };
 
   this.doDrawPlusDiagSplit_ = function(code, ctx) {
@@ -13279,6 +13330,9 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         }
       }
 
+      var gap = CROSSINGGAP;
+      var gapd = CROSSINGGAPD; // for diagonal
+
       if(c == '-') {
         drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
         drawer.drawSplitDiag_(cell, ctx, 2);
@@ -13294,17 +13348,16 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         //drawer.drawLine_(ctx, 0, 0, 1, 1);
         if(isInterestingComponent(cell, 1) && !isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 0, 1, 1);
         if(isInterestingComponent(cell, 1)) {
-          drawer.drawLine_(ctx, 0, 0, 0.4, 0.4);
-          drawer.drawLine_(ctx, 0.6, 0.6, 1, 1);
+          drawer.drawLine_(ctx, 0, 0, 0.5 - gapd, 0.5 - gapd);
+          drawer.drawLine_(ctx, 0.5 + gapd, 0.5 + gapd, 1, 1);
         }
         if(isInterestingComponent(cell, 0)) drawer.drawLine_(ctx, 0, 1, 1, 0);
       } else if(c == '+') {
         var code = drawer.drawPlusDiagSplit_(cell, ctx);
-        var shift = 0.2;
         drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
         //drawer.drawLine(ctx, 0.5, 0, 0.5, 1);
-        drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-        drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+        drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+        drawer.drawLine_(ctx, 0.5, 0.5 + gap, 0.5, 1);
         if(code == 0) {
           this.drawextra = true;
           this.drawextrai0 = 2;
@@ -13363,80 +13416,152 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         drawer.drawSplit_(cell, ctx);
       } else if(c == '^') {
         if(cell.circuitextra == 2) {
-          var num = 0;
-          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawArrow_(ctx, 1, 1, 0, 0); num++; }
-          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawArrow_(ctx, 0, 1, 1, 0); num++; }
-          if(num == 2) this.drawextra = true;
+          var has0 = hasDevice(cell.x, cell.y, 7);
+          var has1 = hasDevice(cell.x, cell.y, 4);
+          var code = (has0 ? 32 : 0) | (has1 ? 64 : 0);
+          var code2 = (has0 ? 128 : 0) | (has1 ? 16 : 0);
+          drawer.drawCrossingInput2_(ctx, code, code2);
+          if(has0 && has1) this.drawextra = true;
+        } else if(cell.circuitextra == 1) {
+          var r = drawer.drawCrossingDirectionalInput_(cell, ctx, 0, false);
+          if(r[0] > 1) {
+            this.dynamicdraw = true;
+            this.dynamicdrawcode = r[1];
+            this.dynamicdrawcode2 = r[2];
+          }
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 0);
         }
       } else if(c == '>') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
-          var num = 0;
-          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawArrow_(ctx, 0, 1, 1, 0); num++; }
-          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawArrow_(ctx, 0, 0, 1, 1); num++; }
-          if(num == 2) this.drawextra = true;
+          var has0 = hasDevice(cell.x, cell.y, 4);
+          var has1 = hasDevice(cell.x, cell.y, 5);
+          var code = (has0 ? 64 : 0) | (has1 ? 128 : 0);
+          var code2 = (has0 ? 16 : 0) | (has1 ? 32 : 0);
+          drawer.drawCrossingInput2_(ctx, code, code2);
+          if(has0 && has1) this.drawextra = true;
+        } else if(cell.circuitextra == 1) {
+          var r = drawer.drawCrossingDirectionalInput_(cell, ctx, 1, false);
+          if(r[0] > 1) {
+            this.dynamicdraw = true;
+            this.dynamicdrawcode = r[1];
+            this.dynamicdrawcode2 = r[2];
+          }
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawArrow_(ctx, 0.5, 0.5, 1, 0.5);
         }
       } else if(c == 'v') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
-          var num = 0;
-          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawArrow_(ctx, 1, 0, 0, 1); num++; }
-          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawArrow_(ctx, 0, 0, 1, 1); num++; }
-          if(num == 2) this.drawextra = true;
+          var has0 = hasDevice(cell.x, cell.y, 6);
+          var has1 = hasDevice(cell.x, cell.y, 5);
+          var code = (has0 ? 16 : 0) | (has1 ? 128 : 0);
+          var code2 = (has0 ? 64 : 0) | (has1 ? 32 : 0);
+          drawer.drawCrossingInput2_(ctx, code, code2);
+          if(has0 && has1) this.drawextra = true;
+        } else if(cell.circuitextra == 1) {
+          var r = drawer.drawCrossingDirectionalInput_(cell, ctx, 2, false);
+          if(r[0] > 1) {
+            this.dynamicdraw = true;
+            this.dynamicdrawcode = r[1];
+            this.dynamicdrawcode2 = r[2];
+          }
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawArrow_(ctx, 0.5, 0.5, 0.5, 1);
         }
       } else if(c == '<') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
-          var num = 0;
-          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawArrow_(ctx, 1, 1, 0, 0); num++; }
-          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawArrow_(ctx, 1, 0, 0, 1); num++; }
-          if(num == 2) this.drawextra = true;
+          var has0 = hasDevice(cell.x, cell.y, 7);
+          var has1 = hasDevice(cell.x, cell.y, 6);
+          var code = (has0 ? 32 : 0) | (has1 ? 16 : 0);
+          var code2 = (has0 ? 128 : 0) | (has1 ? 64 : 0);
+          drawer.drawCrossingInput2_(ctx, code, code2);
+          if(has0 && has1) this.drawextra = true;
+        } else if(cell.circuitextra == 1) {
+          var r = drawer.drawCrossingDirectionalInput_(cell, ctx, 3, false);
+          if(r[0] > 1) {
+            this.dynamicdraw = true;
+            this.dynamicdrawcode = r[1];
+            this.dynamicdrawcode2 = r[2];
+          }
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawArrow_(ctx, 0.5, 0.5, 0, 0.5);
         }
       } else if(c == 'm') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
-          var num = 0;
-          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, oppositeColor, 1, 1, 0, 0); num++; }
-          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0, 1, 1, 0); num++; }
-          if(num == 2) this.drawextra = true;
+          var has0 = hasDevice(cell.x, cell.y, 7);
+          var has1 = hasDevice(cell.x, cell.y, 4);
+          var code = (has0 ? 32 : 0) | (has1 ? 64 : 0);
+          var code2 = (has0 ? 128 : 0) | (has1 ? 16 : 0);
+          drawer.drawAntiCrossingInput2_(ctx, code, code2, undefined, undefined, oppositeColor);
+          if(has0 && has1) this.drawextra = true;
+        } else if(cell.circuitextra == 1) {
+          var r = drawer.drawCrossingDirectionalInput_(cell, ctx, 0, true, oppositeColor);
+          if(r[0] > 1) {
+            this.dynamicdraw = true;
+            this.dynamicdrawcode = r[1];
+            this.dynamicdrawcode2 = r[2];
+          }
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 0);
         }
       } else if(c == ']') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
-          var num = 0;
-          if(hasDevice(cell.x, cell.y, 4)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0, 1, 1, 0); num++; }
-          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0, 0, 1, 1); num++; }
-          if(num == 2) this.drawextra = true;
+          var has0 = hasDevice(cell.x, cell.y, 4);
+          var has1 = hasDevice(cell.x, cell.y, 5);
+          var code = (has0 ? 64 : 0) | (has1 ? 128 : 0);
+          var code2 = (has0 ? 16 : 0) | (has1 ? 32 : 0);
+          drawer.drawAntiCrossingInput2_(ctx, code, code2, undefined, undefined, oppositeColor);
+          if(has0 && has1) this.drawextra = true;
+        } else if(cell.circuitextra == 1) {
+          var r = drawer.drawCrossingDirectionalInput_(cell, ctx, 1, true, oppositeColor);
+          if(r[0] > 1) {
+            this.dynamicdraw = true;
+            this.dynamicdrawcode = r[1];
+            this.dynamicdrawcode2 = r[2];
+          }
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 1, 0.5);
         }
       } else if(c == 'w') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
-          var num = 0;
-          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, oppositeColor, 1, 0, 0, 1); num++; }
-          if(hasDevice(cell.x, cell.y, 5)) { drawer.drawAntiArrow_(ctx, oppositeColor, 0, 0, 1, 1); num++; }
-          if(num == 2) this.drawextra = true;
+          var has0 = hasDevice(cell.x, cell.y, 6);
+          var has1 = hasDevice(cell.x, cell.y, 5);
+          var code = (has0 ? 16 : 0) | (has1 ? 128 : 0);
+          var code2 = (has0 ? 64 : 0) | (has1 ? 32 : 0);
+          drawer.drawAntiCrossingInput2_(ctx, code, code2, undefined, undefined, oppositeColor);
+          if(has0 && has1) this.drawextra = true;
+        } else if(cell.circuitextra == 1) {
+          var r = drawer.drawCrossingDirectionalInput_(cell, ctx, 2, true, oppositeColor);
+          if(r[0] > 1) {
+            this.dynamicdraw = true;
+            this.dynamicdrawcode = r[1];
+            this.dynamicdrawcode2 = r[2];
+          }
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0.5, 1);
         }
       } else if(c == '[') {
         if(cell.circuitextra == 2 && hasRealComponent(cell)) {
-          var num = 0;
-          if(hasDevice(cell.x, cell.y, 7)) { drawer.drawAntiArrow_(ctx, oppositeColor, 1, 1, 0, 0); num++; }
-          if(hasDevice(cell.x, cell.y, 6)) { drawer.drawAntiArrow_(ctx, oppositeColor, 1, 0, 0, 1); num++; }
-          if(num == 2) this.drawextra = true;
+          var has0 = hasDevice(cell.x, cell.y, 7);
+          var has1 = hasDevice(cell.x, cell.y, 6);
+          var code = (has0 ? 32 : 0) | (has1 ? 16 : 0);
+          var code2 = (has0 ? 128 : 0) | (has1 ? 64 : 0);
+          drawer.drawAntiCrossingInput2_(ctx, code, code2, undefined, undefined, oppositeColor);
+          if(has0 && has1) this.drawextra = true;
+        } else if(cell.circuitextra == 1) {
+          var r = drawer.drawCrossingDirectionalInput_(cell, ctx, 3, true, oppositeColor);
+          if(r[0] > 1) {
+            this.dynamicdraw = true;
+            this.dynamicdrawcode = r[1];
+            this.dynamicdrawcode2 = r[2];
+          }
         } else {
           drawer.drawSplit_(cell, ctx, 1);
           drawer.drawAntiArrow_(ctx, oppositeColor, 0.5, 0.5, 0, 0.5);
@@ -13538,7 +13663,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           this.drawextrai1 = 1;
           this.drawextrag = 19;
         }
-        else {
+        else if(r[0] > 1) {
           // nothing simpler work, use complex dynamicdraw
           this.dynamicdraw = true;
           this.dynamicdrawcode = code;
@@ -13627,7 +13752,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
           this.drawextrai1 = 1;
           this.drawextrag = 23;
         }
-        else {
+        else if(r[0] > 1) {
           // nothing simpler work, use complex dynamicdraw
           this.dynamicdraw = true;
           this.dynamicdrawcode = code;
@@ -14045,27 +14170,31 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       // leaving one gap open between each tile so that some border graphics don't overlap each other
       var ty = ((i == 0) ? 0 : 1);
 
+      var gap = CROSSINGGAP;
+      var gapd = CROSSINGGAPD; // for diagonal
+
       // '+'
       prepareAt(0, ty);
-      var shift = 0.2;
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+      drawer.drawLine_(ctx, 0.5, 0.5 + gap, 0.5, 1);
 
       // 'x'
       prepareAt(1, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawLine_(ctx, 0, 0, 0.4, 0.4);
-      drawer.drawLine_(ctx, 0.6, 0.6, 1, 1);
+      drawer.drawLine_(ctx, 0, 0, 0.5 - gapd, 0.5 - gapd);
+      drawer.drawLine_(ctx, 0.5 + gapd, 0.5 + gapd, 1, 1);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawLine_(ctx, 0, 1, 1, 0);
 
       // 'diagonal crossing ^'
       prepareAt(2, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawArrow_(ctx, 1, 1, 0, 0);
+      //drawer.drawArrow_(ctx, 1, 1, 0, 0);
+      drawer.drawLine_(ctx, 1, 1, 0.5 + gapd, 0.5 + gapd);
+      drawer.drawArrow_(ctx, 0.5 - gapd, 0.5 - gapd, 0, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawArrow_(ctx, 0, 1, 1, 0);
 
@@ -14074,26 +14203,32 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawArrow_(ctx, 0, 1, 1, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawArrow_(ctx, 0, 0, 1, 1)
+      drawer.drawLine_(ctx, 0, 0, 0.5 - gapd, 0.5 - gapd);
+      drawer.drawArrow_(ctx, 0.5 + gapd, 0.5 + gapd, 1, 1);
 
       // 'diagonal crossing v'
       prepareAt(4, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawArrow_(ctx, 1, 0, 0, 1);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawArrow_(ctx, 0, 0, 1, 1);
+      drawer.drawLine_(ctx, 0, 0, 0.5 - gapd, 0.5 - gapd);
+      drawer.drawArrow_(ctx, 0.5 + gapd, 0.5 + gapd, 1, 1);
 
       // 'diagonal crossing <'
       prepareAt(5, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawArrow_(ctx, 1, 1, 0, 0);
+      //drawer.drawArrow_(ctx, 1, 1, 0, 0);
+      drawer.drawLine_(ctx, 1, 1, 0.5 + gapd, 0.5 + gapd);
+      drawer.drawArrow_(ctx, 0.5 - gapd, 0.5 - gapd, 0, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawArrow_(ctx, 1, 0, 0, 1);
 
       // 'diagonal crossing m'
       prepareAt(6, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, color1, 1, 1, 0, 0);
+      //drawer.drawAntiArrow_(ctx, color1, 1, 1, 0, 0);
+      drawer.drawLine_(ctx, 1, 1, 0.5 + gapd, 0.5 + gapd);
+      drawer.drawAntiArrow_(ctx, color1, 0.5, 0.5, 0, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawAntiArrow_(ctx, color0, 0, 1, 1, 0);
 
@@ -14102,19 +14237,23 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawAntiArrow_(ctx, color1, 0, 1, 1, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, color0, 0, 0, 1, 1)
+      drawer.drawLine_(ctx, 0, 0, 0.5 - gapd, 0.5 - gapd);
+      drawer.drawAntiArrow_(ctx, color0, 0.5, 0.5, 1, 1);
 
       // 'diagonal crossing w'
       prepareAt(8, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawAntiArrow_(ctx, color1, 1, 0, 0, 1);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, color0, 0, 0, 1, 1);
+      drawer.drawLine_(ctx, 0, 0, 0.5 - gapd, 0.5 - gapd);
+      drawer.drawAntiArrow_(ctx, color0, 0.5, 0.5, 1, 1);
 
       // 'diagonal crossing ['
       prepareAt(9, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, color1, 1, 1, 0, 0);
+      //drawer.drawAntiArrow_(ctx, color1, 1, 1, 0, 0);
+      drawer.drawLine_(ctx, 1, 1, 0.5 + gapd, 0.5 + gapd);
+      drawer.drawAntiArrow_(ctx, color1, 0.5, 0.5, 0, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawAntiArrow_(ctx, color0, 1, 0, 0, 1);
 
@@ -14177,7 +14316,8 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       // input crossing NE
       prepareAt(16, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawArrow_(ctx, 0.5, 1, 0.5, 0, 0.19);
+      drawer.drawLine_(ctx, 0.5, 1, 0.5, 0.5 + CROSSINGGAP);
+      drawer.drawArrow_(ctx, 0.5, 0.5 - CROSSINGGAP, 0.5, 0, 0.19);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawArrow_(ctx, 0, 0.5, 1, 0.5, 0.19);
 
@@ -14186,12 +14326,14 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawArrow_(ctx, 0, 0.5, 1, 0.5, 0.19);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawArrow_(ctx, 0.5, 0, 0.5, 1, 0.19);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - CROSSINGGAP);
+      drawer.drawArrow_(ctx, 0.5, 0.5 + CROSSINGGAP, 0.5, 1, 0.19);
 
       // input crossing SW
       prepareAt(18, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawArrow_(ctx, 0.5, 0, 0.5, 1, 0.19);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - CROSSINGGAP);
+      drawer.drawArrow_(ctx, 0.5, 0.5 + CROSSINGGAP, 0.5, 1, 0.19);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawArrow_(ctx, 1, 0.5, 0, 0.5, 0.19);
 
@@ -14200,12 +14342,14 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawArrow_(ctx, 1, 0.5, 0, 0.5, 0.19);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawArrow_(ctx, 0.5, 1, 0.5, 0, 0.19);
+      drawer.drawLine_(ctx, 0.5, 1, 0.5, 0.5 + CROSSINGGAP);
+      drawer.drawArrow_(ctx, 0.5, 0.5 - CROSSINGGAP, 0.5, 0, 0.19);
 
       // negated input crossing NE
       prepareAt(20, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, color1, 0.5, 1, 0.5, 0);
+      drawer.drawLine_(ctx, 0.5, 1, 0.5, 0.5 + CROSSINGGAP);
+      drawer.drawAntiArrow_(ctx, color1, 0.5, 0.5, 0.5, 0);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawAntiArrow_(ctx, color0, 0, 0.5, 1, 0.5);
 
@@ -14214,12 +14358,14 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawAntiArrow_(ctx, color1, 0, 0.5, 1, 0.5);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, color0, 0.5, 0, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - CROSSINGGAP);
+      drawer.drawAntiArrow_(ctx, color0, 0.5, 0.5, 0.5, 1);
 
       // negated input crossing SW
       prepareAt(22, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
-      drawer.drawAntiArrow_(ctx, color1, 0.5, 0, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - CROSSINGGAP);
+      drawer.drawAntiArrow_(ctx, color1, 0.5, 0.5, 0.5, 1);
       ctx.strokeStyle = ctx.fillStyle = color1;
       drawer.drawAntiArrow_(ctx, color0, 1, 0.5, 0, 0.5);
 
@@ -14228,24 +14374,24 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawAntiArrow_(ctx, color1, 1, 0.5, 0, 0.5);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawAntiArrow_(ctx, color0, 0.5, 1, 0.5, 0);
+      drawer.drawLine_(ctx, 0.5, 1, 0.5, 0.5 + CROSSINGGAP);
+      drawer.drawAntiArrow_(ctx, color0, 0.5, 0.5, 0.5, 0);
 
-      shift = 0.2;
-
+      // TODO: write comment here and for the other uncommented ones below what they are
       prepareAt(24, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+      drawer.drawLine_(ctx, 0.5, 0.5 + gap, 0.5, 1);
       drawer.doDrawPlusDiagSplit_(1, ctx);
 
       prepareAt(25, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+      drawer.drawLine_(ctx, 0.5, 0.5 + gap, 0.5, 1);
       drawer.doDrawPlusDiagSplit_(2, ctx);
 
       prepareAt(26, ty);
@@ -14253,31 +14399,31 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
       drawer.doDrawPlusDiagSplit_(4, ctx);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+      drawer.drawLine_(ctx, 0.5, 0.5 + gap, 0.5, 1);
 
       prepareAt(27, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
       drawer.doDrawPlusDiagSplit_(8, ctx);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+      drawer.drawLine_(ctx, 0.5, 0.5 + gap, 0.5, 1);
 
       prepareAt(28, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+      drawer.drawLine_(ctx, 0.5, 0.5 + gap, 0.5, 1);
       drawer.doDrawPlusDiagSplit_(16, ctx);
 
       prepareAt(29, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+      drawer.drawLine_(ctx, 0.5, 0.5 + gap, 0.5, 1);
       drawer.doDrawPlusDiagSplit_(32, ctx);
 
       prepareAt(30, ty);
@@ -14285,16 +14431,16 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
       drawer.doDrawPlusDiagSplit_(64, ctx);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+      drawer.drawLine_(ctx, 0.5, 0.5 + gap, 0.5, 1);
 
       prepareAt(31, ty);
       ctx.strokeStyle = ctx.fillStyle = color0;
       drawer.drawLine_(ctx, 0, 0.5, 1, 0.5);
       drawer.doDrawPlusDiagSplit_(128, ctx);
       ctx.strokeStyle = ctx.fillStyle = color1;
-      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - shift + 0.1);
-      drawer.drawLine_(ctx, 0.5, 0.5 + shift, 0.5, 1);
+      drawer.drawLine_(ctx, 0.5, 0, 0.5, 0.5 - gap);
+      drawer.drawLine_(ctx, 0.5, 0.5 + gap, 0.5, 1);
 
       // input crossing N
       prepareAt(32, ty);
@@ -14384,6 +14530,7 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         } else if(this.dynamicdrawcode2 < 256) {
           drawer.drawCrossingInput2_(dest, this.dynamicdrawcode, this.dynamicdrawcode2, value, OFFCOLOR, ONCOLOR);
         } else {
+          drawer.clear_(dest); // there is an issue where the o of the antiarrows sometimes gets strange colors due to old versions shining through it. So clear the previous rendering. This is needed for this with the circles, but not for the regular arrows... Reproducible with crossing directional negated input (e.g. circuitextra == 1 on m, with active crossing)
           drawer.drawAntiCrossingInput2_(dest, this.dynamicdrawcode, this.dynamicdrawcode2 >> 8, value, OFFCOLOR, ONCOLOR);
         }
         this.prevvalue = value;
@@ -14394,14 +14541,31 @@ function RendererImg() { // RendererCanvas RendererGraphical RendererGraphics Re
         value &= this.drawonly;
       }
 
-      if(value) {
+      var draw1 = !!value; // whether to use the off color or on color. draw1 means to use the on-color
+
+      var c = cell.circuitsymbol;
+
+      // for directional inputs acting as wire crossing, do NOT make it use the on color if only the sides are on
+      // normally for e.g. a wire crossing, the on-color is used as soon as any of the 2 possible directions is on (but dynamicdraw then fixes the fact that this may cause a stray wire to light up)
+      // but for wire-crossing directional inputs, there are possibilities where it doesn't draw the orthogonal wire (when only a single of the 2 sides touches), but 'value' will still be non-0 if that neighbor is on
+      // and that could cause the arrow to get the 'on' color due to a side neighbor, even if the arrow not interacting with that neighbor is the only thing being drawn
+      // to be clear, it's about this case: the A does not interact with the ^ as per directional input rules, but if there'd be something on the left side the horizontal wire crossing throug the ^ connects the A with that. But with only the single A, no horizontal line is drawn yet the A causes the 'value' variable to be non-0 and would cause it to draw the vertical arrow from the ^ as on while it isn't
+      //   l
+      //   ^A
+      //   s
+
+      if(cell.circuitextra == 1 && dinputmap[c]) {
+        if((c == '^' || c == 'v' || c == 'm' || c == 'w') && !(value & 2)) draw1 = false;
+        if((c == '>' || c == '<' || c == ']' || c == '[') && !(value & 1)) draw1 = false;
+      }
+
+      if(draw1) {
         if(this.usetext) {
           this.text0.style.visibility = 'hidden';
           if(this.text1) this.text1.style.visibility = 'visible';
         }
         source = rglobal.offcanvas1.getCanvasForCell(cell);
         if(this.drawextra) {
-          var c = cell.circuitsymbol;
           var isextra = true;
           var qx, qy;
           if(c == 'x' && value == 1) { qx = 1;  qy = 0; }
@@ -15093,9 +15257,8 @@ function parseExtra() {
         // at the edges when just copypasting the same structure multiple times (see the game of life circuits)
         world[y][x].circuitextra = 2;
       }
-
       if(world[y][x].circuitextra == 0) {
-        // if an input touches a device on its main input side, then ignore devices touching its sides (mostly for special shaped ICs)
+        // if an input touches a device on its main input side, it acts as a wire crossing from the other sides
         if(c == '^' || c == 'm') { wca = getNeighbor(x, y, 2); }
         else if(c == '>' || c == ']') { wca = getNeighbor(x, y, 3); }
         else if(c == 'v' || c == 'w') { wca = getNeighbor(x, y, 0); }
@@ -15107,6 +15270,23 @@ function parseExtra() {
         }
         if(ca == '|' && (c == '^' || c == 'v' || c == 'm' || c == 'w')) world[y][x].circuitextra = 1;
         if(ca == '-' && (c == '>' || c == '<' || c == ']' || c == '[')) world[y][x].circuitextra = 1;
+      }
+      // For a directional input acting as a wire crossing from the sides: if neither of the sides is a _wire_ connecting to it, but instead both sides are device (or one is device and the other side nonexisting), then
+      // do _not_ connect it (marked with circuitextra == 3).
+      // The reason for this behavior: when squeezing an output between two devices, you do NOT want both devices to get connected to each other with what is equivalent to a regular wire, only if explicitely you put an
+      // actual wire aimed at the side of a directional input, should treat it as a connection at all. But a wire on one side, a device on the other side, SHOULD could as a connection, that's exactly what makes a but
+      // like this work:
+      if(dinputmap[c] && world[y][x].circuitextra == 1) {
+        var sidedir = (c == '^' || c == 'm' || c == 'v' || c == 'w') ? 1 : 0;
+        var n0 = getNeighbor(x, y, sidedir);
+        var n1 = getNeighbor(x, y, getOppositeDir(sidedir));
+        var c0 = n0 ? world[n0.y][n0.x].circuitsymbol : undefined;
+        var c1 = n1 ? world[n1.y][n1.x].circuitsymbol : undefined;
+        //var ok0 = n0 && knownmap[c0] && !devicemaparea[c0];
+        //var ok1 = n1 && knownmap[c1] && !devicemaparea[c1];
+        var ok0 = n0 != undefined && wiremap[c0] && !(sidedir == 0 && c0 == '-') && !(sidedir == 1 && c0 == '|') && c0 != '/' && c0 != '\\' && c0 != 'x'; // only wires specifically aimed at it
+        var ok1 = n1 != undefined && wiremap[c1] && !(sidedir == 0 && c1 == '-') && !(sidedir == 1 && c1 == '|') && c1 != '/' && c1 != '\\' && c1 != 'x'; // only wires specifically aimed at it
+        if(!ok0 && !ok1) world[y][x].circuitextra = 3;
       }
     }
   }
@@ -16055,7 +16235,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(todir <= 3 && (c == 'x' || c2 == 'x')) return false; // x's do not interact with the sides
 
   if(z > 3 && c != 'i' && c != '#i') return false;
-  if(z > 1 && !(c == 'i' || c == '#i' || c == 'X' || c2 == 'X' || c == 'Y' || c2 == 'Y' || c == '*' || c2 == '*')) return false;
+  if(z > 1 && !(c == 'i' || c == '#i' || c == 'X' || c2 == 'X' || c == 'Y' || c2 == 'Y' || c == '*' || c2 == '*' || (dinputmap[c] && ce == 1) || (dinputmap[c2] && ce2 == 1))) return false;
 
   if(c == '-' && (todir2 == 0 || todir2 == 2 || todir2 >= 4)) return false;
   if(c == '|' && (todir2 == 1 || todir2 == 3 || todir2 >= 4)) return false;
@@ -16081,7 +16261,7 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
   if(c == '\\' && !(todir == 5 || todir == 7)) return false;
 
   if(c == 'x' && !(z == 0 && (todir == 4 || todir == 6)) && !(z == 1 && (todir == 5 || todir == 7))) return false;
-  if((c == 'X' || c == 'Y' || c == '*') &&
+  if((c == 'X' || c == 'Y' || c == '*' || (dinputmap[c] && ce == 1)) &&
       !(z == 0 && (todir == 1 || todir == 3)) &&
       !(z == 1 && (todir == 0 || todir == 2)) &&
       !(z == 2 && (todir == 5 || todir == 7)) &&
@@ -16094,6 +16274,12 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
       if((c == '>' || c == ']') && !(todir == 6 && z == 0) && !(todir == 7 && z == 1)) return false;
       if((c == 'v' || c == 'w') && !(todir == 7 && z == 0) && !(todir == 4 && z == 1)) return false;
       if((c == '<' || c == '[') && !(todir == 4 && z == 0) && !(todir == 5 && z == 1)) return false;
+    } else if(ce == 3) {
+      // nothing interacts with the either the sides or the front side of these
+      if((c == '^' || c == 'm') && todir != 2) return false;
+      if((c == '>' || c == ']') && todir != 3) return false;
+      if((c == 'v' || c == 'w') && todir != 0) return false;
+      if((c == '<' || c == '[') && todir != 1) return false;
     } else {
       //if(c2 == 'g' || c2 == '=' || antennamap[c2]) return true;
       // nothing interacts with the front side if device inputs here, that is resolved only later
@@ -16102,13 +16288,12 @@ function connected(c, c2, ce, ce2, todir, z, z2) {
       if((c == 'v' || c == 'w') && todir == 2) return false;
       if((c == '<' || c == '[') && todir == 3) return false;
 
-      if((c == '^' || c == 'm') && ce == 1 && devicemaparea[c2] && (todir == 1 || todir == 3)) return false;
-      if((c == '>' || c == ']') && ce == 1 && devicemaparea[c2] && (todir == 0 || todir == 2)) return false;
-      if((c == 'v' || c == 'w') && ce == 1 && devicemaparea[c2] && (todir == 1 || todir == 3)) return false;
-      if((c == '<' || c == '[') && ce == 1 && devicemaparea[c2] && (todir == 0 || todir == 2)) return false;
+      //if((c == '^' || c == 'm') && ce == 1 && devicemaparea[c2] && (todir == 1 || todir == 3)) return false;
+      //if((c == '>' || c == ']') && ce == 1 && devicemaparea[c2] && (todir == 0 || todir == 2)) return false;
+      //if((c == 'v' || c == 'w') && ce == 1 && devicemaparea[c2] && (todir == 1 || todir == 3)) return false;
+      //if((c == '<' || c == '[') && ce == 1 && devicemaparea[c2] && (todir == 0 || todir == 2)) return false;
     }
   }
-
 
   // those device inputs, too, don't interact with devices here (interaction with devices is resolved later)
   if((c == 'V' || c == 'W' || c == 'X' || c == 'Y') && devicemaparea[c2]) return false;
@@ -16157,7 +16342,7 @@ function connected2(x, y, todir) {
   // the theoretical max z is 8, but avoid using higher than 2, avoiding unneeded connected() calls, if the cell doesn't use such high z
   var maxz = 2;
   if(c == '-' || c == '|' || c == '.') maxz = 1;
-  if(c == 'X' || c == 'Y' || c == '*') maxz = 4;
+  if(c == 'X' || c == 'Y' || c == '*' || (dinputmap[c] && ce == 1)) maxz = 4;
   if(c == 'i' || c == '#i') maxz = ((todir > 3) ? 8 : 4);
 
   for(var z = 0; z < maxz; z++) {
@@ -16182,7 +16367,7 @@ function getZ2(c, c2, ce, ce2, todir, z) {
   }
 
   if(c2 == '+' && (todir2 == 0 || todir2 == 2)) return 1;
-  if(c2 == '*' || c2 == 'X' || c2 == 'Y') {
+  if(c2 == '*' || c2 == 'X' || c2 == 'Y' || (dinputmap[c2] && ce2 == 1)) {
     // *'s meaning for z coordinate: z=0:-, z=1:|, z=2:/, z=3:\ (backspace)
     if(todir == 0 || todir == 2) return 1;
     else if(todir == 4 || todir == 6) return 3;
@@ -16697,8 +16882,9 @@ function parseComponents() {
       // It's tricky and hacky and ad hoc (this only added on 20171210) but I HOPE It works
       var maxz0 = 1;
       if(c0 == 'Y') maxz0 = 4;
-      if(c0 == 'x' || c0 == '+' || c0 == '%' || c0 == '&') maxz0 = 2;
+      if(c0 == 'x' || c0 == '+' || c0 == '%' || c0 == '&') maxz0 = 2; // TOOD: why is this needed? if this is useful it should be handling '*' too, but '*' already seems to work correctly in chips in all directions without adding it here.
       if(dinputmap[c0] && world[y0][x0].circuitextra == 2) maxz0 = 2;
+      if(dinputmap[c0] && world[y0][x0].circuitextra == 1) maxz0 = 2; // directional inputs acting as wire crossing on the sides when main input is used as input
 
       for(var z0 = 0; z0 < maxz0; z0++) {
         if(used[y0][x0][z0]) continue;
@@ -17179,6 +17365,13 @@ function parseComponents() {
         if(c == '>' || c == ']') dir = 1;
         if(c == 'v' || c == 'w') dir = 2;
         if(c == '<' || c == '[') dir = 3;
+
+        if(world[y][x].circuitextra == 1) {
+          // directional inputs acting as wire crossing on the sides if main side used
+          if(z == 0 && !(dir == 1 || dir == 3)) continue;
+          if(z == 1 && !(dir == 0 || dir == 2)) continue;
+        }
+
         var wc2 = getNeighbor(x, y, dir);
         if(!wc2) continue;
 

@@ -130,14 +130,6 @@ s...+..>l       x         x
     v                  s     s
     l
 
-
-0"Diagonal wire crossing at the arrowhead itself (causing 2 diagonal crossing"
-0"inputs):"
-
-s...... l
-       >
-s...... l
-
 0"LEDs can also come in various different colors (using numeric digits in the"
 0"source code, but the numbers will be invisible below)"
 
@@ -241,7 +233,7 @@ s..>A..>l
 s....
 
 0"0-input and 1-input gates are also possible. A 0-input AND gate outputs"
-0"true due to the empty product (or, because it has no 'off' inputs):"
+0"true due to the empty product (because it has no 'off' inputs):"
 
 a....>l    s....>a....>l
 
@@ -476,12 +468,7 @@ S-->y-->l
      | | | |                    ss ss
      s s s s                   "22 11"
 
-0"Chips can be rotated. This must be indicated by also rotating the relative"
-0"position of the number compared to the i. The digits themselves must still"
-0"read the same value from left to right or from top to bottom no matter which"
-0"side they're rotated to. Mirroring chips is also supported but only automatically"
-0"detected, does not support indicating it with the number position and cannot be"
-0"done if the input and output shapes are symmetrical."
+0"Chips can be rotated and mirrored, see the editing help for more on this."
 
   s          s
   v  :    :  v
@@ -3032,6 +3019,16 @@ l<5<s
   i
 l<#<s
 
+
+0"Mirroring chips is also supported, this is automatically detected and"
+0"is only possible if there's no ambiguity."
+
+   :        :              :        :
+   cl<#<s   sl<5<s    s>5>ls   s>#>lc
+      i        i        i        i
+   sl<5<s   cl<#<s    s>#>lc   s>5>ls
+   :        :              :        :
+
 0"# SECTION V: Extra Parts"
 
 0"These parts do not extend the logic abilities, but allow different ways of"
@@ -4865,12 +4862,29 @@ s     s              l      s s s  s s s
    l     l          X        lll    lll
                      l
 
-0"NOTE: the diagonal usage of ^ seen earler above is also a type of wire"
-0"crossing input, and the diagonal ^ is a nicer looking style than what you can"
-0"make with X and can be a bit more compact."
+0"Regular directional inputs ^ > v < m ] w [ also become a wire crossing in certain circumstances:"
+
+0"* As seen earlier, they can serve as a diagonal crossing, which is useful to make a compact half-adder, here shown as a single and with 3 inputs:"
+
+a e  a e
+ ^   ^^^
+s s  s s
+
+0"* An input that is used from the back side, will treat the sides as a wire crossing, while without using the back side the sides connect to it directly. That allows making side-inputs to a bus of gates as shown below:"
+
+  l           l
+s-^->l      s-^->l
+  s
+
+      sss
+      v||
+s---->av+------->l
+s----->av------->l
+s------>a------->l
+
 
 0"NOTE: view this circuit in graphical instead of text mode with the dropdown"
-0"to see better what exactly the input is connecting to above."
+0"to see better what exactly the input is connecting to in the above circuits."
 
 0"X and Y can also work as a regular wire crossing, in fact it does the same as"
 0"'*' in that case. That's just a side effect, not their main use case."
@@ -8115,6 +8129,52 @@ s(6)->l
 S(#)-------->l8
 s>#
 
+
+            >l8
+S-----------.
+            >l8
+
+             l8
+S------------^
+
+S------------v
+             l8
+
+S-------v--->l8
+        o--->l8
+
+        s
+S-------v--->l8
+        o---]l8
+
+
+S--->o------>l8
+S---->o----->l8
+S--->o------>l8
+
+
+     SsS
+     v||
+S--->aw+---->l8
+s----]av---->l8
+S----->a---->l8
+
+
+S--->a------>l8
+s----Ya----->l8
+S----+Xa---->l8
+     ||^
+     sSS
+
+
+S----------. l8
+            >
+S----------. l8
+
+
+S----------. l8
+            X
+S----------. l8
 
 
 0"# Off"
